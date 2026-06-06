@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Gratulationsdienst Digital</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="vendor/ag-grid-community.min.js"></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <img src="assets/reinickendorf.jpg" alt="" class="brand-mark">
+          <div>
+            <strong>Gratulationsdienst</strong>
+            <span>Reinickendorf</span>
+          </div>
+        </div>
+        <nav class="nav" aria-label="Hauptnavigation">
+          <button type="button" data-nav="dashboard">Übersicht</button>
+          <button type="button" data-nav="citizens">Gratulanten</button>
+          <button type="button" data-nav="soko">SOKO</button>
+          <button type="button" data-nav="regions">Zuständigkeit</button>
+          <button type="button" data-nav="senders">Absender</button>
+          <button type="button" data-nav="templates">Vorlagen</button>
+          <button type="button" data-nav="documents">Dokumentlauf</button>
+          <button type="button" data-nav="import">Import</button>
+        </nav>
+        <div class="sidebar-footer">
+          <span class="status-dot"></span>
+          <span>Prototyp lokal</span>
+        </div>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Phase 1 / Hauptmodul</p>
+            <h1 id="page-title">Übersicht</h1>
+          </div>
+          <div class="topbar-actions">
+            <button type="button" class="ghost-button" data-action="reset-data">Beispieldaten</button>
+            <button type="button" class="primary-button" data-nav="documents">Dokumentlauf starten</button>
+          </div>
+        </header>
+        <section id="view" class="view" aria-live="polite"></section>
+      </main>
+    </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script src="data/reinickendorf-streets.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

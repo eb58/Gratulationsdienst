@@ -1,0 +1,11 @@
+Anrede;Vorname;Nachname;Straße;Hausnummer;PLZ;Ortsteil;Geburtsdatum;Telefon;E-Mail
+Frau;Gerda;Müller;Ackerplanweg;12;13507;Tegel;1936-07-21;030 4012345;gerda.mueller@example.test
+Herr;Werner;Schmidt;Alt-Lübars;8;13469;Lübars;1931-08-03;;
+Frau;Inge;Fischer;Auguste Viktoria-Allee;44;13403;Reinickendorf;1941-09-14;030 4123456;
+Herr;Dieter;Hoffmann;Hermsdorfer Damm;92;13467;Hermsdorf;1926-10-02;;dieter.hoffmann@example.test
+Frau;Ursula;Krause;Oraniendamm;33;13469;Waidmannslust;1936-11-18;030 4234567;
+Herr;Klaus;Richter;Zabel-Krüger-Damm;17;13469;Wittenau;1941-12-09;;
+Frau;Brigitte;Neumann;Wilhelmsruher Damm;140;13439;Märkisches Viertel;1931-07-30;030 4345678;brigitte.neumann@example.test
+Herr;Heinz;Lehmann;Scharnweberstraße;106;13405;Tegel;1926-08-25;;
+Frau;Elfriede;Becker;Frohnauer Straße;21;13465;Frohnau;1936-09-06;030 4456789;
+Herr;Manfred;Wolf;Heiligenseestraße;55;13503;Heiligensee;1941-10-11;;manfred.wolf@example.test
