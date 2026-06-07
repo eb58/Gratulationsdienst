@@ -8,7 +8,7 @@ Statischer Browser-Prototyp für das Hauptmodul aus dem Pflichtenheft.
 
 ## Enthalten
 
-- Gratulanten-Verwaltung mit Filter, Detailmaske und Speicherung im Browser
+- Jubilare-Verwaltung mit Filter, Detailmaske und Speicherung im Browser
 - 12 prototypische SOKOs mit Mitgliedern und Leitungen
 - Straßenverzeichnis mit SOKO-Zuordnung nach Ortsteil- und Planquadrat-Clustern
 - SOKO-Straßenkarte mit lokalen OpenStreetMap-Geometrien aus Overpass

@@ -18,15 +18,22 @@
           </div>
         </div>
         <nav class="nav" aria-label="Hauptnavigation">
-          <button type="button" data-nav="dashboard">Übersicht</button>
-          <button type="button" data-nav="citizens">Gratulanten</button>
-          <button type="button" data-nav="soko">SOKO</button>
-          <button type="button" data-nav="regions">Zuständigkeit</button>
-          <button type="button" data-nav="map">Karte</button>
-          <button type="button" data-nav="senders">Absender</button>
-          <button type="button" data-nav="templates">Vorlagen</button>
-          <button type="button" data-nav="documents">Dokumentlauf</button>
-          <button type="button" data-nav="import">Import</button>
+          <div class="nav-section">
+            <span class="nav-section-title">Nutzung</span>
+            <button type="button" data-nav="dashboard">Übersicht</button>
+            <button type="button" data-nav="import">Import</button>
+            <button type="button" data-nav="citizens">Jubilare prüfen</button>
+            <button type="button" data-nav="documents">Dokumentlauf</button>
+          </div>
+          <div class="nav-section">
+            <span class="nav-section-title">Stammdatenpflege</span>
+            <button type="button" data-nav="soko">SOKO</button>
+            <button type="button" data-nav="regions">SOKO Straßen & Zuständigkeit</button>
+            <button type="button" data-nav="map">SOKO-Karte</button>
+            <button type="button" data-nav="senders">Absender</button>
+            <button type="button" data-nav="templates">Vorlagen</button>
+            <button type="button" data-action="reset-data">Beispieldaten</button>
+          </div>
         </nav>
         <div class="sidebar-footer">
           <span class="status-dot"></span>
@@ -41,8 +48,7 @@
             <h1 id="page-title">Übersicht</h1>
           </div>
           <div class="topbar-actions">
-            <button type="button" class="ghost-button" data-action="reset-data">Beispieldaten</button>
-            <button type="button" class="primary-button" data-nav="documents">Dokumentlauf starten</button>
+            <button type="button" class="primary-button" data-nav="import">Ablauf starten</button>
           </div>
         </header>
         <section id="view" class="view" aria-live="polite"></section>
