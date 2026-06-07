@@ -266,6 +266,7 @@ const groupOptions = () => [["alle", "Alle SOKO-Gruppen"], ...state.data.sokoGro
 const senderOptions = () => state.data.senders.map(sender => [sender.id, sender.role]);
 const templateOptions = () => state.data.templates.map(template => [template.id, template.name]);
 const occasionOptions = () => [["Geburtstag", "Geburtstag"], ["Jubiläum", "Jubiläum"], ["Einladung", "Einladung"]];
+const formatOptions = () => [["DIN A4 Brief", "DIN A4 Brief"], ["DIN A4 quer", "DIN A4 quer"], ["A5 Karte", "A5 Karte"], ["A5 Karte quer", "A5 Karte quer"]];
 const statusPill = status => `<span class="pill ${status === "offen" ? "gold" : status === "geprüft" ? "green" : ""}">${escapeHtml(status)}</span>`;
 const assignmentPill = citizen => {
   const group = groupForCitizen(citizen);
@@ -347,7 +348,7 @@ const gridTheme = () => window.agGrid?.themeQuartz?.withParams ? window.agGrid.t
   accentColor: "#0f5d58",
   borderColor: "#d9d5ca",
   browserColorScheme: "light",
-  fontFamily: "Inter, Segoe UI, Arial, sans-serif",
+  fontFamily: "Berlin Type, BerlinType, Berlin Type Office, Segoe UI, Arial, sans-serif",
   headerBackgroundColor: "#fbfaf7",
   oddRowBackgroundColor: "#ffffff",
   rowHoverColor: "#f1f7f5",
@@ -371,12 +372,19 @@ const renderTemplate = (template = selectedTemplate(), citizen = selectedCitizen
   const replace = text => Object.entries(replacements).reduce((result, [key, value]) => result.replaceAll(`{{${key}}}`, value), text);
   return { subject: replace(template.subject), body: replace(template.body), group };
 };
-const printFormatClass = template => normalize(template.format).includes("a5") ? "format-a5" : "format-a4";
+const documentFormat = template => {
+  const value = normalize(template.format);
+  const size = value.includes("a5") ? "a5" : "a4";
+  const orientation = value.includes("quer") || value.includes("landscape") ? "landscape" : "portrait";
+  return { className: `format-${size}${orientation === "landscape" ? "-landscape" : ""}`, orientation, size };
+};
+const printFormatClass = template => documentFormat(template).className;
+const documentDesignClass = template => documentFormat(template).size === "a5" && normalize(template.occasion) === "geburtstag" ? "birthday-card" : "";
 
 const documentPreview = (template = selectedTemplate(), citizen = selectedCitizen(), sender = selectedSender()) => {
   const rendered = renderTemplate(template, citizen, sender);
   return `
-    <div class="document-preview">
+    <div class="document-preview ${printFormatClass(template)} ${documentDesignClass(template)}">
       <div class="document-sheet">
         <div class="doc-letterhead" style="border-color:${escapeHtml(sender.color)}">
           <div>
@@ -686,7 +694,7 @@ const views = {
             <input type="hidden" name="id" value="${escapeHtml(template.id)}">
             ${field("name", "Vorlagenname", template.name)}
             ${selectField("occasion", "Anlass", template.occasion, occasionOptions())}
-            ${field("format", "Format", template.format)}
+            ${selectField("format", "Format", template.format, formatOptions())}
             ${selectField("senderId", "Standard-Absender", template.senderId, senderOptions())}
             ${field("subject", "Betreff/Titel", template.subject, "text", "full")}
             <div class="field full">

@@ -1,3 +1,15 @@
+@font-face {
+  font-family: "Berlin Type";
+  src: local("Berlin Type Regular"), local("BerlinType-Regular"), local("Berlin Type");
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: "Berlin Type";
+  src: local("Berlin Type Bold"), local("BerlinType-Bold"), local("Berlin Type");
+  font-weight: 700 900;
+}
+
 :root {
   --bg: #f5f3ee;
   --panel: #ffffff;
@@ -15,7 +27,8 @@
   --green-soft: #e0f0e6;
   --blue: #315a8c;
   --shadow: 0 10px 30px rgba(32, 36, 38, 0.08);
-  font-family: Inter, "Segoe UI", Arial, sans-serif;
+  --font-sans: "Berlin Type", "BerlinType", "Berlin Type Office", "Segoe UI", Arial, sans-serif;
+  font-family: var(--font-sans);
 }
 
 * {
@@ -514,6 +527,123 @@ tbody tr.selected {
     #fff;
 }
 
+.document-preview.format-a5 {
+  display: grid;
+  justify-content: center;
+}
+
+.document-preview.format-a5 .document-sheet {
+  width: min(100%, 420px);
+  min-height: 300px;
+  padding: 22px;
+}
+
+.document-preview.format-a5 .doc-letterhead {
+  gap: 10px;
+  padding-bottom: 10px;
+  margin-bottom: 18px;
+  border-bottom-width: 2px;
+}
+
+.document-preview.format-a5 .doc-letterhead strong {
+  font-size: 15px;
+}
+
+.document-preview.format-a5 .doc-address,
+.document-preview.format-a5 .doc-meta {
+  font-size: 11px;
+}
+
+.document-preview.format-a5 .doc-title {
+  margin: 16px 0 10px;
+  font-size: 16px;
+}
+
+.document-preview.format-a5 .doc-body {
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.document-preview.format-a5 .signature {
+  margin-top: 22px;
+  font-size: 19px;
+}
+
+.document-preview.format-a5-landscape .document-sheet {
+  width: min(100%, 560px);
+  min-height: 230px;
+}
+
+.document-preview.birthday-card .document-sheet {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #d9c8a6;
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(15, 93, 88, 0.14), rgba(15, 93, 88, 0) 36%),
+    linear-gradient(180deg, #fffdf8 0%, #ffffff 62%, #f7fbf9 100%);
+  box-shadow: 0 16px 34px rgba(32, 36, 38, 0.12);
+}
+
+.document-preview.birthday-card .document-sheet::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 9px;
+  background: linear-gradient(90deg, var(--teal), var(--green), var(--gold));
+}
+
+.document-preview.birthday-card .document-sheet::after {
+  content: "90";
+  position: absolute;
+  right: 18px;
+  bottom: 12px;
+  color: rgba(15, 93, 88, 0.08);
+  font-size: 92px;
+  font-weight: 850;
+  line-height: 1;
+}
+
+.document-preview.birthday-card .doc-letterhead {
+  position: relative;
+  z-index: 1;
+  align-items: flex-start;
+  margin-bottom: 14px;
+  border-bottom: 0;
+}
+
+.document-preview.birthday-card .doc-letterhead strong {
+  display: inline-flex;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--teal-soft);
+  font-size: 13px;
+}
+
+.document-preview.birthday-card .doc-address,
+.document-preview.birthday-card .doc-meta,
+.document-preview.birthday-card .doc-title,
+.document-preview.birthday-card .doc-body,
+.document-preview.birthday-card .signature {
+  position: relative;
+  z-index: 1;
+}
+
+.document-preview.birthday-card .doc-title {
+  max-width: 330px;
+  color: #173b38;
+  font-size: 20px;
+  line-height: 1.18;
+}
+
+.document-preview.birthday-card .doc-body {
+  max-width: 340px;
+}
+
+.document-preview.birthday-card .signature {
+  color: var(--teal);
+}
+
 .doc-letterhead {
   display: flex;
   justify-content: space-between;
@@ -758,13 +888,23 @@ tbody tr.selected {
 
 @media print {
   @page a4-document {
-    size: A4;
+    size: A4 portrait;
+    margin: 14mm;
+  }
+
+  @page a4-landscape {
+    size: A4 landscape;
     margin: 14mm;
   }
 
   @page a5-card {
-    size: A5;
-    margin: 10mm;
+    size: A5 portrait;
+    margin: 6mm;
+  }
+
+  @page a5-card-landscape {
+    size: A5 landscape;
+    margin: 6mm;
   }
 
   body {
@@ -796,14 +936,24 @@ tbody tr.selected {
   .print-page {
     page-break-after: always;
     break-after: page;
+    page-break-inside: avoid;
+    break-inside: avoid;
   }
 
   .print-page.format-a4 {
     page: a4-document;
   }
 
+  .print-page.format-a4-landscape {
+    page: a4-landscape;
+  }
+
   .print-page.format-a5 {
     page: a5-card;
+  }
+
+  .print-page.format-a5-landscape {
+    page: a5-card-landscape;
   }
 
   .print-page:last-child {
@@ -817,6 +967,7 @@ tbody tr.selected {
   }
 
   .print-page .document-sheet {
+    width: auto;
     min-height: calc(297mm - 28mm);
     padding: 18mm;
     border: 0;
@@ -825,39 +976,98 @@ tbody tr.selected {
   }
 
   .print-page.format-a5 .document-sheet {
-    min-height: calc(210mm - 20mm);
-    padding: 10mm;
+    min-height: 0;
+    padding: 8mm;
+    page-break-inside: avoid;
+    break-inside: avoid;
   }
 
+  .print-page.format-a4-landscape .document-sheet {
+    min-height: calc(210mm - 28mm);
+    padding: 16mm;
+  }
+
+  .print-page.format-a5-landscape .document-sheet {
+    min-height: 0;
+    padding: 7mm;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .print-page.format-a5-landscape .doc-letterhead,
   .print-page.format-a5 .doc-letterhead {
     gap: 10px;
-    padding-bottom: 10px;
-    margin-bottom: 18px;
+    padding-bottom: 8px;
+    margin-bottom: 14px;
     border-bottom-width: 2px;
   }
 
+  .print-page.format-a5-landscape .doc-letterhead strong,
   .print-page.format-a5 .doc-letterhead strong {
     font-size: 15px;
   }
 
+  .print-page.format-a5-landscape .doc-address,
+  .print-page.format-a5-landscape .doc-meta,
   .print-page.format-a5 .doc-address,
   .print-page.format-a5 .doc-meta {
     font-size: 11px;
   }
 
+  .print-page.format-a5-landscape .doc-title,
   .print-page.format-a5 .doc-title {
-    margin: 16px 0 10px;
-    font-size: 16px;
+    margin: 12px 0 8px;
+    font-size: 15px;
   }
 
+  .print-page.format-a5-landscape .doc-body,
   .print-page.format-a5 .doc-body {
-    font-size: 12px;
-    line-height: 1.45;
+    font-size: 11.5px;
+    line-height: 1.38;
   }
 
+  .print-page.format-a5-landscape .signature,
   .print-page.format-a5 .signature {
-    margin-top: 22px;
-    font-size: 19px;
+    margin-top: 16px;
+    font-size: 18px;
+  }
+
+  .print-page .document-preview.birthday-card .document-sheet {
+    position: relative;
+    overflow: hidden;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background:
+      linear-gradient(135deg, rgba(15, 93, 88, 0.12), rgba(15, 93, 88, 0) 34%),
+      #fff;
+  }
+
+  .print-page .document-preview.birthday-card .document-sheet::before {
+    height: 6px;
+  }
+
+  .print-page .document-preview.birthday-card .document-sheet::after {
+    right: 6mm;
+    bottom: 4mm;
+    font-size: 54px;
+  }
+
+  .print-page .document-preview.birthday-card .doc-title {
+    max-width: 95mm;
+    color: #173b38;
+    font-size: 16px;
+    line-height: 1.18;
+  }
+
+  .print-page .document-preview.birthday-card .doc-body {
+    max-width: 100mm;
+  }
+
+  .print-page .document-preview.birthday-card .doc-letterhead strong {
+    padding: 3px 6px;
+    border-radius: 4px;
+    background: var(--teal-soft);
   }
 
   .print-page .doc-letterhead {
