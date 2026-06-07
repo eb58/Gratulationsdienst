@@ -757,9 +757,42 @@ tbody tr.selected {
 }
 
 .document-preview.format-a5-landscape .document-sheet {
-  width: min(100%, 560px);
+  width: min(100%, 640px);
   aspect-ratio: 210 / 148;
-  padding: 20px;
+  padding: 18px 22px;
+}
+
+.document-preview.format-a5-landscape .doc-letterhead {
+  gap: 14px;
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+  border-bottom-width: 2px;
+}
+
+.document-preview.format-a5-landscape .doc-letterhead strong {
+  font-size: 14px;
+}
+
+.document-preview.format-a5-landscape .doc-address,
+.document-preview.format-a5-landscape .doc-meta {
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.document-preview.format-a5-landscape .doc-title {
+  margin: 12px 0 8px;
+  font-size: 17px;
+  line-height: 1.18;
+}
+
+.document-preview.format-a5-landscape .doc-body {
+  font-size: 11.5px;
+  line-height: 1.35;
+}
+
+.document-preview.format-a5-landscape .signature {
+  margin-top: 14px;
+  font-size: 17px;
 }
 
 .document-preview.birthday-card .document-sheet {
@@ -829,6 +862,60 @@ tbody tr.selected {
 
 .document-preview.birthday-card .signature {
   color: var(--teal);
+}
+
+.document-preview.format-a5-landscape.birthday-card .document-sheet {
+  padding: 12px 16px 12px;
+}
+
+.document-preview.format-a5-landscape.birthday-card .card-age-mark {
+  right: 14px;
+  bottom: 10px;
+  font-size: 64px;
+}
+
+.document-preview.format-a5-landscape.birthday-card .doc-letterhead {
+  gap: 10px;
+  margin-bottom: 5px;
+}
+
+.document-preview.format-a5-landscape.birthday-card .doc-title {
+  max-width: none;
+  margin: 8px 0 5px;
+  padding-right: 72px;
+  font-size: 15px;
+}
+
+.document-preview.format-a5-landscape.birthday-card .doc-body {
+  max-width: none;
+  padding-right: 70px;
+  font-size: 10px;
+  line-height: 1.28;
+}
+
+.document-preview.format-a5-landscape.birthday-card .doc-address,
+.document-preview.format-a5-landscape.birthday-card .doc-meta {
+  font-size: 10px;
+  line-height: 1.25;
+}
+
+.document-preview.format-a5-landscape.birthday-card .doc-letterhead strong {
+  padding: 3px 6px;
+  font-size: 12px;
+}
+
+.document-preview.format-a5-landscape.birthday-card .signature {
+  margin-top: 5px;
+  font-size: 14px;
+}
+
+.document-preview.format-a5-landscape.compact-card .doc-title {
+  font-size: 15px;
+}
+
+.document-preview.format-a5-landscape.compact-card .doc-body {
+  font-size: 11px;
+  line-height: 1.34;
 }
 
 .doc-letterhead {
@@ -1148,24 +1235,9 @@ tbody tr.selected {
 }
 
 @media print {
-  @page a4-document {
+  @page {
     size: A4 portrait;
-    margin: 14mm;
-  }
-
-  @page a4-landscape {
-    size: A4 landscape;
-    margin: 14mm;
-  }
-
-  @page a5-card {
-    size: A5 portrait;
-    margin: 6mm;
-  }
-
-  @page a5-card-landscape {
-    size: A5 landscape;
-    margin: 6mm;
+    margin: 0;
   }
 
   body {
@@ -1195,6 +1267,9 @@ tbody tr.selected {
   }
 
   .print-page {
+    width: 210mm;
+    height: 297mm;
+    overflow: hidden;
     page-break-after: always;
     break-after: page;
     page-break-inside: avoid;
@@ -1202,19 +1277,23 @@ tbody tr.selected {
   }
 
   .print-page.format-a4 {
-    page: a4-document;
+    width: 210mm;
+    height: 297mm;
   }
 
   .print-page.format-a4-landscape {
-    page: a4-landscape;
+    width: 297mm;
+    height: 210mm;
   }
 
   .print-page.format-a5 {
-    page: a5-card;
+    width: 148mm;
+    height: 210mm;
   }
 
   .print-page.format-a5-landscape {
-    page: a5-card-landscape;
+    width: 210mm;
+    height: 148mm;
   }
 
   .print-page:last-child {
@@ -1228,28 +1307,31 @@ tbody tr.selected {
   }
 
   .print-page .document-sheet {
-    width: auto;
-    min-height: calc(297mm - 28mm);
-    padding: 18mm;
+    width: 210mm;
+    height: 297mm;
+    padding: 14mm;
     border: 0;
     box-shadow: none;
     background: #fff;
   }
 
   .print-page.format-a5 .document-sheet {
-    min-height: 0;
-    padding: 8mm;
+    width: 148mm;
+    height: 210mm;
+    padding: 7mm;
     page-break-inside: avoid;
     break-inside: avoid;
   }
 
   .print-page.format-a4-landscape .document-sheet {
-    min-height: calc(210mm - 28mm);
-    padding: 16mm;
+    width: 297mm;
+    height: 210mm;
+    padding: 14mm;
   }
 
   .print-page.format-a5-landscape .document-sheet {
-    min-height: 0;
+    width: 210mm;
+    height: 148mm;
     padding: 7mm;
     page-break-inside: avoid;
     break-inside: avoid;
@@ -1323,6 +1405,54 @@ tbody tr.selected {
 
   .print-page .document-preview.birthday-card .doc-body {
     max-width: 100mm;
+  }
+
+  .print-page.format-a5-landscape .document-preview.birthday-card .card-age-mark {
+    right: 10mm;
+    bottom: 8mm;
+    font-size: 46px;
+  }
+
+  .print-page.format-a5-landscape .document-preview.birthday-card .doc-title {
+    max-width: none;
+    margin: 8mm 0 4mm;
+    padding-right: 32mm;
+    font-size: 18px;
+    line-height: 1.18;
+  }
+
+  .print-page.format-a5-landscape .document-preview.birthday-card .doc-body {
+    max-width: none;
+    padding-right: 30mm;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .print-page.format-a5-landscape .document-preview.birthday-card .signature {
+    margin-top: 5mm;
+    font-size: 20px;
+  }
+
+  .print-page.format-a5-landscape .document-preview.birthday-card .document-sheet {
+    padding: 10mm 12mm;
+    background:
+      linear-gradient(135deg, rgba(15, 93, 88, 0.1), rgba(15, 93, 88, 0) 32%),
+      #fff;
+  }
+
+  .print-page.format-a5-landscape .document-preview.birthday-card .doc-letterhead {
+    margin-bottom: 7mm;
+  }
+
+  .print-page.format-a5-landscape .document-preview.birthday-card .doc-address {
+    margin-bottom: 0;
+    font-size: 12px;
+    line-height: 1.35;
+  }
+
+  .print-page.format-a5-landscape .document-preview.birthday-card .doc-meta {
+    font-size: 12px;
+    line-height: 1.35;
   }
 
   .print-page .document-preview.birthday-card .doc-letterhead strong {

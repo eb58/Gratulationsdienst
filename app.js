@@ -1,4 +1,7 @@
 const STORAGE_KEY = "gratulationsdienst-prototype";
+const API_BASE = "php-api/index.php";
+const APP_VERSION = "20260607-3";
+window.GRATULATIONSDIENST_VERSION = APP_VERSION;
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
 const todayIso = () => new Date().toISOString().slice(0, 10);
@@ -207,6 +210,14 @@ const mergeById = (existing, defaults, keep = () => true) => [
   ...defaults,
   ...(existing || []).filter(item => keep(item) && !defaults.some(entry => entry.id === item.id))
 ];
+const normalizeTemplate = template => {
+  const fallback = byId(sampleData.templates, template.id) || {};
+  return { ...fallback, ...template, format: template.format || fallback.format || "DIN A4 Brief" };
+};
+const normalizeTemplates = templates => [
+  ...sampleData.templates.map(template => normalizeTemplate({ ...template, ...byId(templates || [], template.id) })),
+  ...(templates || []).filter(template => !byId(sampleData.templates, template.id)).map(normalizeTemplate)
+];
 const normalizeLoadedData = data => {
   const repaired = repairStoredText(data);
   const activeGroupIds = new Set(sampleData.sokoGroups.map(group => group.id));
@@ -214,7 +225,8 @@ const normalizeLoadedData = data => {
     ...repaired,
     sokoGroups: mergeById(repaired?.sokoGroups, sampleData.sokoGroups, group => activeGroupIds.has(group.id)),
     sokoMembers: mergeById(repaired?.sokoMembers, sampleData.sokoMembers, member => activeGroupIds.has(member.groupId)),
-    streets: mergeStreetData(repaired?.streets)
+    streets: mergeStreetData(repaired?.streets),
+    templates: normalizeTemplates(repaired?.templates)
   };
 };
 
@@ -242,7 +254,34 @@ const state = {
   dialog: null
 };
 
-const saveData = () => localStorage.setItem(STORAGE_KEY, JSON.stringify(state.data));
+const hasBackendData = data => data && ["citizens", "sokoGroups", "sokoMembers", "streets", "senders", "templates"].some(key => Array.isArray(data[key]) && data[key].length);
+const apiRequest = (path, options = {}) => fetch(`${API_BASE}${path}`, {
+  ...options,
+  headers: { "Content-Type": "application/json", ...(options.headers || {}) }
+}).then(response => response.ok ? response.json() : Promise.reject(new Error(`API ${response.status}`)));
+const saveBackendData = data => location.protocol === "file:" ? Promise.resolve() : apiRequest("/data", {
+  method: "PUT",
+  body: JSON.stringify(data)
+}).catch(error => console.warn("Datenbank-Speicherung nicht verfügbar.", error));
+const loadBackendData = () => {
+  if (location.protocol === "file:") return;
+  apiRequest("/data")
+    .then(data => {
+      if (!hasBackendData(data)) {
+        saveBackendData(state.data);
+        return;
+      }
+      state.data = normalizeLoadedData(data);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state.data));
+      render();
+      toast("Daten aus der Datenbank geladen.");
+    })
+    .catch(error => console.warn("Datenbank-Laden nicht verfügbar.", error));
+};
+const saveData = () => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state.data));
+  saveBackendData(state.data);
+};
 const toast = message => {
   $("#toast").textContent = message;
   $("#toast").classList.add("show");
@@ -444,13 +483,42 @@ const documentFormat = template => {
 };
 const printFormatClass = template => documentFormat(template).className;
 const documentDesignClass = template => documentFormat(template).size === "a5" && normalize(template.occasion) === "geburtstag" ? "birthday-card" : "";
+const compactBirthdayCardBody = citizen => [
+  `Sehr geehrte/r ${citizen.salutation} ${citizen.lastName},`,
+  `zu Ihrem ${calculateAge(citizen.birthDate)}. Geburtstag gratulieren wir sehr herzlich.`,
+  "Für das neue Lebensjahr wünschen wir Gesundheit, Zuversicht und viele gute Begegnungen."
+].join("\n\n");
+const printPageSettings = format => {
+  const value = normalize(format);
+  if (value.includes("a5") && (value.includes("quer") || value.includes("landscape"))) return { size: "A5 landscape", className: "format-a5-landscape" };
+  if (value.includes("a5")) return { size: "A5 portrait", className: "format-a5" };
+  if (value.includes("quer") || value.includes("landscape")) return { size: "A4 landscape", className: "format-a4-landscape" };
+  return { size: "A4 portrait", className: "format-a4" };
+};
+const preparePrint = () => {
+  const firstDoc = state.generatedDocs[0];
+  if (!firstDoc) return false;
+  const settings = printPageSettings(firstDoc.format);
+  document.body.classList.remove("print-format-a4", "print-format-a4-landscape", "print-format-a5", "print-format-a5-landscape");
+  document.body.classList.add(`print-${settings.className}`);
+  $("#dynamic-print-style")?.remove();
+  const style = document.createElement("style");
+  style.id = "dynamic-print-style";
+  style.textContent = `@media print { @page { size: ${settings.size}; margin: 0; } }`;
+  document.head.append(style);
+  return true;
+};
 
 const documentPreview = (template = selectedTemplate(), citizen = selectedCitizen(), sender = selectedSender()) => {
+  const format = documentFormat(template);
+  const designClass = documentDesignClass(template);
+  const isCompactCard = designClass && format.orientation === "landscape";
   const rendered = renderTemplate(template, citizen, sender);
+  const body = isCompactCard ? compactBirthdayCardBody(citizen) : rendered.body;
   return `
-    <div class="document-preview ${printFormatClass(template)} ${documentDesignClass(template)}">
+    <div class="document-preview ${format.className} ${designClass} ${isCompactCard ? "compact-card" : ""}">
       <div class="document-sheet">
-        ${documentDesignClass(template) ? `<div class="card-age-mark" aria-hidden="true">${escapeHtml(calculateAge(citizen.birthDate))}</div>` : ""}
+        ${designClass ? `<div class="card-age-mark" aria-hidden="true">${escapeHtml(calculateAge(citizen.birthDate))}</div>` : ""}
         <div class="doc-letterhead" style="border-color:${escapeHtml(sender.color)}">
           <div>
             <strong style="color:${escapeHtml(sender.color)}">${escapeHtml(sender.logo)}</strong>
@@ -464,7 +532,7 @@ const documentPreview = (template = selectedTemplate(), citizen = selectedCitize
           ${escapeHtml(citizen.postalCode)} Berlin
         </div>
         <div class="doc-title">${escapeHtml(rendered.subject)}</div>
-        <div class="doc-body">${escapeHtml(rendered.body)}</div>
+        <div class="doc-body">${escapeHtml(body)}</div>
         <div class="signature">${escapeHtml(sender.signature)}</div>
       </div>
     </div>
@@ -475,7 +543,8 @@ const printDocumentPages = () => {
     const citizen = byId(state.data.citizens, doc.citizenId);
     const template = byId(state.data.templates, doc.templateId) || selectedTemplate();
     const sender = byId(state.data.senders, doc.senderId) || selectedSender();
-    return citizen ? `<section class="print-page ${printFormatClass(template)}">${documentPreview(template, citizen, sender)}</section>` : "";
+    const printTemplate = { ...template, format: doc.format || template.format };
+    return citizen ? `<section class="print-page ${printFormatClass(printTemplate)}">${documentPreview(printTemplate, citizen, sender)}</section>` : "";
   }).join("");
 };
 
@@ -812,12 +881,16 @@ const views = {
     const previewDoc = docs.find(doc => doc.citizenId === state.selectedCitizenId) || docs[0];
     const checkedCount = documentCitizens().length;
     const previewCitizen = previewDoc ? byId(state.data.citizens, previewDoc.citizenId) : documentCitizens()[0] || selectedCitizen();
+    const previewTemplateBase = previewDoc ? byId(state.data.templates, previewDoc.templateId) || template : template;
+    const previewTemplate = previewDoc ? { ...previewTemplateBase, format: previewDoc.format || previewTemplateBase.format } : previewTemplateBase;
+    const previewSender = previewDoc ? byId(state.data.senders, previewDoc.senderId) || sender : sender;
     return `
       ${wizardControls("documents")}
       <div class="panel">
         <h2>Dokumentlauf konfigurieren</h2>
         <div class="split-controls">
           ${selectField("doc-template", "Vorlage", template.id, templateOptions())}
+          ${selectField("doc-format", "Format", template.format, formatOptions())}
           ${selectField("doc-sender", "Absender", sender.id, senderOptions())}
           ${selectField("doc-month", "Geburtsmonat", state.filters.month, months)}
           ${selectField("doc-group", "SOKO", state.filters.groupId, groupOptions())}
@@ -837,7 +910,7 @@ const views = {
         </section>
         <section class="panel">
           <h2>Seriendruck-Vorschau</h2>
-          ${documentPreview(template, previewCitizen, sender)}
+          ${documentPreview(previewTemplate, previewCitizen, previewSender)}
         </section>
       </div>
       <div class="print-pages print-only">
@@ -1311,6 +1384,7 @@ const actions = {
   "generate-docs": () => {
     const template = byId(state.data.templates, $("#doc-template").value);
     const sender = byId(state.data.senders, $("#doc-sender").value);
+    const format = $("#doc-format").value || template.format;
     state.selectedTemplateId = template.id;
     state.selectedSenderId = sender.id;
     state.filters.month = $("#doc-month").value;
@@ -1325,14 +1399,14 @@ const actions = {
       address: `${citizen.street} ${citizen.houseNo}, ${citizen.postalCode} Berlin`,
       groupId: groupForCitizen(citizen)?.id || "",
       templateName: template.name,
-      format: template.format,
+      format,
       sender: sender.role,
       createdAt: todayIso()
     }));
     render();
     toast(state.generatedDocs.length ? `${state.generatedDocs.length} Dokumente erzeugt.` : "Keine geprüften Jubilare in der aktuellen Auswahl.");
   },
-  "print-docs": () => state.generatedDocs.length ? window.print() : toast("Bitte zuerst einen Dokumentlauf erzeugen."),
+  "print-docs": () => preparePrint() ? window.print() : toast("Bitte zuerst einen Dokumentlauf erzeugen."),
   "export-docs": () => {
     const header = ["id", "empfaenger", "adresse", "soko", "vorlage", "format", "absender", "datum"];
     const rows = state.generatedDocs.map(doc => [doc.id, doc.recipient, doc.address, doc.groupId, doc.templateName, doc.format, doc.sender, doc.createdAt]);
@@ -1483,4 +1557,5 @@ document.addEventListener("change", event => {
 
 state.view = viewTitles[new URLSearchParams(location.search).get("view")] ? new URLSearchParams(location.search).get("view") : state.view;
 render();
+loadBackendData();
 
