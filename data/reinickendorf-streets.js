@@ -1,11 +1,11 @@
-// Quellen: Strassenverzeichnis des Bezirkes Reinickendorf, berlin.de, PDF rueckseite_der_karten_2016.pdf; Ortsteil-Zuordnung: Kauperts Ortsteil-Strassenverzeichnisse Reinickendorf; SOKO-Zuordnung: prototypische Ortsteil-Cluster
+// Quellen: Strassenverzeichnis des Bezirkes Reinickendorf, berlin.de, PDF rueckseite_der_karten_2016.pdf; Ortsteil-Zuordnung: Kauperts Ortsteil-Strassenverzeichnisse Reinickendorf; SOKO-Zuordnung: prototypische Ortsteil- und Planquadrat-Cluster
 window.REINICKENDORF_STREETS = [
   {
     "id": "STR-RD-0001",
     "name": "Ackerplanweg",
     "district": "Tegel",
     "area": "F 7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -15,7 +15,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Adelheidallee",
     "district": "Tegel",
     "area": "E 7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -25,7 +25,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Aegirstraße",
     "district": "Reinickendorf",
     "area": "I 10",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf"
     ]
@@ -35,7 +35,7 @@ window.REINICKENDORF_STREETS = [
     "name": "AEG-Siedlung Heimat",
     "district": "Lübars",
     "area": "H 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars"
     ]
@@ -45,7 +45,7 @@ window.REINICKENDORF_STREETS = [
     "name": "AEG-Straße",
     "district": "Tegel",
     "area": "H 5",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -55,7 +55,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Agathenweg",
     "district": "Tegel",
     "area": "EF 7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -65,7 +65,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Albtalweg",
     "district": "Waidmannslust",
     "area": "G 5-6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Waidmannslust"
     ]
@@ -75,7 +75,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Alemannenstraße",
     "district": "Frohnau",
     "area": "E 3-4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -85,7 +85,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Allée St. Exupéry",
     "district": "Tegel",
     "area": "EF 9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -95,7 +95,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Allmendeweg",
     "district": "Tegel",
     "area": "F 6",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -105,7 +105,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Almazeile",
     "district": "Konradshöhe",
     "area": "C 9",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 07",
     "districts": [
       "Konradshöhe"
     ]
@@ -115,7 +115,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Almutstraße",
     "district": "Hermsdorf",
     "area": "FG 5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -125,7 +125,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Altdammer Weg",
     "district": "Heiligensee",
     "area": "C 4",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -135,7 +135,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Altenhofer Weg",
     "district": "Borsigwalde / Tegel",
     "area": "F 8",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 03",
     "districts": [
       "Borsigwalde",
       "Tegel"
@@ -146,7 +146,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Alter Bernauer Heerweg",
     "district": "Lübars",
     "area": "HI 5",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars"
     ]
@@ -156,7 +156,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Alter Wiesenweg",
     "district": "Tegel",
     "area": "E 11",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -166,7 +166,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Alt-Heiligensee",
     "district": "Heiligensee",
     "area": "B 6",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -176,7 +176,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Alt-Hermsdorf",
     "district": "Hermsdorf",
     "area": "FG 5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -186,7 +186,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Alt-Lübars",
     "district": "Lübars",
     "area": "H 5",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars"
     ]
@@ -206,7 +206,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Alt-Tegel",
     "district": "Tegel",
     "area": "E 7-8",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -216,7 +216,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Alt-Wittenau",
     "district": "Wittenau",
     "area": "G 7",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -226,7 +226,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Amandastraße",
     "district": "Hermsdorf",
     "area": "G 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -236,7 +236,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Ansitz",
     "district": "Waidmannslust",
     "area": "F 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Waidmannslust"
     ]
@@ -246,7 +246,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Ausblick",
     "district": "Frohnau",
     "area": "E 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -256,7 +256,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Bärensprung",
     "district": "Heiligensee",
     "area": "C 5-6",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -266,7 +266,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Biberbau",
     "district": "Frohnau",
     "area": "F 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -276,7 +276,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Borsigturm",
     "district": "Tegel",
     "area": "E 8",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -286,7 +286,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Amboßweg",
     "district": "Wittenau",
     "area": "G 7",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -296,7 +296,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Brunnen",
     "district": "Tegel",
     "area": "F 7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -306,7 +306,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Buchenberg",
     "district": "Hermsdorf",
     "area": "F 5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -316,7 +316,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Buddeplatz",
     "district": "Tegel",
     "area": "E 8",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -326,7 +326,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Dachsbau",
     "district": "Heiligensee",
     "area": "C 5-6",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -336,7 +336,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Dianaplatz",
     "district": "Waidmannslust",
     "area": "F 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Waidmannslust"
     ]
@@ -356,7 +356,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Dorfanger",
     "district": "Wittenau",
     "area": "G 7",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -366,7 +366,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Dorfteich",
     "district": "Heiligensee",
     "area": "D 5-6",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -376,7 +376,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Eichenhain",
     "district": "Frohnau",
     "area": "D 3-4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -396,7 +396,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Eulenhorst",
     "district": "Konradshöhe",
     "area": "C 8",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 07",
     "districts": [
       "Konradshöhe"
     ]
@@ -406,7 +406,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Fölzberg",
     "district": "Lübars",
     "area": "H 5",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars"
     ]
@@ -416,7 +416,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Freibad",
     "district": "Lübars",
     "area": "G 5",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars"
     ]
@@ -426,7 +426,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Fuchsbau",
     "district": "Heiligensee",
     "area": "C 5-6",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -436,7 +436,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Grünen Hof",
     "district": "Frohnau",
     "area": "E 3-4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -446,7 +446,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Grünen Zipfel",
     "district": "Frohnau",
     "area": "E 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -456,7 +456,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Grüngürtel",
     "district": "Wittenau",
     "area": "G 7",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -466,7 +466,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Hirschwechsel",
     "district": "Heiligensee",
     "area": "C 6",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -476,7 +476,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Hohenzollernkanal",
     "district": "Tegel",
     "area": "E 11",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -486,7 +486,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Hügel",
     "district": "Wittenau",
     "area": "F 7",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -496,7 +496,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Jartz",
     "district": "Lübars",
     "area": "H 5",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars"
     ]
@@ -506,7 +506,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Kahlschlag",
     "district": "Frohnau",
     "area": "E 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -516,7 +516,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Kesselpfuhl",
     "district": "Wittenau",
     "area": "F 7",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -526,7 +526,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Klauswerder",
     "district": "Wittenau",
     "area": "G 7",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -536,7 +536,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Klötzgraben",
     "district": "Lübars",
     "area": "H 5",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars"
     ]
@@ -546,7 +546,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Krähenberg",
     "district": "Konradshöhe",
     "area": "BC 8",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 07",
     "districts": [
       "Konradshöhe"
     ]
@@ -556,7 +556,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Kringel",
     "district": "Frohnau",
     "area": "E 3-4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -566,7 +566,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Lehnshof",
     "district": "Hermsdorf",
     "area": "FG 5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -576,7 +576,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Leitbruch",
     "district": "Waidmannslust",
     "area": "F 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Waidmannslust"
     ]
@@ -586,7 +586,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Lübarser Feld",
     "district": "Lübars",
     "area": "G 5-6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars"
     ]
@@ -596,7 +596,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Nordgraben",
     "district": "Borsigwalde / Reinickendorf / Wittenau",
     "area": "F7-H8",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 03",
     "districts": [
       "Borsigwalde",
       "Reinickendorf",
@@ -608,7 +608,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Osrücken",
     "district": "Lübars",
     "area": "G6-H5",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars"
     ]
@@ -618,7 +618,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Packereigraben",
     "district": "Wittenau",
     "area": "F 7",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -628,7 +628,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Pfingstberg",
     "district": "Frohnau / Hermsdorf",
     "area": "F 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau",
       "Hermsdorf"
@@ -639,7 +639,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Pilz",
     "district": "Frohnau",
     "area": "F 2",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -649,7 +649,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Poloplatz",
     "district": "Frohnau",
     "area": "E 2",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -659,7 +659,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Priesteracker",
     "district": "Wittenau",
     "area": "F 7",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -669,7 +669,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Priesterberg",
     "district": "Frohnau",
     "area": "D 3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -679,7 +679,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Querschlag",
     "district": "Frohnau",
     "area": "E 3-4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -689,7 +689,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Rathauspark",
     "district": "Wittenau",
     "area": "G 7-8",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -699,7 +699,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Ried",
     "district": "Hermsdorf",
     "area": "G 5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -709,7 +709,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Rodelberg",
     "district": "Lübars",
     "area": "H 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars"
     ]
@@ -719,7 +719,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Rohrbusch",
     "district": "Lübars",
     "area": "G 4",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars"
     ]
@@ -729,7 +729,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Rosenanger",
     "district": "Frohnau",
     "area": "F 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -739,7 +739,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Rosensteg",
     "district": "Tegel",
     "area": "F 7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -759,7 +759,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Seeschloß",
     "district": "Hermsdorf",
     "area": "G 5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -769,7 +769,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Amselgrund",
     "district": "Hermsdorf",
     "area": "E 6",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -779,7 +779,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Springebruch",
     "district": "Lübars",
     "area": "H 5",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars"
     ]
@@ -799,7 +799,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Steinbergpark",
     "district": "Wittenau",
     "area": "F 7",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -809,7 +809,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Südfeld",
     "district": "Heiligensee",
     "area": "C 6",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -819,7 +819,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Tegeler Hafen",
     "district": "Tegel",
     "area": "E 7-8",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -829,7 +829,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Tegelgrund",
     "district": "Heiligensee / Tegel",
     "area": "D 6",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee",
       "Tegel"
@@ -840,7 +840,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Triftpark",
     "district": "Wittenau",
     "area": "FG 7",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -850,7 +850,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Unterholz",
     "district": "Heiligensee",
     "area": "C 6",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -860,7 +860,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Vierrutenberg",
     "district": "Lübars",
     "area": "GH 5",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars"
     ]
@@ -870,7 +870,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Waidmannseck",
     "district": "Wittenau",
     "area": "G 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -880,7 +880,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Waldidyll",
     "district": "Hermsdorf",
     "area": "E 5-6",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -890,7 +890,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Waldpark",
     "district": "Hermsdorf",
     "area": "F 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -900,7 +900,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Wechsel",
     "district": "Waidmannslust",
     "area": "F 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Waidmannslust"
     ]
@@ -910,7 +910,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Am Wiesenende",
     "district": "Lübars",
     "area": "H 5",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars"
     ]
@@ -920,7 +920,7 @@ window.REINICKENDORF_STREETS = [
     "name": "An den Fließtalhöfen",
     "district": "Hermsdorf",
     "area": "G 5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -930,7 +930,7 @@ window.REINICKENDORF_STREETS = [
     "name": "An der Aussicht",
     "district": "Heiligensee",
     "area": "C 4",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -940,7 +940,7 @@ window.REINICKENDORF_STREETS = [
     "name": "An der Buche",
     "district": "Frohnau",
     "area": "E 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -950,7 +950,7 @@ window.REINICKENDORF_STREETS = [
     "name": "An der Hasenfurt",
     "district": "Heiligensee",
     "area": "C 5-6",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -960,7 +960,7 @@ window.REINICKENDORF_STREETS = [
     "name": "An der Heide",
     "district": "Tegel",
     "area": "F 7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -980,7 +980,7 @@ window.REINICKENDORF_STREETS = [
     "name": "An der Krähenheide",
     "district": "Konradshöhe",
     "area": "C 8",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 07",
     "districts": [
       "Konradshöhe"
     ]
@@ -990,7 +990,7 @@ window.REINICKENDORF_STREETS = [
     "name": "An der Kremmener Bahn",
     "district": "Heiligensee",
     "area": "D 5",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -1000,7 +1000,7 @@ window.REINICKENDORF_STREETS = [
     "name": "An der Mäckeritzbrücke",
     "district": "Tegel",
     "area": "D 11",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -1010,7 +1010,7 @@ window.REINICKENDORF_STREETS = [
     "name": "An der Mühle",
     "district": "Tegel",
     "area": "E 7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -1020,7 +1020,7 @@ window.REINICKENDORF_STREETS = [
     "name": "An der Oberrealschule",
     "district": "Tegel",
     "area": "E 7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -1030,7 +1030,7 @@ window.REINICKENDORF_STREETS = [
     "name": "An der Schneise",
     "district": "Heiligensee",
     "area": "CD 6",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -1040,7 +1040,7 @@ window.REINICKENDORF_STREETS = [
     "name": "An der Wildbahn",
     "district": "Heiligensee",
     "area": "CD 6",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -1050,7 +1050,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Andornsteig",
     "district": "Heiligensee",
     "area": "C 5",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -1060,7 +1060,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Angersbacher Pfad",
     "district": "Wittenau",
     "area": "G 7",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -1070,7 +1070,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Anglersiedlung",
     "district": "Heiligensee",
     "area": "BC 4",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -1080,7 +1080,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Ansgarstraße",
     "district": "Frohnau",
     "area": "D 3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -1090,7 +1090,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Antonienstraße",
     "district": "Reinickendorf",
     "area": "F 9",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf"
     ]
@@ -1100,7 +1100,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Antonyplatz",
     "district": "Tegel",
     "area": "F 6",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -1110,7 +1110,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Ariadnestraße",
     "district": "Frohnau",
     "area": "E 3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -1120,7 +1120,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Aristide-Briand-Brücke",
     "district": "Tegel",
     "area": "F 11",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -1140,7 +1140,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Arnheidstraße",
     "district": "Hermsdorf",
     "area": "F 5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -1160,7 +1160,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Artemisstraße",
     "district": "Waidmannslust",
     "area": "F 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Waidmannslust"
     ]
@@ -1170,7 +1170,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Artuswall",
     "district": "Frohnau",
     "area": "DE 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -1180,7 +1180,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Ascheberger Weg",
     "district": "Tegel",
     "area": "E 9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -1190,7 +1190,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Askaloner Weg",
     "district": "Frohnau",
     "area": "E 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -1200,7 +1200,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Attendorner Weg",
     "district": "Tegel",
     "area": "E 9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -1210,7 +1210,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Auber Steig",
     "district": "Frohnau",
     "area": "F 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -1220,7 +1220,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Auf dem Mühlenberg",
     "district": "Lübars",
     "area": "H 5",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars"
     ]
@@ -1230,7 +1230,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Auguste Viktoria-Allee",
     "district": "Reinickendorf",
     "area": "FG 9",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf"
     ]
@@ -1240,7 +1240,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Auguste-Viktoria-Straße",
     "district": "Hermsdorf",
     "area": "F 5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -1250,7 +1250,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Avenue Charles de Gaulle",
     "district": "Wittenau",
     "area": "FG 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -1260,7 +1260,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Avenue Jean Mermoz",
     "district": "Tegel",
     "area": "F 9-10",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -1270,7 +1270,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Baaber Steig",
     "district": "Heiligensee",
     "area": "C 4",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -1280,7 +1280,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Backnanger Straße",
     "district": "Hermsdorf",
     "area": "F 5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -1290,7 +1290,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Bad-Steben-Straße",
     "district": "Wittenau",
     "area": "G 8",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -1300,7 +1300,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Bahnhofplatz",
     "district": "Hermsdorf",
     "area": "F 5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -1310,7 +1310,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Bärbelweg",
     "district": "Konradshöhe",
     "area": "B 8-9",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 07",
     "districts": [
       "Konradshöhe"
     ]
@@ -1320,7 +1320,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Barnabasstraße",
     "district": "Tegel",
     "area": "F 6-7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -1330,7 +1330,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Barschelplatz",
     "district": "Konradshöhe",
     "area": "C 9",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 07",
     "districts": [
       "Konradshöhe"
     ]
@@ -1340,7 +1340,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Barthstraße",
     "district": "Frohnau",
     "area": "E 2",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -1350,7 +1350,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Basdorfer Zeile",
     "district": "Tegel",
     "area": "F 7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -1370,7 +1370,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Basiliusweg",
     "district": "Tegel",
     "area": "E 7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -1380,7 +1380,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Baummardersteig",
     "district": "Konradshöhe",
     "area": "BC 8",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 07",
     "districts": [
       "Konradshöhe"
     ]
@@ -1390,7 +1390,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Beatestraße",
     "district": "Konradshöhe",
     "area": "C 9",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 07",
     "districts": [
       "Konradshöhe"
     ]
@@ -1410,7 +1410,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Beckumer Straße",
     "district": "Tegel",
     "area": "E 8",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -1420,7 +1420,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Bei den Wörden",
     "district": "Wittenau",
     "area": "F 7",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -1430,7 +1430,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Bekassinenweg",
     "district": "Heiligensee",
     "area": "C 6",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -1450,7 +1450,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Benediktinerstraße",
     "district": "Frohnau",
     "area": "DE 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -1460,7 +1460,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Benekendorffstraße",
     "district": "Lübars / Waidmannslust",
     "area": "G6-H5",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars",
       "Waidmannslust"
@@ -1481,7 +1481,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Bergemannweg",
     "district": "Heiligensee",
     "area": "C 6",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -1491,7 +1491,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Bergfelder Weg",
     "district": "Frohnau",
     "area": "EF 3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -1501,7 +1501,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Bergstraße",
     "district": "Hermsdorf",
     "area": "F 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -1511,7 +1511,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Berliner Straße (HD)",
     "district": "Heiligensee",
     "area": "F 4-5",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -1521,7 +1521,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Berliner Straße (TG)",
     "district": "Tegel",
     "area": "E 7-9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -1531,7 +1531,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Bernauer Straße",
     "district": "Tegel",
     "area": "D11-E9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -1541,7 +1541,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Bernhard-Lichtenberg-Platz",
     "district": "Tegel",
     "area": "E 9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -1551,7 +1551,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Bernshausener Ring",
     "district": "Wittenau",
     "area": "G 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -1561,7 +1561,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Bernstorffstraße",
     "district": "Tegel",
     "area": "E 7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -1571,7 +1571,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Bertastraße",
     "district": "Hermsdorf",
     "area": "G 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -1581,7 +1581,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Bertramstraße",
     "district": "Hermsdorf",
     "area": "F5-G4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -1591,7 +1591,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Betzdorfer Pfad",
     "district": "Tegel",
     "area": "E 9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -1601,7 +1601,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Beyschlagstraße",
     "district": "Heiligensee",
     "area": "D 6",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -1611,7 +1611,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Biedenkopfer Straße",
     "district": "Tegel",
     "area": "E 8",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -1631,7 +1631,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Bieselheider Weg",
     "district": "Frohnau",
     "area": "F 2-3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -1641,7 +1641,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Bifröstweg",
     "district": "Frohnau",
     "area": "D 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -1651,7 +1651,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Billerbecker Weg",
     "district": "Tegel",
     "area": "E 9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -1661,7 +1661,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Bilsenkrautstraße",
     "district": "Heiligensee",
     "area": "C 5",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -1671,7 +1671,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Birkenwerderstraße",
     "district": "Märkisches Viertel",
     "area": "H 7",
-    "groupId": "SOKO 24",
+    "groupId": "SOKO 12",
     "districts": [
       "Märkisches Viertel"
     ]
@@ -1681,7 +1681,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Bisonweg",
     "district": "Heiligensee",
     "area": "C 5",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -1691,7 +1691,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Blankenfelder Chaussee",
     "district": "Lübars",
     "area": "HI 5",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars"
     ]
@@ -1711,7 +1711,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Bläßhuhnweg",
     "district": "Heiligensee",
     "area": "C 6",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -1721,7 +1721,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Blesener Zeile",
     "district": "Tegel",
     "area": "F 7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -1731,7 +1731,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Blitzenroder Ring",
     "district": "Wittenau",
     "area": "G 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -1741,7 +1741,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Blomberger Weg",
     "district": "Wittenau",
     "area": "G 7",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -1751,7 +1751,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Blunckstraße",
     "district": "Wittenau",
     "area": "G 8",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -1761,7 +1761,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Bocholter Weg",
     "district": "Tegel",
     "area": "D 9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -1771,7 +1771,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Bohnsacker Steig",
     "district": "Heiligensee",
     "area": "B 5",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -1781,7 +1781,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Bölkauer Pfad",
     "district": "Heiligensee",
     "area": "C 5",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -1791,7 +1791,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Bollestraße",
     "district": "Tegel",
     "area": "F 7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -1801,7 +1801,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Bondickstraße",
     "district": "Waidmannslust",
     "area": "F 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Waidmannslust"
     ]
@@ -1811,7 +1811,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Bonifaziusstraße",
     "district": "Tegel",
     "area": "E6-F7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -1821,7 +1821,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Borgfelder Steig",
     "district": "Heiligensee",
     "area": "B 5",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -1841,7 +1841,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Borgsdorfer Straße",
     "district": "Märkisches Viertel",
     "area": "H 7",
-    "groupId": "SOKO 24",
+    "groupId": "SOKO 12",
     "districts": [
       "Märkisches Viertel"
     ]
@@ -1851,7 +1851,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Borkener Weg",
     "district": "Tegel",
     "area": "E 9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -1861,7 +1861,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Bornepfad",
     "district": "Hermsdorf",
     "area": "F 5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -1871,7 +1871,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Borsigdamm",
     "district": "Tegel",
     "area": "E 8-9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -1881,7 +1881,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Borsigwalder Weg",
     "district": "Borsigwalde",
     "area": "F 8",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 03",
     "districts": [
       "Borsigwalde"
     ]
@@ -1891,7 +1891,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Bottroper Weg",
     "district": "Tegel",
     "area": "E 9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -1901,7 +1901,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Boumannstraße",
     "district": "Hermsdorf",
     "area": "F 6",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -1911,7 +1911,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Brandtstraße",
     "district": "Hermsdorf",
     "area": "F 5-6",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -1921,7 +1921,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Breckerfelder Pfad",
     "district": "Tegel",
     "area": "E 9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -1931,7 +1931,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Breitachzeile",
     "district": "Tegel",
     "area": "EF 8",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -1941,7 +1941,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Breitenbachstraße",
     "district": "Borsigwalde",
     "area": "F 8-9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 03",
     "districts": [
       "Borsigwalde"
     ]
@@ -1971,7 +1971,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Brodersenstraße",
     "district": "Wittenau",
     "area": "G 8",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -1981,7 +1981,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Brunowplatz",
     "district": "Tegel",
     "area": "E 8",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -1991,7 +1991,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Brunowstraße",
     "district": "Tegel",
     "area": "E 8",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -2011,7 +2011,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Buddestraße",
     "district": "Tegel",
     "area": "E 7-8",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -2021,7 +2021,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Büchenbronner Steig",
     "district": "Lübars",
     "area": "G 5",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars"
     ]
@@ -2031,7 +2031,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Büchsenweg",
     "district": "Reinickendorf",
     "area": "I 9",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf"
     ]
@@ -2041,7 +2041,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Büdnerring",
     "district": "Reinickendorf",
     "area": "I 9",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf"
     ]
@@ -2051,7 +2051,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Bürgersruh",
     "district": "Hermsdorf",
     "area": "I 5-6",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -2061,7 +2061,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Bürgerstraße",
     "district": "Reinickendorf",
     "area": "I 9",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf"
     ]
@@ -2071,7 +2071,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Büssower Weg",
     "district": "Heiligensee",
     "area": "C 4",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -2081,7 +2081,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Büsumer Pfad",
     "district": "Heiligensee",
     "area": "B 6",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -2091,7 +2091,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Bulgenbachweg",
     "district": "Frohnau",
     "area": "F 3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -2101,7 +2101,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Bundschuhweg",
     "district": "Frohnau",
     "area": "F 3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -2111,7 +2111,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Buntspechtstraße",
     "district": "Konradshöhe",
     "area": "B 8",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 07",
     "districts": [
       "Konradshöhe"
     ]
@@ -2121,7 +2121,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Burgfrauenstraße",
     "district": "Frohnau / Hermsdorf",
     "area": "E3-F4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau",
       "Hermsdorf"
@@ -2132,7 +2132,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Calauer Straße",
     "district": "Märkisches Viertel",
     "area": "H 6",
-    "groupId": "SOKO 24",
+    "groupId": "SOKO 12",
     "districts": [
       "Märkisches Viertel"
     ]
@@ -2142,7 +2142,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Calvinstraße",
     "district": "Hermsdorf",
     "area": "F 5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -2152,7 +2152,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Campestraße",
     "district": "Tegel",
     "area": "D 7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -2162,7 +2162,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Cecilienallee",
     "district": "Hermsdorf",
     "area": "F 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -2172,7 +2172,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Cecilienplatz",
     "district": "Hermsdorf",
     "area": "F 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -2182,7 +2182,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Coesfelder Weg",
     "district": "Tegel",
     "area": "E 9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -2192,7 +2192,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Conradstraße",
     "district": "Borsigwalde",
     "area": "F 8",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 03",
     "districts": [
       "Borsigwalde"
     ]
@@ -2202,7 +2202,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Creienfelder Weg",
     "district": "Lübars",
     "area": "H 5",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars"
     ]
@@ -2212,7 +2212,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Criolloweg",
     "district": "Frohnau",
     "area": "E 2",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -2222,7 +2222,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Cyclopstraße",
     "district": "Wittenau",
     "area": "G 6-7",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -2232,7 +2232,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Dacheroedenstraße",
     "district": "Tegel",
     "area": "E 7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -2252,7 +2252,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Dambockstraße",
     "district": "Heiligensee",
     "area": "CD 6",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -2262,7 +2262,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Damkitzstraße",
     "district": "Heiligensee",
     "area": "C 5",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -2272,7 +2272,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Damwildsteig",
     "district": "Heiligensee",
     "area": "C 6-7",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -2282,7 +2282,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Dannenwalder Weg",
     "district": "Märkisches Viertel",
     "area": "GH 7",
-    "groupId": "SOKO 24",
+    "groupId": "SOKO 12",
     "districts": [
       "Märkisches Viertel"
     ]
@@ -2292,7 +2292,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Darsiner Weg",
     "district": "Heiligensee",
     "area": "C 4",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -2302,7 +2302,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Dattelner Weg",
     "district": "Tegel",
     "area": "D 9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -2312,7 +2312,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Deeper Pfad",
     "district": "Heiligensee",
     "area": "C 5",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -2322,7 +2322,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Deilingeweg",
     "district": "Lübars",
     "area": "H 5",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars"
     ]
@@ -2332,7 +2332,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Der Zwinger",
     "district": "Frohnau",
     "area": "E 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -2342,7 +2342,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Desideriusweg",
     "district": "Tegel",
     "area": "EF 7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -2352,7 +2352,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Dessinstraße",
     "district": "Tegel",
     "area": "F 9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -2372,7 +2372,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Diakonieweg",
     "district": "Heiligensee",
     "area": "D 5",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -2382,7 +2382,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Dianaplatz",
     "district": "Waidmannslust",
     "area": "F 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Waidmannslust"
     ]
@@ -2392,7 +2392,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Dianastraße",
     "district": "Waidmannslust",
     "area": "F 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Waidmannslust"
     ]
@@ -2402,7 +2402,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Dietrichinger Weg",
     "district": "Wittenau",
     "area": "G 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -2412,7 +2412,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Dinkelsbühler Steig",
     "district": "Frohnau",
     "area": "E3-F4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -2422,7 +2422,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Dohlenstraße",
     "district": "Konradshöhe",
     "area": "C 8",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 07",
     "districts": [
       "Konradshöhe"
     ]
@@ -2432,7 +2432,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Dohnensteig",
     "district": "Hermsdorf",
     "area": "E 6",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -2442,7 +2442,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Donnersmarckallee",
     "district": "Frohnau",
     "area": "E 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -2452,7 +2452,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Donnersmarckplatz",
     "district": "Frohnau",
     "area": "E 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -2462,7 +2462,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Dorndreherweg",
     "district": "Konradshöhe",
     "area": "C 7-8",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 07",
     "districts": [
       "Konradshöhe"
     ]
@@ -2472,7 +2472,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Dr.-Ilse-Kassel-Platz",
     "district": "Wittenau",
     "area": "F 5",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -2482,7 +2482,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Drebkauer Straße",
     "district": "Märkisches Viertel",
     "area": "H 7",
-    "groupId": "SOKO 24",
+    "groupId": "SOKO 12",
     "districts": [
       "Märkisches Viertel"
     ]
@@ -2492,7 +2492,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Dreifelderweg",
     "district": "Tegel",
     "area": "F 7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -2502,7 +2502,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Drenziger Zeile",
     "district": "Borsigwalde",
     "area": "EF 8",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 03",
     "districts": [
       "Borsigwalde"
     ]
@@ -2512,7 +2512,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Drewitzer Straße",
     "district": "Hermsdorf",
     "area": "F 4-5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -2522,7 +2522,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Drostestraße",
     "district": "Borsigwalde",
     "area": "F 8",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 03",
     "districts": [
       "Borsigwalde"
     ]
@@ -2532,7 +2532,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Dübelpfad",
     "district": "Wittenau",
     "area": "H 7",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -2542,7 +2542,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Dülmener Pfad",
     "district": "Tegel",
     "area": "DE 9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -2552,7 +2552,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Dünenweg",
     "district": "Tegel",
     "area": "F 7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -2562,7 +2562,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Düsterhauptstraße",
     "district": "Waidmannslust",
     "area": "FG 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Waidmannslust"
     ]
@@ -2572,7 +2572,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Edelhofdamm",
     "district": "Frohnau",
     "area": "EF 3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -2582,7 +2582,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Edeltrautweg",
     "district": "Konradshöhe",
     "area": "C 9",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 07",
     "districts": [
       "Konradshöhe"
     ]
@@ -2592,7 +2592,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Egellsstraße",
     "district": "Tegel",
     "area": "E 8",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -2602,7 +2602,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Egidystraße",
     "district": "Tegel",
     "area": "F 6-7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -2612,7 +2612,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Ehrenpfortensteig",
     "district": "Hermsdorf",
     "area": "E 5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -2622,7 +2622,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Eichborndamm",
     "district": "Borsigwalde / Reinickendorf / Wittenau",
     "area": "F9-G7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 03",
     "districts": [
       "Borsigwalde",
       "Reinickendorf",
@@ -2634,7 +2634,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Eichelhäherstraße",
     "district": "Konradshöhe",
     "area": "C 8",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 07",
     "districts": [
       "Konradshöhe"
     ]
@@ -2644,7 +2644,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Eichenroder Ring",
     "district": "Wittenau",
     "area": "G 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -2654,7 +2654,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Eichhorster Weg",
     "district": "Märkisches Viertel / Wittenau",
     "area": "G6-H7",
-    "groupId": "SOKO 24",
+    "groupId": "SOKO 12",
     "districts": [
       "Märkisches Viertel",
       "Wittenau"
@@ -2665,7 +2665,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Eichstädter Weg",
     "district": "Borsigwalde",
     "area": "F 8",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 03",
     "districts": [
       "Borsigwalde"
     ]
@@ -2685,7 +2685,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Eisenhammerweg",
     "district": "Tegel",
     "area": "E 8",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -2695,7 +2695,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Eisenhartsteig",
     "district": "Wittenau",
     "area": "G 8",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -2705,7 +2705,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Elchdamm",
     "district": "Heiligensee",
     "area": "B7-C6",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -2715,7 +2715,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Elkesteig",
     "district": "Hermsdorf",
     "area": "FG 5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -2725,7 +2725,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Elsenbruchstraße",
     "district": "Hermsdorf",
     "area": "F 5-6",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -2735,7 +2735,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Elsenpfuhlstraße",
     "district": "Wittenau",
     "area": "G 8",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -2745,7 +2745,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Elsestraße",
     "district": "Hermsdorf",
     "area": "G 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -2755,7 +2755,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Elstergasse",
     "district": "Konradshöhe",
     "area": "C 7",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 07",
     "districts": [
       "Konradshöhe"
     ]
@@ -2765,7 +2765,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Eltviller Straße",
     "district": "Frohnau",
     "area": "F 3-4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -2785,7 +2785,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Emstaler Platz",
     "district": "Tegel",
     "area": "E 9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -2795,7 +2795,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Engelmannweg",
     "district": "Reinickendorf",
     "area": "F10-G9",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf"
     ]
@@ -2805,7 +2805,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Engelroder Weg",
     "district": "Wittenau",
     "area": "H 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -2815,7 +2815,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Enkircher Straße",
     "district": "Frohnau",
     "area": "F 3-4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -2825,7 +2825,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Epensteinplatz",
     "district": "Reinickendorf",
     "area": "I 10",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf"
     ]
@@ -2835,7 +2835,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Epensteinstraße",
     "district": "Reinickendorf",
     "area": "I 10",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf"
     ]
@@ -2845,7 +2845,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Erholungsweg",
     "district": "Tegel",
     "area": "EF 7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -2855,7 +2855,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Erich-Anger-Weg",
     "district": "Heiligensee",
     "area": "D 5-6",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -2865,7 +2865,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Erndtebrücker Weg",
     "district": "Tegel",
     "area": "E 9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -2875,7 +2875,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Ernststraße",
     "district": "Borsigwalde / Tegel",
     "area": "EF 8",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 03",
     "districts": [
       "Borsigwalde",
       "Tegel"
@@ -2886,7 +2886,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Eschachstraße",
     "district": "Tegel",
     "area": "E 7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -2896,7 +2896,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Ettenheimer Pfad",
     "district": "Waidmannslust",
     "area": "G 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Waidmannslust"
     ]
@@ -2906,7 +2906,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Eutinger Weg",
     "district": "Waidmannslust",
     "area": "G 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Waidmannslust"
     ]
@@ -2926,7 +2926,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Fährstraße",
     "district": "Heiligensee",
     "area": "B 6",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -2936,7 +2936,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Fäustelweg",
     "district": "Wittenau",
     "area": "H 7",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -2946,7 +2946,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Falkenhorststraße",
     "district": "Konradshöhe",
     "area": "BC 8",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 07",
     "districts": [
       "Konradshöhe"
     ]
@@ -2956,7 +2956,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Falkenplatz",
     "district": "Konradshöhe",
     "area": "C 8",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 07",
     "districts": [
       "Konradshöhe"
     ]
@@ -2966,7 +2966,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Falkentaler Steig",
     "district": "Hermsdorf",
     "area": "E4-F5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -2976,7 +2976,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Fasanerie",
     "district": "Lübars",
     "area": "H6-I 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars"
     ]
@@ -2986,7 +2986,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Feldlerchenweg",
     "district": "Lübars",
     "area": "H 5",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars"
     ]
@@ -2996,7 +2996,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Feldmarkweg",
     "district": "Tegel",
     "area": "F 7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -3006,7 +3006,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Feldspatzenweg",
     "district": "Lübars",
     "area": "I 5",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars"
     ]
@@ -3016,7 +3016,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Fellbacher Platz",
     "district": "Hermsdorf",
     "area": "F 5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -3026,7 +3026,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Fellbacher Straße",
     "district": "Hermsdorf",
     "area": "F 5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -3036,7 +3036,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Fetschowzeile",
     "district": "Wittenau",
     "area": "F 8",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -3046,7 +3046,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Feuerweg",
     "district": "Wittenau",
     "area": "G 8",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -3056,7 +3056,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Fichtestraße",
     "district": "Hermsdorf",
     "area": "F 5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -3066,7 +3066,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Finnentroper Weg",
     "district": "Tegel",
     "area": "E 9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -3076,7 +3076,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Finsterwalder Straße",
     "district": "Lübars / Märkisches Viertel / Wittenau",
     "area": "G7-H6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars",
       "Märkisches Viertel",
@@ -3088,7 +3088,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Fließtalstraße",
     "district": "Hermsdorf",
     "area": "F 6",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -3098,7 +3098,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Flötnerweg",
     "district": "Wittenau",
     "area": "G 8",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -3108,7 +3108,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Flohrstraße",
     "district": "Tegel",
     "area": "F 9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -3118,7 +3118,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Florastraße",
     "district": "Waidmannslust",
     "area": "G 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Waidmannslust"
     ]
@@ -3138,7 +3138,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Flughafen Tegel",
     "district": "Tegel",
     "area": "EF 11",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -3148,7 +3148,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Fontanestraße",
     "district": "Hermsdorf",
     "area": "F 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -3158,7 +3158,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Forlenweg",
     "district": "Hermsdorf",
     "area": "F 5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -3168,7 +3168,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Forststraße",
     "district": "Hermsdorf",
     "area": "E6-F5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -3178,7 +3178,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Forstweg",
     "district": "Frohnau",
     "area": "DE 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -3188,7 +3188,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Foxweg",
     "district": "Reinickendorf",
     "area": "F 9",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf"
     ]
@@ -3198,7 +3198,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Fräsersteig",
     "district": "Wittenau",
     "area": "GH 7",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -3208,7 +3208,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Frankendorfer Steig",
     "district": "Hermsdorf",
     "area": "F 5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -3228,7 +3228,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Freester Weg",
     "district": "Heiligensee",
     "area": "C 4",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -3249,7 +3249,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Freiherr-vom-Stein-Straße",
     "district": "Hermsdorf",
     "area": "F 5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -3259,7 +3259,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Freilandweg",
     "district": "Tegel",
     "area": "F 6",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -3269,7 +3269,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Friederikestraße",
     "district": "Konradshöhe",
     "area": "C 8-9",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 07",
     "districts": [
       "Konradshöhe"
     ]
@@ -3289,7 +3289,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Friedrichsthaler Weg",
     "district": "Hermsdorf",
     "area": "F 5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -3309,7 +3309,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Frischborner Weg",
     "district": "Wittenau",
     "area": "G 6-7",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -3319,7 +3319,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Frohnauer Brücke",
     "district": "Frohnau",
     "area": "E 3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -3329,7 +3329,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Frohnauer Straße",
     "district": "Frohnau / Hermsdorf",
     "area": "E4-F5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau",
       "Hermsdorf"
@@ -3340,7 +3340,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Frommpromenade",
     "district": "Wittenau",
     "area": "G 7",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -3350,7 +3350,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Fuchsring",
     "district": "Frohnau",
     "area": "E 2-3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -3360,7 +3360,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Fuchsschwanzweg",
     "district": "Wittenau",
     "area": "G 7-8",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -3370,7 +3370,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Fuchssteinerweg",
     "district": "Frohnau",
     "area": "EF 3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -3380,7 +3380,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Fürst-Bismarck-Straße",
     "district": "Waidmannslust",
     "area": "F 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Waidmannslust"
     ]
@@ -3390,7 +3390,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Fürstenauer Weg",
     "district": "Heiligensee",
     "area": "B 5",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -3400,7 +3400,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Fürstendamm",
     "district": "Frohnau",
     "area": "E3-F4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -3410,7 +3410,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Gabelweihstraße",
     "district": "Konradshöhe",
     "area": "C 8",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 07",
     "districts": [
       "Konradshöhe"
     ]
@@ -3420,7 +3420,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Gabrielenstraße",
     "district": "Tegel",
     "area": "DE 7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -3430,7 +3430,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Gambiner Weg",
     "district": "Heiligensee",
     "area": "C 4",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -3450,7 +3450,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Gandenitzer Weg",
     "district": "Märkisches Viertel",
     "area": "H 6-7",
-    "groupId": "SOKO 24",
+    "groupId": "SOKO 12",
     "districts": [
       "Märkisches Viertel"
     ]
@@ -3460,7 +3460,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Gawanstraße",
     "district": "Frohnau",
     "area": "E 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -3470,7 +3470,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Gedonstraße",
     "district": "Reinickendorf",
     "area": "I 10",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf"
     ]
@@ -3480,7 +3480,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Geierpfad",
     "district": "Frohnau",
     "area": "F 2",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -3490,7 +3490,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Gemsenpfad",
     "district": "Heiligensee",
     "area": "C 5",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -3500,7 +3500,7 @@ window.REINICKENDORF_STREETS = [
     "name": "General-Barby-Straße",
     "district": "Reinickendorf",
     "area": "F 10",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf"
     ]
@@ -3510,7 +3510,7 @@ window.REINICKENDORF_STREETS = [
     "name": "General-Woyna-Straße",
     "district": "Reinickendorf",
     "area": "F 9-10",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf"
     ]
@@ -3530,7 +3530,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Gerlindeweg",
     "district": "Konradshöhe / Tegel",
     "area": "BC 9",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 07",
     "districts": [
       "Konradshöhe",
       "Tegel"
@@ -3541,7 +3541,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Germendorfer Straße",
     "district": "Märkisches Viertel",
     "area": "H 7",
-    "groupId": "SOKO 24",
+    "groupId": "SOKO 12",
     "districts": [
       "Märkisches Viertel"
     ]
@@ -3551,7 +3551,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Gertrudstraße",
     "district": "Hermsdorf",
     "area": "G 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -3561,7 +3561,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Gesellschaftstraße",
     "district": "Reinickendorf",
     "area": "I 10",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf"
     ]
@@ -3571,7 +3571,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Getreideweg",
     "district": "Lübars",
     "area": "H 5",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars"
     ]
@@ -3581,7 +3581,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Gisbertasteig",
     "district": "Hermsdorf",
     "area": "G 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -3591,7 +3591,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Glambecker Weg",
     "district": "Frohnau / Hermsdorf",
     "area": "E 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau",
       "Hermsdorf"
@@ -3602,7 +3602,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Glaskrautstraße",
     "district": "Heiligensee",
     "area": "C 5",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -3612,7 +3612,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Glienicker Straße",
     "district": "Hermsdorf",
     "area": "F 5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -3622,7 +3622,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Göschenplatz",
     "district": "Wittenau",
     "area": "G 7",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -3632,7 +3632,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Göschenstraße",
     "district": "Wittenau",
     "area": "G 7",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -3642,7 +3642,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Götzestraße",
     "district": "Hermsdorf",
     "area": "F 5-6",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -3652,7 +3652,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Gollanczstraße",
     "district": "Frohnau",
     "area": "E 2-3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -3662,7 +3662,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Gorkistraße",
     "district": "Tegel / Wittenau",
     "area": "EF 7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel",
       "Wittenau"
@@ -3683,7 +3683,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Graf-Haeseler-Straße",
     "district": "Reinickendorf",
     "area": "F 9",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf"
     ]
@@ -3693,7 +3693,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Gralsburgsteig",
     "district": "Frohnau",
     "area": "E 3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -3703,7 +3703,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Gralsritterweg",
     "district": "Frohnau",
     "area": "E 3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -3713,7 +3713,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Granatenstraße",
     "district": "Reinickendorf",
     "area": "I 9",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf"
     ]
@@ -3723,7 +3723,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Graneweg",
     "district": "Frohnau",
     "area": "D 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -3733,7 +3733,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Grebenhainer Weg",
     "district": "Wittenau",
     "area": "G 7",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -3743,7 +3743,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Grimbartsteig",
     "district": "Heiligensee",
     "area": "C 6",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -3773,7 +3773,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Grünlandweg",
     "district": "Wittenau",
     "area": "F 7",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -3793,7 +3793,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Grünspechtweg",
     "district": "Lübars",
     "area": "H 5",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars"
     ]
@@ -3803,7 +3803,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Grußdorfstraße",
     "district": "Tegel",
     "area": "E 8",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -3813,7 +3813,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Güttlandring",
     "district": "Heiligensee",
     "area": "C 4",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -3823,7 +3823,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Guhlener Zeile",
     "district": "Märkisches Viertel",
     "area": "G 7",
-    "groupId": "SOKO 24",
+    "groupId": "SOKO 12",
     "districts": [
       "Märkisches Viertel"
     ]
@@ -3833,7 +3833,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Gurnemanzpfad",
     "district": "Frohnau",
     "area": "D 3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -3843,7 +3843,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Gutachstraße",
     "district": "Waidmannslust",
     "area": "G 5-6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Waidmannslust"
     ]
@@ -3853,7 +3853,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Gutshofstraße",
     "district": "Frohnau",
     "area": "F 3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -3863,7 +3863,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Habichtstraße",
     "district": "Konradshöhe",
     "area": "C 8",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 07",
     "districts": [
       "Konradshöhe"
     ]
@@ -3873,7 +3873,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Hademarscher Weg",
     "district": "Heiligensee",
     "area": "B 5-6",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -3883,7 +3883,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Haflingerpfad",
     "district": "Frohnau",
     "area": "E 2",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -3893,7 +3893,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Hainbuchenstraße",
     "district": "Frohnau",
     "area": "DE 3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -3903,7 +3903,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Halalistraße",
     "district": "Waidmannslust",
     "area": "F 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Waidmannslust"
     ]
@@ -3913,7 +3913,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Hallichpromenade",
     "district": "Wittenau",
     "area": "G 7",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -3923,7 +3923,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Halligweg",
     "district": "Tegel",
     "area": "C 10 - 11",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -3933,7 +3933,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Hambacher Weg",
     "district": "Frohnau",
     "area": "F 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -3943,7 +3943,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Hangweg",
     "district": "Frohnau",
     "area": "D 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -3953,7 +3953,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Haselhuhnweg",
     "district": "Heiligensee",
     "area": "C 6",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -3973,7 +3973,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Hattenheimer Straße",
     "district": "Frohnau",
     "area": "F 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -3983,7 +3983,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Hattinger Weg",
     "district": "Tegel",
     "area": "E 9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -3993,7 +3993,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Hatzfeldtallee",
     "district": "Tegel",
     "area": "E 7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -4003,7 +4003,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Hausotterplatz",
     "district": "Reinickendorf",
     "area": "I 9",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf"
     ]
@@ -4023,7 +4023,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Havelmüllerweg",
     "district": "Tegel",
     "area": "F 7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -4043,7 +4043,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Hedwigstraße",
     "district": "Hermsdorf",
     "area": "G 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -4053,7 +4053,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Heerruferweg",
     "district": "Frohnau",
     "area": "D 3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -4063,7 +4063,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Heidenheimer Straße",
     "district": "Hermsdorf",
     "area": "F 5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -4073,7 +4073,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Heidestraße",
     "district": "Hermsdorf",
     "area": "F 5-6",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -4083,7 +4083,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Heiligenseestraße",
     "district": "Heiligensee",
     "area": "B5-E7",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -4093,7 +4093,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Heiligental",
     "district": "Wittenau",
     "area": "G 8",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -4103,7 +4103,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Heinsestraße",
     "district": "Hermsdorf",
     "area": "F 5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -4113,7 +4113,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Helgaweg",
     "district": "Konradshöhe",
     "area": "B 9",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 07",
     "districts": [
       "Konradshöhe"
     ]
@@ -4123,7 +4123,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Helmkrautstraße",
     "district": "Heiligensee",
     "area": "C 5",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -4133,7 +4133,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Helweg",
     "district": "Frohnau",
     "area": "D 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -4143,7 +4143,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Hemmingstedter Weg",
     "district": "Heiligensee",
     "area": "BC 6",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -4153,7 +4153,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Hennigsdorfer Straße",
     "district": "Heiligensee",
     "area": "B5-C4",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -4163,7 +4163,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Henricistraße",
     "district": "Wittenau",
     "area": "G 8",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -4173,7 +4173,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Herbsteiner Straße",
     "district": "Wittenau",
     "area": "GH 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -4183,7 +4183,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Herbststraße",
     "district": "Reinickendorf",
     "area": "I 9",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf"
     ]
@@ -4193,7 +4193,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Hermann-Piper-Straße",
     "district": "Wittenau",
     "area": "G 8",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -4203,7 +4203,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Hermsdorfer Damm",
     "district": "Hermsdorf",
     "area": "E7-G4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -4213,7 +4213,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Hermsdorfer Straße",
     "district": "Wittenau",
     "area": "G 6-7",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -4223,7 +4223,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Herrnholzweg",
     "district": "Lübars",
     "area": "H 5",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars"
     ]
@@ -4233,7 +4233,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Herscheider Weg",
     "district": "Tegel",
     "area": "E 9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -4243,7 +4243,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Hieronymusweg",
     "district": "Tegel",
     "area": "E 7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -4253,7 +4253,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Hilchenbacher Weg",
     "district": "Tegel",
     "area": "E 9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -4263,7 +4263,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Hillmannstraße",
     "district": "Hermsdorf",
     "area": "F 5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -4283,7 +4283,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Hochjagdstraße",
     "district": "Waidmannslust",
     "area": "F 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Waidmannslust"
     ]
@@ -4293,7 +4293,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Höllentalweg",
     "district": "Waidmannslust",
     "area": "G 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Waidmannslust"
     ]
@@ -4303,7 +4303,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Höpfertsteig",
     "district": "Lübars",
     "area": "H 5",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars"
     ]
@@ -4313,7 +4313,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Hofjägerallee",
     "district": "Frohnau",
     "area": "F 3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -4323,7 +4323,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Hohefeldstraße",
     "district": "Hermsdorf",
     "area": "F 4-5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -4333,7 +4333,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Hohenheimer Straße",
     "district": "Frohnau",
     "area": "F 3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -4343,7 +4343,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Hohenzollernstraße",
     "district": "Hermsdorf",
     "area": "F 5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -4363,7 +4363,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Holwedestraße",
     "district": "Tegel",
     "area": "DE 7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -4373,7 +4373,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Holzhauser Straße",
     "district": "Borsigwalde / Tegel",
     "area": "F 8-9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 03",
     "districts": [
       "Borsigwalde",
       "Tegel"
@@ -4394,7 +4394,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Hoppestraße",
     "district": "Reinickendorf",
     "area": "I 9",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf"
     ]
@@ -4404,7 +4404,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Horandweg",
     "district": "Frohnau",
     "area": "E 3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -4414,7 +4414,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Horber Straße",
     "district": "Waidmannslust",
     "area": "G 5-6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Waidmannslust"
     ]
@@ -4424,7 +4424,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Hubertusstraße",
     "district": "Waidmannslust",
     "area": "F 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Waidmannslust"
     ]
@@ -4434,7 +4434,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Hubertusweg",
     "district": "Frohnau",
     "area": "EF 1",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -4444,7 +4444,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Humannstraße",
     "district": "Reinickendorf",
     "area": "F 9",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf"
     ]
@@ -4464,7 +4464,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Huttenstraße",
     "district": "Frohnau",
     "area": "EF 3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -4484,7 +4484,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Ilbeshäuser Weg",
     "district": "Wittenau",
     "area": "G 7",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -4494,7 +4494,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Illerzeile",
     "district": "Tegel",
     "area": "E 7-8",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -4504,7 +4504,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Im Amseltal",
     "district": "Frohnau",
     "area": "E 3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -4514,7 +4514,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Im Brachfeldwinkel",
     "district": "Tegel",
     "area": "F 7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -4524,7 +4524,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Im Erpelgrund",
     "district": "Heiligensee",
     "area": "CD 6",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -4534,7 +4534,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Im Fischgrund",
     "district": "Frohnau",
     "area": "F 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -4544,7 +4544,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Im Hufenschlag",
     "district": "Wittenau",
     "area": "F8-G9",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -4554,7 +4554,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Im Rehgrund",
     "district": "Heiligensee",
     "area": "C 5-6",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -4564,7 +4564,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Im Riedgrund",
     "district": "Lübars",
     "area": "G 4-5",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars"
     ]
@@ -4584,7 +4584,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Im Saatwinkel",
     "district": "Tegel",
     "area": "C 10",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -4594,7 +4594,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Im Vogtland",
     "district": "Lübars",
     "area": "H 5",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars"
     ]
@@ -4604,7 +4604,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Im Waldwinkel",
     "district": "Heiligensee",
     "area": "D 6",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -4614,7 +4614,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Im Wiesenbusch",
     "district": "Lübars",
     "area": "G 5",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars"
     ]
@@ -4624,7 +4624,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Im Wolfsgartenfeld",
     "district": "Wittenau",
     "area": "G 8",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -4634,7 +4634,7 @@ window.REINICKENDORF_STREETS = [
     "name": "In den Kaveln",
     "district": "Wittenau",
     "area": "F 7",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -4644,7 +4644,7 @@ window.REINICKENDORF_STREETS = [
     "name": "In den Schifferbergen",
     "district": "Heiligensee",
     "area": "B 7",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -4654,7 +4654,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Innungsstraße",
     "district": "Borsigwalde",
     "area": "F 8-9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 03",
     "districts": [
       "Borsigwalde"
     ]
@@ -4674,7 +4674,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Invalidensiedlung",
     "district": "Frohnau",
     "area": "E 1",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -4684,7 +4684,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Isegrimsteig",
     "district": "Heiligensee",
     "area": "C 6",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -4694,7 +4694,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Jacobsenweg",
     "district": "Borsigwalde",
     "area": "F 8",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 03",
     "districts": [
       "Borsigwalde"
     ]
@@ -4704,7 +4704,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Jägerstieg",
     "district": "Frohnau",
     "area": "EF 1",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -4714,7 +4714,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Jägerweg",
     "district": "Heiligensee",
     "area": "C 5-6",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -4724,7 +4724,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Jagowstraße",
     "district": "Hermsdorf",
     "area": "F 6",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -4734,7 +4734,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Jahnstraße",
     "district": "Hermsdorf",
     "area": "F 5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -4744,7 +4744,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Jansenstraße",
     "district": "Wittenau",
     "area": "G 8",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -4754,7 +4754,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Jathoweg",
     "district": "Wittenau",
     "area": "G 7-8",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -4764,7 +4764,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Jean-Jaurès-Straße",
     "district": "Wittenau",
     "area": "G 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -4774,7 +4774,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Jörsstraße",
     "district": "Konradshöhe",
     "area": "C 9",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 07",
     "districts": [
       "Konradshöhe"
     ]
@@ -4784,7 +4784,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Jostweg",
     "district": "Frohnau",
     "area": "F 3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -4804,7 +4804,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Junostraße",
     "district": "Hermsdorf",
     "area": "G 5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -4814,7 +4814,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Jupiterstraße",
     "district": "Reinickendorf",
     "area": "F 10",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf"
     ]
@@ -4824,7 +4824,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Käthestraße",
     "district": "Hermsdorf",
     "area": "G 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -4834,7 +4834,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Kamekestraße",
     "district": "Reinickendorf",
     "area": "I 9",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf"
     ]
@@ -4844,7 +4844,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Kamener Weg",
     "district": "Tegel",
     "area": "E 9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -4854,7 +4854,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Kammgasse",
     "district": "Frohnau",
     "area": "E 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -4864,7 +4864,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Kampweg",
     "district": "Tegel",
     "area": "F 6",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -4884,7 +4884,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Karmeliterweg",
     "district": "Frohnau",
     "area": "DE 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -4894,7 +4894,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Karolinenstraße",
     "district": "Tegel",
     "area": "E 7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -4904,7 +4904,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Karwitzer Pfad",
     "district": "Heiligensee",
     "area": "C 4-5",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -4914,7 +4914,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Kasinoweg",
     "district": "Frohnau",
     "area": "E 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -4924,7 +4924,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Katzensteg",
     "district": "Frohnau",
     "area": "F 3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -4934,7 +4934,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Kehrwieder",
     "district": "Tegel",
     "area": "F 7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -4944,7 +4944,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Keilerstraße",
     "district": "Heiligensee",
     "area": "C5-D6",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -4954,7 +4954,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Kellenzeile",
     "district": "Wittenau",
     "area": "G 7",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -4964,7 +4964,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Kettelerpfad",
     "district": "Tegel",
     "area": "E 6-7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -4974,7 +4974,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Kiefheider Weg",
     "district": "Heiligensee",
     "area": "C 4-5",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -4984,7 +4984,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Kienhorststraße",
     "district": "Reinickendorf",
     "area": "FG 9",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf"
     ]
@@ -4994,7 +4994,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Kieselbronner Weg",
     "district": "Lübars",
     "area": "H 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars"
     ]
@@ -5004,7 +5004,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Kirchgasse",
     "district": "Tegel",
     "area": "E 8",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -5024,7 +5024,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Klaushager Weg",
     "district": "Hermsdorf",
     "area": "EF 5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -5054,7 +5054,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Klinnerweg",
     "district": "Borsigwalde",
     "area": "F 8",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 03",
     "districts": [
       "Borsigwalde"
     ]
@@ -5064,7 +5064,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Klixstraße",
     "district": "Reinickendorf",
     "area": "F 9",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf"
     ]
@@ -5074,7 +5074,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Klötzesteig",
     "district": "Lübars",
     "area": "H 5",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars"
     ]
@@ -5084,7 +5084,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Klosterfelder Weg",
     "district": "Borsigwalde",
     "area": "F 8",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 03",
     "districts": [
       "Borsigwalde"
     ]
@@ -5094,7 +5094,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Klosterheider Weg",
     "district": "Hermsdorf",
     "area": "EF 5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -5104,7 +5104,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Knappenpfad",
     "district": "Frohnau",
     "area": "E 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -5114,7 +5114,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Knauerstraße",
     "district": "Wittenau",
     "area": "GH 8",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -5124,7 +5124,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Kneippstraße",
     "district": "Hermsdorf",
     "area": "E5-F4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -5134,7 +5134,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Kniggeweg",
     "district": "Frohnau",
     "area": "E 3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -5154,7 +5154,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Königsbacher Zeile",
     "district": "Frohnau",
     "area": "EF 3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -5164,7 +5164,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Königshorster Straße",
     "district": "Märkisches Viertel",
     "area": "H 7",
-    "groupId": "SOKO 24",
+    "groupId": "SOKO 12",
     "districts": [
       "Märkisches Viertel"
     ]
@@ -5174,7 +5174,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Königsweg",
     "district": "Tegel",
     "area": "E 7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -5194,7 +5194,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Konradshöher Straße",
     "district": "Tegel",
     "area": "C8-D7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -5204,7 +5204,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Konzer Platz",
     "district": "Frohnau",
     "area": "F 3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -5224,7 +5224,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Koppelweg",
     "district": "Frohnau",
     "area": "F 3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -5234,7 +5234,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Kornweg",
     "district": "Lübars",
     "area": "H 5",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars"
     ]
@@ -5244,7 +5244,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Kossätenstraße",
     "district": "Wittenau",
     "area": "G 8",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -5254,7 +5254,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Krangener Weg",
     "district": "Märkisches Viertel",
     "area": "H 7",
-    "groupId": "SOKO 24",
+    "groupId": "SOKO 12",
     "districts": [
       "Märkisches Viertel"
     ]
@@ -5264,7 +5264,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Krantorweg",
     "district": "Heiligensee",
     "area": "C 4-5",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -5274,7 +5274,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Kreuzritterstraße",
     "district": "Frohnau",
     "area": "E 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -5284,7 +5284,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Kreuztaler Weg",
     "district": "Tegel",
     "area": "E 9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -5294,7 +5294,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Krumminer Weg",
     "district": "Heiligensee",
     "area": "B 5",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -5304,7 +5304,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Krumpuhler Weg",
     "district": "Tegel",
     "area": "E 9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -5314,7 +5314,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Kühleweinstraße",
     "district": "Reinickendorf",
     "area": "I 10",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf"
     ]
@@ -5324,7 +5324,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Kühnemannstraße",
     "district": "Reinickendorf",
     "area": "I 10",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf"
     ]
@@ -5334,7 +5334,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Kurfürstenstraße",
     "district": "Hermsdorf",
     "area": "EF 6",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -5344,7 +5344,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Kurhausstraße",
     "district": "Hermsdorf",
     "area": "F 4-5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -5354,7 +5354,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Kurt-Schumacher-Damm",
     "district": "Reinickendorf / Tegel",
     "area": "F11-G10",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf",
       "Tegel"
@@ -5375,7 +5375,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Kurzebracker Weg",
     "district": "Heiligensee",
     "area": "BC 5",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -5385,7 +5385,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Kurze Straße",
     "district": "Hermsdorf",
     "area": "F 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -5395,7 +5395,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Labeser Weg",
     "district": "Heiligensee",
     "area": "C 4",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -5405,7 +5405,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Lachtaubenweg",
     "district": "Konradshöhe",
     "area": "C 7",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 07",
     "districts": [
       "Konradshöhe"
     ]
@@ -5415,7 +5415,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Ladeburger Weg",
     "district": "Borsigwalde",
     "area": "F 8",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 03",
     "districts": [
       "Borsigwalde"
     ]
@@ -5425,7 +5425,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Lahrer Pfad",
     "district": "Waidmannslust",
     "area": "G 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Waidmannslust"
     ]
@@ -5445,7 +5445,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Landenhäuser Weg",
     "district": "Wittenau",
     "area": "G 7",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -5455,7 +5455,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Lange Enden",
     "district": "Wittenau",
     "area": "FG 7",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -5465,7 +5465,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Langenauer Weg",
     "district": "Heiligensee",
     "area": "C 5",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -5475,7 +5475,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Langohrzeile",
     "district": "Frohnau",
     "area": "F 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -5485,7 +5485,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Laurinsteig",
     "district": "Frohnau",
     "area": "DE 3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -5505,7 +5505,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Lesewitzer Steig",
     "district": "Heiligensee",
     "area": "C 5",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -5515,7 +5515,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Letmather Weg",
     "district": "Tegel",
     "area": "E 9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -5525,7 +5525,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Letschiner Weg",
     "district": "Borsigwalde",
     "area": "F 8",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 03",
     "districts": [
       "Borsigwalde"
     ]
@@ -5535,7 +5535,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Letteallee",
     "district": "Reinickendorf",
     "area": "I 10",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf"
     ]
@@ -5545,7 +5545,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Letteplatz",
     "district": "Reinickendorf",
     "area": "I 10",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf"
     ]
@@ -5555,7 +5555,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Letzkauer Steig",
     "district": "Heiligensee",
     "area": "BC 5",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -5565,7 +5565,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Leuenberger Zeile",
     "district": "Borsigwalde",
     "area": "E 8",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 03",
     "districts": [
       "Borsigwalde"
     ]
@@ -5575,7 +5575,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Lichtungsweg",
     "district": "Frohnau",
     "area": "D 3-4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -5585,7 +5585,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Lichtweg",
     "district": "Tegel",
     "area": "E 9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -5595,7 +5595,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Lieberoser Straße",
     "district": "Märkisches Viertel",
     "area": "GH 7",
-    "groupId": "SOKO 24",
+    "groupId": "SOKO 12",
     "districts": [
       "Märkisches Viertel"
     ]
@@ -5605,7 +5605,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Liebfrauenweg",
     "district": "Tegel",
     "area": "E6-F7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -5615,7 +5615,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Liebstöckelweg",
     "district": "Heiligensee",
     "area": "C 5",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -5635,7 +5635,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Lierbacher Weg",
     "district": "Waidmannslust",
     "area": "G 5-6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Waidmannslust"
     ]
@@ -5645,7 +5645,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Liesborner Weg",
     "district": "Tegel",
     "area": "E 8-9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -5655,7 +5655,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Liessauer Pfad",
     "district": "Heiligensee",
     "area": "C 5",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -5675,7 +5675,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Lindenallee",
     "district": "Heiligensee",
     "area": "C 10",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -5685,7 +5685,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Lipizzanerweg",
     "district": "Frohnau",
     "area": "E 2",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -5695,7 +5695,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Lißberger Zeile",
     "district": "Wittenau",
     "area": "G 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -5705,7 +5705,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Lobber Steig",
     "district": "Heiligensee",
     "area": "C 4",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -5715,7 +5715,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Löblauer Pfad",
     "district": "Heiligensee",
     "area": "C 4",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -5725,7 +5725,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Loerkesteig",
     "district": "Hermsdorf",
     "area": "F 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -5735,7 +5735,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Lotosweg",
     "district": "Hermsdorf",
     "area": "G 5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -5745,7 +5745,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Lubminer Pfad",
     "district": "Heiligensee",
     "area": "BC 4",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -5755,7 +5755,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Ludolfingerplatz",
     "district": "Frohnau",
     "area": "E 3-4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -5765,7 +5765,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Ludolfingerweg",
     "district": "Frohnau",
     "area": "E 3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -5775,7 +5775,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Lübarser Aue",
     "district": "Lübars",
     "area": "H 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars"
     ]
@@ -5785,7 +5785,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Lübarser Straße",
     "district": "Wittenau",
     "area": "G 6-7",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -5805,7 +5805,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Luisenstraße",
     "district": "Konradshöhe",
     "area": "BC 9",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 07",
     "districts": [
       "Konradshöhe"
     ]
@@ -5825,7 +5825,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Maarer Straße",
     "district": "Wittenau",
     "area": "G7-H6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -5835,7 +5835,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Maienwerderweg",
     "district": "Tegel",
     "area": "CD 10",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -5855,7 +5855,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Marie-Schlei-Platz",
     "district": "Tegel",
     "area": "F 6",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -5865,7 +5865,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Markendorfer Straße",
     "district": "Märkisches Viertel",
     "area": "GH 7",
-    "groupId": "SOKO 24",
+    "groupId": "SOKO 12",
     "districts": [
       "Märkisches Viertel"
     ]
@@ -5875,7 +5875,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Markgrafenstraße",
     "district": "Frohnau",
     "area": "E3-F4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -5905,7 +5905,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Marlenestraße",
     "district": "Konradshöhe",
     "area": "C 9",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 07",
     "districts": [
       "Konradshöhe"
     ]
@@ -5925,7 +5925,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Marthastraße",
     "district": "Hermsdorf",
     "area": "G 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -5935,7 +5935,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Martin-Luther-Straße",
     "district": "Hermsdorf",
     "area": "E6-F5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -5945,7 +5945,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Martin-Rudloff-Weg",
     "district": "Heiligensee",
     "area": "D 5-6",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -5955,7 +5955,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Marzahnstraße",
     "district": "Tegel",
     "area": "EF 7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -5965,7 +5965,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Mattenbuder Pfad",
     "district": "Heiligensee",
     "area": "BC 5",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -5975,7 +5975,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Mattersburger Weg",
     "district": "Frohnau",
     "area": "E 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -5985,7 +5985,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Mauschbacher Steig",
     "district": "Wittenau",
     "area": "G 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -5995,7 +5995,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Max-Beckmann-Platz",
     "district": "Hermsdorf",
     "area": "F 5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -6005,7 +6005,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Maximiliankorso",
     "district": "Frohnau",
     "area": "D4-E3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -6015,7 +6015,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Mecklenburgweg",
     "district": "Tegel",
     "area": "E 11",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -6025,7 +6025,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Medebacher Weg",
     "district": "Tegel",
     "area": "E 7-8",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -6035,7 +6035,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Mehlweg",
     "district": "Lübars",
     "area": "H 5",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars"
     ]
@@ -6045,7 +6045,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Mehringer Straße",
     "district": "Frohnau",
     "area": "EF 3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -6055,7 +6055,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Mehrower Zeile",
     "district": "Märkisches Viertel",
     "area": "H 7",
-    "groupId": "SOKO 24",
+    "groupId": "SOKO 12",
     "districts": [
       "Märkisches Viertel"
     ]
@@ -6065,7 +6065,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Melanchthonstraße",
     "district": "Hermsdorf",
     "area": "EF 5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -6075,7 +6075,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Meldorfer Steig",
     "district": "Heiligensee",
     "area": "C 6",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -6095,7 +6095,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Mergelweg",
     "district": "Lübars",
     "area": "G 5",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars"
     ]
@@ -6115,7 +6115,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Merlinweg",
     "district": "Frohnau",
     "area": "D 3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -6125,7 +6125,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Mescheder Weg",
     "district": "Tegel",
     "area": "E 9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -6135,7 +6135,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Meteorstraße",
     "district": "Reinickendorf",
     "area": "FG 10",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf"
     ]
@@ -6145,7 +6145,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Michelbacher Zeile",
     "district": "Wittenau",
     "area": "G 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -6155,7 +6155,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Mickestraße",
     "district": "Reinickendorf",
     "area": "I 10",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf"
     ]
@@ -6165,7 +6165,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Milanstraße",
     "district": "Konradshöhe",
     "area": "C 8",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 07",
     "districts": [
       "Konradshöhe"
     ]
@@ -6175,7 +6175,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Minheimer Straße",
     "district": "Frohnau",
     "area": "E 3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -6185,7 +6185,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Miraustraße",
     "district": "Borsigwalde / Tegel",
     "area": "F 7-9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 03",
     "districts": [
       "Borsigwalde",
       "Tegel"
@@ -6216,7 +6216,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Moorweg",
     "district": "Tegel",
     "area": "E7-F6",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -6226,7 +6226,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Moränenweg",
     "district": "Tegel",
     "area": "F 7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -6236,7 +6236,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Mottlaupfad",
     "district": "Heiligensee",
     "area": "C 5",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -6256,7 +6256,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Mühlenfeldstraße",
     "district": "Hermsdorf",
     "area": "E6-F5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -6266,7 +6266,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Mühlsteinweg",
     "district": "Lübars",
     "area": "H 5",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars"
     ]
@@ -6276,7 +6276,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Mümmelmannweg",
     "district": "Heiligensee",
     "area": "C 5",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -6286,7 +6286,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Münchener Straße",
     "district": "Frohnau",
     "area": "DE 3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -6296,7 +6296,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Mustangweg",
     "district": "Frohnau",
     "area": "E 2",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -6306,7 +6306,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Myrtenweg",
     "district": "Tegel",
     "area": "F 7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -6316,7 +6316,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Nach der Höhe",
     "district": "Waidmannslust",
     "area": "F 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Waidmannslust"
     ]
@@ -6326,7 +6326,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Nagolder Pfad",
     "district": "Waidmannslust",
     "area": "G 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Waidmannslust"
     ]
@@ -6336,7 +6336,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Namslaustraße",
     "district": "Tegel",
     "area": "E 8-9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -6346,7 +6346,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Nassenheider Weg",
     "district": "Borsigwalde",
     "area": "F 8",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 03",
     "districts": [
       "Borsigwalde"
     ]
@@ -6356,7 +6356,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Neheimer Straße",
     "district": "Tegel",
     "area": "D9-E8",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -6366,7 +6366,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Neptunstraße",
     "district": "Reinickendorf",
     "area": "I 10",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf"
     ]
@@ -6376,7 +6376,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Neubrücker Straße",
     "district": "Frohnau",
     "area": "DE 3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -6386,7 +6386,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Neufährer Steig",
     "district": "Heiligensee",
     "area": "BC 5",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -6396,7 +6396,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Neulandweg",
     "district": "Tegel",
     "area": "F 6",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -6406,7 +6406,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Neuwarper Pfad",
     "district": "Heiligensee",
     "area": "C 4",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -6416,7 +6416,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Nibelungenstraße",
     "district": "Frohnau",
     "area": "E 3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -6426,7 +6426,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Niebüller Weg",
     "district": "Heiligensee",
     "area": "C 6",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -6436,7 +6436,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Nietheweg",
     "district": "Wittenau",
     "area": "G 8",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -6446,7 +6446,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Nimrodstraße",
     "district": "Waidmannslust",
     "area": "F7-G6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Waidmannslust"
     ]
@@ -6456,7 +6456,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Nordbahnstraße",
     "district": "Reinickendorf",
     "area": "I 9",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf"
     ]
@@ -6466,7 +6466,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Norddorfer Pfad",
     "district": "Heiligensee",
     "area": "C 6",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -6476,7 +6476,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Nordhellesteig",
     "district": "Tegel",
     "area": "E 9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -6486,7 +6486,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Nordlichtstraße",
     "district": "Reinickendorf",
     "area": "FG 10",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf"
     ]
@@ -6496,7 +6496,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Nußhäherstraße",
     "district": "Konradshöhe",
     "area": "B 8-9",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 07",
     "districts": [
       "Konradshöhe"
     ]
@@ -6506,7 +6506,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Öschelbronner Weg",
     "district": "Lübars",
     "area": "G5-H6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars"
     ]
@@ -6516,7 +6516,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Odilostraße",
     "district": "Hermsdorf",
     "area": "F 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -6526,7 +6526,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Oelder Weg",
     "district": "Tegel",
     "area": "E 9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -6536,7 +6536,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Oeserstraße",
     "district": "Tegel",
     "area": "EF 7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -6546,7 +6546,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Oggenhauser Straße",
     "district": "Hermsdorf",
     "area": "F 5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -6556,7 +6556,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Olafstraße",
     "district": "Hermsdorf",
     "area": "F 4-5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -6566,7 +6566,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Olbendorfer Weg",
     "district": "Wittenau",
     "area": "G 8",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -6576,7 +6576,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Olbrichweg",
     "district": "Wittenau",
     "area": "G 8",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -6596,7 +6596,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Olwenstraße",
     "district": "Frohnau",
     "area": "DE 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -6606,7 +6606,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Oppenheimer Weg",
     "district": "Frohnau",
     "area": "F 3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -6616,7 +6616,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Oranienburger Chaussee",
     "district": "Frohnau",
     "area": "E1-F4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -6626,7 +6626,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Oranienburger Straße",
     "district": "Wittenau",
     "area": "G 6-9",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -6636,7 +6636,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Oraniendamm",
     "district": "Waidmannslust",
     "area": "F5-G6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Waidmannslust"
     ]
@@ -6646,7 +6646,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Ortwinstraße",
     "district": "Frohnau",
     "area": "E 3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -6656,7 +6656,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Osianderweg",
     "district": "Tegel",
     "area": "F 6-7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -6666,7 +6666,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Osterwicker Steig",
     "district": "Heiligensee",
     "area": "C 5",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -6686,7 +6686,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Oswinsteig",
     "district": "Hermsdorf",
     "area": "F 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -6696,7 +6696,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Otisstraße",
     "district": "Reinickendorf / Tegel",
     "area": "F 9",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf",
       "Tegel"
@@ -6707,7 +6707,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Otternweg",
     "district": "Frohnau",
     "area": "F 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -6717,7 +6717,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Ottilienweg",
     "district": "Konradshöhe",
     "area": "C 9",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 07",
     "districts": [
       "Konradshöhe"
     ]
@@ -6727,7 +6727,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Otto-Dibelius-Platz",
     "district": "Tegel",
     "area": "E 8",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -6747,7 +6747,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Pannwitzstraße",
     "district": "Wittenau",
     "area": "F9-G8",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -6757,7 +6757,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Parkstraße",
     "district": "Hermsdorf",
     "area": "FG 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -6767,7 +6767,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Pfadfinderweg",
     "district": "Frohnau",
     "area": "DE 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -6797,7 +6797,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Pforzheimer Straße",
     "district": "Waidmannslust",
     "area": "G 5",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Waidmannslust"
     ]
@@ -6807,7 +6807,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Pilgersdorfer Weg",
     "district": "Frohnau",
     "area": "D 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -6817,7 +6817,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Pirschweg",
     "district": "Frohnau",
     "area": "D 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -6827,7 +6827,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Place Molière",
     "district": "Wittenau",
     "area": "F 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -6837,7 +6837,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Platenhofer Weg",
     "district": "Heiligensee",
     "area": "C 5",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -6847,7 +6847,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Plettenberger Pfad",
     "district": "Tegel",
     "area": "E 9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -6857,7 +6857,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Polsumer Pfad",
     "district": "Tegel",
     "area": "D 9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -6867,7 +6867,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Polziner Weg",
     "district": "Heiligensee",
     "area": "C 4",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -6877,7 +6877,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Ponyweg",
     "district": "Frohnau",
     "area": "E 2",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -6887,7 +6887,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Prendener Zeile",
     "district": "Tegel",
     "area": "F 7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -6897,7 +6897,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Primusweg",
     "district": "Wittenau",
     "area": "G 8",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -6907,7 +6907,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Provinzstraße",
     "district": "Reinickendorf",
     "area": "I 9-10",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf"
     ]
@@ -6917,7 +6917,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Puchertweg",
     "district": "Wittenau",
     "area": "G 8",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -6927,7 +6927,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Quäkerstraße",
     "district": "Reinickendorf",
     "area": "F 9",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf"
     ]
@@ -6937,7 +6937,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Quickborner Straße",
     "district": "Lübars / Märkisches Viertel",
     "area": "H5-I7",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars",
       "Märkisches Viertel"
@@ -6948,7 +6948,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Rabenhorststraße",
     "district": "Konradshöhe",
     "area": "C 7-8",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 07",
     "districts": [
       "Konradshöhe"
     ]
@@ -6958,7 +6958,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Rabenstraße",
     "district": "Konradshöhe",
     "area": "C 8",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 07",
     "districts": [
       "Konradshöhe"
     ]
@@ -6968,7 +6968,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Räuschstraße",
     "district": "Borsigwalde",
     "area": "F 8",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 03",
     "districts": [
       "Borsigwalde"
     ]
@@ -6988,7 +6988,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Rallenweg",
     "district": "Heiligensee",
     "area": "B 7",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -6998,7 +6998,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Randower Weg",
     "district": "Heiligensee",
     "area": "C 4",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -7008,7 +7008,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Rappenweg",
     "district": "Frohnau",
     "area": "E 2",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -7028,7 +7028,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Rathauspromenade",
     "district": "Wittenau",
     "area": "G 8",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -7038,7 +7038,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Rauentaler Straße",
     "district": "Frohnau",
     "area": "F 2",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -7048,7 +7048,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Rauhbankzeile",
     "district": "Wittenau",
     "area": "GH 7",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -7058,7 +7058,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Rauhfußgasse",
     "district": "Konradshöhe",
     "area": "C 8",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 07",
     "districts": [
       "Konradshöhe"
     ]
@@ -7068,7 +7068,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Rausendorffweg",
     "district": "Heiligensee",
     "area": "D 6",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -7078,7 +7078,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Rautensteig",
     "district": "Heiligensee",
     "area": "C 5",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -7088,7 +7088,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Rauxeler Weg",
     "district": "Tegel",
     "area": "E 9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -7098,7 +7098,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Regenwalder Weg",
     "district": "Heiligensee",
     "area": "C 4",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -7108,7 +7108,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Reginhardstraße",
     "district": "Reinickendorf",
     "area": "I 9-10",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf"
     ]
@@ -7118,7 +7118,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Reiherallee",
     "district": "Heiligensee",
     "area": "C 6-7",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -7128,7 +7128,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Reimerswalder Steig",
     "district": "Heiligensee",
     "area": "C 5",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -7148,7 +7148,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Remstaler Straße",
     "district": "Frohnau",
     "area": "F 3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -7158,7 +7158,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Reppener Zeile",
     "district": "Borsigwalde",
     "area": "EF 8",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 03",
     "districts": [
       "Borsigwalde"
     ]
@@ -7188,7 +7188,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Ribbeweg",
     "district": "Reinickendorf",
     "area": "I 9",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf"
     ]
@@ -7198,7 +7198,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Rickenweg",
     "district": "Heiligensee",
     "area": "C 5",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -7208,7 +7208,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Riemerstraße",
     "district": "Tegel",
     "area": "E 7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -7218,7 +7218,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Ringstraße",
     "district": "Hermsdorf",
     "area": "E6-F5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -7228,7 +7228,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Ritterlandweg",
     "district": "Reinickendorf",
     "area": "I 10",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf"
     ]
@@ -7238,7 +7238,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Robert-Schuman-Brücke",
     "district": "Tegel",
     "area": "F 11",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -7248,7 +7248,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Robinienweg",
     "district": "Hermsdorf",
     "area": "F 5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -7258,7 +7258,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Rodelbahnpfad",
     "district": "Frohnau",
     "area": "F 3-4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -7279,7 +7279,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Roedernstraße",
     "district": "Hermsdorf",
     "area": "F 4-5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -7289,7 +7289,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Rohrbrunner Straße",
     "district": "Tegel",
     "area": "F 7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -7299,7 +7299,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Rohrweihstraße",
     "district": "Konradshöhe",
     "area": "B 7-8",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 07",
     "districts": [
       "Konradshöhe"
     ]
@@ -7329,7 +7329,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Rosenorter Steig",
     "district": "Heiligensee",
     "area": "C 5",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -7339,7 +7339,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Rosenplüterweg",
     "district": "Frohnau",
     "area": "F 3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -7349,7 +7349,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Rosentreterpromenade",
     "district": "Wittenau",
     "area": "FG 7",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -7359,7 +7359,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Roswithastraße",
     "district": "Hermsdorf",
     "area": "F 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -7369,7 +7369,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Rotbuchenweg",
     "district": "Wittenau",
     "area": "G 8",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -7379,7 +7379,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Rotwildpfad",
     "district": "Heiligensee",
     "area": "C 6",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -7389,7 +7389,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Rue Ambroise Paré",
     "district": "Tegel",
     "area": "F 11",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -7399,7 +7399,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Rue Charles Calmette",
     "district": "Tegel",
     "area": "F 10-11",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -7409,7 +7409,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Rue Diderot",
     "district": "Wittenau",
     "area": "G 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -7419,7 +7419,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Rue Dominique Larrey",
     "district": "Tegel",
     "area": "F 11",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -7429,7 +7429,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Rue Doret",
     "district": "Tegel",
     "area": "F 9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -7439,7 +7439,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Rue du Capitaine Jean Maridor",
     "district": "Tegel",
     "area": "F 10",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -7449,7 +7449,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Rue du Commandant J. Tulasne",
     "district": "Tegel",
     "area": "F 10",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -7459,7 +7459,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Rue du Dr. Roux",
     "district": "Tegel",
     "area": "F 11",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -7469,7 +7469,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Rue Georges Vallerey",
     "district": "Wittenau",
     "area": "G 7",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -7479,7 +7479,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Rue Henri Guillaumet",
     "district": "Tegel",
     "area": "F 9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -7489,7 +7489,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Rue Hyacinthe Vincent",
     "district": "Tegel",
     "area": "F 10-11",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -7499,7 +7499,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Rue Joseph le Brix",
     "district": "Tegel",
     "area": "EF 10",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -7509,7 +7509,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Rue Lamartine",
     "district": "Wittenau",
     "area": "G 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -7519,7 +7519,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Rue Montesquieu",
     "district": "Wittenau",
     "area": "FG 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -7529,7 +7529,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Rue Marin La Meslée",
     "district": "Tegel",
     "area": "F 9-10",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -7539,7 +7539,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Rue Nungesser et Coli",
     "district": "Tegel",
     "area": "F 9-10",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -7549,7 +7549,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Rue Racine",
     "district": "Wittenau",
     "area": "F 6-7",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -7559,7 +7559,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Rue René Laennec",
     "district": "Tegel",
     "area": "F 10",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -7569,7 +7569,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Rüdesheimer Straße",
     "district": "Frohnau",
     "area": "F 3-4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -7579,7 +7579,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Rüdnitzer Zeile",
     "district": "Borsigwalde",
     "area": "F 8",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 03",
     "districts": [
       "Borsigwalde"
     ]
@@ -7599,7 +7599,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Rundhofer Pfad",
     "district": "Heiligensee",
     "area": "B 5-6",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -7609,7 +7609,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Rundlingsteig",
     "district": "Hermsdorf",
     "area": "FG 5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -7629,7 +7629,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Ruppiner Chaussee",
     "district": "Heiligensee / Tegel",
     "area": "C4-E7",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee",
       "Tegel"
@@ -7660,7 +7660,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Sagemühler Steig",
     "district": "Heiligensee",
     "area": "C 4-5",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -7670,7 +7670,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Sagritzer Weg",
     "district": "Märkisches Viertel",
     "area": "GH 7",
-    "groupId": "SOKO 24",
+    "groupId": "SOKO 12",
     "districts": [
       "Märkisches Viertel"
     ]
@@ -7680,7 +7680,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Sallgaster Straße",
     "district": "Märkisches Viertel",
     "area": "H 7",
-    "groupId": "SOKO 24",
+    "groupId": "SOKO 12",
     "districts": [
       "Märkisches Viertel"
     ]
@@ -7690,7 +7690,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Sandgrasweg",
     "district": "Tegel",
     "area": "F 7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -7700,7 +7700,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Sandhauser Straße",
     "district": "Heiligensee / Konradshöhe",
     "area": "B6-C8",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee",
       "Konradshöhe"
@@ -7711,7 +7711,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Sangestraße",
     "district": "Wittenau",
     "area": "F 7",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -7741,7 +7741,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Scharfenberger Straße",
     "district": "Konradshöhe",
     "area": "C 9",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 07",
     "districts": [
       "Konradshöhe"
     ]
@@ -7751,7 +7751,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Scharnweberstraße",
     "district": "Reinickendorf",
     "area": "F9-G10",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf"
     ]
@@ -7761,7 +7761,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Schauflerpfad",
     "district": "Heiligensee",
     "area": "C 6-7",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -7771,7 +7771,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Schellbronner Weg",
     "district": "Lübars",
     "area": "G 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars"
     ]
@@ -7781,7 +7781,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Schickstraße",
     "district": "Tegel",
     "area": "DE 7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -7791,7 +7791,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Schildower Straße",
     "district": "Hermsdorf",
     "area": "F5-G4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -7801,7 +7801,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Schildower Weg",
     "district": "Lübars",
     "area": "HI 4-5",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars"
     ]
@@ -7831,7 +7831,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Schlieperstraße",
     "district": "Tegel",
     "area": "E 8",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -7841,7 +7841,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Schlitzer Straße",
     "district": "Wittenau",
     "area": "GH 6-7",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -7851,7 +7851,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Schloßplatz",
     "district": "Tegel",
     "area": "F 5",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -7861,7 +7861,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Schloßstraße (HD)",
     "district": "Heiligensee",
     "area": "F 5",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -7871,7 +7871,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Schloßstraße (TG)",
     "district": "Tegel",
     "area": "E 7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -7881,7 +7881,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Schluchseestraße",
     "district": "Lübars / Waidmannslust",
     "area": "G 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars",
       "Waidmannslust"
@@ -7892,7 +7892,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Schmiedepfad",
     "district": "Wittenau",
     "area": "G 7",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -7902,7 +7902,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Schmitzweg",
     "district": "Wittenau",
     "area": "G 8",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -7912,7 +7912,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Schneegansweg",
     "district": "Heiligensee",
     "area": "C 6",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -7922,7 +7922,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Schöllkrautstraße",
     "district": "Heiligensee",
     "area": "C 5",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -7932,7 +7932,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Schönbaumer Weg",
     "district": "Heiligensee",
     "area": "B 5",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -7942,7 +7942,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Schönfließer Straße",
     "district": "Frohnau",
     "area": "E3-F2",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -7952,7 +7952,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Schollenhof",
     "district": "Tegel",
     "area": "F 6",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -7962,7 +7962,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Schollenweg",
     "district": "Tegel",
     "area": "F 6",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -7972,7 +7972,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Schonacher Straße",
     "district": "Waidmannslust",
     "area": "G 5-6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Waidmannslust"
     ]
@@ -7982,7 +7982,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Schorfheidestraße",
     "district": "Märkisches Viertel",
     "area": "H 7",
-    "groupId": "SOKO 24",
+    "groupId": "SOKO 12",
     "districts": [
       "Märkisches Viertel"
     ]
@@ -7992,7 +7992,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Schramberger Straße",
     "district": "Hermsdorf",
     "area": "F 5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -8002,7 +8002,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Schubartstraße",
     "district": "Borsigwalde",
     "area": "F 8",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 03",
     "districts": [
       "Borsigwalde"
     ]
@@ -8022,7 +8022,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Schulstraße",
     "district": "Tegel",
     "area": "E 8",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -8032,7 +8032,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Schulzendorfer Straße (HD)",
     "district": "Heiligensee",
     "area": "E6-F5",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -8042,7 +8042,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Schulzendorfer Straße (HS)",
     "district": "Hermsdorf",
     "area": "BC 5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -8052,7 +8052,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Schwabstedter Weg",
     "district": "Heiligensee",
     "area": "BC 6",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -8062,7 +8062,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Schwabstraße",
     "district": "Reinickendorf",
     "area": "I 10",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf"
     ]
@@ -8072,7 +8072,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Schwartzstraße",
     "district": "Reinickendorf",
     "area": "I 10",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf"
     ]
@@ -8082,7 +8082,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Schwarzer Weg",
     "district": "Tegel",
     "area": "C9-E7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -8092,7 +8092,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Schwarzkittelweg",
     "district": "Frohnau",
     "area": "F 2",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -8102,7 +8102,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Schwarzspechtweg",
     "district": "Konradshöhe",
     "area": "BC 8",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 07",
     "districts": [
       "Konradshöhe"
     ]
@@ -8112,7 +8112,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Seebadstraße",
     "district": "Hermsdorf",
     "area": "G 5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -8122,7 +8122,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Seebeckstraße",
     "district": "Reinickendorf",
     "area": "I 9",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf"
     ]
@@ -8132,7 +8132,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Seeblickstraße",
     "district": "Hermsdorf",
     "area": "F 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -8142,7 +8142,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Seestraße",
     "district": "Hermsdorf",
     "area": "G 5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -8152,7 +8152,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Seidelstraße",
     "district": "Reinickendorf / Tegel",
     "area": "F 9",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf",
       "Tegel"
@@ -8163,7 +8163,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Selmer Pfad",
     "district": "Tegel",
     "area": "DE 9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -8173,7 +8173,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Semkensteig",
     "district": "Reinickendorf",
     "area": "I 10",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf"
     ]
@@ -8183,7 +8183,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Semmelweg",
     "district": "Tegel",
     "area": "D 9-10",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -8193,7 +8193,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Sendener Weg",
     "district": "Tegel",
     "area": "DE 9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -8203,7 +8203,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Senftenberger Ring",
     "district": "Märkisches Viertel",
     "area": "H 6-7",
-    "groupId": "SOKO 24",
+    "groupId": "SOKO 12",
     "districts": [
       "Märkisches Viertel"
     ]
@@ -8213,7 +8213,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Senheimer Straße",
     "district": "Frohnau",
     "area": "E 2-3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -8223,7 +8223,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Senziger Zeile",
     "district": "Märkisches Viertel",
     "area": "G 7",
-    "groupId": "SOKO 24",
+    "groupId": "SOKO 12",
     "districts": [
       "Märkisches Viertel"
     ]
@@ -8233,7 +8233,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Seppenrader Weg",
     "district": "Tegel",
     "area": "D 9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -8263,7 +8263,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Sigismundkorso",
     "district": "Frohnau",
     "area": "DE 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -8273,7 +8273,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Silberhammerweg",
     "district": "Heiligensee",
     "area": "B5-C4",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -8283,7 +8283,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Silvesterweg",
     "district": "Hermsdorf",
     "area": "F 4-5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -8303,7 +8303,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Singdrosselsteig",
     "district": "Tegel",
     "area": "DE 11",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -8313,7 +8313,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Sittestraße",
     "district": "Wittenau",
     "area": "G 8",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -8323,7 +8323,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Söllerpfad",
     "district": "Frohnau",
     "area": "E 3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -8343,7 +8343,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Solquellstraße",
     "district": "Hermsdorf",
     "area": "F4-G5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -8353,7 +8353,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Soltauer Straße",
     "district": "Borsigwalde",
     "area": "F 8-9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 03",
     "districts": [
       "Borsigwalde"
     ]
@@ -8363,7 +8363,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Sommerfelder Straße",
     "district": "Borsigwalde",
     "area": "F 8",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 03",
     "districts": [
       "Borsigwalde"
     ]
@@ -8373,7 +8373,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Sommerstraße",
     "district": "Reinickendorf",
     "area": "I 9",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf"
     ]
@@ -8383,7 +8383,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Sonnenwalder Weg",
     "district": "Heiligensee",
     "area": "C 4-5",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -8393,7 +8393,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Spachtelweg",
     "district": "Wittenau",
     "area": "G 7-8",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -8403,7 +8403,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Spechtstraße",
     "district": "Konradshöhe",
     "area": "C 8",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 07",
     "districts": [
       "Konradshöhe"
     ]
@@ -8413,7 +8413,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Speerweg",
     "district": "Frohnau",
     "area": "DE 3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -8423,7 +8423,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Sperberstraße",
     "district": "Konradshöhe",
     "area": "BC 8",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 07",
     "districts": [
       "Konradshöhe"
     ]
@@ -8433,7 +8433,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Spießergasse",
     "district": "Heiligensee",
     "area": "C 6",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -8443,7 +8443,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Spießweg",
     "district": "Wittenau",
     "area": "G 7",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -8453,7 +8453,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Sprintsteig",
     "district": "Lübars",
     "area": "H 5",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars"
     ]
@@ -8463,7 +8463,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Staehleweg",
     "district": "Frohnau",
     "area": "E 1",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -8473,7 +8473,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Staffelder Weg",
     "district": "Tegel",
     "area": "F 7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -8503,7 +8503,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Steilpfad",
     "district": "Tegel",
     "area": "F 7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -8513,7 +8513,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Steinadlerpfad",
     "district": "Konradshöhe",
     "area": "B 8",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 07",
     "districts": [
       "Konradshöhe"
     ]
@@ -8523,7 +8523,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Steinkauzgasse",
     "district": "Konradshöhe",
     "area": "C 8",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 07",
     "districts": [
       "Konradshöhe"
     ]
@@ -8533,7 +8533,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Steinkirchener Straße",
     "district": "Märkisches Viertel",
     "area": "GH 7",
-    "groupId": "SOKO 24",
+    "groupId": "SOKO 12",
     "districts": [
       "Märkisches Viertel"
     ]
@@ -8543,7 +8543,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Sterkrader Straße",
     "district": "Tegel",
     "area": "E 8-9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -8553,7 +8553,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Stillachzeile",
     "district": "Tegel",
     "area": "E 7-8",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -8563,7 +8563,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Stockumer Straße",
     "district": "Tegel",
     "area": "E 9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -8573,7 +8573,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Stößerstraße",
     "district": "Konradshöhe",
     "area": "BC 8",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 07",
     "districts": [
       "Konradshöhe"
     ]
@@ -8583,7 +8583,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Stolpmünder Weg",
     "district": "Heiligensee",
     "area": "C 4",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -8593,7 +8593,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Stolzingstraße",
     "district": "Frohnau",
     "area": "E 3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -8603,7 +8603,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Straße A",
     "district": "Tegel",
     "area": "D 11",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -8613,7 +8613,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Straße C",
     "district": "Tegel",
     "area": "D 11",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -8623,7 +8623,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Straße D",
     "district": "Tegel",
     "area": "D 11",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -8633,7 +8633,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Straße E",
     "district": "Tegel",
     "area": "D 11",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -8643,7 +8643,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Straße F",
     "district": "Tegel",
     "area": "D 11",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -8653,7 +8653,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Straße G",
     "district": "Tegel",
     "area": "D 11",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -8663,7 +8663,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Straße H",
     "district": "Tegel",
     "area": "D 11",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -8673,7 +8673,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Straße J",
     "district": "Tegel",
     "area": "D 11",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -8683,7 +8683,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Straße K",
     "district": "Tegel",
     "area": "D 11",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -8693,7 +8693,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Straße L",
     "district": "Tegel",
     "area": "D 11",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -8703,7 +8703,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Straße M",
     "district": "Tegel",
     "area": "D 11",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -8713,7 +8713,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Straße N",
     "district": "Tegel",
     "area": "D 11",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -8723,7 +8723,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Straße O",
     "district": "Tegel",
     "area": "D 11",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -8733,7 +8733,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Straße P",
     "district": "Tegel",
     "area": "D 11",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -8743,7 +8743,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Straße Q",
     "district": "Tegel",
     "area": "D 11",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -8753,7 +8753,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Straße R",
     "district": "Tegel",
     "area": "C10 - D11",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -8763,7 +8763,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Straße S",
     "district": "Tegel",
     "area": "D 11",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -8773,7 +8773,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Straße T",
     "district": "Tegel",
     "area": "CD 11",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -8783,7 +8783,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Straße U",
     "district": "Tegel",
     "area": "C 11",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -8793,7 +8793,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Straße V",
     "district": "Tegel",
     "area": "C 11",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -8803,7 +8803,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Straße W",
     "district": "Tegel",
     "area": "C 11",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -8813,7 +8813,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Straße X",
     "district": "Tegel",
     "area": "C 11",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -8823,7 +8823,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Straße Y",
     "district": "Tegel",
     "area": "C 11",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -8833,7 +8833,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Straße Z",
     "district": "Tegel",
     "area": "C 11",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -8843,7 +8843,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Straße 12",
     "district": "Borsigwalde",
     "area": "F 8",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 03",
     "districts": [
       "Borsigwalde"
     ]
@@ -8853,7 +8853,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Straße 22",
     "district": "Tegel",
     "area": "F 9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -8863,7 +8863,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Straße 114A",
     "district": "Frohnau",
     "area": "F 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -8873,7 +8873,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Straße 167",
     "district": "Waidmannslust",
     "area": "G 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Waidmannslust"
     ]
@@ -8883,7 +8883,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Straße 199",
     "district": "Waidmannslust",
     "area": "G 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Waidmannslust"
     ]
@@ -8893,7 +8893,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Straße 366",
     "district": "Heiligensee",
     "area": "B 6",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -8903,7 +8903,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Straße 367",
     "district": "Heiligensee",
     "area": "B 6",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -8913,7 +8913,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Straße 368",
     "district": "Heiligensee",
     "area": "B 6",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -8963,7 +8963,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Straupitzer Steig",
     "district": "Märkisches Viertel",
     "area": "H 7",
-    "groupId": "SOKO 24",
+    "groupId": "SOKO 12",
     "districts": [
       "Märkisches Viertel"
     ]
@@ -8973,7 +8973,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Stubbichtweg",
     "district": "Tegel",
     "area": "F 7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -8983,7 +8983,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Süderholmer Steig",
     "district": "Heiligensee",
     "area": "B 6",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -8993,7 +8993,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Taldorfer Weg",
     "district": "Wittenau",
     "area": "G 8",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -9003,7 +9003,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Talsandweg",
     "district": "Tegel",
     "area": "F 7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 04",
     "districts": [
       "Tegel"
     ]
@@ -9013,7 +9013,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Tannenhäherstraße",
     "district": "Konradshöhe",
     "area": "C 8",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 07",
     "districts": [
       "Konradshöhe"
     ]
@@ -9023,7 +9023,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Tannenstraße",
     "district": "Frohnau",
     "area": "E 3-4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -9033,7 +9033,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Techowpromenade",
     "district": "Wittenau",
     "area": "G 7-8",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -9043,7 +9043,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Tegeler Straße",
     "district": "Hermsdorf",
     "area": "F 5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -9053,7 +9053,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Tegelorter Ufer",
     "district": "Konradshöhe",
     "area": "C 9",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 07",
     "districts": [
       "Konradshöhe"
     ]
@@ -9063,7 +9063,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Tegernauer Zeile",
     "district": "Waidmannslust",
     "area": "G 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Waidmannslust"
     ]
@@ -9083,7 +9083,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Teschendorfer Weg",
     "district": "Märkisches Viertel",
     "area": "H 7",
-    "groupId": "SOKO 24",
+    "groupId": "SOKO 12",
     "districts": [
       "Märkisches Viertel"
     ]
@@ -9093,7 +9093,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Tessenowstraße",
     "district": "Wittenau",
     "area": "GH 8",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -9113,7 +9113,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Theresenweg",
     "district": "Konradshöhe",
     "area": "C 9",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 07",
     "districts": [
       "Konradshöhe"
     ]
@@ -9123,7 +9123,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Thiloweg",
     "district": "Wittenau",
     "area": "G 7-8",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -9133,7 +9133,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Thurbrucher Steig",
     "district": "Heiligensee",
     "area": "C 4-5",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -9164,7 +9164,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Tiefenbronner Weg",
     "district": "Waidmannslust",
     "area": "G 5-6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Waidmannslust"
     ]
@@ -9174,7 +9174,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Tiefenseer Straße",
     "district": "Märkisches Viertel",
     "area": "H 7",
-    "groupId": "SOKO 24",
+    "groupId": "SOKO 12",
     "districts": [
       "Märkisches Viertel"
     ]
@@ -9184,7 +9184,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Tietzstraße",
     "district": "Borsigwalde",
     "area": "F 8",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 03",
     "districts": [
       "Borsigwalde"
     ]
@@ -9194,7 +9194,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Tile-Brügge-Weg",
     "district": "Tegel",
     "area": "EF 7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -9204,7 +9204,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Titiseestraße",
     "district": "Waidmannslust",
     "area": "G 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Waidmannslust"
     ]
@@ -9214,7 +9214,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Titusweg",
     "district": "Tegel",
     "area": "E 6-7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -9224,7 +9224,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Todtnauer Zeile",
     "district": "Waidmannslust",
     "area": "G 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Waidmannslust"
     ]
@@ -9234,7 +9234,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Tonstichweg",
     "district": "Lübars",
     "area": "G 5",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars"
     ]
@@ -9244,7 +9244,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Tornower Weg",
     "district": "Märkisches Viertel",
     "area": "H 7",
-    "groupId": "SOKO 24",
+    "groupId": "SOKO 12",
     "districts": [
       "Märkisches Viertel"
     ]
@@ -9254,7 +9254,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Trampenauer Steig",
     "district": "Heiligensee",
     "area": "C 5",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -9264,7 +9264,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Tramper Weg",
     "district": "Märkisches Viertel",
     "area": "H 7",
-    "groupId": "SOKO 24",
+    "groupId": "SOKO 12",
     "districts": [
       "Märkisches Viertel"
     ]
@@ -9274,7 +9274,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Treiberpfad",
     "district": "Waidmannslust",
     "area": "F 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Waidmannslust"
     ]
@@ -9284,7 +9284,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Trepliner Weg",
     "district": "Borsigwalde",
     "area": "EF 8",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 03",
     "districts": [
       "Borsigwalde"
     ]
@@ -9294,7 +9294,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Treskowstraße",
     "district": "Tegel",
     "area": "E 8",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -9304,7 +9304,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Trettachzeile",
     "district": "Borsigwalde",
     "area": "E 8",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 03",
     "districts": [
       "Borsigwalde"
     ]
@@ -9314,7 +9314,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Treuenbrietzener Straße",
     "district": "Märkisches Viertel",
     "area": "H7-I6",
-    "groupId": "SOKO 24",
+    "groupId": "SOKO 12",
     "districts": [
       "Märkisches Viertel"
     ]
@@ -9324,7 +9324,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Treutelstraße",
     "district": "Wittenau",
     "area": "G 8",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -9334,7 +9334,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Triftstraße",
     "district": "Borsigwalde / Wittenau",
     "area": "F8-G7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 03",
     "districts": [
       "Borsigwalde",
       "Wittenau"
@@ -9345,7 +9345,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Triniusstraße",
     "district": "Hermsdorf",
     "area": "F 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -9355,7 +9355,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Turmfalkenstraße",
     "district": "Konradshöhe",
     "area": "C 8",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 07",
     "districts": [
       "Konradshöhe"
     ]
@@ -9365,7 +9365,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Ulmenstraße",
     "district": "Hermsdorf",
     "area": "F 5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -9375,7 +9375,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Ulrichsteiner Weg",
     "district": "Wittenau",
     "area": "GH 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -9385,7 +9385,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Unkeler Pfad",
     "district": "Frohnau",
     "area": "F 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -9395,7 +9395,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Uranusweg",
     "district": "Reinickendorf",
     "area": "F 10",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf"
     ]
@@ -9405,7 +9405,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Utestraße",
     "district": "Frohnau",
     "area": "EF 1",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -9415,7 +9415,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Valentinswerder",
     "district": "Tegel",
     "area": "C 10",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -9425,7 +9425,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Veitstraße",
     "district": "Tegel",
     "area": "E 8",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -9435,7 +9435,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Veltheimstraße",
     "district": "Hermsdorf",
     "area": "FG 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -9455,7 +9455,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Verlängerte Koloniestraße",
     "district": "Reinickendorf",
     "area": "I 9-10",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf"
     ]
@@ -9475,7 +9475,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Vietzer Zeile",
     "district": "Borsigwalde",
     "area": "EF 8",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 03",
     "districts": [
       "Borsigwalde"
     ]
@@ -9485,7 +9485,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Virgiliusstraße",
     "district": "Tegel",
     "area": "E 6",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -9505,7 +9505,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Vor den Toren",
     "district": "Tegel",
     "area": "E 11",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -9515,7 +9515,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Wachsmuthstraße",
     "district": "Hermsdorf",
     "area": "F 5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -9525,7 +9525,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Wachstraße",
     "district": "Tegel",
     "area": "E 7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -9535,7 +9535,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Wahnfriedstraße",
     "district": "Frohnau",
     "area": "E 3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -9545,7 +9545,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Waidmannsluster Damm",
     "district": "Tegel / Waidmannslust",
     "area": "EG 7-6",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel",
       "Waidmannslust"
@@ -9566,7 +9566,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Waldfriedenstraße",
     "district": "Hermsdorf",
     "area": "E 6",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -9576,7 +9576,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Waldhornstraße",
     "district": "Waidmannslust",
     "area": "F 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Waidmannslust"
     ]
@@ -9586,7 +9586,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Waldkauzstraße",
     "district": "Konradshöhe",
     "area": "C 8",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 07",
     "districts": [
       "Konradshöhe"
     ]
@@ -9596,7 +9596,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Waldläuferweg",
     "district": "Lübars",
     "area": "H 5",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars"
     ]
@@ -9616,7 +9616,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Waldseeweg",
     "district": "Hermsdorf",
     "area": "F 4-5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -9626,7 +9626,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Waldshuter Zeile",
     "district": "Waidmannslust",
     "area": "G 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Waidmannslust"
     ]
@@ -9636,7 +9636,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Waldspechtweg",
     "district": "Hermsdorf",
     "area": "E 6",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -9646,7 +9646,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Waldstraße",
     "district": "Reinickendorf",
     "area": "FG 9",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf"
     ]
@@ -9656,7 +9656,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Wallenroder Straße",
     "district": "Wittenau",
     "area": "GH 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -9676,7 +9676,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Walporzheimer Straße",
     "district": "Frohnau",
     "area": "F 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -9686,7 +9686,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Warnauer Pfad",
     "district": "Heiligensee",
     "area": "C 5",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -9696,7 +9696,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Weidenauer Weg",
     "district": "Tegel",
     "area": "E 9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -9706,7 +9706,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Weinbrennerweg",
     "district": "Wittenau",
     "area": "GH 8",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -9716,7 +9716,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Weislingenstraße",
     "district": "Frohnau",
     "area": "F 3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -9726,7 +9726,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Welfenallee",
     "district": "Frohnau",
     "area": "E 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -9736,7 +9736,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Welzower Steig",
     "district": "Märkisches Viertel",
     "area": "H 6-7",
-    "groupId": "SOKO 24",
+    "groupId": "SOKO 12",
     "districts": [
       "Märkisches Viertel"
     ]
@@ -9746,7 +9746,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Wentowsteig",
     "district": "Märkisches Viertel",
     "area": "H 7",
-    "groupId": "SOKO 24",
+    "groupId": "SOKO 12",
     "districts": [
       "Märkisches Viertel"
     ]
@@ -9756,7 +9756,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Werdohler Weg",
     "district": "Tegel",
     "area": "E 9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -9776,7 +9776,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Wernickestraße",
     "district": "Hermsdorf",
     "area": "F 5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -9786,7 +9786,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Wesendorfer Straße",
     "district": "Märkisches Viertel",
     "area": "H 6",
-    "groupId": "SOKO 24",
+    "groupId": "SOKO 12",
     "districts": [
       "Märkisches Viertel"
     ]
@@ -9796,7 +9796,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Wesselburer Weg",
     "district": "Heiligensee",
     "area": "B 6",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -9806,7 +9806,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Westiger Pfad",
     "district": "Tegel",
     "area": "E 9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -9816,7 +9816,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Weststraße",
     "district": "Reinickendorf",
     "area": "F 10",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf"
     ]
@@ -9826,7 +9826,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Wickeder Straße",
     "district": "Tegel",
     "area": "E 9",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -9836,7 +9836,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Wickhofstraße",
     "district": "Hermsdorf",
     "area": "F 5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -9846,7 +9846,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Wildganssteig",
     "district": "Heiligensee",
     "area": "CD 6",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -9856,7 +9856,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Wildkanzelweg",
     "district": "Frohnau",
     "area": "F 2",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -9866,7 +9866,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Wildschwansteig",
     "district": "Heiligensee",
     "area": "C 6",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -9876,7 +9876,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Wildtaubenweg",
     "district": "Konradshöhe",
     "area": "BC 8",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 07",
     "districts": [
       "Konradshöhe"
     ]
@@ -9886,7 +9886,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Wilhelm-Blume-Allee",
     "district": "Tegel",
     "area": "E 7",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -9896,7 +9896,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Wilhelm-Gericke-Straße",
     "district": "Wittenau",
     "area": "G 8",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -9906,7 +9906,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Wilhelmsruher Damm",
     "district": "Märkisches Viertel / Wittenau",
     "area": "GI 7",
-    "groupId": "SOKO 24",
+    "groupId": "SOKO 12",
     "districts": [
       "Märkisches Viertel",
       "Wittenau"
@@ -9917,7 +9917,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Wilhelmstraße",
     "district": "Hermsdorf",
     "area": "F 5",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -9927,7 +9927,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Wilkestraße",
     "district": "Tegel",
     "area": "E 7-8",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 05",
     "districts": [
       "Tegel"
     ]
@@ -9937,7 +9937,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Wilsbergzeile",
     "district": "Frohnau",
     "area": "D 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -9947,7 +9947,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Wiltinger Straße",
     "district": "Frohnau",
     "area": "E 3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -9957,7 +9957,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Windhalmweg",
     "district": "Wittenau",
     "area": "FG 8",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -9967,7 +9967,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Windmühlenweg",
     "district": "Lübars",
     "area": "H 5",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars"
     ]
@@ -9977,7 +9977,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Winterstraße",
     "district": "Reinickendorf",
     "area": "I 9",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf"
     ]
@@ -9997,7 +9997,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Wisentweg",
     "district": "Heiligensee",
     "area": "C 5-6",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -10007,7 +10007,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Wittenauer Straße",
     "district": "Lübars / Wittenau",
     "area": "G6-H5",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars",
       "Wittenau"
@@ -10018,7 +10018,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Wittestraße",
     "district": "Reinickendorf / Tegel",
     "area": "E8-F9",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf",
       "Tegel"
@@ -10029,7 +10029,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Wolfacher Pfad",
     "district": "Waidmannslust",
     "area": "G 5",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Waidmannslust"
     ]
@@ -10039,7 +10039,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Zabel-Krüger-Damm",
     "district": "Lübars / Waidmannslust",
     "area": "G6-H5",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars",
       "Waidmannslust"
@@ -10050,7 +10050,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Zangengasse",
     "district": "Wittenau",
     "area": "G 7",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -10060,7 +10060,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Zanower Weg",
     "district": "Heiligensee",
     "area": "C 4",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -10070,7 +10070,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Zehntwerderweg",
     "district": "Lübars / Waidmannslust",
     "area": "GH 5",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars",
       "Waidmannslust"
@@ -10081,7 +10081,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Zeisgendorfer Weg",
     "district": "Heiligensee",
     "area": "C 5",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -10091,7 +10091,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Zeltinger Platz",
     "district": "Frohnau",
     "area": "E 3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -10101,7 +10101,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Zeltinger Straße",
     "district": "Frohnau",
     "area": "EF 3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -10111,7 +10111,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Zempiner Steig",
     "district": "Heiligensee",
     "area": "B 5",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -10131,7 +10131,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Zerndorfer Weg",
     "district": "Frohnau",
     "area": "EF 3",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]
@@ -10141,7 +10141,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Zerpenschleuser Ring",
     "district": "Märkisches Viertel",
     "area": "I 6",
-    "groupId": "SOKO 24",
+    "groupId": "SOKO 12",
     "districts": [
       "Märkisches Viertel"
     ]
@@ -10151,7 +10151,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Ziegeleiweg",
     "district": "Lübars",
     "area": "G 5",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars"
     ]
@@ -10161,7 +10161,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Ziegenorter Pfad",
     "district": "Heiligensee",
     "area": "C 4",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -10171,7 +10171,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Ziekowstraße",
     "district": "Borsigwalde / Tegel",
     "area": "E7-F8",
-    "groupId": "SOKO 07",
+    "groupId": "SOKO 03",
     "districts": [
       "Borsigwalde",
       "Tegel"
@@ -10182,7 +10182,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Zieselweg",
     "district": "Hermsdorf",
     "area": "E 5-6",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -10192,7 +10192,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Zobeltitzstraße",
     "district": "Reinickendorf",
     "area": "F9-G10",
-    "groupId": "SOKO 01",
+    "groupId": "SOKO 02",
     "districts": [
       "Reinickendorf"
     ]
@@ -10202,7 +10202,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Zühler Weg",
     "district": "Hermsdorf",
     "area": "E 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 09",
     "districts": [
       "Hermsdorf"
     ]
@@ -10212,7 +10212,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Zugdamer Steig",
     "district": "Heiligensee",
     "area": "BC 5",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -10222,7 +10222,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Zum Klötzbecken",
     "district": "Wittenau",
     "area": "GH 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -10232,7 +10232,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Zum Klötzhain",
     "district": "Wittenau",
     "area": "H 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 11",
     "districts": [
       "Wittenau"
     ]
@@ -10242,7 +10242,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Zur Lübarser Bahn",
     "district": "Lübars",
     "area": "H 6",
-    "groupId": "SOKO 12",
+    "groupId": "SOKO 10",
     "districts": [
       "Lübars"
     ]
@@ -10252,7 +10252,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Zur Sonnenhöhe",
     "district": "Heiligensee",
     "area": "C 4",
-    "groupId": "SOKO 21",
+    "groupId": "SOKO 06",
     "districts": [
       "Heiligensee"
     ]
@@ -10262,7 +10262,7 @@ window.REINICKENDORF_STREETS = [
     "name": "Zwergenweg",
     "district": "Frohnau",
     "area": "E 4",
-    "groupId": "SOKO 18",
+    "groupId": "SOKO 08",
     "districts": [
       "Frohnau"
     ]

@@ -576,6 +576,79 @@ tbody tr.selected {
   gap: 12px;
 }
 
+.map-legend {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.legend-item {
+  display: grid;
+  grid-template-columns: 14px 76px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-soft);
+}
+
+.legend-item span {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+}
+
+.legend-item em,
+.legend-item small {
+  color: var(--muted);
+  font-style: normal;
+}
+
+.map-shell {
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #e9e5d8;
+}
+
+.street-map {
+  display: block;
+  width: 100%;
+  min-width: 820px;
+  height: auto;
+}
+
+.street-map .map-background {
+  fill: #e9e5d8;
+}
+
+.street-map .map-tile {
+  opacity: 0.88;
+}
+
+.street-map path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 3;
+  opacity: 0.88;
+  paint-order: stroke;
+  filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.9));
+}
+
+.street-map path:hover {
+  stroke-width: 6;
+  opacity: 1;
+}
+
+.map-attribution {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
 .alert {
   padding: 12px;
   border-radius: 8px;
@@ -617,6 +690,10 @@ tbody tr.selected {
 }
 
 .print-only {
+  display: none;
+}
+
+.print-pages {
   display: none;
 }
 
@@ -680,13 +757,23 @@ tbody tr.selected {
 }
 
 @media print {
+  @page a4-document {
+    size: A4;
+    margin: 14mm;
+  }
+
+  @page a5-card {
+    size: A5;
+    margin: 10mm;
+  }
+
   body {
     background: #fff;
   }
 
   .sidebar,
   .topbar,
-  .view > :not(.print-target),
+  .view > :not(.print-pages),
   .toast {
     display: none !important;
   }
@@ -700,11 +787,85 @@ tbody tr.selected {
     padding: 0;
   }
 
-  .print-target,
+  .print-pages,
   .document-preview,
   .document-sheet {
     display: block;
+  }
+
+  .print-page {
+    page-break-after: always;
+    break-after: page;
+  }
+
+  .print-page.format-a4 {
+    page: a4-document;
+  }
+
+  .print-page.format-a5 {
+    page: a5-card;
+  }
+
+  .print-page:last-child {
+    page-break-after: auto;
+    break-after: auto;
+  }
+
+  .print-page .document-preview {
+    padding: 0;
+    background: #fff;
+  }
+
+  .print-page .document-sheet {
+    min-height: calc(297mm - 28mm);
+    padding: 18mm;
     border: 0;
     box-shadow: none;
+    background: #fff;
+  }
+
+  .print-page.format-a5 .document-sheet {
+    min-height: calc(210mm - 20mm);
+    padding: 10mm;
+  }
+
+  .print-page.format-a5 .doc-letterhead {
+    gap: 10px;
+    padding-bottom: 10px;
+    margin-bottom: 18px;
+    border-bottom-width: 2px;
+  }
+
+  .print-page.format-a5 .doc-letterhead strong {
+    font-size: 15px;
+  }
+
+  .print-page.format-a5 .doc-address,
+  .print-page.format-a5 .doc-meta {
+    font-size: 11px;
+  }
+
+  .print-page.format-a5 .doc-title {
+    margin: 16px 0 10px;
+    font-size: 16px;
+  }
+
+  .print-page.format-a5 .doc-body {
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  .print-page.format-a5 .signature {
+    margin-top: 22px;
+    font-size: 19px;
+  }
+
+  .print-page .doc-letterhead {
+    break-inside: avoid;
+  }
+
+  .print-page .doc-body,
+  .print-page .signature {
+    break-inside: avoid;
   }
 }

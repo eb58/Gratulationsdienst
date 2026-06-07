@@ -54,14 +54,7 @@ const districtOptions = current => {
   const options = reinickendorfDistricts.map(district => [district, district]);
   return current && !reinickendorfDistricts.includes(current) ? [[current, current], ...options] : options;
 };
-const demoStreetAssignments = {
-  "Alt-Lübars": "SOKO 12",
-  "Oraniendamm": "SOKO 12",
-  "Zabel-Krüger-Damm": "SOKO 12",
-  "Scharnweberstraße": "SOKO 07",
-  "Residenzstraße": "SOKO 01",
-  "Hermsdorfer Damm": "SOKO 18"
-};
+const demoStreetAssignments = {};
 const demoStreetDistricts = {
   "Alt-Lübars": "Lübars",
   "Oraniendamm": "Waidmannslust",
@@ -69,6 +62,21 @@ const demoStreetDistricts = {
   "Scharnweberstraße": "Tegel",
   "Residenzstraße": "Reinickendorf",
   "Hermsdorfer Damm": "Hermsdorf"
+};
+const sokoColors = {
+  "SOKO 01": "#2b7a78",
+  "SOKO 02": "#8f6b2f",
+  "SOKO 03": "#c44e52",
+  "SOKO 04": "#4c78a8",
+  "SOKO 05": "#6f4e9b",
+  "SOKO 06": "#59a14f",
+  "SOKO 07": "#b07aa1",
+  "SOKO 08": "#f28e2b",
+  "SOKO 09": "#3f6c51",
+  "SOKO 10": "#e15759",
+  "SOKO 11": "#7f7f7f",
+  "SOKO 12": "#1f77b4",
+  offen: "#9aa0a6"
 };
 const fallbackStreets = [
   { id: "STR-001", name: "Alt-Lübars", district: "Lübars", area: "Nordost", groupId: "SOKO 12" },
@@ -96,32 +104,56 @@ const sampleData = {
     { id: "G-2026-006", salutation: "Herr", firstName: "Joachim", lastName: "Neumann", street: "Zabel-Krüger-Damm", houseNo: "5", postalCode: "13469", district: "Wittenau", birthDate: "1941-07-18", phone: "", email: "", wish: "Besuch erwünscht", notes: "", source: "LABO CSV", updatedAt: "2026-06-06", status: "offen" }
   ],
   sokoGroups: [
-    { id: "SOKO 01", name: "SOKO Reinickendorf", region: "Reinickendorf / Residenzstraße", leaderId: "S-001" },
-    { id: "SOKO 07", name: "SOKO Tegel", region: "Tegel / Borsigwalde", leaderId: "S-003" },
-    { id: "SOKO 12", name: "SOKO Nordost", region: "Lübars / Waidmannslust / Wittenau", leaderId: "S-005" },
-    { id: "SOKO 18", name: "SOKO Hermsdorf", region: "Hermsdorf / Frohnau", leaderId: "S-007" },
-    { id: "SOKO 21", name: "SOKO Havel Nord", region: "Heiligensee / Konradshöhe", leaderId: "S-009" },
-    { id: "SOKO 24", name: "SOKO Märkisches Viertel", region: "Märkisches Viertel", leaderId: "S-011" }
+    { id: "SOKO 01", name: "SOKO Reinickendorf West", region: "Reinickendorf westlich / Schäfersee", leaderId: "S-001" },
+    { id: "SOKO 02", name: "SOKO Reinickendorf Ost", region: "Reinickendorf Ost / Residenzstraße", leaderId: "S-004" },
+    { id: "SOKO 03", name: "SOKO Borsigwalde", region: "Borsigwalde / Tegel Südost", leaderId: "S-007" },
+    { id: "SOKO 04", name: "SOKO Tegel Mitte", region: "Tegel Mitte / Berliner Straße", leaderId: "S-010" },
+    { id: "SOKO 05", name: "SOKO Tegel Nord", region: "Tegel Nord / Flughafenbereich", leaderId: "S-013" },
+    { id: "SOKO 06", name: "SOKO Heiligensee", region: "Heiligensee", leaderId: "S-016" },
+    { id: "SOKO 07", name: "SOKO Konradshöhe", region: "Konradshöhe / Tegelort", leaderId: "S-019" },
+    { id: "SOKO 08", name: "SOKO Frohnau", region: "Frohnau", leaderId: "S-022" },
+    { id: "SOKO 09", name: "SOKO Hermsdorf", region: "Hermsdorf", leaderId: "S-025" },
+    { id: "SOKO 10", name: "SOKO Lübars-Waidmannslust", region: "Lübars / Waidmannslust", leaderId: "S-028" },
+    { id: "SOKO 11", name: "SOKO Wittenau", region: "Wittenau", leaderId: "S-031" },
+    { id: "SOKO 12", name: "SOKO Märkisches Viertel", region: "Märkisches Viertel", leaderId: "S-034" }
   ],
   sokoMembers: [
     { id: "S-001", salutation: "Frau", firstName: "Andrea", lastName: "Schulz", groupId: "SOKO 01", street: "Mittelbruchzeile 12", phone: "030 401000", mobile: "", email: "andrea.schulz@example.test", bank: "DE00 1000 0000 0000 0000 01", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: true },
-    { id: "S-002", salutation: "Herr", firstName: "Peter", lastName: "Klein", groupId: "SOKO 01", street: "Reginhardstraße 5", phone: "", mobile: "0170 000001", email: "peter.klein@example.test", bank: "DE00 1000 0000 0000 0000 02", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: false },
-    { id: "S-003", salutation: "Frau", firstName: "Birgit", lastName: "Meyer", groupId: "SOKO 07", street: "Berliner Straße 31", phone: "030 402000", mobile: "", email: "birgit.meyer@example.test", bank: "DE00 1000 0000 0000 0000 03", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: true },
-    { id: "S-004", salutation: "Herr", firstName: "Ralf", lastName: "Krüger", groupId: "SOKO 07", street: "Buddestraße 9", phone: "", mobile: "0170 000004", email: "ralf.krueger@example.test", bank: "DE00 1000 0000 0000 0000 04", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: false },
-    { id: "S-005", salutation: "Herr", firstName: "Thomas", lastName: "Brandt", groupId: "SOKO 12", street: "Waidmannsluster Damm 8", phone: "", mobile: "0170 000005", email: "thomas.brandt@example.test", bank: "DE00 1000 0000 0000 0000 05", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: true },
-    { id: "S-006", salutation: "Frau", firstName: "Monika", lastName: "Seidel", groupId: "SOKO 12", street: "Alt-Lübars 22", phone: "030 405000", mobile: "", email: "monika.seidel@example.test", bank: "DE00 1000 0000 0000 0000 06", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: false },
-    { id: "S-007", salutation: "Frau", firstName: "Heike", lastName: "Lorenz", groupId: "SOKO 18", street: "Heinsestraße 17", phone: "030 406000", mobile: "", email: "heike.lorenz@example.test", bank: "DE00 1000 0000 0000 0000 07", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: true },
-    { id: "S-008", salutation: "Herr", firstName: "Jürgen", lastName: "Neumann", groupId: "SOKO 18", street: "Ludolfingerplatz 4", phone: "", mobile: "0170 000008", email: "juergen.neumann@example.test", bank: "DE00 1000 0000 0000 0000 08", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: false },
-    { id: "S-009", salutation: "Frau", firstName: "Sabine", lastName: "Koch", groupId: "SOKO 21", street: "Ruppiner Chaussee 112", phone: "030 407000", mobile: "", email: "sabine.koch@example.test", bank: "DE00 1000 0000 0000 0000 09", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: true },
-    { id: "S-010", salutation: "Herr", firstName: "Frank", lastName: "Wagner", groupId: "SOKO 21", street: "Eichelhäherstraße 18", phone: "030 407100", mobile: "", email: "frank.wagner@example.test", bank: "DE00 1000 0000 0000 0000 10", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: false },
-    { id: "S-011", salutation: "Herr", firstName: "Michael", lastName: "Berger", groupId: "SOKO 24", street: "Wilhelmsruher Damm 140", phone: "", mobile: "0170 000011", email: "michael.berger@example.test", bank: "DE00 1000 0000 0000 0000 11", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: true },
-    { id: "S-012", salutation: "Frau", firstName: "Petra", lastName: "Hahn", groupId: "SOKO 24", street: "Senftenberger Ring 82", phone: "030 408000", mobile: "", email: "petra.hahn@example.test", bank: "DE00 1000 0000 0000 0000 12", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: false },
-    { id: "S-013", salutation: "Herr", firstName: "Uwe", lastName: "Scholz", groupId: "SOKO 01", street: "Aroser Allee 67", phone: "", mobile: "0170 000013", email: "uwe.scholz@example.test", bank: "DE00 1000 0000 0000 0000 13", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: false },
-    { id: "S-014", salutation: "Frau", firstName: "Claudia", lastName: "Richter", groupId: "SOKO 07", street: "Scharnweberstraße 84", phone: "030 402100", mobile: "", email: "claudia.richter@example.test", bank: "DE00 1000 0000 0000 0000 14", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: false },
-    { id: "S-015", salutation: "Herr", firstName: "Norbert", lastName: "Peters", groupId: "SOKO 12", street: "Oraniendamm 57", phone: "", mobile: "0170 000015", email: "norbert.peters@example.test", bank: "DE00 1000 0000 0000 0000 15", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: false },
-    { id: "S-016", salutation: "Frau", firstName: "Anja", lastName: "Vogel", groupId: "SOKO 18", street: "Burgfrauenstraße 11", phone: "030 406100", mobile: "", email: "anja.vogel@example.test", bank: "DE00 1000 0000 0000 0000 16", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: false },
-    { id: "S-017", salutation: "Herr", firstName: "Stefan", lastName: "Möller", groupId: "SOKO 21", street: "Sandhauser Straße 69", phone: "", mobile: "0170 000017", email: "stefan.moeller@example.test", bank: "DE00 1000 0000 0000 0000 17", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: false },
-    { id: "S-018", salutation: "Frau", firstName: "Gisela", lastName: "Kranz", groupId: "SOKO 24", street: "Finsterwalder Straße 44", phone: "030 408100", mobile: "", email: "gisela.kranz@example.test", bank: "DE00 1000 0000 0000 0000 18", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: false }
+    { id: "S-002", salutation: "Herr", firstName: "Peter", lastName: "Klein", groupId: "SOKO 01", street: "Reginhardstraße 5", phone: "", mobile: "0170 000002", email: "peter.klein@example.test", bank: "DE00 1000 0000 0000 0000 02", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: false },
+    { id: "S-003", salutation: "Frau", firstName: "Ursula", lastName: "Falk", groupId: "SOKO 01", street: "Aroser Allee 67", phone: "030 401100", mobile: "", email: "ursula.falk@example.test", bank: "DE00 1000 0000 0000 0000 03", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: false },
+    { id: "S-004", salutation: "Herr", firstName: "Uwe", lastName: "Scholz", groupId: "SOKO 02", street: "Residenzstraße 88", phone: "", mobile: "0170 000004", email: "uwe.scholz@example.test", bank: "DE00 1000 0000 0000 0000 04", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: true },
+    { id: "S-005", salutation: "Frau", firstName: "Marion", lastName: "Berndt", groupId: "SOKO 02", street: "Lindauer Allee 41", phone: "030 401200", mobile: "", email: "marion.berndt@example.test", bank: "DE00 1000 0000 0000 0000 05", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: false },
+    { id: "S-006", salutation: "Herr", firstName: "Dieter", lastName: "Krause", groupId: "SOKO 02", street: "Provinzstraße 19", phone: "", mobile: "0170 000006", email: "dieter.krause@example.test", bank: "DE00 1000 0000 0000 0000 06", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: false },
+    { id: "S-007", salutation: "Frau", firstName: "Birgit", lastName: "Meyer", groupId: "SOKO 03", street: "Buddestraße 9", phone: "030 402000", mobile: "", email: "birgit.meyer@example.test", bank: "DE00 1000 0000 0000 0000 07", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: true },
+    { id: "S-008", salutation: "Herr", firstName: "Ralf", lastName: "Krüger", groupId: "SOKO 03", street: "Ernststraße 27", phone: "", mobile: "0170 000008", email: "ralf.krueger@example.test", bank: "DE00 1000 0000 0000 0000 08", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: false },
+    { id: "S-009", salutation: "Frau", firstName: "Claudia", lastName: "Richter", groupId: "SOKO 03", street: "Borsigwalder Weg 12", phone: "030 402100", mobile: "", email: "claudia.richter@example.test", bank: "DE00 1000 0000 0000 0000 09", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: false },
+    { id: "S-010", salutation: "Herr", firstName: "Thomas", lastName: "Brandt", groupId: "SOKO 04", street: "Scharnweberstraße 84", phone: "", mobile: "0170 000010", email: "thomas.brandt@example.test", bank: "DE00 1000 0000 0000 0000 10", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: true },
+    { id: "S-011", salutation: "Frau", firstName: "Heike", lastName: "Sommer", groupId: "SOKO 04", street: "Berliner Straße 31", phone: "030 402200", mobile: "", email: "heike.sommer@example.test", bank: "DE00 1000 0000 0000 0000 11", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: false },
+    { id: "S-012", salutation: "Herr", firstName: "Norbert", lastName: "Peters", groupId: "SOKO 04", street: "Miraustraße 52", phone: "", mobile: "0170 000012", email: "norbert.peters@example.test", bank: "DE00 1000 0000 0000 0000 12", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: false },
+    { id: "S-013", salutation: "Frau", firstName: "Sabine", lastName: "Koch", groupId: "SOKO 05", street: "Ackerplanweg 12", phone: "030 403000", mobile: "", email: "sabine.koch@example.test", bank: "DE00 1000 0000 0000 0000 13", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: true },
+    { id: "S-014", salutation: "Herr", firstName: "Frank", lastName: "Wagner", groupId: "SOKO 05", street: "Karolinenstraße 18", phone: "030 403100", mobile: "", email: "frank.wagner@example.test", bank: "DE00 1000 0000 0000 0000 14", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: false },
+    { id: "S-015", salutation: "Frau", firstName: "Gisela", lastName: "Kranz", groupId: "SOKO 05", street: "Rue du Commandant Jean Tulasne 6", phone: "", mobile: "0170 000015", email: "gisela.kranz@example.test", bank: "DE00 1000 0000 0000 0000 15", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: false },
+    { id: "S-016", salutation: "Herr", firstName: "Stefan", lastName: "Möller", groupId: "SOKO 06", street: "Ruppiner Chaussee 112", phone: "", mobile: "0170 000016", email: "stefan.moeller@example.test", bank: "DE00 1000 0000 0000 0000 16", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: true },
+    { id: "S-017", salutation: "Frau", firstName: "Petra", lastName: "Hahn", groupId: "SOKO 06", street: "Heiligenseestraße 55", phone: "030 404000", mobile: "", email: "petra.hahn@example.test", bank: "DE00 1000 0000 0000 0000 17", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: false },
+    { id: "S-018", salutation: "Herr", firstName: "Michael", lastName: "Berger", groupId: "SOKO 06", street: "Sandhauser Straße 69", phone: "", mobile: "0170 000018", email: "michael.berger@example.test", bank: "DE00 1000 0000 0000 0000 18", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: false },
+    { id: "S-019", salutation: "Frau", firstName: "Monika", lastName: "Seidel", groupId: "SOKO 07", street: "Eichelhäherstraße 18", phone: "030 405000", mobile: "", email: "monika.seidel@example.test", bank: "DE00 1000 0000 0000 0000 19", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: true },
+    { id: "S-020", salutation: "Herr", firstName: "Jürgen", lastName: "Neumann", groupId: "SOKO 07", street: "Sandhauser Straße 22", phone: "", mobile: "0170 000020", email: "juergen.neumann@example.test", bank: "DE00 1000 0000 0000 0000 20", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: false },
+    { id: "S-021", salutation: "Frau", firstName: "Anja", lastName: "Vogel", groupId: "SOKO 07", street: "Elchdamm 7", phone: "030 405100", mobile: "", email: "anja.vogel@example.test", bank: "DE00 1000 0000 0000 0000 21", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: false },
+    { id: "S-022", salutation: "Herr", firstName: "Martin", lastName: "Becker", groupId: "SOKO 08", street: "Frohnauer Straße 21", phone: "", mobile: "0170 000022", email: "martin.becker@example.test", bank: "DE00 1000 0000 0000 0000 22", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: true },
+    { id: "S-023", salutation: "Frau", firstName: "Renate", lastName: "Lange", groupId: "SOKO 08", street: "Ludolfingerplatz 4", phone: "030 406000", mobile: "", email: "renate.lange@example.test", bank: "DE00 1000 0000 0000 0000 23", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: false },
+    { id: "S-024", salutation: "Herr", firstName: "Klaus", lastName: "Fischer", groupId: "SOKO 08", street: "Oranienburger Chaussee 73", phone: "", mobile: "0170 000024", email: "klaus.fischer@example.test", bank: "DE00 1000 0000 0000 0000 24", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: false },
+    { id: "S-025", salutation: "Frau", firstName: "Heike", lastName: "Lorenz", groupId: "SOKO 09", street: "Heinsestraße 17", phone: "030 406100", mobile: "", email: "heike.lorenz@example.test", bank: "DE00 1000 0000 0000 0000 25", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: true },
+    { id: "S-026", salutation: "Herr", firstName: "Manfred", lastName: "Wolf", groupId: "SOKO 09", street: "Hermsdorfer Damm 92", phone: "", mobile: "0170 000026", email: "manfred.wolf@example.test", bank: "DE00 1000 0000 0000 0000 26", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: false },
+    { id: "S-027", salutation: "Frau", firstName: "Elfriede", lastName: "Becker", groupId: "SOKO 09", street: "Burgfrauenstraße 11", phone: "030 406200", mobile: "", email: "elfriede.becker@example.test", bank: "DE00 1000 0000 0000 0000 27", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: false },
+    { id: "S-028", salutation: "Herr", firstName: "Joachim", lastName: "Brandt", groupId: "SOKO 10", street: "Waidmannsluster Damm 8", phone: "", mobile: "0170 000028", email: "joachim.brandt@example.test", bank: "DE00 1000 0000 0000 0000 28", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: true },
+    { id: "S-029", salutation: "Frau", firstName: "Hilde", lastName: "Krüger", groupId: "SOKO 10", street: "Alt-Lübars 22", phone: "030 407000", mobile: "", email: "hilde.krueger@example.test", bank: "DE00 1000 0000 0000 0000 29", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: false },
+    { id: "S-030", salutation: "Herr", firstName: "Werner", lastName: "Schmidt", groupId: "SOKO 10", street: "Oraniendamm 57", phone: "", mobile: "0170 000030", email: "werner.schmidt@example.test", bank: "DE00 1000 0000 0000 0000 30", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: false },
+    { id: "S-031", salutation: "Frau", firstName: "Inge", lastName: "Fischer", groupId: "SOKO 11", street: "Zabel-Krüger-Damm 17", phone: "030 407100", mobile: "", email: "inge.fischer@example.test", bank: "DE00 1000 0000 0000 0000 31", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: true },
+    { id: "S-032", salutation: "Herr", firstName: "Dieter", lastName: "Hoffmann", groupId: "SOKO 11", street: "Eichborndamm 215", phone: "", mobile: "0170 000032", email: "dieter.hoffmann@example.test", bank: "DE00 1000 0000 0000 0000 32", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: false },
+    { id: "S-033", salutation: "Frau", firstName: "Brigitte", lastName: "Neumann", groupId: "SOKO 11", street: "Triftstraße 44", phone: "030 407200", mobile: "", email: "brigitte.neumann@example.test", bank: "DE00 1000 0000 0000 0000 33", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: false },
+    { id: "S-034", salutation: "Herr", firstName: "Michael", lastName: "Berger", groupId: "SOKO 12", street: "Wilhelmsruher Damm 140", phone: "", mobile: "0170 000034", email: "michael.berger@example.test", bank: "DE00 1000 0000 0000 0000 34", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: true },
+    { id: "S-035", salutation: "Frau", firstName: "Petra", lastName: "Hahn", groupId: "SOKO 12", street: "Senftenberger Ring 82", phone: "030 408000", mobile: "", email: "petra.hahn@example.test", bank: "DE00 1000 0000 0000 0000 35", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: false },
+    { id: "S-036", salutation: "Frau", firstName: "Gisela", lastName: "Kranz", groupId: "SOKO 12", street: "Finsterwalder Straße 44", phone: "030 408100", mobile: "", email: "gisela.kranz@example.test", bank: "DE00 1000 0000 0000 0000 36", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: false }
   ],
   streets: buildStreetData(),
   senders: [
@@ -143,19 +175,22 @@ const mergeStreetData = streets => {
     ...street,
     district: normalizeStreetDistrict(existingByName[street.name]?.district) !== "nicht zugeordnet" ? existingByName[street.name].district : street.district,
     area: street.area || existingByName[street.name]?.area || "",
-    groupId: existingByName[street.name]?.groupId || street.groupId || ""
+    groupId: street.groupId || existingByName[street.name]?.groupId || ""
   }));
 };
-const mergeById = (existing, defaults) => [
-  ...defaults.map(item => ({ ...item, ...(existing || []).find(entry => entry.id === item.id) || {} })),
-  ...(existing || []).filter(item => !defaults.some(entry => entry.id === item.id))
+const mergeById = (existing, defaults, keep = () => true) => [
+  ...defaults,
+  ...(existing || []).filter(item => keep(item) && !defaults.some(entry => entry.id === item.id))
 ];
-const normalizeLoadedData = data => ({
-  ...data,
-  sokoGroups: mergeById(data?.sokoGroups, sampleData.sokoGroups),
-  sokoMembers: mergeById(data?.sokoMembers, sampleData.sokoMembers),
-  streets: mergeStreetData(data?.streets)
-});
+const normalizeLoadedData = data => {
+  const activeGroupIds = new Set(sampleData.sokoGroups.map(group => group.id));
+  return {
+    ...data,
+    sokoGroups: mergeById(data?.sokoGroups, sampleData.sokoGroups, group => activeGroupIds.has(group.id)),
+    sokoMembers: mergeById(data?.sokoMembers, sampleData.sokoMembers, member => activeGroupIds.has(member.groupId)),
+    streets: mergeStreetData(data?.streets)
+  };
+};
 
 const loadData = () => {
   try {
@@ -237,6 +272,77 @@ const assignmentPill = citizen => {
   return group ? `<span class="pill">${escapeHtml(group.id)}</span>` : `<span class="pill red">offen</span>`;
 };
 const gridHost = (name, height = 430) => `<div class="ag-grid-host" data-grid="${name}" style="height:${height}px"></div>`;
+const mapData = () => window.REINICKENDORF_STREET_GEOMETRIES || { bbox: [], segments: [] };
+const mapSegments = () => mapData().segments || [];
+const mapSegmentCounts = () => mapSegments().reduce((counts, segment) => ({ ...counts, [segment.groupId]: (counts[segment.groupId] || 0) + 1 }), {});
+const mapNearbyCount = () => mapSegments().filter(segment => segment.matchSource === "nearby").length;
+const lonLatToWorld = ([lon, lat], zoom) => {
+  const scale = 256 * 2 ** zoom;
+  const sinLat = Math.sin(lat * Math.PI / 180);
+  return [
+    (lon + 180) / 360 * scale,
+    (0.5 - Math.log((1 + sinLat) / (1 - sinLat)) / (4 * Math.PI)) * scale
+  ];
+};
+const mapViewport = (bbox, width, height, padding, zoom = 13) => {
+  const [minLon, minLat, maxLon, maxLat] = bbox;
+  const topLeft = lonLatToWorld([minLon, maxLat], zoom);
+  const bottomRight = lonLatToWorld([maxLon, minLat], zoom);
+  const scale = Math.min((width - padding * 2) / (bottomRight[0] - topLeft[0]), (height - padding * 2) / (bottomRight[1] - topLeft[1]));
+  const xOffset = (width - (bottomRight[0] - topLeft[0]) * scale) / 2;
+  const yOffset = (height - (bottomRight[1] - topLeft[1]) * scale) / 2;
+  return { zoom, scale, topLeft, xOffset, yOffset };
+};
+const mapProject = (coord, viewport) => {
+  const world = lonLatToWorld(coord, viewport.zoom);
+  return [
+    viewport.xOffset + (world[0] - viewport.topLeft[0]) * viewport.scale,
+    viewport.yOffset + (world[1] - viewport.topLeft[1]) * viewport.scale
+  ];
+};
+const mapTileImages = (bbox, viewport) => {
+  const [minLon, minLat, maxLon, maxLat] = bbox;
+  const minWorld = lonLatToWorld([minLon, maxLat], viewport.zoom);
+  const maxWorld = lonLatToWorld([maxLon, minLat], viewport.zoom);
+  const minX = Math.floor(minWorld[0] / 256);
+  const maxX = Math.floor(maxWorld[0] / 256);
+  const minY = Math.floor(minWorld[1] / 256);
+  const maxY = Math.floor(maxWorld[1] / 256);
+  return Array.from({ length: maxX - minX + 1 }, (_, xIndex) => minX + xIndex).flatMap(tileX =>
+    Array.from({ length: maxY - minY + 1 }, (_, yIndex) => {
+      const tileY = minY + yIndex;
+      const x = viewport.xOffset + (tileX * 256 - viewport.topLeft[0]) * viewport.scale;
+      const y = viewport.yOffset + (tileY * 256 - viewport.topLeft[1]) * viewport.scale;
+      const size = 256 * viewport.scale;
+      return `<image class="map-tile" href="https://tile.openstreetmap.org/${viewport.zoom}/${tileX}/${tileY}.png" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${size.toFixed(1)}" height="${size.toFixed(1)}"></image>`;
+    })
+  ).join("");
+};
+const mapPath = (coords, project) => coords.map((coord, index) => {
+  const [x, y] = project(coord);
+  return `${index ? "L" : "M"}${x.toFixed(1)} ${y.toFixed(1)}`;
+}).join(" ");
+const streetMapSvg = () => {
+  const data = mapData();
+  const width = 1120;
+  const height = 760;
+  const viewport = mapViewport(data.bbox, width, height, 28);
+  const project = coord => mapProject(coord, viewport);
+  const segments = mapSegments();
+  return data.bbox.length ? `
+    <svg class="street-map" viewBox="0 0 ${width} ${height}" role="img" aria-label="Straßenkarte Reinickendorf nach SOKO-Zuständigkeit">
+      <rect class="map-background" width="${width}" height="${height}" rx="0"></rect>
+      <g class="map-tiles">${mapTileImages(data.bbox, viewport)}</g>
+      <g class="map-streets">
+        ${segments.map(segment => `
+          <path d="${mapPath(segment.coords, project)}" stroke="${escapeHtml(sokoColors[segment.groupId] || sokoColors.offen)}">
+            <title>${escapeHtml(segment.name)} · ${escapeHtml(segment.groupId)}</title>
+          </path>
+        `).join("")}
+      </g>
+    </svg>
+  ` : `<div class="empty-state">Keine Kartendaten geladen</div>`;
+};
 const gridTheme = () => window.agGrid?.themeQuartz?.withParams ? window.agGrid.themeQuartz.withParams({
   accentColor: "#0f5d58",
   borderColor: "#d9d5ca",
@@ -265,6 +371,7 @@ const renderTemplate = (template = selectedTemplate(), citizen = selectedCitizen
   const replace = text => Object.entries(replacements).reduce((result, [key, value]) => result.replaceAll(`{{${key}}}`, value), text);
   return { subject: replace(template.subject), body: replace(template.body), group };
 };
+const printFormatClass = template => normalize(template.format).includes("a5") ? "format-a5" : "format-a4";
 
 const documentPreview = (template = selectedTemplate(), citizen = selectedCitizen(), sender = selectedSender()) => {
   const rendered = renderTemplate(template, citizen, sender);
@@ -290,12 +397,21 @@ const documentPreview = (template = selectedTemplate(), citizen = selectedCitize
     </div>
   `;
 };
+const printDocumentPages = () => {
+  return state.generatedDocs.map(doc => {
+    const citizen = byId(state.data.citizens, doc.citizenId);
+    const template = byId(state.data.templates, doc.templateId) || selectedTemplate();
+    const sender = byId(state.data.senders, doc.senderId) || selectedSender();
+    return citizen ? `<section class="print-page ${printFormatClass(template)}">${documentPreview(template, citizen, sender)}</section>` : "";
+  }).join("");
+};
 
 const viewTitles = {
   dashboard: "Übersicht",
   citizens: "Gratulanten",
   soko: "SOKO-Datenverwaltung",
   regions: "Regionale Zuständigkeit",
+  map: "SOKO-Straßenkarte",
   senders: "Absenderprofile",
   templates: "Vorlagen",
   documents: "Dokumentlauf",
@@ -484,6 +600,29 @@ const views = {
     `;
   },
 
+  map: () => {
+    const counts = mapSegmentCounts();
+    const nearby = mapNearbyCount();
+    return `
+      <div class="panel">
+        <div class="section-head">
+          <div>
+            <h2>Straßenkarte Reinickendorf</h2>
+            <p class="muted">${mapSegments().length} OSM-Straßensegmente farbig einer SOKO zugeordnet, davon ${nearby} räumlich ergänzt.</p>
+          </div>
+          <span class="pill">Stadtplan: OpenStreetMap</span>
+        </div>
+        <div class="map-legend">
+          ${state.data.sokoGroups.map(group => `
+            <div class="legend-item"><span style="background:${escapeHtml(sokoColors[group.id])}"></span><strong>${escapeHtml(group.id)}</strong><em>${escapeHtml(group.region)}</em><small>${counts[group.id] || 0}</small></div>
+          `).join("")}
+        </div>
+        <div class="map-shell">${streetMapSvg()}</div>
+        <p class="map-attribution">Stadtplan und Straßengeometrien © OpenStreetMap-Mitwirkende. Die Hintergrundkacheln werden online von tile.openstreetmap.org geladen; die SOKO-Straßen liegen lokal als farbiges Overlay vor.</p>
+      </div>
+    `;
+  },
+
   senders: () => {
     const sender = selectedSender();
     return `
@@ -600,6 +739,9 @@ const views = {
           <h2>Seriendruck-Vorschau</h2>
           ${documentPreview(template, previewCitizen, sender)}
         </section>
+      </div>
+      <div class="print-pages print-only">
+        ${docs.length ? printDocumentPages() : ""}
       </div>
     `;
   },
@@ -923,6 +1065,8 @@ const actions = {
     state.generatedDocs = filteredCitizens().map(citizen => ({
       id: `DOC-${citizen.id}`,
       citizenId: citizen.id,
+      templateId: template.id,
+      senderId: sender.id,
       recipient: `${citizen.firstName} ${citizen.lastName}`,
       address: `${citizen.street} ${citizen.houseNo}, ${citizen.postalCode} Berlin`,
       groupId: groupForCitizen(citizen)?.id || "",
@@ -934,7 +1078,7 @@ const actions = {
     render();
     toast(`${state.generatedDocs.length} Dokumente erzeugt.`);
   },
-  "print-docs": () => window.print(),
+  "print-docs": () => state.generatedDocs.length ? window.print() : toast("Bitte zuerst einen Dokumentlauf erzeugen."),
   "export-docs": () => {
     const header = ["id", "empfaenger", "adresse", "soko", "vorlage", "format", "absender", "datum"];
     const rows = state.generatedDocs.map(doc => [doc.id, doc.recipient, doc.address, doc.groupId, doc.templateName, doc.format, doc.sender, doc.createdAt]);
