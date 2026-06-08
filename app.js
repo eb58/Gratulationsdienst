@@ -1,6 +1,6 @@
 const STORAGE_KEY = "gratulationsdienst-prototype";
 const API_BASE = "php-api/index.php";
-const APP_VERSION = "20260608-3";
+const APP_VERSION = "20260608-6";
 window.GRATULATIONSDIENST_VERSION = APP_VERSION;
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];

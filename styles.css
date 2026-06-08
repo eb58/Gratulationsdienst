@@ -776,8 +776,6 @@ tbody tr.selected {
 
 .document-preview.format-square .document-sheet {
   position: relative;
-  display: grid;
-  align-items: end;
   width: min(100%, 560px);
   aspect-ratio: 1;
   padding: 0;
@@ -785,41 +783,44 @@ tbody tr.selected {
 }
 
 .square-card-preview-image {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
+  display: block;
   width: 100%;
   height: 100%;
+  aspect-ratio: 1;
   object-fit: fill;
   pointer-events: none;
 }
 
 .square-greeting {
-  position: relative;
+  position: absolute;
+  top: 54%;
+  right: 0;
+  bottom: 18%;
+  left: 0;
   z-index: 1;
   box-sizing: border-box;
-  width: 100%;
-  height: 50%;
-  padding: 30px 42px 62px;
+  overflow: hidden;
+  padding: 20px 46px 0;
 }
 
 .document-preview.square-greeting-card .doc-title {
   max-width: none;
-  margin: 0 0 12px;
+  margin: 0 0 10px;
   color: #173b38;
-  font-size: 22px;
+  font-size: 16px;
   line-height: 1.18;
 }
 
 .document-preview.square-greeting-card .doc-body {
   max-width: none;
-  font-size: 14px;
-  line-height: 1.55;
+  font-size: 10.5px;
+  line-height: 1.32;
 }
 
 .document-preview.square-greeting-card .signature {
-  margin-top: 24px;
+  margin-top: 8px;
   color: var(--teal);
+  font-size: 18px;
 }
 
 .document-preview.format-a5-landscape .doc-letterhead {
@@ -1404,8 +1405,7 @@ tbody tr.selected {
   }
 
   .print-page.format-square .document-sheet {
-    display: grid;
-    align-items: end;
+    position: relative;
     width: 210mm;
     height: 210mm;
     padding: 0;
@@ -1419,30 +1419,36 @@ tbody tr.selected {
   }
 
   .print-page.format-square .square-greeting {
+    position: absolute;
+    top: 113mm;
+    right: 0;
+    bottom: 38mm;
+    left: 0;
     box-sizing: border-box;
-    width: 100%;
-    height: 105mm;
-    padding: 12mm 18mm 16mm;
+    width: auto;
+    height: auto;
+    overflow: hidden;
+    padding: 8mm 18mm 0;
   }
 
   .print-page.format-square .document-preview.square-greeting-card .doc-title {
     max-width: none;
-    margin: 0 0 5mm;
+    margin: 0 0 4mm;
     color: #173b38;
-    font-size: 18px;
+    font-size: 14px;
     line-height: 1.18;
   }
 
   .print-page.format-square .document-preview.square-greeting-card .doc-body {
     max-width: none;
     padding-right: 22mm;
-    font-size: 13px;
-    line-height: 1.48;
+    font-size: 10.5px;
+    line-height: 1.32;
   }
 
   .print-page.format-square .document-preview.square-greeting-card .signature {
-    margin-top: 7mm;
-    font-size: 21px;
+    margin-top: 3mm;
+    font-size: 17px;
   }
 
   .print-page.format-a5-landscape .doc-letterhead,
