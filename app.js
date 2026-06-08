@@ -1271,6 +1271,8 @@ const gridDefinitions = {
     columnDefs: [
       { headerName: "Zeit", field: "time", minWidth: 170 },
       { headerName: "Name", field: "name", minWidth: 190, flex: 1 },
+      { headerName: "Geburtstag", field: "birthDate", width: 130, valueFormatter: params => formatDateDe(params.value) },
+      { headerName: "Alter", field: "age", width: 90 },
       { headerName: "Ergebnis", field: "type", width: 135, cellRenderer: params => params.value === "Fehler" ? badgeCell("Fehler", "red") : params.value === "Dublette" ? badgeCell("Dublette", "gold") : badgeCell("Importiert", "green") },
       { headerName: "Hinweis", field: "message", minWidth: 260, flex: 1 }
     ],
@@ -1501,13 +1503,10 @@ const actions = {
   },
   "print-docs": printCurrentRun,
   "soko-print": () => {
-    const pool = state.lastImportedIds?.size
+    const citizens = state.lastImportedIds?.size
       ? state.data.citizens.filter(c => state.lastImportedIds.has(c.id))
       : activeCitizens();
-    const citizens = pool.filter(c =>
-      state.filters.month === "alle" || birthdayMonth(c.birthDate) === state.filters.month
-    );
-    if (!citizens.length) { toast("Keine Jubilare für den gewählten Monat."); return; }
+    if (!citizens.length) { toast("Keine importierten Jubilare vorhanden."); return; }
     const base = window.location.href.replace(/[^/]*$/, "");
     const imageSrc = `${base}assets/fragebogen-soko.png`;
     const forms = citizens.map((c, i) => renderSokoForm(c, i, imageSrc)).join("");
@@ -1594,6 +1593,8 @@ const actions = {
       const log = {
         time: new Date().toLocaleString("de-DE"),
         name: `${row.firstName || ""} ${row.lastName || ""}`.trim(),
+        birthDate: row.birthDate || "",
+        age: row.birthDate ? calculateAge(row.birthDate) : "",
         type: missing ? "Fehler" : duplicate ? "Dublette" : "Importiert",
         message: missing
           ? "Pflichtfelder fehlen."
