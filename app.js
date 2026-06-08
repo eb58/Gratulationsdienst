@@ -1,6 +1,6 @@
 const STORAGE_KEY = "gratulationsdienst-prototype";
 const API_BASE = "php-api/index.php";
-const APP_VERSION = "20260607-3";
+const APP_VERSION = "20260608-3";
 window.GRATULATIONSDIENST_VERSION = APP_VERSION;
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
@@ -39,6 +39,16 @@ const birthdayInRunYear = birthDate => {
 };
 const calculateAge = birthDate => runYear() - new Date(birthDate).getFullYear();
 const birthdayMonth = birthDate => String(new Date(birthDate).getMonth() + 1).padStart(2, "0");
+const isPrintedCitizen = citizen => citizen.status === "gedruckt";
+const activeCitizens = () => state.data.citizens.filter(citizen => !isPrintedCitizen(citizen));
+const duplicateKey = citizen => normalize([
+  citizen.firstName,
+  citizen.lastName,
+  citizen.street,
+  citizen.houseNo,
+  citizen.postalCode,
+  calculateAge(citizen.birthDate)
+].join("|"));
 const months = [
   ["alle", "Alle Monate"],
   ["01", "Januar"],
@@ -190,9 +200,10 @@ const sampleData = {
     { id: "A-003", role: "Fachbereich", name: "Fachbereich Gratulationsdienst", department: "Amt für Bürgerdienste", address: "Eichborndamm 215, 13437 Berlin", phone: "030 90294-0", email: "gratulation@example.test", logo: "Gratulationsdienst", signature: "Müller", color: "#315a8c" }
   ],
   templates: [
-    { id: "T-001", name: "Geburtstagskarte 85+", occasion: "Geburtstag", format: "A5 Karte", senderId: "A-001", subject: "Herzliche Glückwünsche zum {{alter}}. Geburtstag", body: "Sehr geehrte/r {{anrede}} {{nachname}},\n\nzu Ihrem {{alter}}. Geburtstag gratuliere ich Ihnen im Namen des Bezirksamtes Reinickendorf sehr herzlich.\n\nFür das neue Lebensjahr wünsche ich Ihnen Gesundheit, Zuversicht und viele gute Begegnungen.\n\nMit freundlichen Grüßen", updatedAt: "2026-06-06" },
-    { id: "T-002", name: "Jubiläumsanschreiben Besuch", occasion: "Jubiläum", format: "DIN A4 Brief", senderId: "A-002", subject: "Ihr Jubiläum am {{geburtstag}}", body: "Sehr geehrte/r {{anrede}} {{nachname}},\n\nanlässlich Ihres besonderen Jubiläums möchten wir Ihnen persönlich gratulieren. Die zuständige Sozialkommission {{soko}} wird die weiteren Schritte abstimmen.\n\nMit freundlichen Grüßen", updatedAt: "2026-06-06" },
-    { id: "T-003", name: "Veranstaltungseinladung", occasion: "Einladung", format: "DIN A4 Brief", senderId: "A-003", subject: "Einladung des Bezirksamtes Reinickendorf", body: "Sehr geehrte/r {{anrede}} {{nachname}},\n\nwir laden Sie herzlich zur nächsten Veranstaltung des Bezirksamtes Reinickendorf ein.\n\nWeitere Informationen erhalten Sie mit diesem Schreiben.\n\nMit freundlichen Grüßen", updatedAt: "2026-06-06" }
+    { id: "T-001", name: "Quadratische Reinickendorf-Karte", occasion: "Geburtstag", format: "Quadratkarte 210 mm", senderId: "A-001", subject: "Herzliche Glückwünsche zum {{alter}}. Geburtstag", body: "Sehr geehrte/r {{anrede}} {{nachname}},\n\nzu Ihrem {{alter}}. Geburtstag gratulieren wir Ihnen im Namen des Bezirksamtes Reinickendorf sehr herzlich.\n\nFür das neue Lebensjahr wünschen wir Ihnen Gesundheit, Freude und viele gute Begegnungen.", updatedAt: "2026-06-08" },
+    { id: "T-002", name: "Geburtstagskarte 85+", occasion: "Geburtstag", format: "A5 Karte", senderId: "A-001", subject: "Herzliche Glückwünsche zum {{alter}}. Geburtstag", body: "Sehr geehrte/r {{anrede}} {{nachname}},\n\nzu Ihrem {{alter}}. Geburtstag gratuliere ich Ihnen im Namen des Bezirksamtes Reinickendorf sehr herzlich.\n\nFür das neue Lebensjahr wünsche ich Ihnen Gesundheit, Zuversicht und viele gute Begegnungen.\n\nMit freundlichen Grüßen", updatedAt: "2026-06-06" },
+    { id: "T-003", name: "Jubiläumsanschreiben Besuch", occasion: "Jubiläum", format: "DIN A4 Brief", senderId: "A-002", subject: "Ihr Jubiläum am {{geburtstag}}", body: "Sehr geehrte/r {{anrede}} {{nachname}},\n\nanlässlich Ihres besonderen Jubiläums möchten wir Ihnen persönlich gratulieren. Die zuständige Sozialkommission {{soko}} wird die weiteren Schritte abstimmen.\n\nMit freundlichen Grüßen", updatedAt: "2026-06-06" },
+    { id: "T-004", name: "Veranstaltungseinladung", occasion: "Einladung", format: "DIN A4 Brief", senderId: "A-003", subject: "Einladung des Bezirksamtes Reinickendorf", body: "Sehr geehrte/r {{anrede}} {{nachname}},\n\nwir laden Sie herzlich zur nächsten Veranstaltung des Bezirksamtes Reinickendorf ein.\n\nWeitere Informationen erhalten Sie mit diesem Schreiben.\n\nMit freundlichen Grüßen", updatedAt: "2026-06-06" }
   ],
   importLog: []
 };
@@ -246,7 +257,7 @@ const state = {
   selectedMemberId: "S-001",
   selectedStreetId: "STR-001",
   selectedSenderId: "A-001",
-  selectedTemplateId: "T-001",
+  selectedTemplateId: "T-004",
   importText: "",
   importSplit: 42,
   generatedDocs: [],
@@ -254,21 +265,25 @@ const state = {
   dialog: null
 };
 
-const hasBackendData = data => data && ["citizens", "sokoGroups", "sokoMembers", "streets", "senders", "templates"].some(key => Array.isArray(data[key]) && data[key].length);
+const apiCollections = ["citizens", "sokoGroups", "sokoMembers", "streets", "senders", "templates", "importLog"];
+const persistedCollections = ["citizens", "sokoGroups", "sokoMembers", "streets", "senders", "templates"];
+const hasBackendData = data => data && persistedCollections.some(key => Array.isArray(data[key]) && data[key].length);
 const apiRequest = (path, options = {}) => fetch(`${API_BASE}${path}`, {
   ...options,
   headers: { "Content-Type": "application/json", ...(options.headers || {}) }
 }).then(response => response.ok ? response.json() : Promise.reject(new Error(`API ${response.status}`)));
-const saveBackendData = data => location.protocol === "file:" ? Promise.resolve() : apiRequest("/data", {
+const loadBackendCollection = collection => apiRequest(`/${collection}`).then(items => [collection, items]);
+const saveBackendCollection = (collection, items) => apiRequest(`/${collection}`, {
   method: "PUT",
-  body: JSON.stringify(data)
-}).catch(error => console.warn("Datenbank-Speicherung nicht verfügbar.", error));
-const loadBackendData = () => {
+  body: JSON.stringify(items)
+});
+const loadCollectionData = () => {
   if (location.protocol === "file:") return;
-  apiRequest("/data")
-    .then(data => {
+  Promise.all(apiCollections.map(loadBackendCollection))
+    .then(entries => {
+      const data = Object.fromEntries(entries);
       if (!hasBackendData(data)) {
-        saveBackendData(state.data);
+        saveCollectionData(state.data);
         return;
       }
       state.data = normalizeLoadedData(data);
@@ -278,9 +293,13 @@ const loadBackendData = () => {
     })
     .catch(error => console.warn("Datenbank-Laden nicht verfügbar.", error));
 };
+const saveCollectionData = data => location.protocol === "file:"
+  ? Promise.resolve()
+  : Promise.all(apiCollections.map(collection => saveBackendCollection(collection, data[collection] || [])))
+    .catch(error => console.warn("Datenbank-Speicherung nicht verfügbar.", error));
 const saveData = () => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state.data));
-  saveBackendData(state.data);
+  saveCollectionData(state.data);
 };
 const toast = message => {
   $("#toast").textContent = message;
@@ -291,13 +310,16 @@ const toast = message => {
 const streetAssignment = citizen => state.data.streets.find(street => normalize(street.name) === normalize(citizen.street));
 const groupForCitizen = citizen => byId(state.data.sokoGroups, streetAssignment(citizen)?.groupId);
 const leaderForGroup = group => byId(state.data.sokoMembers, group?.leaderId);
-const selectedCitizen = () => byId(state.data.citizens, state.selectedCitizenId) || state.data.citizens[0];
+const selectedCitizen = () => {
+  const citizen = byId(state.data.citizens, state.selectedCitizenId);
+  return citizen && !isPrintedCitizen(citizen) ? citizen : activeCitizens()[0];
+};
 const selectedTemplate = () => byId(state.data.templates, state.selectedTemplateId) || state.data.templates[0];
 const selectedSender = () => byId(state.data.senders, state.selectedSenderId) || state.data.senders[0];
 const selectedMember = () => byId(state.data.sokoMembers, state.selectedMemberId) || state.data.sokoMembers[0];
 const selectedStreet = () => byId(state.data.streets, state.selectedStreetId) || state.data.streets[0];
 
-const filteredCitizens = () => state.data.citizens.filter(citizen => {
+const filteredCitizens = () => activeCitizens().filter(citizen => {
   const haystack = normalize([citizen.firstName, citizen.lastName, citizen.street, citizen.district, citizen.wish].join(" "));
   const age = calculateAge(citizen.birthDate);
   const group = groupForCitizen(citizen);
@@ -355,7 +377,7 @@ const groupOptions = () => [["alle", "Alle SOKO-Gruppen"], ...state.data.sokoGro
 const senderOptions = () => state.data.senders.map(sender => [sender.id, sender.role]);
 const templateOptions = () => state.data.templates.map(template => [template.id, template.name]);
 const occasionOptions = () => [["Geburtstag", "Geburtstag"], ["Jubiläum", "Jubiläum"], ["Einladung", "Einladung"]];
-const formatOptions = () => [["DIN A4 Brief", "DIN A4 Brief"], ["DIN A4 quer", "DIN A4 quer"], ["A5 Karte", "A5 Karte"], ["A5 Karte quer", "A5 Karte quer"]];
+const formatOptions = () => [["DIN A4 Brief", "DIN A4 Brief"], ["DIN A4 quer", "DIN A4 quer"], ["A5 Karte", "A5 Karte"], ["A5 Karte quer", "A5 Karte quer"], ["Quadratkarte 210 mm", "Quadratkarte 210 mm"]];
 const statusPill = status => `<span class="pill ${status === "offen" ? "gold" : status === "geprüft" ? "green" : ""}">${escapeHtml(status)}</span>`;
 const assignmentPill = citizen => {
   const group = groupForCitizen(citizen);
@@ -477,12 +499,16 @@ const renderTemplate = (template = selectedTemplate(), citizen = selectedCitizen
 };
 const documentFormat = template => {
   const value = normalize(template.format);
-  const size = value.includes("a5") ? "a5" : "a4";
+  const size = value.includes("quadrat") || value.includes("square") ? "square" : value.includes("a5") ? "a5" : "a4";
   const orientation = value.includes("quer") || value.includes("landscape") ? "landscape" : "portrait";
   return { className: `format-${size}${orientation === "landscape" ? "-landscape" : ""}`, orientation, size };
 };
 const printFormatClass = template => documentFormat(template).className;
-const documentDesignClass = template => documentFormat(template).size === "a5" && normalize(template.occasion) === "geburtstag" ? "birthday-card" : "";
+const documentDesignClass = template => {
+  const format = documentFormat(template);
+  if (format.size === "square") return "square-greeting-card";
+  return format.size === "a5" && normalize(template.occasion) === "geburtstag" ? "birthday-card" : "";
+};
 const compactBirthdayCardBody = citizen => [
   `Sehr geehrte/r ${citizen.salutation} ${citizen.lastName},`,
   `zu Ihrem ${calculateAge(citizen.birthDate)}. Geburtstag gratulieren wir sehr herzlich.`,
@@ -490,6 +516,7 @@ const compactBirthdayCardBody = citizen => [
 ].join("\n\n");
 const printPageSettings = format => {
   const value = normalize(format);
+  if (value.includes("quadrat") || value.includes("square")) return { size: "210mm 210mm", className: "format-square" };
   if (value.includes("a5") && (value.includes("quer") || value.includes("landscape"))) return { size: "A5 landscape", className: "format-a5-landscape" };
   if (value.includes("a5")) return { size: "A5 portrait", className: "format-a5" };
   if (value.includes("quer") || value.includes("landscape")) return { size: "A4 landscape", className: "format-a4-landscape" };
@@ -498,8 +525,9 @@ const printPageSettings = format => {
 const preparePrint = () => {
   const firstDoc = state.generatedDocs[0];
   if (!firstDoc) return false;
-  const settings = printPageSettings(firstDoc.format);
-  document.body.classList.remove("print-format-a4", "print-format-a4-landscape", "print-format-a5", "print-format-a5-landscape");
+  const template = byId(state.data.templates, firstDoc.templateId) || selectedTemplate();
+  const settings = printPageSettings(template.format);
+  document.body.classList.remove("print-format-a4", "print-format-a4-landscape", "print-format-a5", "print-format-a5-landscape", "print-format-square");
   document.body.classList.add(`print-${settings.className}`);
   $("#dynamic-print-style")?.remove();
   const style = document.createElement("style");
@@ -508,32 +536,63 @@ const preparePrint = () => {
   document.head.append(style);
   return true;
 };
+const completePrintRun = () => {
+  const printedIds = new Set(state.generatedDocs.map(doc => doc.citizenId));
+  if (!printedIds.size) return;
+  state.data.citizens = state.data.citizens.map(citizen => printedIds.has(citizen.id)
+    ? { ...citizen, status: "gedruckt", printedAt: todayIso(), printedAge: calculateAge(citizen.birthDate), printedYear: runYear(), updatedAt: todayIso() }
+    : citizen);
+  state.generatedDocs = [];
+  state.selectedCitizenId = activeCitizens()[0]?.id || "";
+  saveData();
+  render();
+  toast(`${printedIds.size} Jubilare als gedruckt vermerkt.`);
+};
+const printCurrentRun = () => {
+  if (!preparePrint()) {
+    toast("Bitte zuerst einen Dokumentlauf erzeugen.");
+    return;
+  }
+  window.addEventListener("afterprint", completePrintRun, { once: true });
+  window.print();
+};
 
 const documentPreview = (template = selectedTemplate(), citizen = selectedCitizen(), sender = selectedSender()) => {
+  if (!citizen) return `<div class="empty-state">Kein Jubilar ausgewählt</div>`;
   const format = documentFormat(template);
   const designClass = documentDesignClass(template);
   const isCompactCard = designClass && format.orientation === "landscape";
+  const isSquareGreetingCard = format.size === "square";
   const rendered = renderTemplate(template, citizen, sender);
   const body = isCompactCard ? compactBirthdayCardBody(citizen) : rendered.body;
   return `
     <div class="document-preview ${format.className} ${designClass} ${isCompactCard ? "compact-card" : ""}">
       <div class="document-sheet">
-        ${designClass ? `<div class="card-age-mark" aria-hidden="true">${escapeHtml(calculateAge(citizen.birthDate))}</div>` : ""}
-        <div class="doc-letterhead" style="border-color:${escapeHtml(sender.color)}">
-          <div>
-            <strong style="color:${escapeHtml(sender.color)}">${escapeHtml(sender.logo)}</strong>
-            <div class="doc-address">${escapeHtml(sender.department)}<br>${escapeHtml(sender.address)}</div>
+        ${designClass === "birthday-card" ? `<div class="card-age-mark" aria-hidden="true">${escapeHtml(calculateAge(citizen.birthDate))}</div>` : ""}
+        ${isSquareGreetingCard ? `
+          <img class="square-card-preview-image" src="assets/gratulationskarte-reinickendorf-210.jpg" alt="" aria-hidden="true">
+          <div class="square-greeting">
+            <div class="doc-title">${escapeHtml(rendered.subject)}</div>
+            <div class="doc-body">${escapeHtml(body)}</div>
+            <div class="signature">${escapeHtml(sender.signature)}</div>
           </div>
-          <div class="doc-meta">${escapeHtml(sender.phone)}<br>${escapeHtml(sender.email)}</div>
-        </div>
-        <div class="doc-address">
-          ${escapeHtml(citizen.salutation)} ${escapeHtml(citizen.firstName)} ${escapeHtml(citizen.lastName)}<br>
-          ${escapeHtml(citizen.street)} ${escapeHtml(citizen.houseNo)}<br>
-          ${escapeHtml(citizen.postalCode)} Berlin
-        </div>
-        <div class="doc-title">${escapeHtml(rendered.subject)}</div>
-        <div class="doc-body">${escapeHtml(body)}</div>
-        <div class="signature">${escapeHtml(sender.signature)}</div>
+        ` : `
+          <div class="doc-letterhead" style="border-color:${escapeHtml(sender.color)}">
+            <div>
+              <strong style="color:${escapeHtml(sender.color)}">${escapeHtml(sender.logo)}</strong>
+              <div class="doc-address">${escapeHtml(sender.department)}<br>${escapeHtml(sender.address)}</div>
+            </div>
+            <div class="doc-meta">${escapeHtml(sender.phone)}<br>${escapeHtml(sender.email)}</div>
+          </div>
+          <div class="doc-address">
+            ${escapeHtml(citizen.salutation)} ${escapeHtml(citizen.firstName)} ${escapeHtml(citizen.lastName)}<br>
+            ${escapeHtml(citizen.street)} ${escapeHtml(citizen.houseNo)}<br>
+            ${escapeHtml(citizen.postalCode)} Berlin
+          </div>
+          <div class="doc-title">${escapeHtml(rendered.subject)}</div>
+          <div class="doc-body">${escapeHtml(body)}</div>
+          <div class="signature">${escapeHtml(sender.signature)}</div>
+        `}
       </div>
     </div>
   `;
@@ -543,8 +602,7 @@ const printDocumentPages = () => {
     const citizen = byId(state.data.citizens, doc.citizenId);
     const template = byId(state.data.templates, doc.templateId) || selectedTemplate();
     const sender = byId(state.data.senders, doc.senderId) || selectedSender();
-    const printTemplate = { ...template, format: doc.format || template.format };
-    return citizen ? `<section class="print-page ${printFormatClass(printTemplate)}">${documentPreview(printTemplate, citizen, sender)}</section>` : "";
+    return citizen ? `<section class="print-page ${printFormatClass(template)}">${documentPreview(template, citizen, sender)}</section>` : "";
   }).join("");
 };
 
@@ -588,7 +646,7 @@ const wizardControls = current => {
 
 const views = {
   dashboard: () => {
-    const citizens = state.data.citizens;
+    const citizens = activeCitizens();
     const assigned = citizens.filter(citizen => groupForCitizen(citizen)).length;
     const july = citizens.filter(citizen => birthdayMonth(citizen.birthDate) === "07").length;
     const openStreets = state.data.streets.filter(street => !street.groupId).length;
@@ -646,7 +704,8 @@ const views = {
   },
 
   citizens: () => {
-    const citizen = selectedCitizen();
+    const citizens = filteredCitizens();
+    const citizen = citizens.find(item => item.id === state.selectedCitizenId) || citizens[0];
     return `
       ${wizardControls("citizens")}
       <div class="toolbar">
@@ -657,36 +716,34 @@ const views = {
           ${[["alle", "Alle Alter"], ["85", "85 Jahre"], ["90plus", "90+"], ["100", "100+"]].map(option => `<option value="${option[0]}" ${state.filters.age === option[0] ? "selected" : ""}>${option[1]}</option>`).join("")}
         </select>
       </div>
-      <div class="grid two">
+      <div class="${citizen ? "grid two" : ""}">
         <section class="panel">
           <h2>Datensätze</h2>
           ${gridHost("citizens", 500)}
         </section>
-        <section class="panel">
+        ${citizen ? `<section class="panel">
           <h2>Detailmaske</h2>
-          ${citizen ? `
-            <form id="citizen-form" class="form-grid">
-              <input type="hidden" name="id" value="${escapeHtml(citizen.id)}">
-              ${selectField("salutation", "Anrede", citizen.salutation, [["Frau", "Frau"], ["Herr", "Herr"], ["Divers", "Divers"]])}
-              ${field("firstName", "Vorname", citizen.firstName)}
-              ${field("lastName", "Nachname", citizen.lastName)}
-              ${field("birthDate", "Geburtsdatum", citizen.birthDate, "date")}
-              ${field("street", "Straße", citizen.street)}
-              ${field("houseNo", "Hausnummer", citizen.houseNo)}
-              ${field("postalCode", "PLZ", citizen.postalCode)}
-              ${field("district", "Ortsteil", citizen.district)}
-              ${field("phone", "Telefon", citizen.phone)}
-              ${emailField("email", "E-Mail", citizen.email)}
-              ${selectField("wish", "Wunsch", citizen.wish, [["Besuch erwünscht", "Besuch erwünscht"], ["Nur Karte", "Nur Karte"], ["Veranstaltungseinladung", "Veranstaltungseinladung"], ["offen", "offen"]], "full")}
-              ${textField("notes", "Notiz", citizen.notes, "full")}
-              <div class="field full button-row">
-                <button type="button" class="primary-button" data-action="save-citizen">Speichern</button>
-                <button type="button" class="ghost-button" data-nav="import"><span class="button-arrow">←</span> Import</button>
-                <button type="button" class="ghost-button" data-nav="documents">Dokumentlauf <span class="button-arrow">→</span></button>
-              </div>
-            </form>
-          ` : `<div class="empty-state">Keine Datensätze</div>`}
-        </section>
+          <form id="citizen-form" class="form-grid">
+            <input type="hidden" name="id" value="${escapeHtml(citizen.id)}">
+            ${selectField("salutation", "Anrede", citizen.salutation, [["Frau", "Frau"], ["Herr", "Herr"], ["Divers", "Divers"]])}
+            ${field("firstName", "Vorname", citizen.firstName)}
+            ${field("lastName", "Nachname", citizen.lastName)}
+            ${field("birthDate", "Geburtsdatum", citizen.birthDate, "date")}
+            ${field("street", "Straße", citizen.street)}
+            ${field("houseNo", "Hausnummer", citizen.houseNo)}
+            ${field("postalCode", "PLZ", citizen.postalCode)}
+            ${field("district", "Ortsteil", citizen.district)}
+            ${field("phone", "Telefon", citizen.phone)}
+            ${emailField("email", "E-Mail", citizen.email)}
+            ${selectField("wish", "Wunsch", citizen.wish, [["Besuch erwünscht", "Besuch erwünscht"], ["Nur Karte", "Nur Karte"], ["Veranstaltungseinladung", "Veranstaltungseinladung"], ["offen", "offen"]], "full")}
+            ${textField("notes", "Notiz", citizen.notes, "full")}
+            <div class="field full button-row">
+              <button type="button" class="primary-button" data-action="save-citizen">Speichern</button>
+              <button type="button" class="ghost-button" data-nav="import"><span class="button-arrow">←</span> Import</button>
+              <button type="button" class="ghost-button" data-nav="documents">Dokumentlauf <span class="button-arrow">→</span></button>
+            </div>
+          </form>
+        </section>` : ""}
       </div>
     `;
   },
@@ -758,7 +815,7 @@ const views = {
               </div>
             </form>
             <div class="list" style="margin-top:16px">
-              ${state.data.citizens.filter(citizen => normalize(citizen.street) === normalize(street.name)).map(citizen => `
+              ${activeCitizens().filter(citizen => normalize(citizen.street) === normalize(street.name)).map(citizen => `
                 <div class="list-item">
                   <div><strong>${escapeHtml(citizen.firstName)} ${escapeHtml(citizen.lastName)}</strong><span class="muted">${formatDate(citizen.birthDate)}</span></div>
                   ${assignmentPill(citizen)}
@@ -881,8 +938,7 @@ const views = {
     const previewDoc = docs.find(doc => doc.citizenId === state.selectedCitizenId) || docs[0];
     const checkedCount = documentCitizens().length;
     const previewCitizen = previewDoc ? byId(state.data.citizens, previewDoc.citizenId) : documentCitizens()[0] || selectedCitizen();
-    const previewTemplateBase = previewDoc ? byId(state.data.templates, previewDoc.templateId) || template : template;
-    const previewTemplate = previewDoc ? { ...previewTemplateBase, format: previewDoc.format || previewTemplateBase.format } : previewTemplateBase;
+    const previewTemplate = previewDoc ? byId(state.data.templates, previewDoc.templateId) || template : template;
     const previewSender = previewDoc ? byId(state.data.senders, previewDoc.senderId) || sender : sender;
     return `
       ${wizardControls("documents")}
@@ -890,7 +946,6 @@ const views = {
         <h2>Dokumentlauf konfigurieren</h2>
         <div class="split-controls">
           ${selectField("doc-template", "Vorlage", template.id, templateOptions())}
-          ${selectField("doc-format", "Format", template.format, formatOptions())}
           ${selectField("doc-sender", "Absender", sender.id, senderOptions())}
           ${selectField("doc-month", "Geburtsmonat", state.filters.month, months)}
           ${selectField("doc-group", "SOKO", state.filters.groupId, groupOptions())}
@@ -927,10 +982,13 @@ const views = {
         <div class="form-grid">
           <div class="field full">
             <label for="import-file">Datei</label>
-            <label class="file-picker" for="import-file">
-              <span>CSV-Datei auswählen</span>
+            <div class="file-action-row">
+              <label class="file-picker" for="import-file">
+                <span>Aus CSV laden</span>
               <em>${state.importText ? "Datei geladen oder Daten eingefügt" : "Noch keine Datei geladen"}</em>
-            </label>
+              </label>
+              <button type="button" class="ghost-button" data-action="sample-import">Beispiel laden</button>
+            </div>
             <input id="import-file" class="file-input" type="file" accept=".csv,text/csv">
           </div>
           <div class="field full">
@@ -938,9 +996,7 @@ const views = {
             <textarea id="import-text">${escapeHtml(state.importText)}</textarea>
           </div>
           <div class="field full button-row">
-            <button type="button" class="ghost-button" data-action="sample-import">Beispiel laden</button>
             <button type="button" class="primary-button" data-action="run-import">Import prüfen und übernehmen</button>
-            <button type="button" class="ghost-button" data-nav="citizens">Jubilare prüfen <span class="button-arrow">→</span></button>
           </div>
         </div>
       </section>
@@ -1162,8 +1218,7 @@ const gridDefinitions = {
       { headerName: "Empfänger", field: "recipient", minWidth: 190, flex: 1 },
       { headerName: "Adresse", field: "address", minWidth: 230, flex: 1 },
       { headerName: "SOKO", field: "groupId", width: 125, cellRenderer: params => params.value ? badgeCell(params.value) : badgeCell("offen", "red") },
-      { headerName: "Vorlage", field: "templateName", minWidth: 190 },
-      { headerName: "Format", field: "format", minWidth: 120 }
+      { headerName: "Vorlage", field: "templateName", minWidth: 190 }
     ],
     getRowId: params => params.data.id,
     getRowClass: params => params.data.citizenId === state.selectedCitizenId ? "selected" : "",
@@ -1384,7 +1439,6 @@ const actions = {
   "generate-docs": () => {
     const template = byId(state.data.templates, $("#doc-template").value);
     const sender = byId(state.data.senders, $("#doc-sender").value);
-    const format = $("#doc-format").value || template.format;
     state.selectedTemplateId = template.id;
     state.selectedSenderId = sender.id;
     state.filters.month = $("#doc-month").value;
@@ -1399,34 +1453,35 @@ const actions = {
       address: `${citizen.street} ${citizen.houseNo}, ${citizen.postalCode} Berlin`,
       groupId: groupForCitizen(citizen)?.id || "",
       templateName: template.name,
-      format,
       sender: sender.role,
       createdAt: todayIso()
     }));
     render();
     toast(state.generatedDocs.length ? `${state.generatedDocs.length} Dokumente erzeugt.` : "Keine geprüften Jubilare in der aktuellen Auswahl.");
   },
-  "print-docs": () => preparePrint() ? window.print() : toast("Bitte zuerst einen Dokumentlauf erzeugen."),
+  "print-docs": printCurrentRun,
   "export-docs": () => {
-    const header = ["id", "empfaenger", "adresse", "soko", "vorlage", "format", "absender", "datum"];
-    const rows = state.generatedDocs.map(doc => [doc.id, doc.recipient, doc.address, doc.groupId, doc.templateName, doc.format, doc.sender, doc.createdAt]);
+    const header = ["id", "empfaenger", "adresse", "soko", "vorlage", "absender", "datum"];
+    const rows = state.generatedDocs.map(doc => [doc.id, doc.recipient, doc.address, doc.groupId, doc.templateName, doc.sender, doc.createdAt]);
     downloadText("dokumentlauf.csv", [header, ...rows].map(row => row.map(csvEscape).join(";")).join("\n"), "text/csv;charset=utf-8");
   },
   "sample-import": () => {
+    const batch = String(Date.now()).slice(-6);
+    const door = value => `${value}${batch.slice(-2)}`;
     state.importText = [
       "Anrede;Vorname;Nachname;Straße;Hausnummer;PLZ;Ortsteil;Geburtsdatum;Telefon;E-Mail",
-      "Frau;Gerda;Müller;Ackerplanweg;12;13507;Tegel;1936-07-21;030 4012345;gerda.mueller@example.test",
-      "Herr;Werner;Schmidt;Alt-Lübars;8;13469;Lübars;1931-08-03;;",
-      "Frau;Inge;Fischer;Auguste Viktoria-Allee;44;13403;Reinickendorf;1941-09-14;030 4123456;",
-      "Herr;Dieter;Hoffmann;Hermsdorfer Damm;92;13467;Hermsdorf;1926-10-02;;dieter.hoffmann@example.test",
-      "Frau;Ursula;Krause;Oraniendamm;33;13469;Waidmannslust;1936-11-18;030 4234567;",
-      "Herr;Klaus;Richter;Zabel-Krüger-Damm;17;13469;Wittenau;1941-12-09;;",
-      "Frau;Brigitte;Neumann;Wilhelmsruher Damm;140;13439;Märkisches Viertel;1931-07-30;030 4345678;brigitte.neumann@example.test",
-      "Herr;Heinz;Lehmann;Scharnweberstraße;106;13405;Tegel;1926-08-25;;",
-      "Frau;Elfriede;Becker;Frohnauer Straße;21;13465;Frohnau;1936-09-06;030 4456789;",
-      "Herr;Manfred;Wolf;Heiligenseestraße;55;13503;Heiligensee;1941-10-11;;manfred.wolf@example.test",
-      "Frau;Martha;Seidel;Alt-Lübars;9;13469;Lübars;1931-07-26;;",
-      "Frau;Ursula;Falk;Triftstraße;4;13509;Wittenau;1936-08-19;;ursula.falk@example.test"
+      `Frau;Lena;Bachmann;Ackerplanweg;${door("12")};13507;Tegel;1941-07-21;030 401${batch};lena.bachmann.${batch}@example.test`,
+      `Herr;Martin;Feldmann;Alt-Lübars;${door("8")};13469;Lübars;1936-08-03;;`,
+      `Frau;Clara;Wegner;Auguste Viktoria-Allee;${door("44")};13403;Reinickendorf;1931-09-14;030 412${batch};`,
+      `Herr;Rolf;Henning;Hermsdorfer Damm;${door("92")};13467;Hermsdorf;1926-10-02;;rolf.henning.${batch}@example.test`,
+      `Frau;Marlies;Keller;Oraniendamm;${door("33")};13469;Waidmannslust;1941-11-18;030 423${batch};`,
+      `Herr;Bernd;Sommer;Zabel-Krüger-Damm;${door("17")};13469;Wittenau;1936-12-09;;`,
+      `Frau;Hannelore;Brandes;Wilhelmsruher Damm;${door("140")};13439;Märkisches Viertel;1931-07-30;030 434${batch};hannelore.brandes.${batch}@example.test`,
+      `Herr;Kurt;Seifert;Scharnweberstraße;${door("106")};13405;Tegel;1926-08-25;;`,
+      `Frau;Ilse;Lorenz;Frohnauer Straße;${door("21")};13465;Frohnau;1941-09-06;030 445${batch};`,
+      `Herr;Günter;Pohl;Heiligenseestraße;${door("55")};13503;Heiligensee;1936-10-11;;guenter.pohl.${batch}@example.test`,
+      `Frau;Erika;Mertens;Alt-Lübars;${door("9")};13469;Lübars;1931-07-26;;`,
+      `Frau;Sabine;Reuter;Triftstraße;${door("4")};13509;Wittenau;1941-08-19;;sabine.reuter.${batch}@example.test`
     ].join("\n");
     render();
   },
@@ -1436,24 +1491,46 @@ const actions = {
     const mapped = rows.map(mapImportRow);
     const result = mapped.reduce((acc, row) => {
       const missing = !row.firstName || !row.lastName || !row.birthDate || !row.street;
-      const duplicate = state.data.citizens.some(citizen => normalize(`${citizen.firstName}|${citizen.lastName}|${citizen.birthDate}|${citizen.street}`) === normalize(`${row.firstName}|${row.lastName}|${row.birthDate}|${row.street}`));
+      const key = duplicateKey(row);
+      const duplicate = !missing && acc.keys.has(key);
+      const printedDuplicate = duplicate && acc.printedKeys.has(key);
       const group = state.data.streets.find(street => normalize(street.name) === normalize(row.street))?.groupId;
       const log = {
         time: new Date().toLocaleString("de-DE"),
         name: `${row.firstName || ""} ${row.lastName || ""}`.trim(),
         type: missing ? "Fehler" : duplicate ? "Dublette" : "Importiert",
-        message: missing ? "Pflichtfelder fehlen." : duplicate ? "Bestehender Datensatz bleibt erhalten." : group ? `Zugeordnet zu ${group}.` : "Straße ohne SOKO-Zuordnung."
+        message: missing
+          ? "Pflichtfelder fehlen."
+          : duplicate
+            ? printedDuplicate ? "Bestehender Datensatz wurde bereits gedruckt." : "Bestehender Datensatz bleibt erhalten."
+            : group ? `Zugeordnet zu ${group}.` : "Straße ohne SOKO-Zuordnung."
       };
+      const item = { ...row, id: nextId("G-2026", [...state.data.citizens, ...acc.rows]), source: "CSV Import", updatedAt: todayIso(), status: group ? "importiert" : "offen" };
+      const keys = missing || duplicate ? acc.keys : new Set([...acc.keys, key]);
       return {
-        rows: missing || duplicate ? acc.rows : [...acc.rows, { ...row, id: nextId("G-2026", [...state.data.citizens, ...acc.rows]), source: "CSV Import", updatedAt: todayIso(), status: group ? "importiert" : "offen" }],
-        logs: [...acc.logs, log]
+        rows: missing || duplicate ? acc.rows : [...acc.rows, item],
+        logs: [...acc.logs, log],
+        duplicates: duplicate ? acc.duplicates + 1 : acc.duplicates,
+        printedDuplicates: printedDuplicate ? acc.printedDuplicates + 1 : acc.printedDuplicates,
+        keys
       };
-    }, { rows: [], logs: [] });
+    }, {
+      rows: [],
+      logs: [],
+      duplicates: 0,
+      printedDuplicates: 0,
+      keys: new Set(state.data.citizens.map(duplicateKey)),
+      printedKeys: new Set(state.data.citizens.filter(isPrintedCitizen).map(duplicateKey))
+    });
     state.data.citizens = [...state.data.citizens, ...result.rows];
     state.data.importLog = [...result.logs, ...state.data.importLog].slice(0, 40);
     saveData();
     render();
-    toast(`${result.rows.length} neue Datensätze importiert.`);
+    toast(result.printedDuplicates
+      ? `${result.rows.length} neue Datensätze importiert. ${result.duplicates} Dubletten gefunden, davon ${result.printedDuplicates} bereits gedruckt.`
+      : result.duplicates
+        ? `${result.rows.length} neue Datensätze importiert. ${result.duplicates} Dubletten gefunden.`
+        : `${result.rows.length} neue Datensätze importiert.`);
   },
   "select-generated": event => {
     state.selectedCitizenId = event.target.closest("[data-id]").dataset.id;
@@ -1546,6 +1623,18 @@ document.addEventListener("keydown", event => {
 });
 
 document.addEventListener("change", event => {
+  if (event.target.matches("#doc-template")) {
+    state.selectedTemplateId = event.target.value;
+    state.generatedDocs = [];
+    render();
+    return;
+  }
+  if (event.target.matches("#doc-sender")) {
+    state.selectedSenderId = event.target.value;
+    state.generatedDocs = [];
+    render();
+    return;
+  }
   const file = event.target.matches("#import-file") ? event.target.files[0] : null;
   if (file) {
     file.text().then(text => {
@@ -1557,5 +1646,4 @@ document.addEventListener("change", event => {
 
 state.view = viewTitles[new URLSearchParams(location.search).get("view")] ? new URLSearchParams(location.search).get("view") : state.view;
 render();
-loadBackendData();
-
+loadCollectionData();
