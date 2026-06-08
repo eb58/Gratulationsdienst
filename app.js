@@ -1224,7 +1224,7 @@ const gridDefinitions = {
     rowData: filteredCitizens().map(citizen => ({
       id: citizen.id,
       name: `${citizen.lastName}, ${citizen.firstName}`,
-      birthday: formatDate(citizen.birthDate),
+      birthday: citizen.birthDate,
       age: calculateAge(citizen.birthDate),
       address: `${citizen.street} ${citizen.houseNo}`,
       groupId: groupForCitizen(citizen)?.id || "offen",
@@ -1232,7 +1232,7 @@ const gridDefinitions = {
     })),
     columnDefs: [
       { headerName: "Name", field: "name", minWidth: 130, flex: 1 },
-      { headerName: "Geburtstag", field: "birthday", width: 105 },
+      { headerName: "Geburtstag", field: "birthday", width: 105, valueFormatter: params => formatDate(params.value) },
       { headerName: "Alter", field: "age", width: 70, filter: "agNumberColumnFilter" },
       { headerName: "Adresse", field: "address", minWidth: 125, flex: 1 },
       { headerName: "SOKO", field: "groupId", width: 94, cellRenderer: params => params.value === "offen" ? badgeCell("offen", "red") : badgeCell(params.value) },
@@ -1547,10 +1547,8 @@ const actions = {
   "print-docs": printCurrentRun,
   "toggle-print-background": e => { state.printBackground = e.target.checked; },
   "soko-print": () => {
-    const citizens = state.lastImportedIds?.size
-      ? state.data.citizens.filter(c => state.lastImportedIds.has(c.id))
-      : activeCitizens();
-    if (!citizens.length) { toast("Keine importierten Jubilare vorhanden."); return; }
+    const citizens = activeCitizens();
+    if (!citizens.length) { toast("Keine Jubilare vorhanden."); return; }
     const base = window.location.href.replace(/[^/]*$/, "");
     const imageSrc = `${base}assets/fragebogen-soko.png`;
     const forms = citizens.map((c, i) => renderSokoForm(c, i, imageSrc)).join("");
