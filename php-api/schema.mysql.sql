@@ -58,12 +58,16 @@ CREATE TABLE IF NOT EXISTS gd_citizens (
     source VARCHAR(80) NOT NULL DEFAULT '',
     updated_at_date DATE NULL,
     status VARCHAR(32) NOT NULL DEFAULT '',
+    printed_at_date DATE NULL,
+    printed_age INT NULL,
+    printed_year INT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_gd_citizens_name (last_name, first_name),
     INDEX idx_gd_citizens_birthday (birth_date),
     INDEX idx_gd_citizens_street (street),
-    INDEX idx_gd_citizens_status (status)
+    INDEX idx_gd_citizens_status (status),
+    INDEX idx_gd_citizens_printed (printed_year, printed_age)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS gd_senders (

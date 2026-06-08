@@ -45,6 +45,9 @@ function collectionConfig(string $collection): array
                 'source' => ['source', 'string'],
                 'updatedAt' => ['updated_at_date', 'date'],
                 'status' => ['status', 'string'],
+                'printedAt' => ['printed_at_date', 'date'],
+                'printedAge' => ['printed_age', 'int'],
+                'printedYear' => ['printed_year', 'int'],
             ],
         ],
         'sokoGroups' => [
@@ -202,6 +205,11 @@ function handleCollection(array $db, string $method, string $collection, ?string
         $item ? respond($item) : respond(['error' => 'Datensatz nicht gefunden.'], 404);
     }
 
+    if ($method === 'PUT' && $id === null) {
+        replaceCollection($db, $collection, requireList(readJson(), $collection));
+        respond(readCollection($db, $collection));
+    }
+
     if ($method === 'POST') {
         $item = requireObject(readJson());
         $itemId = itemId($item, $collection, 0);
@@ -339,6 +347,7 @@ function valueForDb(mixed $value, string $type): mixed
     if ($type === 'bool') return $value ? 1 : 0;
     if ($type === 'json') return json_encode($value ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
     if ($type === 'date') return trim((string)($value ?? '')) ?: null;
+    if ($type === 'int') return trim((string)($value ?? '')) === '' ? null : (int)$value;
     return (string)($value ?? '');
 }
 
@@ -346,6 +355,7 @@ function valueFromDb(mixed $value, string $type): mixed
 {
     if ($type === 'bool') return (bool)$value;
     if ($type === 'json') return $value ? json_decode((string)$value, true, flags: JSON_THROW_ON_ERROR) : [];
+    if ($type === 'int') return $value === null ? null : (int)$value;
     return $value ?? '';
 }
 
@@ -519,12 +529,13 @@ function routes(): array
 {
     return [
         'GET /health',
-        'GET /data',
-        'PUT /data',
         'GET /{collection}',
+        'PUT /{collection}',
         'POST /{collection}',
         'GET /{collection}/{id}',
         'PUT /{collection}/{id}',
         'DELETE /{collection}/{id}',
+        'GET /data',
+        'PUT /data',
     ];
 }

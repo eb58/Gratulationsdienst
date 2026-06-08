@@ -16,6 +16,7 @@ Statischer Browser-Prototyp fuer das Hauptmodul aus dem Pflichtenheft.
 - Vorlageneditor mit Platzhaltern
 - Dokumentlauf mit Seriendruck-Vorschau und CSV-Export
 - LABO-CSV-Import mit Dubletten- und Fehlerprotokoll
+- Gedruckte Jubilare werden als `gedruckt` markiert und aus der aktiven Jubilarliste ausgeblendet; Dubletten werden auch gegen bereits gedruckte Jubiläen erkannt
 - AG Grid Community fuer Listen, Sortierung, Filter und Pagination
 
 Die Browseroberflaeche speichert aktuell weiter lokal im `localStorage`. Ueber `Beispieldaten` werden die Daten zurueckgesetzt.
@@ -39,13 +40,14 @@ php -S 127.0.0.1:8080 -t .
 Danach:
 
 - `GET http://127.0.0.1:8080/php-api/index.php/health`
-- `GET http://127.0.0.1:8080/php-api/index.php/data`
-- `PUT http://127.0.0.1:8080/php-api/index.php/data`
-- `GET/POST/PUT/DELETE http://127.0.0.1:8080/php-api/index.php/{collection}`
+- `GET http://127.0.0.1:8080/php-api/index.php/{collection}`
+- `PUT http://127.0.0.1:8080/php-api/index.php/{collection}` ersetzt eine komplette Collection-Liste
+- `POST http://127.0.0.1:8080/php-api/index.php/{collection}` legt einen Datensatz an
+- `GET/PUT/DELETE http://127.0.0.1:8080/php-api/index.php/{collection}/{id}`
 
 Unterstuetzte Collections: `citizens`, `sokoGroups`, `sokoMembers`, `streets`, `senders`, `templates`, `importLog`.
 
-Die API liefert fuer das Frontend weiter ein gemeinsames `/data`-Objekt, speichert intern aber nicht mehr in einer JSON-Sammeltabelle. Angelegt werden:
+Das Frontend nutzt die Collection-Endpunkte direkt. `/data` bleibt als Kompatibilitaetsroute fuer Sammel-Import/-Export verfuegbar, speichert intern aber nicht mehr in einer JSON-Sammeltabelle. Angelegt werden:
 
 - `gd_citizens`
 - `gd_soko_groups`
