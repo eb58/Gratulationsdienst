@@ -263,6 +263,7 @@ const state = {
   importSplit: 42,
   citizenSplit: 50,
   generatedDocs: [],
+  printBackground: true,
   gridApis: {},
   dialog: null
 };
@@ -681,15 +682,17 @@ const documentPreview = (template = selectedTemplate(), citizen = selectedCitize
 const printSquareCardPage = (template, citizen, sender) => {
   const rendered = renderTemplate(template, citizen, sender);
   const base = window.location.href.replace(/[^/]*$/, "");
+  const bgImg = state.printBackground
+    ? `<img src="${base}assets/gratulationskarte-reinickendorf-210.jpg" style="position:absolute;top:0;left:0;width:210mm;height:210mm;display:block" alt="">`
+    : "";
   return `
   <section class="print-page format-square">
     <div style="position:relative;width:210mm;height:210mm;overflow:hidden;background:#fff">
-      <img src="${base}assets/gratulationskarte-reinickendorf-210.jpg"
-           style="position:absolute;top:0;left:0;width:210mm;height:210mm;display:block" alt="">
+      ${bgImg}
       <div style="position:absolute;top:113mm;right:0;bottom:38mm;left:0;box-sizing:border-box;padding:8mm 18mm 0;overflow:hidden">
-        <div style="font-weight:bold;font-size:14pt;margin:0 0 3mm;color:#173b38;font-family:Arial,sans-serif">${escapeHtml(rendered.subject)}</div>
-        <div style="font-size:9.5pt;line-height:1.32;font-family:Arial,sans-serif">${escapeHtml(rendered.body)}</div>
-        <div style="margin-top:3mm;font-size:16pt;color:#1a7a6a;font-family:Georgia,serif">${escapeHtml(sender.signature)}</div>
+        <div style="font-weight:800;font-size:12pt;line-height:1.18;margin:0 0 3mm;color:#173b38;font-family:Arial,sans-serif">${escapeHtml(rendered.subject)}</div>
+        <div style="font-size:9.5pt;line-height:1.32;white-space:pre-wrap;font-family:Arial,sans-serif">${escapeHtml(rendered.body)}</div>
+        <div style="margin-top:3mm;font-size:14pt;color:#0f5d58;font-family:'Segoe Script','Brush Script MT',cursive">${escapeHtml(sender.signature)}</div>
       </div>
     </div>
   </section>`;
@@ -1035,6 +1038,10 @@ const views = {
         <div class="button-row" style="margin-top:14px">
           <button type="button" class="ghost-button" data-action="print-docs">Drucken</button>
           <button type="button" class="ghost-button" data-action="export-docs">PDF/XLSX/XML Export</button>
+          <label class="toggle-label" style="margin-left:8px">
+            <input type="checkbox" data-action="toggle-print-background" ${state.printBackground ? "checked" : ""}>
+            Hintergrundbild drucken
+          </label>
         </div>
         <p class="muted" style="margin:12px 0 0">Es werden nur geprüfte Jubilare berücksichtigt. Aktuelle Auswahl: ${checkedCount}</p>
       </div>
@@ -1538,6 +1545,7 @@ const actions = {
     toast(state.generatedDocs.length ? `${state.generatedDocs.length} Dokumente erzeugt.` : "Keine geprüften Jubilare in der aktuellen Auswahl.");
   },
   "print-docs": printCurrentRun,
+  "toggle-print-background": e => { state.printBackground = e.target.checked; },
   "soko-print": () => {
     const citizens = state.lastImportedIds?.size
       ? state.data.citizens.filter(c => state.lastImportedIds.has(c.id))
@@ -1763,6 +1771,10 @@ document.addEventListener("keydown", event => {
 });
 
 document.addEventListener("change", event => {
+  if (event.target.dataset.action) {
+    actions[event.target.dataset.action]?.(event);
+    return;
+  }
   if (event.target.matches("#doc-template, #doc-sender, #doc-month, #doc-group")) {
     actions["generate-docs"]();
     return;
