@@ -573,12 +573,28 @@ const completePrintRun = () => {
   toast(`${printedIds.size} Jubilare als gedruckt vermerkt.`);
 };
 const printCurrentRun = () => {
-  if (!preparePrint()) {
+  if (!state.generatedDocs.length) {
     toast("Bitte zuerst einen Dokumentlauf erzeugen.");
     return;
   }
-  window.addEventListener("afterprint", completePrintRun, { once: true });
-  window.print();
+  const firstDoc = state.generatedDocs[0];
+  const template = byId(state.data.templates, firstDoc.templateId) || selectedTemplate();
+  const settings = printPageSettings(template.format);
+  const base = window.location.href.replace(/[^/]*$/, "");
+  const pages = printDocumentPages();
+  const w = window.open("", "_blank", "width=900,height=700");
+  w.document.write(`<!doctype html><html lang="de"><head>
+    <meta charset="utf-8">
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body { background: #888; }
+      @page { size: ${settings.size}; margin: 0; }
+      @media print { body { background: none; } }
+    </style>
+  </head><body>${pages}</body></html>`);
+  w.document.close();
+  w.addEventListener("afterprint", () => { completePrintRun(); w.close(); }, { once: true });
+  w.onload = () => setTimeout(() => { w.focus(); w.print(); }, 300);
 };
 
 const formatDateDe = iso => {
@@ -662,12 +678,32 @@ const documentPreview = (template = selectedTemplate(), citizen = selectedCitize
     </div>
   `;
 };
+const printSquareCardPage = (template, citizen, sender) => {
+  const rendered = renderTemplate(template, citizen, sender);
+  const base = window.location.href.replace(/[^/]*$/, "");
+  return `
+  <section class="print-page format-square">
+    <div style="position:relative;width:210mm;height:210mm;overflow:hidden;background:#fff">
+      <img src="${base}assets/gratulationskarte-reinickendorf-210.jpg"
+           style="position:absolute;top:0;left:0;width:210mm;height:210mm;display:block" alt="">
+      <div style="position:absolute;top:113mm;right:0;bottom:38mm;left:0;box-sizing:border-box;padding:8mm 18mm 0;overflow:hidden">
+        <div style="font-weight:bold;font-size:14pt;margin:0 0 3mm;color:#173b38;font-family:Arial,sans-serif">${escapeHtml(rendered.subject)}</div>
+        <div style="font-size:9.5pt;line-height:1.32;font-family:Arial,sans-serif">${escapeHtml(rendered.body)}</div>
+        <div style="margin-top:3mm;font-size:16pt;color:#1a7a6a;font-family:Georgia,serif">${escapeHtml(sender.signature)}</div>
+      </div>
+    </div>
+  </section>`;
+};
+
 const printDocumentPages = () => {
   return state.generatedDocs.map(doc => {
     const citizen = byId(state.data.citizens, doc.citizenId);
     const template = byId(state.data.templates, doc.templateId) || selectedTemplate();
     const sender = byId(state.data.senders, doc.senderId) || selectedSender();
-    return citizen ? `<section class="print-page ${printFormatClass(template)}">${documentPreview(template, citizen, sender)}</section>` : "";
+    if (!citizen) return "";
+    const format = documentFormat(template);
+    if (format.size === "square") return printSquareCardPage(template, citizen, sender);
+    return `<section class="print-page ${printFormatClass(template)}">${documentPreview(template, citizen, sender)}</section>`;
   }).join("");
 };
 

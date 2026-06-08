@@ -1447,11 +1447,18 @@ tbody tr.selected {
     padding: 0;
     page-break-inside: avoid;
     break-inside: avoid;
-    background: #fff !important;
+    background: none;
+    overflow: hidden;
   }
 
   .print-page.format-square .square-card-preview-image {
-    display: none !important;
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 210mm;
+    height: 210mm;
+    z-index: 0;
   }
 
   .print-page.format-square .square-greeting {
@@ -1460,6 +1467,7 @@ tbody tr.selected {
     right: 0;
     bottom: 38mm;
     left: 0;
+    z-index: 1;
     box-sizing: border-box;
     width: auto;
     height: auto;
