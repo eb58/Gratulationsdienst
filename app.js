@@ -260,6 +260,7 @@ const state = {
   selectedTemplateId: "T-004",
   importText: "",
   importSplit: 42,
+  citizenSplit: 50,
   generatedDocs: [],
   gridApis: {},
   dialog: null
@@ -344,7 +345,7 @@ const emailField = (name, label, value, extra = "") => {
     <div class="field ${extra}">
       <label for="${name}">${label}</label>
       <input id="${name}" name="${name}" class="${valid ? "" : "invalid"}" type="email" value="${escapeHtml(value)}" placeholder="name@example.de" autocomplete="email">
-      <small class="field-hint ${valid ? "" : "error"}">${String(value ?? "").trim() ? valid ? "E-Mail gültig" : "E-Mail-Adresse ist ungültig" : "Optional, mit E-Mail-Prüfung"}</small>
+      <small class="field-hint ${valid ? "" : "error"}">${String(value ?? "").trim() ? valid ? "E-Mail gültig" : "E-Mail-Adresse ist ungültig" : ""}</small>
     </div>
   `;
 };
@@ -371,6 +372,29 @@ const textField = (name, label, value, extra = "") => `
   <div class="field ${extra}">
     <label for="${name}">${label}</label>
     <textarea id="${name}" name="${name}">${escapeHtml(value)}</textarea>
+  </div>
+`;
+const checkField = (name, label, value, extra = "") => `
+  <div class="field ${extra}">
+    <label>${label}</label>
+    <label class="toggle-label">
+      <input type="hidden" name="${name}" value="false">
+      <input id="${name}" type="checkbox" name="${name}" value="true" class="toggle" ${value === "true" || value === true ? "checked" : ""}>
+      ${label}
+    </label>
+  </div>
+`;
+const radioField = (name, label, value, options, extra = "") => `
+  <div class="field ${extra}">
+    <label>${escapeHtml(label)}</label>
+    <div class="radio-group" role="group" aria-label="${escapeHtml(label)}">
+      ${options.map(([optValue, optLabel]) => `
+        <label class="radio-option">
+          <input type="radio" name="${name}" value="${escapeHtml(optValue)}" ${String(value ?? "") === String(optValue) ? "checked" : ""}>
+          ${escapeHtml(optLabel)}
+        </label>
+      `).join("")}
+    </div>
   </div>
 `;
 const groupOptions = () => [["alle", "Alle SOKO-Gruppen"], ...state.data.sokoGroups.map(group => [group.id, group.id])];
@@ -716,12 +740,13 @@ const views = {
           ${[["alle", "Alle Alter"], ["85", "85 Jahre"], ["90plus", "90+"], ["100", "100+"]].map(option => `<option value="${option[0]}" ${state.filters.age === option[0] ? "selected" : ""}>${option[1]}</option>`).join("")}
         </select>
       </div>
-      <div class="${citizen ? "grid two" : ""}">
+      <div class="${citizen ? "citizen-split" : ""}" ${citizen ? `style="--citizen-left:${state.citizenSplit}%"` : ""}>
         <section class="panel">
           <h2>Datensätze</h2>
           ${gridHost("citizens", 500)}
         </section>
-        ${citizen ? `<section class="panel">
+        ${citizen ? `<div class="vertical-splitter" data-splitter="citizen" role="separator" aria-orientation="vertical" aria-label="Bereiche aufteilen" aria-valuemin="20" aria-valuemax="80" aria-valuenow="${state.citizenSplit}" tabindex="0"></div>
+        <section class="panel">
           <h2>Detailmaske</h2>
           <form id="citizen-form" class="form-grid">
             <input type="hidden" name="id" value="${escapeHtml(citizen.id)}">
@@ -735,7 +760,15 @@ const views = {
             ${field("district", "Ortsteil", citizen.district)}
             ${field("phone", "Telefon", citizen.phone)}
             ${emailField("email", "E-Mail", citizen.email)}
-            ${selectField("wish", "Wunsch", citizen.wish, [["Besuch erwünscht", "Besuch erwünscht"], ["Nur Karte", "Nur Karte"], ["Veranstaltungseinladung", "Veranstaltungseinladung"], ["offen", "offen"]], "full")}
+            ${selectField("wish", "Wunsch", citizen.wish, [["Besuch erwünscht", "Besuch erwünscht"], ["per Post", "per Post"], ["keine", "keine"], ["offen", "offen"]], "full")}
+            ${radioField("weddingAnniversary", "Es steht bevor die", citizen.weddingAnniversary ?? "", [
+              ["", "—"],
+              ["Goldene Hochzeit", "Goldene Hochzeit"],
+              ["Diamantene Hochzeit", "Diamantene Hochzeit"],
+              ["Eiserne Hochzeit", "Eiserne Hochzeit"],
+              ["Gnadenhochzeit", "Gnadenhochzeit"]
+            ], "full")}
+            ${checkField("pressPublication", "Veröffentlichung in der lokalen Presse", citizen.pressPublication, "full")}
             ${textField("notes", "Notiz", citizen.notes, "full")}
             <div class="field full button-row">
               <button type="button" class="primary-button" data-action="save-citizen">Speichern</button>
@@ -991,16 +1024,9 @@ const views = {
             </div>
             <input id="import-file" class="file-input" type="file" accept=".csv,text/csv">
           </div>
-          <div class="field full">
-            <label for="import-text">CSV-Daten</label>
-            <textarea id="import-text">${escapeHtml(state.importText)}</textarea>
-          </div>
-          <div class="field full button-row">
-            <button type="button" class="primary-button" data-action="run-import">Import prüfen und übernehmen</button>
-          </div>
         </div>
       </section>
-      <div class="vertical-splitter" data-import-splitter role="separator" aria-orientation="vertical" aria-label="Bereiche aufteilen" aria-valuemin="30" aria-valuemax="70" aria-valuenow="${state.importSplit}" tabindex="0"></div>
+      <div class="vertical-splitter" data-splitter="import" role="separator" aria-orientation="vertical" aria-label="Bereiche aufteilen" aria-valuemin="30" aria-valuemax="70" aria-valuenow="${state.importSplit}" tabindex="0"></div>
       <section class="panel">
         <h2>Import-Protokoll</h2>
         ${state.data.importLog.length ? gridHost("importLog", 500) : `<div class="empty-state">Noch kein Import-Protokoll</div>`}
@@ -1483,10 +1509,13 @@ const actions = {
       `Frau;Erika;Mertens;Alt-Lübars;${door("9")};13469;Lübars;1931-07-26;;`,
       `Frau;Sabine;Reuter;Triftstraße;${door("4")};13509;Wittenau;1941-08-19;;sabine.reuter.${batch}@example.test`
     ].join("\n");
-    render();
+    actions["run-import"]();
   },
   "run-import": () => {
-    state.importText = $("#import-text").value;
+    if (!state.importText) {
+      toast("Bitte zuerst eine CSV-Datei laden.");
+      return;
+    }
     const rows = parseCsv(state.importText);
     const mapped = rows.map(mapImportRow);
     const result = mapped.reduce((acc, row) => {
@@ -1587,8 +1616,10 @@ document.addEventListener("input", event => {
 });
 
 document.addEventListener("pointerdown", event => {
-  const splitter = event.target.closest("[data-import-splitter]");
-  const split = splitter?.closest(".import-split");
+  const splitter = event.target.closest("[data-splitter]");
+  if (!splitter) return;
+  const key = splitter.dataset.splitter;
+  const split = splitter.closest(`.${key}-split`);
   if (!split) return;
   event.preventDefault();
   splitter.setPointerCapture(event.pointerId);
@@ -1596,9 +1627,9 @@ document.addEventListener("pointerdown", event => {
   const move = moveEvent => {
     const rect = split.getBoundingClientRect();
     const raw = ((moveEvent.clientX - rect.left) / rect.width) * 100;
-    const next = Math.max(30, Math.min(70, Math.round(raw)));
-    state.importSplit = next;
-    split.style.setProperty("--import-left", `${next}%`);
+    const next = Math.max(20, Math.min(80, Math.round(raw)));
+    state[`${key}Split`] = next;
+    split.style.setProperty(`--${key}-left`, `${next}%`);
   };
   const done = () => {
     splitter.releasePointerCapture(event.pointerId);
@@ -1611,14 +1642,16 @@ document.addEventListener("pointerdown", event => {
 });
 
 document.addEventListener("keydown", event => {
-  const splitter = event.target.closest("[data-import-splitter]");
-  const split = splitter?.closest(".import-split");
+  const splitter = event.target.closest("[data-splitter]");
+  if (!splitter) return;
+  const key = splitter.dataset.splitter;
+  const split = splitter.closest(`.${key}-split`);
   const delta = event.key === "ArrowLeft" ? -4 : event.key === "ArrowRight" ? 4 : 0;
   if (!split || !delta) return;
   event.preventDefault();
-  const next = Math.max(30, Math.min(70, state.importSplit + delta));
-  state.importSplit = next;
-  split.style.setProperty("--import-left", `${next}%`);
+  const next = Math.max(20, Math.min(80, state[`${key}Split`] + delta));
+  state[`${key}Split`] = next;
+  split.style.setProperty(`--${key}-left`, `${next}%`);
   splitter.setAttribute("aria-valuenow", String(next));
 });
 
@@ -1639,7 +1672,7 @@ document.addEventListener("change", event => {
   if (file) {
     file.text().then(text => {
       state.importText = text;
-      render();
+      actions["run-import"]();
     });
   }
 });

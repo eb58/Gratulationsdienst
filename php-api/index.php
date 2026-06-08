@@ -48,6 +48,8 @@ function collectionConfig(string $collection): array
                 'printedAt' => ['printed_at_date', 'date'],
                 'printedAge' => ['printed_age', 'int'],
                 'printedYear' => ['printed_year', 'int'],
+                'pressPublication' => ['press_publication', 'bool'],
+                'weddingAnniversary' => ['wedding_anniversary', 'string'],
             ],
         ],
         'sokoGroups' => [

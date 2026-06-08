@@ -340,6 +340,12 @@ h3 {
   align-items: stretch;
 }
 
+.citizen-split {
+  display: grid;
+  grid-template-columns: minmax(280px, var(--citizen-left, 50%)) 12px minmax(280px, 1fr);
+  align-items: start;
+}
+
 .vertical-splitter {
   position: relative;
   cursor: col-resize;
@@ -452,6 +458,86 @@ textarea {
 input.invalid {
   border-color: var(--red);
   background: var(--red-soft);
+}
+
+.toggle-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--ink);
+  user-select: none;
+}
+
+input[type="checkbox"].toggle {
+  position: relative;
+  width: 40px;
+  min-height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 11px;
+  background: var(--line);
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+input[type="checkbox"].toggle::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border-radius: 50%;
+  transition: left 0.15s;
+}
+
+input[type="checkbox"].toggle:checked {
+  background: var(--teal);
+}
+
+input[type="checkbox"].toggle:checked::after {
+  left: 21px;
+}
+
+.radio-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.radio-option {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--ink);
+  background: var(--panel-soft);
+  transition: border-color 0.15s, background 0.15s;
+  user-select: none;
+}
+
+.radio-option input[type="radio"] {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.radio-option:has(input:checked) {
+  border-color: var(--teal);
+  background: var(--teal-soft);
+  color: var(--teal);
+  font-weight: 700;
 }
 
 .field-hint {
