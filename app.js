@@ -136,10 +136,10 @@ const buildStreetData = () => (window.REINICKENDORF_STREETS || fallbackStreets).
 const sampleData = {
   citizens: [
     { id: "G-2026-001", salutation: "Frau", firstName: "Hilde", lastName: "Krüger", street: "Alt-Lübars", houseNo: "17", postalCode: "13469", district: "Lübars", birthDate: "1936-07-14", phone: "", email: "", wish: "Besuch erwünscht", notes: "Runder Geburtstag, Besuch durch SOKO vormerken.", source: "LABO CSV", updatedAt: "2026-06-06", status: "importiert" },
-    { id: "G-2026-002", salutation: "Herr", firstName: "Karl", lastName: "Lehmann", street: "Oraniendamm", houseNo: "42", postalCode: "13469", district: "Waidmannslust", birthDate: "1931-07-03", phone: "030 403000", email: "", wish: "Nur Karte", notes: "", source: "LABO CSV", updatedAt: "2026-06-06", status: "geprüft" },
+    { id: "G-2026-002", salutation: "Herr", firstName: "Karl", lastName: "Lehmann", street: "Oraniendamm", houseNo: "42", postalCode: "13469", district: "Waidmannslust", birthDate: "1931-07-03", phone: "030 403000", email: "", wish: "per Post", notes: "", source: "LABO CSV", updatedAt: "2026-06-06", status: "geprüft" },
     { id: "G-2026-003", salutation: "Frau", firstName: "Elisabeth", lastName: "Sommer", street: "Scharnweberstraße", houseNo: "108", postalCode: "13405", district: "Tegel", birthDate: "1941-08-22", phone: "", email: "familie.sommer@example.test", wish: "Veranstaltungseinladung", notes: "Einladung bevorzugt per Brief.", source: "LABO CSV", updatedAt: "2026-06-06", status: "importiert" },
     { id: "G-2026-004", salutation: "Herr", firstName: "Manfred", lastName: "Wolter", street: "Residenzstraße", houseNo: "88", postalCode: "13409", district: "Reinickendorf", birthDate: "1926-07-29", phone: "", email: "", wish: "Besuch erwünscht", notes: "100. Geburtstag, Amtsleitung informieren.", source: "LABO CSV", updatedAt: "2026-06-06", status: "geprüft" },
-    { id: "G-2026-005", salutation: "Frau", firstName: "Renate", lastName: "Berger", street: "Hermsdorfer Damm", houseNo: "14", postalCode: "13467", district: "Hermsdorf", birthDate: "1936-08-02", phone: "", email: "", wish: "Nur Karte", notes: "", source: "LABO CSV", updatedAt: "2026-06-06", status: "importiert" },
+    { id: "G-2026-005", salutation: "Frau", firstName: "Renate", lastName: "Berger", street: "Hermsdorfer Damm", houseNo: "14", postalCode: "13467", district: "Hermsdorf", birthDate: "1936-08-02", phone: "", email: "", wish: "per Post", notes: "", source: "LABO CSV", updatedAt: "2026-06-06", status: "importiert" },
     { id: "G-2026-006", salutation: "Herr", firstName: "Joachim", lastName: "Neumann", street: "Zabel-Krüger-Damm", houseNo: "5", postalCode: "13469", district: "Wittenau", birthDate: "1941-07-18", phone: "", email: "", wish: "Besuch erwünscht", notes: "", source: "LABO CSV", updatedAt: "2026-06-06", status: "offen" }
   ],
   sokoGroups: [
@@ -581,6 +581,47 @@ const printCurrentRun = () => {
   window.print();
 };
 
+const formatDateDe = iso => {
+  if (!iso) return "";
+  const [y, m, d] = iso.split("-");
+  return `${d}.${m}.${y}`;
+};
+
+const renderSokoForm = (citizen, index, imageSrc) => {
+  const group = groupForCitizen(citizen);
+  const age = calculateAge(citizen.birthDate);
+  const month = citizen.birthDate ? citizen.birthDate.slice(5, 7) : "";
+  const at = (left, top, extra = "") =>
+    `position:absolute;left:${left}mm;top:${top}mm;font-size:9.5pt;font-family:Arial,sans-serif;${extra}`;
+  return `
+  <div style="position:relative;width:210mm;height:297mm;overflow:hidden;page-break-after:always;background:white">
+    <img src="${imageSrc}" style="position:absolute;top:0;left:0;width:210mm;height:297mm;display:block">
+
+    <!-- Datum (heute) -->
+    <span style="${at(106, 15)}">${formatDateDe(todayIso())}</span>
+
+    <!-- Geburtsdatum -->
+    <span style="${at(165, 21)}">${formatDateDe(citizen.birthDate)}</span>
+
+    <!-- Adresse im Fensterbereich -->
+    <div style="${at(110, 24)}line-height:5.5mm">
+      <div>${escapeHtml(citizen.salutation || "")} ${escapeHtml(citizen.firstName || "")} ${escapeHtml(citizen.lastName || "")}</div>
+      <div>${escapeHtml(citizen.street || "")} ${escapeHtml(citizen.houseNo || "")}</div>
+      <div>${escapeHtml(citizen.postalCode || "")} Berlin-${escapeHtml(citizen.district || "")}</div>
+      ${citizen.phone ? `<div>${escapeHtml(citizen.phone)}</div>` : ""}
+    </div>
+
+    <!-- SOKO -->
+    <span style="${at(51, 27)}">${escapeHtml(group?.id || "")}</span>
+
+    <!-- Lfd. Nr. / Monat -->
+    <span style="${at(168, 72)}">${String(index + 1).padStart(3, "0")} / ${month}</span>
+
+    <!-- Alter vor ". Geburtstag d. nebenstehend Genannten" -->
+    <span style="${at(17, 49)}font-size:11pt;font-weight:bold">${age}</span>
+  </div>`;
+};
+
 const documentPreview = (template = selectedTemplate(), citizen = selectedCitizen(), sender = selectedSender()) => {
   if (!citizen) return `<div class="empty-state">Kein Jubilar ausgewählt</div>`;
   const format = documentFormat(template);
@@ -983,7 +1024,6 @@ const views = {
         <h2>CSV-Import</h2>
         <div class="form-grid">
           <div class="field full">
-            <label for="import-file">Datei</label>
             <div class="file-action-row">
               <label class="file-picker" for="import-file">
                 <span>Aus CSV laden</span>
@@ -998,6 +1038,9 @@ const views = {
       <section class="panel">
         <h2>Import-Protokoll</h2>
         ${state.data.importLog.length ? gridHost("importLog", 500) : `<div class="empty-state">Noch kein Import-Protokoll</div>`}
+        <div class="button-row" style="margin-top:12px">
+          <button type="button" class="primary-button" data-action="soko-print">SOKO-Druck</button>
+        </div>
       </section>
     </div>
   `
@@ -1121,8 +1164,8 @@ const baseGridOptions = () => ({
     true: "Wahr"
   },
   pagination: true,
-  paginationPageSize: 10,
-  paginationPageSizeSelector: [10, 20, 50],
+  paginationPageSize: 20,
+  paginationPageSizeSelector: [20, 50, 100],
   rowHeight: 46,
   rowSelection: { checkboxes: false, enableClickSelection: true, mode: "singleRow" },
   suppressCellFocus: true
@@ -1457,6 +1500,31 @@ const actions = {
     toast(state.generatedDocs.length ? `${state.generatedDocs.length} Dokumente erzeugt.` : "Keine geprüften Jubilare in der aktuellen Auswahl.");
   },
   "print-docs": printCurrentRun,
+  "soko-print": () => {
+    const pool = state.lastImportedIds?.size
+      ? state.data.citizens.filter(c => state.lastImportedIds.has(c.id))
+      : activeCitizens();
+    const citizens = pool.filter(c =>
+      state.filters.month === "alle" || birthdayMonth(c.birthDate) === state.filters.month
+    );
+    if (!citizens.length) { toast("Keine Jubilare für den gewählten Monat."); return; }
+    const base = window.location.href.replace(/[^/]*$/, "");
+    const imageSrc = `${base}assets/fragebogen-soko.png`;
+    const forms = citizens.map((c, i) => renderSokoForm(c, i, imageSrc)).join("");
+    const w = window.open("", "_blank", "width=900,height=700");
+    w.document.write(`<!doctype html><html lang="de"><head>
+      <meta charset="utf-8">
+      <title>SOKO-Fragebogen</title>
+      <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: #888; }
+        @page { size: A4 portrait; margin: 0; }
+        @media print { body { background: none; } }
+      </style>
+    </head><body>${forms}</body></html>`);
+    w.document.close();
+    setTimeout(() => { w.focus(); w.print(); }, 400);
+  },
   "export-docs": () => {
     const header = ["id", "empfaenger", "adresse", "soko", "vorlage", "absender", "datum"];
     const rows = state.generatedDocs.map(doc => [doc.id, doc.recipient, doc.address, doc.groupId, doc.templateName, doc.sender, doc.createdAt]);
@@ -1501,7 +1569,7 @@ const actions = {
       const lastName = pick(lastNames);
       const [street, plz, district] = pick(streets);
       const year = pick(milestoneYears);
-      const month = p2(ri(1, 12));
+      const month = "07";
       const day = p2(ri(1, 28));
       const phone = Math.random() < 0.6 ? `030 ${ri(300,499)}${ri(1000,9999)}` : "";
       const email = Math.random() < 0.4 ? `${deAscii(firstName.toLowerCase())}.${deAscii(lastName.toLowerCase())}${ri(10,99)}@example.test` : "";
@@ -1550,8 +1618,9 @@ const actions = {
       keys: new Set(state.data.citizens.map(duplicateKey)),
       printedKeys: new Set(state.data.citizens.filter(isPrintedCitizen).map(duplicateKey))
     });
+    state.lastImportedIds = new Set(result.rows.map(r => r.id));
     state.data.citizens = [...state.data.citizens, ...result.rows];
-    state.data.importLog = [...result.logs, ...state.data.importLog].slice(0, 40);
+    state.data.importLog = [...result.logs, ...state.data.importLog];
     saveData();
     render();
     toast(result.printedDuplicates
@@ -1596,6 +1665,7 @@ document.addEventListener("click", event => {
   if (nav) {
     state.view = nav.dataset.nav;
     render();
+    if (state.view === "documents") actions["generate-docs"]();
   }
   if (action) {
     actions[action.dataset.action]?.(event);
