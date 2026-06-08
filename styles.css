@@ -710,15 +710,18 @@ tbody tr.selected {
 
 .document-preview {
   display: grid;
+  justify-items: center;
   justify-content: center;
+  max-height: min(760px, calc(100vh - 150px));
+  overflow: auto;
 }
 
 .document-sheet {
-  width: min(100%, 520px);
+  width: min(100%, 620px);
   aspect-ratio: 210 / 297;
   min-height: 0;
   overflow: hidden;
-  padding: 34px;
+  padding: 40px;
   border: 1px solid #cfc8b8;
   background:
     linear-gradient(90deg, rgba(15, 93, 88, 0.08), rgba(15, 93, 88, 0) 28%),
@@ -861,18 +864,12 @@ tbody tr.selected {
   overflow: hidden;
   border: 1px solid #d9c8a6;
   border-radius: 8px;
-  background:
-    linear-gradient(135deg, rgba(15, 93, 88, 0.14), rgba(15, 93, 88, 0) 36%),
-    linear-gradient(180deg, #fffdf8 0%, #ffffff 62%, #f7fbf9 100%);
+  background: #fff url("assets/gratulationskarte-reinickendorf-210.jpg") center / 100% 100% no-repeat;
   box-shadow: 0 16px 34px rgba(32, 36, 38, 0.12);
 }
 
 .document-preview.birthday-card .document-sheet::before {
-  content: "";
-  position: absolute;
-  inset: 0 0 auto;
-  height: 9px;
-  background: linear-gradient(90deg, var(--teal), var(--green), var(--gold));
+  content: none;
 }
 
 .document-preview.birthday-card .card-age-mark {
