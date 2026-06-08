@@ -1,4 +1,5 @@
-const STORAGE_KEY = "gratulationsdienst-prototype";
+const STORAGE_KEY = "gratulationsdienst";
+const MONTH_KEY = "gd_month_filter";
 const API_BASE = "php-api/index.php";
 const APP_VERSION = "20260608-6";
 window.GRATULATIONSDIENST_VERSION = APP_VERSION;
@@ -39,8 +40,8 @@ const birthdayInRunYear = birthDate => {
 };
 const calculateAge = birthDate => runYear() - new Date(birthDate).getFullYear();
 const birthdayMonth = birthDate => String(new Date(birthDate).getMonth() + 1).padStart(2, "0");
-const isPrintedCitizen = citizen => citizen.status === "gedruckt";
 const activeCitizens = () => state.data.citizens.filter(citizen => !isPrintedCitizen(citizen));
+const isPrintedCitizen = citizen => citizen.status === "gedruckt";
 const duplicateKey = citizen => normalize([
   citizen.firstName,
   citizen.lastName,
@@ -252,12 +253,12 @@ const loadData = () => {
 const state = {
   view: "dashboard",
   data: loadData(),
-  filters: { q: "", month: "alle", groupId: "alle", age: "alle", status: "alle", occasion: "Geburtstag" },
+  filters: { q: "", month: localStorage.getItem(MONTH_KEY) || "alle", groupId: "alle", age: "alle", status: "alle", occasion: "Geburtstag" },
   selectedCitizenId: "G-2026-001",
   selectedMemberId: "S-001",
   selectedStreetId: "STR-001",
   selectedSenderId: "A-001",
-  selectedTemplateId: "T-004",
+  selectedTemplateId: "T-001",
   importText: "",
   importSplit: 42,
   citizenSplit: 50,
@@ -376,7 +377,6 @@ const textField = (name, label, value, extra = "") => `
 `;
 const checkField = (name, label, value, extra = "") => `
   <div class="field ${extra}">
-    <label>${label}</label>
     <label class="toggle-label">
       <input type="hidden" name="${name}" value="false">
       <input id="${name}" type="checkbox" name="${name}" value="true" class="toggle" ${value === "true" || value === true ? "checked" : ""}>
@@ -641,32 +641,6 @@ const viewTitles = {
   documents: "Dokumentlauf",
   import: "LABO-Import"
 };
-const wizardSteps = [
-  { id: "import", label: "Import" },
-  { id: "citizens", label: "Jubilare prüfen" },
-  { id: "documents", label: "Dokumentlauf" }
-];
-const wizardControls = current => {
-  const index = wizardSteps.findIndex(step => step.id === current);
-  const previous = wizardSteps[index - 1];
-  const next = wizardSteps[index + 1];
-  return `
-    <div class="wizard-bar">
-      <div class="wizard-steps" aria-label="Ablaufschritte">
-        ${wizardSteps.map((step, stepIndex) => `
-          <button type="button" class="wizard-step ${step.id === current ? "active" : ""}" data-nav="${step.id}" aria-current="${step.id === current ? "step" : "false"}">
-            <span>${stepIndex + 1}</span>
-            <strong>${escapeHtml(step.label)}</strong>
-          </button>
-        `).join("")}
-      </div>
-      <div class="wizard-actions">
-        ${previous ? `<button type="button" class="ghost-button" data-nav="${previous.id}"><span class="button-arrow">←</span> ${escapeHtml(previous.label)}</button>` : ""}
-        ${next ? `<button type="button" class="primary-button" data-nav="${next.id}">${escapeHtml(next.label)} <span class="button-arrow">→</span></button>` : ""}
-      </div>
-    </div>
-  `;
-};
 
 const views = {
   dashboard: () => {
@@ -731,10 +705,9 @@ const views = {
     const citizens = filteredCitizens();
     const citizen = citizens.find(item => item.id === state.selectedCitizenId) || citizens[0];
     return `
-      ${wizardControls("citizens")}
       <div class="toolbar">
-        <input name="q" data-filter placeholder="Suche" value="${escapeHtml(state.filters.q)}">
-        <select name="month" data-filter>${months.map(month => `<option value="${month[0]}" ${state.filters.month === month[0] ? "selected" : ""}>${month[1]}</option>`).join("")}</select>
+        <label class="toolbar-label">Geburtsmonat</label>
+        <select name="month" data-filter style="width:130px">${months.map(month => `<option value="${month[0]}" ${state.filters.month === month[0] ? "selected" : ""}>${month[1]}</option>`).join("")}</select>
         <select name="groupId" data-filter>${groupOptions().map(group => `<option value="${group[0]}" ${state.filters.groupId === group[0] ? "selected" : ""}>${group[1]}</option>`).join("")}</select>
         <select name="age" data-filter>
           ${[["alle", "Alle Alter"], ["85", "85 Jahre"], ["90plus", "90+"], ["100", "100+"]].map(option => `<option value="${option[0]}" ${state.filters.age === option[0] ? "selected" : ""}>${option[1]}</option>`).join("")}
@@ -742,12 +715,12 @@ const views = {
       </div>
       <div class="${citizen ? "citizen-split" : ""}" ${citizen ? `style="--citizen-left:${state.citizenSplit}%"` : ""}>
         <section class="panel">
-          <h2>Datensätze</h2>
+          <h2>Jubilare</h2>
           ${gridHost("citizens", 500)}
         </section>
         ${citizen ? `<div class="vertical-splitter" data-splitter="citizen" role="separator" aria-orientation="vertical" aria-label="Bereiche aufteilen" aria-valuemin="20" aria-valuemax="80" aria-valuenow="${state.citizenSplit}" tabindex="0"></div>
         <section class="panel">
-          <h2>Detailmaske</h2>
+          <h2>Jubilar</h2>
           <form id="citizen-form" class="form-grid">
             <input type="hidden" name="id" value="${escapeHtml(citizen.id)}">
             ${selectField("salutation", "Anrede", citizen.salutation, [["Frau", "Frau"], ["Herr", "Herr"], ["Divers", "Divers"]])}
@@ -760,7 +733,8 @@ const views = {
             ${field("district", "Ortsteil", citizen.district)}
             ${field("phone", "Telefon", citizen.phone)}
             ${emailField("email", "E-Mail", citizen.email)}
-            ${selectField("wish", "Wunsch", citizen.wish, [["Besuch erwünscht", "Besuch erwünscht"], ["per Post", "per Post"], ["keine", "keine"], ["offen", "offen"]], "full")}
+            ${selectField("wish", "Glückwünsche", citizen.wish, [["Besuch erwünscht", "Besuch erwünscht"], ["per Post", "per Post"], ["keine", "keine"], ["offen", "offen"]], "full")}
+            ${checkField("pressPublication", "Veröffentlichung in der lokalen Presse", citizen.pressPublication, "full")}
             ${radioField("weddingAnniversary", "Es steht bevor die", citizen.weddingAnniversary ?? "", [
               ["", "—"],
               ["Goldene Hochzeit", "Goldene Hochzeit"],
@@ -768,12 +742,11 @@ const views = {
               ["Eiserne Hochzeit", "Eiserne Hochzeit"],
               ["Gnadenhochzeit", "Gnadenhochzeit"]
             ], "full")}
-            ${checkField("pressPublication", "Veröffentlichung in der lokalen Presse", citizen.pressPublication, "full")}
-            ${textField("notes", "Notiz", citizen.notes, "full")}
+            ${field("weddingDate", "am", citizen.weddingDate ?? "", "date", "hochzeit-date-field")}
+            ${field("spouseName", "Name des Ehegatten", citizen.spouseName ?? "", "text", "hochzeit-spouse-field")}
+            ${textField("notes", "Notiz", citizen.notes, "full notes-field")}
             <div class="field full button-row">
               <button type="button" class="primary-button" data-action="save-citizen">Speichern</button>
-              <button type="button" class="ghost-button" data-nav="import"><span class="button-arrow">←</span> Import</button>
-              <button type="button" class="ghost-button" data-nav="documents">Dokumentlauf <span class="button-arrow">→</span></button>
             </div>
           </form>
         </section>` : ""}
@@ -974,7 +947,6 @@ const views = {
     const previewTemplate = previewDoc ? byId(state.data.templates, previewDoc.templateId) || template : template;
     const previewSender = previewDoc ? byId(state.data.senders, previewDoc.senderId) || sender : sender;
     return `
-      ${wizardControls("documents")}
       <div class="panel">
         <h2>Dokumentlauf konfigurieren</h2>
         <div class="split-controls">
@@ -984,8 +956,6 @@ const views = {
           ${selectField("doc-group", "SOKO", state.filters.groupId, groupOptions())}
         </div>
         <div class="button-row" style="margin-top:14px">
-          <button type="button" class="ghost-button" data-nav="citizens"><span class="button-arrow">←</span> Jubilare prüfen</button>
-          <button type="button" class="primary-button" data-action="generate-docs">Lauf erzeugen</button>
           <button type="button" class="ghost-button" data-action="print-docs">Drucken</button>
           <button type="button" class="ghost-button" data-action="export-docs">PDF/XLSX/XML Export</button>
         </div>
@@ -1008,8 +978,7 @@ const views = {
   },
 
   import: () => `
-    ${wizardControls("import")}
-    <div class="import-split" style="--import-left:${state.importSplit}%">
+    <div class="stack">
       <section class="panel">
         <h2>CSV-Import</h2>
         <div class="form-grid">
@@ -1026,7 +995,6 @@ const views = {
           </div>
         </div>
       </section>
-      <div class="vertical-splitter" data-splitter="import" role="separator" aria-orientation="vertical" aria-label="Bereiche aufteilen" aria-valuemin="30" aria-valuemax="70" aria-valuenow="${state.importSplit}" tabindex="0"></div>
       <section class="panel">
         <h2>Import-Protokoll</h2>
         ${state.data.importLog.length ? gridHost("importLog", 500) : `<div class="empty-state">Noch kein Import-Protokoll</div>`}
@@ -1244,6 +1212,7 @@ const gridDefinitions = {
       { headerName: "Empfänger", field: "recipient", minWidth: 190, flex: 1 },
       { headerName: "Adresse", field: "address", minWidth: 230, flex: 1 },
       { headerName: "SOKO", field: "groupId", width: 125, cellRenderer: params => params.value ? badgeCell(params.value) : badgeCell("offen", "red") },
+      { headerName: "Glückwünsche", field: "wish", width: 155 },
       { headerName: "Vorlage", field: "templateName", minWidth: 190 }
     ],
     getRowId: params => params.data.id,
@@ -1468,6 +1437,7 @@ const actions = {
     state.selectedTemplateId = template.id;
     state.selectedSenderId = sender.id;
     state.filters.month = $("#doc-month").value;
+    localStorage.setItem(MONTH_KEY, state.filters.month);
     state.filters.groupId = $("#doc-group").value;
     const citizens = documentCitizens();
     state.generatedDocs = citizens.map(citizen => ({
@@ -1478,6 +1448,7 @@ const actions = {
       recipient: `${citizen.firstName} ${citizen.lastName}`,
       address: `${citizen.street} ${citizen.houseNo}, ${citizen.postalCode} Berlin`,
       groupId: groupForCitizen(citizen)?.id || "",
+      wish: citizen.wish || "",
       templateName: template.name,
       sender: sender.role,
       createdAt: todayIso()
@@ -1492,23 +1463,51 @@ const actions = {
     downloadText("dokumentlauf.csv", [header, ...rows].map(row => row.map(csvEscape).join(";")).join("\n"), "text/csv;charset=utf-8");
   },
   "sample-import": () => {
-    const batch = String(Date.now()).slice(-6);
-    const door = value => `${value}${batch.slice(-2)}`;
-    state.importText = [
-      "Anrede;Vorname;Nachname;Straße;Hausnummer;PLZ;Ortsteil;Geburtsdatum;Telefon;E-Mail",
-      `Frau;Lena;Bachmann;Ackerplanweg;${door("12")};13507;Tegel;1941-07-21;030 401${batch};lena.bachmann.${batch}@example.test`,
-      `Herr;Martin;Feldmann;Alt-Lübars;${door("8")};13469;Lübars;1936-08-03;;`,
-      `Frau;Clara;Wegner;Auguste Viktoria-Allee;${door("44")};13403;Reinickendorf;1931-09-14;030 412${batch};`,
-      `Herr;Rolf;Henning;Hermsdorfer Damm;${door("92")};13467;Hermsdorf;1926-10-02;;rolf.henning.${batch}@example.test`,
-      `Frau;Marlies;Keller;Oraniendamm;${door("33")};13469;Waidmannslust;1941-11-18;030 423${batch};`,
-      `Herr;Bernd;Sommer;Zabel-Krüger-Damm;${door("17")};13469;Wittenau;1936-12-09;;`,
-      `Frau;Hannelore;Brandes;Wilhelmsruher Damm;${door("140")};13439;Märkisches Viertel;1931-07-30;030 434${batch};hannelore.brandes.${batch}@example.test`,
-      `Herr;Kurt;Seifert;Scharnweberstraße;${door("106")};13405;Tegel;1926-08-25;;`,
-      `Frau;Ilse;Lorenz;Frohnauer Straße;${door("21")};13465;Frohnau;1941-09-06;030 445${batch};`,
-      `Herr;Günter;Pohl;Heiligenseestraße;${door("55")};13503;Heiligensee;1936-10-11;;guenter.pohl.${batch}@example.test`,
-      `Frau;Erika;Mertens;Alt-Lübars;${door("9")};13469;Lübars;1931-07-26;;`,
-      `Frau;Sabine;Reuter;Triftstraße;${door("4")};13509;Wittenau;1941-08-19;;sabine.reuter.${batch}@example.test`
-    ].join("\n");
+    const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+    const ri = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+    const p2 = n => String(n).padStart(2, "0");
+    const deAscii = s => s.replaceAll("ä","ae").replaceAll("ö","oe").replaceAll("ü","ue").replaceAll("ß","ss");
+    const femaleNames = ["Lena","Clara","Ilse","Erika","Hannelore","Marlies","Sabine","Gertrud","Elfriede","Hildegard","Irmgard","Lieselotte","Margarete","Ursula","Brigitte","Renate","Ingrid","Christa","Waltraud","Hedwig","Anni","Ruth","Hilde","Erna","Frieda"];
+    const maleNames = ["Martin","Rolf","Bernd","Kurt","Günter","Hans","Werner","Heinz","Horst","Gerhard","Helmut","Walter","Friedrich","Karl","Wilhelm","Herbert","Manfred","Dieter","Klaus","Joachim","Otto","Ernst","Georg","Rudolf","Willi"];
+    const lastNames = ["Bachmann","Feldmann","Wegner","Henning","Keller","Sommer","Brandes","Seifert","Lorenz","Pohl","Mertens","Reuter","Müller","Schmidt","Schneider","Fischer","Weber","Meyer","Krause","Hoffmann","Schäfer","Bauer","Koch","Richter","Klein","Wolf","Schröder","Neumann","Zimmermann","Braun","Hartmann","Lange","Schwarz","Krüger","Peters","Schulz"];
+    const streets = [
+      ["Ackerplanweg","13507","Tegel"],
+      ["Alt-Lübars","13469","Lübars"],
+      ["Auguste-Viktoria-Allee","13403","Reinickendorf"],
+      ["Hermsdorfer Damm","13467","Hermsdorf"],
+      ["Oraniendamm","13469","Waidmannslust"],
+      ["Zabel-Krüger-Damm","13469","Wittenau"],
+      ["Wilhelmsruher Damm","13439","Märkisches Viertel"],
+      ["Scharnweberstraße","13405","Tegel"],
+      ["Frohnauer Straße","13465","Frohnau"],
+      ["Heiligenseestraße","13503","Heiligensee"],
+      ["Triftstraße","13509","Wittenau"],
+      ["Residenzstraße","13409","Reinickendorf"],
+      ["Alt-Reinickendorf","13407","Reinickendorf"],
+      ["Senftenberger Ring","13439","Märkisches Viertel"],
+      ["Roedernallee","13407","Reinickendorf"],
+      ["Waidmannsluster Damm","13469","Waidmannslust"],
+      ["Flottenstraße","13407","Reinickendorf"],
+      ["Eichborndamm","13403","Reinickendorf"],
+      ["Quickborner Straße","13439","Märkisches Viertel"],
+      ["Alt-Wittenau","13435","Wittenau"],
+    ];
+    const milestoneYears = [1921,1922,1923,1926,1931,1936,1941];
+    const count = ri(8, 14);
+    const lines = ["Anrede;Vorname;Nachname;Straße;Hausnummer;PLZ;Ortsteil;Geburtsdatum;Telefon;E-Mail"];
+    for (let i = 0; i < count; i++) {
+      const female = Math.random() < 0.5;
+      const firstName = pick(female ? femaleNames : maleNames);
+      const lastName = pick(lastNames);
+      const [street, plz, district] = pick(streets);
+      const year = pick(milestoneYears);
+      const month = p2(ri(1, 12));
+      const day = p2(ri(1, 28));
+      const phone = Math.random() < 0.6 ? `030 ${ri(300,499)}${ri(1000,9999)}` : "";
+      const email = Math.random() < 0.4 ? `${deAscii(firstName.toLowerCase())}.${deAscii(lastName.toLowerCase())}${ri(10,99)}@example.test` : "";
+      lines.push(`${female ? "Frau" : "Herr"};${firstName};${lastName};${street};${ri(1,160)};${plz};${district};${year}-${month}-${day};${phone};${email}`);
+    }
+    state.importText = lines.join("\n");
     actions["run-import"]();
   },
   "run-import": () => {
@@ -1607,6 +1606,7 @@ document.addEventListener("input", event => {
   const input = event.target.closest("[data-filter]");
   if (input) {
     state.filters[input.name] = input.value;
+    if (input.name === "month") localStorage.setItem(MONTH_KEY, input.value);
     render();
   }
   const email = event.target.closest("input[type='email']");
@@ -1656,16 +1656,8 @@ document.addEventListener("keydown", event => {
 });
 
 document.addEventListener("change", event => {
-  if (event.target.matches("#doc-template")) {
-    state.selectedTemplateId = event.target.value;
-    state.generatedDocs = [];
-    render();
-    return;
-  }
-  if (event.target.matches("#doc-sender")) {
-    state.selectedSenderId = event.target.value;
-    state.generatedDocs = [];
-    render();
+  if (event.target.matches("#doc-template, #doc-sender, #doc-month, #doc-group")) {
+    actions["generate-docs"]();
     return;
   }
   const file = event.target.matches("#import-file") ? event.target.files[0] : null;

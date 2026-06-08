@@ -245,77 +245,11 @@ h3 {
   border-color: var(--line);
 }
 
-.button-arrow {
-  display: inline-block;
-  font-family: "Segoe UI Symbol", "Arial Black", var(--font-sans);
-  font-size: 20px;
-  font-weight: 900;
-  line-height: 1;
-  transform: translateY(1px);
-}
 
 .view {
   padding-top: 22px;
 }
 
-.wizard-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  margin-bottom: 16px;
-  padding: 12px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--panel);
-  box-shadow: var(--shadow);
-}
-
-.wizard-steps,
-.wizard-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.wizard-step {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 38px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 0 12px;
-  color: var(--muted);
-  background: var(--panel-soft);
-}
-
-.wizard-step span {
-  display: grid;
-  place-items: center;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  color: #fff;
-  background: #8b9692;
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.wizard-step strong {
-  font-size: 13px;
-}
-
-.wizard-step.active {
-  color: var(--ink);
-  border-color: #96c7bd;
-  background: var(--teal-soft);
-}
-
-.wizard-step.active span {
-  background: var(--teal);
-}
 
 .grid {
   display: grid;
@@ -338,6 +272,12 @@ h3 {
   display: grid;
   grid-template-columns: minmax(320px, var(--import-left, 42%)) 12px minmax(420px, 1fr);
   align-items: stretch;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
 .citizen-split {
@@ -412,10 +352,17 @@ body.is-resizing {
 }
 
 .toolbar {
-  display: grid;
-  grid-template-columns: minmax(220px, 1fr) repeat(3, minmax(140px, 180px));
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 10px;
   margin-bottom: 14px;
+}
+
+.toolbar-label {
+  font-size: 13px;
+  color: var(--muted);
+  white-space: nowrap;
 }
 
 .form-grid {
@@ -540,6 +487,11 @@ input[type="checkbox"].toggle:checked::after {
   font-weight: 700;
 }
 
+.form-grid:has(input[name="weddingAnniversary"][value=""]:checked) .hochzeit-date-field,
+.form-grid:has(input[name="weddingAnniversary"][value=""]:checked) .hochzeit-spouse-field {
+  display: none;
+}
+
 .field-hint {
   color: var(--muted);
   font-size: 12px;
@@ -614,6 +566,10 @@ textarea {
 
 .import-split textarea {
   min-height: 360px;
+}
+
+.notes-field textarea {
+  min-height: 72px;
 }
 
 .table-wrap {
@@ -1330,10 +1286,7 @@ tbody tr.selected {
     display: none;
   }
 
-  .wizard-bar {
-    align-items: flex-start;
-    flex-direction: column;
-  }
+
 
   .grid.two,
   .grid.three,
