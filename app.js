@@ -504,8 +504,37 @@ const confirmDialog = () => state.dialog ? `
 ` : "";
 const gridHost = (name, height = 430) => `<div class="ag-grid-host" data-grid="${name}" style="height:${height}px"></div>`;
 const mapData = () => window.REINICKENDORF_STREET_GEOMETRIES || { bbox: [], segments: [] };
-const mapSegments = () => mapData().segments || [];
-const mapSegmentCounts = () => mapSegments().reduce((counts, segment) => ({ ...counts, [segment.groupId]: (counts[segment.groupId] || 0) + 1 }), {});
+const addressPointData = () => window.REINICKENDORF_ADDRESS_POINTS || { addresses: [] };
+const assignedAddressPoints = () => (addressPointData().addresses || []).filter(address => address.soko);
+const addressGroupId = address => address.soko ? sokoGroupId(address.soko) : "offen";
+const realAddressCandidates = () => assignedAddressPoints().filter(address => address.street && address.houseNumber && address.postalCode);
+const mapStreetLookup = () => state.data.streets.reduce((lookup, street) => {
+  streetNameVariants(street.name).forEach(name => {
+    lookup[normalize(name)] = street;
+  });
+  return lookup;
+}, {});
+const mapStreetByName = (name, lookup = mapStreetLookup()) => {
+  const variants = streetNameVariants(name);
+  return variants.map(variant => lookup[normalize(variant)]).find(Boolean)
+    || state.data.streets.find(street => variants.some(variant => normalize(street.name).includes(normalize(variant)) || normalize(variant).includes(normalize(street.name))));
+};
+const mapSegmentGroupIds = (segment, lookup = mapStreetLookup()) => {
+  const street = mapStreetByName(segment.name, lookup);
+  const groups = [...new Set((street?.rules || []).map(rule => rule.soko).filter(Boolean))]
+    .sort((a, b) => Number(a) - Number(b))
+    .map(sokoGroupId);
+  return groups.length ? groups : ["offen"];
+};
+const mapSegments = () => {
+  const lookup = mapStreetLookup();
+  return (mapData().segments || []).map(segment => ({
+    ...segment,
+    groupIds: mapSegmentGroupIds(segment, lookup)
+  }));
+};
+const mapSegmentCounts = () => mapSegments().reduce((counts, segment) =>
+  segment.groupIds.reduce((next, groupId) => ({ ...next, [groupId]: (next[groupId] || 0) + 1 }), counts), {});
 const lonLatToWorld = ([lon, lat], zoom) => {
   const scale = 256 * 2 ** zoom;
   const sinLat = Math.sin(lat * Math.PI / 180);
@@ -552,6 +581,12 @@ const mapPath = (coords, project) => coords.map((coord, index) => {
   const [x, y] = project(coord);
   return `${index ? "L" : "M"}${x.toFixed(1)} ${y.toFixed(1)}`;
 }).join(" ");
+const mapAddressPointsSvg = project => assignedAddressPoints().map(address => {
+  const [x, y] = project([address.lon, address.lat]);
+  const groupId = addressGroupId(address);
+  const title = `${address.street} ${address.houseNumber} · ${groupId}`;
+  return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="1.8" fill="${escapeHtml(sokoColors[groupId] || sokoColors.offen)}"><title>${escapeHtml(title)}</title></circle>`;
+}).join("");
 const streetMapSvg = () => {
   const data = mapData();
   const width = 1120;
@@ -564,12 +599,17 @@ const streetMapSvg = () => {
       <rect class="map-background" width="${width}" height="${height}" rx="0"></rect>
       <g class="map-tiles">${mapTileImages(data.bbox, viewport)}</g>
       <g class="map-streets">
-        ${segments.map(segment => `
-          <path d="${mapPath(segment.coords, project)}" stroke="${escapeHtml(sokoColors[segment.groupId] || sokoColors.offen)}">
-            <title>${escapeHtml(segment.name)} · ${escapeHtml(segment.groupId)}</title>
+        ${segments.flatMap(segment => {
+          const path = mapPath(segment.coords, project);
+          const title = `${segment.name} · ${segment.groupIds.join(", ")}`;
+          return segment.groupIds.map((groupId, index) => `
+          <path d="${path}" stroke="${escapeHtml(sokoColors[groupId] || sokoColors.offen)}" ${segment.groupIds.length > 1 ? `stroke-dasharray="12 8" stroke-dashoffset="${index * 6}"` : ""}>
+            <title>${escapeHtml(title)}</title>
           </path>
-        `).join("")}
+        `);
+        }).join("")}
       </g>
+      <g class="map-address-points">${mapAddressPointsSvg(project)}</g>
     </svg>
   ` : `<div class="empty-state">Keine Kartendaten geladen</div>`;
 };
@@ -1043,17 +1083,20 @@ const views = {
   },
 
   map: () => {
+    const addressCount = addressPointData().addresses?.length || 0;
+    const assignedCount = assignedAddressPoints().length;
     return `
       <div class="panel">
         <div class="section-head">
           <div>
             <h2>Straßenkarte Reinickendorf</h2>
+            <p>${assignedCount.toLocaleString("de-DE")} von ${addressCount.toLocaleString("de-DE")} OSM-Adressen einer SOKO zugeordnet</p>
           </div>
         </div>
+        <div class="map-shell">${streetMapSvg()}</div>
         <div class="map-legend">
           ${state.data.sokoGroups.map(group => `<div class="legend-item"><span style="background:${escapeHtml(sokoColors[group.id])}"></span><strong>${escapeHtml(group.id)}</strong><em>${escapeHtml(group.region)}</em></div>`).join("")}
         </div>
-        <div class="map-shell">${streetMapSvg()}</div>
       </div>
     `;
   },
@@ -1800,10 +1843,11 @@ const actions = {
     const femaleNames = ["Lena","Clara","Ilse","Erika","Hannelore","Marlies","Sabine","Gertrud","Elfriede","Hildegard","Irmgard","Lieselotte","Margarete","Ursula","Brigitte","Renate","Ingrid","Christa","Waltraud","Hedwig","Anni","Ruth","Hilde","Erna","Frieda"];
     const maleNames = ["Martin","Rolf","Bernd","Kurt","Günter","Hans","Werner","Heinz","Horst","Gerhard","Helmut","Walter","Friedrich","Karl","Wilhelm","Herbert","Manfred","Dieter","Klaus","Joachim","Otto","Ernst","Georg","Rudolf","Willi"];
     const lastNames = ["Bachmann","Feldmann","Wegner","Henning","Keller","Sommer","Brandes","Seifert","Lorenz","Pohl","Mertens","Reuter","Müller","Schmidt","Schneider","Fischer","Weber","Meyer","Krause","Hoffmann","Schäfer","Bauer","Koch","Richter","Klein","Wolf","Schröder","Neumann","Zimmermann","Braun","Hartmann","Lange","Schwarz","Krüger","Peters","Schulz"];
+    const realAddresses = realAddressCandidates();
     const rangeEntries = Object.entries(window.SOKO_STRASSENVERZEICHNIS || {})
       .flatMap(([street, entries]) => entries.map(entry => ({ street, ...entry })))
       .filter(entry => entry.von && entry.bis && entry.bis !== "999" && Number.isFinite(parseInt(entry.von, 10)) && Number.isFinite(parseInt(entry.bis, 10)));
-    const streetEntries = rangeEntries.length ? rangeEntries : [{ street: "Alt-Lübars", plz: "13469", ortsteil: "Lübars", von: "1", bis: "99", art: "F" }];
+    const streetEntries = rangeEntries.length ? rangeEntries : [{ street: "Alt-L?bars", plz: "13469", ortsteil: "L?bars", von: "1", bis: "99", art: "F" }];
     const houseNoForEntry = entry => {
       const from = parseInt(entry.von, 10);
       const to = Math.min(parseInt(entry.bis, 10), 220);
@@ -1811,7 +1855,7 @@ const actions = {
         .filter(number => entry.art === "G" ? number % 2 === 0 : entry.art === "U" ? number % 2 !== 0 : true);
       return String(pick(numbers.length ? numbers : [from]));
     };
-    const validAddress = (attempt = 0) => {
+    const fallbackAddress = (attempt = 0) => {
       const entry = pick(streetEntries);
       const houseNo = houseNoForEntry(entry);
       try {
@@ -1819,9 +1863,15 @@ const actions = {
         return { street: entry.street, houseNo, plz: entry.plz, district: entry.ortsteil };
       } catch {
         return attempt < 100
-          ? validAddress(attempt + 1)
+          ? fallbackAddress(attempt + 1)
           : { street: "Frohnauer Str.", houseNo: "21", plz: "13467", district: "Hermsdorf" };
       }
+    };
+    const validAddress = () => {
+      const address = realAddresses.length ? pick(realAddresses) : null;
+      return address
+        ? { street: address.street, houseNo: address.houseNumber, plz: address.postalCode, district: address.district }
+        : fallbackAddress();
     };
     const milestoneYears = [1921,1922,1923,1926,1931,1936,1941];
     const count = ri(8, 14);

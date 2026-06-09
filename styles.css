@@ -1201,6 +1201,18 @@ tbody tr.selected {
   opacity: 1;
 }
 
+.street-map .map-address-points circle {
+  opacity: 0.78;
+  pointer-events: all;
+  stroke: #fff;
+  stroke-width: 0.55;
+}
+
+.street-map .map-address-points circle:hover {
+  opacity: 1;
+  r: 3.4;
+}
+
 .map-attribution {
   margin: 10px 0 0;
   color: var(--muted);
