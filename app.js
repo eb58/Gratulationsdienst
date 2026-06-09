@@ -2,6 +2,11 @@ window.GRATULATIONSDIENST_VERSION = "20260608-6";
 
 const STORAGE_KEY = "gratulationsdienst";
 const MONTH_KEY = "gd_month_filter";
+const splitStorageKey = key => `gratulationsdienst.${key}Split`;
+const storedSplit = (key, fallback) => {
+  const value = Number(localStorage.getItem(splitStorageKey(key)));
+  return Number.isFinite(value) ? Math.max(20, Math.min(80, value)) : fallback;
+};
 const API_BASE = "php-api/index.php";
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
@@ -106,6 +111,29 @@ const sokoColors = {
 const sokoStreetNames = code => Object.entries(window.SOKO_STRASSENVERZEICHNIS || {})
   .filter(([, entries]) => entries.some(entry => entry.soko === code))
   .map(([name]) => name);
+const streetRuleId = (streetIndex, ruleIndex) => `SR-${String(streetIndex + 1).padStart(4, "0")}-${String(ruleIndex + 1).padStart(2, "0")}`;
+const normalizeStreetRules = (rules = [], streetIndex = 0) => rules.map((rule, ruleIndex) => ({
+  id: rule.id || streetRuleId(streetIndex, ruleIndex),
+  plz: rule.plz || "",
+  ortsteil: normalizeStreetDistrict(rule.ortsteil || rule.district),
+  soko: rule.soko ? String(rule.soko).padStart(2, "0") : "",
+  von: rule.von || "",
+  bis: rule.bis || "",
+  art: rule.art || "F"
+}));
+const streetDistrictSummary = rules => [...new Set(rules.map(rule => rule.ortsteil).filter(Boolean))].join(" / ");
+const streetGroupSummary = rules => {
+  const groups = [...new Set(rules.map(rule => rule.soko).filter(Boolean))];
+  return groups.length === 1 ? sokoGroupId(groups[0]) : "";
+};
+const streetGroupDisplay = street => {
+  const groups = [...new Set((street.rules || []).map(rule => rule.soko).filter(Boolean))]
+    .sort((a, b) => Number(a) - Number(b));
+  return street.groupId || (groups.length ? groups.map(sokoGroupId).join(", ") : "offen");
+};
+const streetRangeLabel = rule => [rule.von || "alle", rule.bis || "alle"].some(value => value !== "alle")
+  ? `${rule.von || "ab Anfang"}-${rule.bis || "offen"} ${rule.art || "F"}`
+  : "alle Hausnummern";
 const buildSokoGroups = () => sokoCodesFromDirectory().map(code => {
   const entries = Object.values(window.SOKO_STRASSENVERZEICHNIS || {}).flat().filter(entry => entry.soko === code);
   const districts = [...new Set(entries.map(entry => entry.ortsteil))].join(" / ");
@@ -149,13 +177,13 @@ const buildSokoMembers = () => sokoCodesFromDirectory().flatMap((code, groupInde
   };
 }));
 const buildStreetData = () => Object.entries(window.SOKO_STRASSENVERZEICHNIS || {}).map(([name, entries], i) => {
-  const socos = [...new Set(entries.map(e => e.soko))];
+  const rules = normalizeStreetRules(entries, i);
   return {
     id: `STR-${String(i + 1).padStart(4, "0")}`,
     name,
-    district: entries[0].ortsteil,
-    area: "",
-    groupId: socos.length === 1 ? sokoGroupId(socos[0]) : ""
+    district: streetDistrictSummary(rules),
+    groupId: streetGroupSummary(rules),
+    rules
   };
 });
 
@@ -187,12 +215,16 @@ const sampleData = {
 
 const mergeStreetData = streets => {
   const existingByName = Object.fromEntries((streets || []).map(street => [street.name, street]));
-  return buildStreetData().map(street => ({
-    ...street,
-    district: normalizeStreetDistrict(existingByName[street.name]?.district) !== "nicht zugeordnet" ? existingByName[street.name].district : street.district,
-    area: street.area || existingByName[street.name]?.area || "",
-    groupId: street.groupId || existingByName[street.name]?.groupId || ""
-  }));
+  return buildStreetData().map((street, index) => {
+    const existing = existingByName[street.name];
+    const rules = normalizeStreetRules(existing?.rules?.length ? existing.rules : street.rules, index);
+    return {
+      ...street,
+      district: streetDistrictSummary(rules) || street.district,
+      groupId: streetGroupSummary(rules),
+      rules
+    };
+  });
 };
 const mergeById = (existing, defaults, keep = () => true) => [
   ...defaults,
@@ -236,8 +268,9 @@ const state = {
   selectedSenderId: "A-001",
   selectedTemplateId: "T-001",
   importText: "",
-  importSplit: 42,
-  citizenSplit: 50,
+  importSplit: storedSplit("import", 42),
+  citizenSplit: storedSplit("citizen", 50),
+  regionSplit: storedSplit("region", 58),
   generatedDocs: [],
   printBackground: true,
   gridApis: {},
@@ -296,6 +329,23 @@ const streetNameVariants = value => {
     name.replace(/str\./giu, "stra\u00dfe")
   ].filter(Boolean))];
 };
+const houseNumberValue = value => parseInt(String(value ?? "").match(/\d+/)?.[0] || "", 10);
+const ruleMatchesHouseNo = (rule, houseNo) => {
+  const number = houseNumberValue(houseNo);
+  if (!Number.isFinite(number)) return !rule.von && !rule.bis;
+  const from = rule.von ? houseNumberValue(rule.von) : -Infinity;
+  const to = rule.bis ? houseNumberValue(rule.bis) : Infinity;
+  const parityMatches = rule.art === "G" ? number % 2 === 0 : rule.art === "U" ? number % 2 !== 0 : true;
+  return number >= from && number <= to && parityMatches;
+};
+const editableStreetAssignment = citizen => {
+  const street = streetNameVariants(citizen.street).map(streetByName).find(Boolean);
+  if (!street?.rules?.length) return street || null;
+  const plz = String(citizen.postalCode || "").trim();
+  const rules = street.rules.filter(rule => (!plz || !rule.plz || rule.plz === plz) && ruleMatchesHouseNo(rule, citizen.houseNo));
+  const rule = rules[0] || street.rules.find(item => ruleMatchesHouseNo(item, citizen.houseNo)) || street.rules[0];
+  return rule ? { ...street, district: rule.ortsteil || street.district, groupId: sokoGroupId(rule.soko), rule } : street;
+};
 const preciseStreetAssignment = citizen => {
   const assignment = streetNameVariants(citizen.street).map(street => {
     try {
@@ -311,6 +361,8 @@ const preciseStreetAssignment = citizen => {
     } : null;
 };
 const streetAssignment = citizen => {
+  const editable = editableStreetAssignment(citizen);
+  if (editable?.groupId) return editable;
   const precise = preciseStreetAssignment(citizen);
   const street = streetByName(precise?.name || citizen.street);
   return precise ? { ...(street || {}), ...precise } : street;
@@ -339,10 +391,10 @@ const filteredCitizens = () => activeCitizens().filter(citizen => {
 });
 const documentCitizens = () => filteredCitizens().filter(citizen => citizen.status === "geprüft");
 
-const field = (name, label, value, type = "text", extra = "") => `
+const field = (name, label, value, type = "text", extra = "", inputAttrs = "") => `
   <div class="field ${extra}">
     <label for="${name}">${label}</label>
-    <input id="${name}" name="${name}" type="${type}" value="${escapeHtml(value)}">
+    <input id="${name}" name="${name}" type="${type}" value="${escapeHtml(value)}" ${inputAttrs}>
   </div>
 `;
 const emailField = (name, label, value, extra = "") => {
@@ -409,6 +461,27 @@ const senderOptions = () => state.data.senders.map(sender => [sender.id, sender.
 const templateOptions = () => state.data.templates.map(template => [template.id, template.name]);
 const occasionOptions = () => [["Geburtstag", "Geburtstag"], ["Jubiläum", "Jubiläum"], ["Einladung", "Einladung"]];
 const formatOptions = () => [["DIN A4 Brief", "DIN A4 Brief"], ["DIN A4 quer", "DIN A4 quer"], ["A5 Karte", "A5 Karte"], ["A5 Karte quer", "A5 Karte quer"], ["Quadratkarte 210 mm", "Quadratkarte 210 mm"]];
+const streetRuleArtOptions = () => [["F", "fortlaufend"], ["G", "gerade"], ["U", "ungerade"]];
+const streetRuleRows = street => `
+  <div class="street-rule-list field full">
+    <label>Abschnitte und Zuständigkeit</label>
+    <div class="street-rule-head">
+      <span>PLZ</span><span>Ortsteil</span><span>von</span><span>bis</span><span>Art</span><span>SOKO</span><span></span>
+    </div>
+    ${(street.rules?.length ? street.rules : [{ id: "new" }]).map((rule, index) => `
+      <div class="street-rule-row" data-rule-row>
+        <input type="hidden" name="ruleId" value="${escapeHtml(rule.id || `new-${index}`)}">
+        <input name="plz" value="${escapeHtml(rule.plz || "")}" inputmode="numeric" placeholder="134...">
+        <input name="ortsteil" value="${escapeHtml(rule.ortsteil || street.district || "")}">
+        <input name="von" value="${escapeHtml(rule.von || "")}" placeholder="alle">
+        <input name="bis" value="${escapeHtml(rule.bis || "")}" placeholder="alle">
+        <select name="art">${streetRuleArtOptions().map(([value, label]) => `<option value="${value}" ${String(rule.art || "F") === value ? "selected" : ""}>${label}</option>`).join("")}</select>
+        <select name="soko">${sokoCodesFromDirectory().map(code => `<option value="${code}" ${String(rule.soko || "").padStart(2, "0") === code ? "selected" : ""}>${sokoGroupId(code)}</option>`).join("")}</select>
+        <button type="button" class="ghost-button" data-action="delete-street-rule" data-rule-id="${escapeHtml(rule.id || `new-${index}`)}">Löschen</button>
+      </div>
+    `).join("")}
+  </div>
+`;
 const statusPill = status => `<span class="pill ${status === "offen" ? "gold" : status === "geprüft" ? "green" : ""}">${escapeHtml(status)}</span>`;
 const assignmentPill = citizen => {
   const group = groupForCitizen(citizen);
@@ -753,6 +826,46 @@ const viewTitles = {
   import: "LABO-Import"
 };
 
+const regionAssignmentContent = () => {
+  const street = selectedStreet();
+  return `
+    <h2>Zuordnung</h2>
+    <div class="region-panel-scroll">
+      ${street ? `
+        <form id="street-form" class="form-grid">
+          <input type="hidden" name="id" value="${escapeHtml(street.id)}">
+          ${field("name", "Straße", street.name)}
+          ${field("district", "Ortsteil gesamt", street.district, "text", "", "readonly")}
+          ${field("groupId", "SOKO gesamt", streetGroupDisplay(street), "text", "", "readonly")}
+          ${streetRuleRows(street)}
+          <div class="field full">
+            <button type="button" class="ghost-button" data-action="add-street-rule">Abschnitt hinzufügen</button>
+          </div>
+          <div class="field full">
+            <button type="button" class="primary-button" data-action="save-street">Zuordnung speichern</button>
+          </div>
+        </form>
+        <div class="list" style="margin-top:16px">
+          ${activeCitizens().filter(citizen => normalize(citizen.street) === normalize(street.name)).map(citizen => `
+            <div class="list-item">
+              <div><strong>${escapeHtml(citizen.firstName)} ${escapeHtml(citizen.lastName)}</strong><span class="muted">${formatDate(citizen.birthDate)}</span></div>
+              ${assignmentPill(citizen)}
+            </div>
+          `).join("") || `<div class="empty-state">Keine Jubilare in dieser Straße</div>`}
+        </div>
+      ` : `<div class="empty-state">Keine Straße ausgewählt</div>`}
+    </div>
+  `;
+};
+const renderRegionAssignment = () => {
+  const element = $("#region-assignment-panel");
+  if (!element) {
+    render();
+    return;
+  }
+  element.innerHTML = regionAssignmentContent();
+};
+
 const views = {
   dashboard: () => {
     const citizens = activeCitizens();
@@ -910,36 +1023,17 @@ const views = {
 
   regions: () => {
     const street = selectedStreet();
-    const unassigned = state.data.streets.filter(item => !item.groupId);
+    const unassigned = state.data.streets.filter(item => !item.rules?.some(rule => rule.soko));
     return `
-      <div class="grid two">
-        <section class="panel">
+      <div class="${street ? "region-split" : "grid two"}" ${street ? `style="--region-left:${state.regionSplit}%"` : ""}>
+        <section class="panel region-panel">
           <h2>Straßenverzeichnis</h2>
           ${unassigned.length ? `<div class="alert">${unassigned.length} Straße ohne SOKO-Zuordnung</div>` : ""}
-          <div style="margin-top:12px">${gridHost("streets", 500)}</div>
+          <div class="region-panel-scroll region-grid-scroll">${gridHost("streets", 500)}</div>
         </section>
-        <section class="panel">
-          <h2>Zuordnung</h2>
-          ${street ? `
-            <form id="street-form" class="form-grid">
-              <input type="hidden" name="id" value="${escapeHtml(street.id)}">
-              ${field("name", "Straße", street.name)}
-              ${selectField("district", "Ortsteil", street.district, districtOptions(street.district))}
-              ${field("area", "Planquadrat/Gebiet", street.area)}
-              ${selectField("groupId", "SOKO-Gruppe", street.groupId, [["", "offen"], ...sokoSelectOptions()])}
-              <div class="field full">
-                <button type="button" class="primary-button" data-action="save-street">Zuordnung speichern</button>
-              </div>
-            </form>
-            <div class="list" style="margin-top:16px">
-              ${activeCitizens().filter(citizen => normalize(citizen.street) === normalize(street.name)).map(citizen => `
-                <div class="list-item">
-                  <div><strong>${escapeHtml(citizen.firstName)} ${escapeHtml(citizen.lastName)}</strong><span class="muted">${formatDate(citizen.birthDate)}</span></div>
-                  ${assignmentPill(citizen)}
-                </div>
-              `).join("") || `<div class="empty-state">Keine Jubilare in dieser Straße</div>`}
-            </div>
-          ` : `<div class="empty-state">Keine Straße ausgewählt</div>`}
+        ${street ? `<div class="vertical-splitter" data-splitter="region" role="separator" aria-orientation="vertical" aria-label="Straßenverzeichnis und Zuordnung aufteilen" aria-valuemin="20" aria-valuemax="80" aria-valuenow="${state.regionSplit}" tabindex="0"></div>` : ""}
+        <section class="panel region-panel" id="region-assignment-panel">
+          ${regionAssignmentContent()}
         </section>
       </div>
     `;
@@ -1330,20 +1424,21 @@ const gridDefinitions = {
       id: street.id,
       name: street.name,
       district: street.district,
-      area: street.area,
-      groupId: street.groupId || "offen"
+      groupId: streetGroupDisplay(street),
+      ruleCount: street.rules?.length || 0
     })),
     columnDefs: [
       { headerName: "Straße", field: "name", width: 320, minWidth: 220 },
       { headerName: "Ortsteil", field: "district", width: 175, minWidth: 145 },
-      { headerName: "Planquadrat/Gebiet", field: "area", width: 190, minWidth: 160 },
-      { headerName: "SOKO", field: "groupId", width: 115, minWidth: 105, cellRenderer: params => params.value === "offen" ? badgeCell("offen", "red") : badgeCell(params.value) }
+      { headerName: "Abschnitte", field: "ruleCount", width: 120, minWidth: 105, filter: "agNumberColumnFilter" },
+      { headerName: "SOKO", field: "groupId", width: 210, minWidth: 125, cellRenderer: params => params.value === "offen" ? badgeCell("offen", "red") : badgeCell(params.value) }
     ],
     getRowId: params => params.data.id,
     getRowClass: params => params.data.id === state.selectedStreetId ? "selected" : "",
     onRowClicked: params => {
       state.selectedStreetId = params.data.id;
-      render();
+      renderRegionAssignment();
+      state.gridApis.streets?.redrawRows?.();
     }
   }),
   documents: () => ({
@@ -1389,6 +1484,7 @@ const mountGrid = element => {
   const onGridReady = definition.onGridReady;
   definition.onGridReady = params => {
     onGridReady?.(params);
+    state.gridApis[gridKey] = params.api;
     restoreGridColumnWidths(gridKey, params.api);
   };
   definition.onColumnResized = params => {
@@ -1406,6 +1502,35 @@ const render = () => {
 };
 
 const formValues = selector => Object.fromEntries(new FormData($(selector)).entries());
+const streetRuleFormValues = selector => [...$(selector).querySelectorAll("[data-rule-row]")].map((row, index) => {
+  const value = name => row.querySelector(`[name="${name}"]`)?.value.trim() || "";
+  return {
+    id: value("ruleId") || `custom-${index + 1}`,
+    plz: value("plz"),
+    ortsteil: normalizeStreetDistrict(value("ortsteil")),
+    von: value("von"),
+    bis: value("bis"),
+    art: value("art") || "F",
+    soko: value("soko") ? value("soko").padStart(2, "0") : ""
+  };
+}).filter(rule => rule.plz || rule.ortsteil || rule.soko);
+const streetPatchFromForm = selector => {
+  const values = formValues(selector);
+  const current = byId(state.data.streets, values.id);
+  const streetIndex = Number(String(values.id).match(/\d+/)?.[0] || 1) - 1;
+  const rules = normalizeStreetRules(streetRuleFormValues(selector), streetIndex);
+  return {
+    current,
+    patch: {
+      ...current,
+      id: values.id,
+      name: values.name,
+      district: streetDistrictSummary(rules),
+      groupId: streetGroupSummary(rules),
+      rules
+    }
+  };
+};
 const validateEmailFields = selector => {
   const fields = [...$(selector).querySelectorAll("input[type='email']")];
   const invalid = fields.filter(input => !isValidEmail(input.value));
@@ -1495,11 +1620,37 @@ const actions = {
     render();
   },
   "save-street": () => {
-    const values = formValues("#street-form");
-    state.data.streets = updateItem(state.data.streets, values.id, values);
+    const { patch } = streetPatchFromForm("#street-form");
+    if (!patch.rules.length) {
+      toast("Bitte mindestens einen Zuständigkeitsabschnitt erfassen.");
+      return;
+    }
+    state.data.streets = updateItem(state.data.streets, patch.id, patch);
     saveData();
     render();
     toast("Zuständigkeit gespeichert.");
+  },
+  "add-street-rule": () => {
+    const { patch } = streetPatchFromForm("#street-form");
+    const template = patch.rules.at(-1) || {};
+    const nextRule = { ...template, id: `custom-${Date.now()}`, von: "", bis: "" };
+    const nextPatch = { ...patch, rules: [...patch.rules, nextRule] };
+    state.data.streets = updateItem(state.data.streets, patch.id, nextPatch);
+    saveData();
+    render();
+  },
+  "delete-street-rule": event => {
+    const { patch } = streetPatchFromForm("#street-form");
+    const ruleId = event.target.closest("[data-rule-id]")?.dataset.ruleId;
+    const rules = patch.rules.filter(rule => rule.id !== ruleId);
+    if (!rules.length) {
+      toast("Mindestens ein Abschnitt muss erhalten bleiben.");
+      return;
+    }
+    const nextPatch = { ...patch, district: streetDistrictSummary(rules), groupId: streetGroupSummary(rules), rules };
+    state.data.streets = updateItem(state.data.streets, patch.id, nextPatch);
+    saveData();
+    render();
   },
   "select-sender": event => {
     state.selectedSenderId = event.target.closest("[data-id]").dataset.id;
@@ -1819,6 +1970,7 @@ document.addEventListener("pointerdown", event => {
     document.body.classList.remove("is-resizing");
     document.removeEventListener("pointermove", move);
     document.removeEventListener("pointerup", done);
+    localStorage.setItem(splitStorageKey(key), String(state[`${key}Split`]));
   };
   document.addEventListener("pointermove", move);
   document.addEventListener("pointerup", done);
@@ -1836,6 +1988,7 @@ document.addEventListener("keydown", event => {
   state[`${key}Split`] = next;
   split.style.setProperty(`--${key}-left`, `${next}%`);
   splitter.setAttribute("aria-valuenow", String(next));
+  localStorage.setItem(splitStorageKey(key), String(next));
 });
 
 document.addEventListener("change", event => {

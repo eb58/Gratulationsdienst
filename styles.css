@@ -286,6 +286,36 @@ h3 {
   align-items: start;
 }
 
+.region-split {
+  display: grid;
+  grid-template-columns: minmax(360px, var(--region-left, 58%)) 12px minmax(360px, 1fr);
+  align-items: stretch;
+  height: min(760px, calc(100vh - 190px));
+  min-height: 560px;
+}
+
+.region-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.region-panel-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  margin-top: 12px;
+}
+
+.region-grid-scroll {
+  overflow: hidden;
+}
+
+.region-grid-scroll .ag-grid-host {
+  height: 100% !important;
+}
+
 .vertical-splitter {
   position: relative;
   cursor: col-resize;
@@ -388,6 +418,30 @@ body.is-resizing {
   color: var(--muted);
   font-size: 12px;
   font-weight: 700;
+}
+
+.street-rule-list {
+  gap: 8px;
+}
+
+.street-rule-head,
+.street-rule-row {
+  display: grid;
+  grid-template-columns: 82px minmax(120px, 1fr) 72px 72px 110px 130px 92px;
+  gap: 8px;
+  align-items: center;
+}
+
+.street-rule-head {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.street-rule-row input,
+.street-rule-row select,
+.street-rule-row button {
+  min-height: 36px;
 }
 
 input,
@@ -1292,12 +1346,37 @@ tbody tr.selected {
   .grid.three,
   .grid.four,
   .import-split,
+  .region-split,
+  .citizen-split,
   .toolbar,
   .form-grid,
   .form-grid.three,
   .file-action-row,
   .split-controls {
     grid-template-columns: 1fr;
+  }
+
+  .street-rule-head {
+    display: none;
+  }
+
+  .street-rule-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--panel-soft);
+  }
+
+  .region-split {
+    height: auto;
+    min-height: 0;
+  }
+
+  .region-panel,
+  .region-panel-scroll {
+    height: auto;
+    overflow: visible;
   }
 
   .vertical-splitter {
