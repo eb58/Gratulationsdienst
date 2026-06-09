@@ -713,7 +713,7 @@ const printSquareCardBack = (citizen) => {
     ? `<img src="${base}assets/gratulationskarte-reinickendorf-r%C3%BCckseite-210.jpg" style="position:absolute;top:0;left:0;width:210mm;height:210mm;display:block" alt="">`
     : "";
   return `
-  <div style="position:relative;width:210mm;height:210mm;page-break-after:always;break-after:page;background:#fff">
+  <div style="position:relative;width:210mm;height:210mm;page-break-after:always;break-after:page;background:#fff;transform:rotate(180deg);transform-origin:center center">
     ${bgImg}
     <div style="position:absolute;left:20mm;top:155mm;font-size:10.5pt;font-family:Arial,sans-serif;line-height:6.5mm">
       <div>${escapeHtml(citizen.salutation || "")} ${escapeHtml(citizen.firstName || "")} ${escapeHtml(citizen.lastName || "")}</div>
