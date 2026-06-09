@@ -581,12 +581,46 @@ const mapPath = (coords, project) => coords.map((coord, index) => {
   const [x, y] = project(coord);
   return `${index ? "L" : "M"}${x.toFixed(1)} ${y.toFixed(1)}`;
 }).join(" ");
-const mapAddressPointsSvg = project => assignedAddressPoints().map(address => {
+const mapStreetPathGroups = (segments, project) => {
+  const groups = {};
+  segments.forEach(segment => {
+    const path = mapPath(segment.coords, project);
+    segment.groupIds.forEach((groupId, index) => {
+      const dash = segment.groupIds.length > 1 ? `${index * 6}` : "";
+      const key = `${groupId}|${dash}`;
+      groups[key] = groups[key] || { groupId, dash, paths: [], count: 0 };
+      groups[key].paths.push(path);
+      groups[key].count += 1;
+    });
+  });
+  return Object.values(groups);
+};
+const mapStreetPathsSvg = (segments, project) => mapStreetPathGroups(segments, project).map(group => `
+  <path class="map-street-group" d="${group.paths.join(" ")}" style="stroke:${escapeHtml(sokoColors[group.groupId] || sokoColors.offen)}" ${group.dash ? `stroke-dasharray="12 8" stroke-dashoffset="${group.dash}"` : ""}>
+    <title>${escapeHtml(`${group.groupId}: ${group.count.toLocaleString("de-DE")} Straßenabschnitte`)}</title>
+  </path>
+`).join("");
+const mapPointPath = (addresses, project) => addresses.map(address => {
   const [x, y] = project([address.lon, address.lat]);
-  const groupId = addressGroupId(address);
-  const title = `${address.street} ${address.houseNumber} · ${groupId}`;
-  return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="1.8" fill="${escapeHtml(sokoColors[groupId] || sokoColors.offen)}"><title>${escapeHtml(title)}</title></circle>`;
+  const left = (x - 1.3).toFixed(1);
+  const top = (y - 1.3).toFixed(1);
+  return `M${left} ${top}h2.6v2.6h-2.6z`;
 }).join("");
+const mapAddressPointGroups = () => {
+  const groups = {};
+  assignedAddressPoints().forEach(address => {
+    const groupId = addressGroupId(address);
+    groups[groupId] = groups[groupId] || [];
+    groups[groupId].push(address);
+  });
+  return groups;
+};
+const mapAddressPointsSvg = project => Object.entries(mapAddressPointGroups())
+  .map(([groupId, addresses]) => `
+    <path class="map-address-point-group" d="${mapPointPath(addresses, project)}" style="fill:${escapeHtml(sokoColors[groupId] || sokoColors.offen)}">
+      <title>${escapeHtml(`${groupId}: ${addresses.length.toLocaleString("de-DE")} Adressen`)}</title>
+    </path>
+  `).join("");
 const streetMapSvg = () => {
   const data = mapData();
   const width = 1120;
@@ -598,17 +632,7 @@ const streetMapSvg = () => {
     <svg class="street-map" viewBox="0 0 ${width} ${height}" role="img" aria-label="Straßenkarte Reinickendorf nach SOKO-Zuständigkeit">
       <rect class="map-background" width="${width}" height="${height}" rx="0"></rect>
       <g class="map-tiles">${mapTileImages(data.bbox, viewport)}</g>
-      <g class="map-streets">
-        ${segments.flatMap(segment => {
-          const path = mapPath(segment.coords, project);
-          const title = `${segment.name} · ${segment.groupIds.join(", ")}`;
-          return segment.groupIds.map((groupId, index) => `
-          <path d="${path}" stroke="${escapeHtml(sokoColors[groupId] || sokoColors.offen)}" ${segment.groupIds.length > 1 ? `stroke-dasharray="12 8" stroke-dashoffset="${index * 6}"` : ""}>
-            <title>${escapeHtml(title)}</title>
-          </path>
-        `);
-        }).join("")}
-      </g>
+      <g class="map-streets">${mapStreetPathsSvg(segments, project)}</g>
       <g class="map-address-points">${mapAddressPointsSvg(project)}</g>
     </svg>
   ` : `<div class="empty-state">Keine Kartendaten geladen</div>`;

@@ -1201,16 +1201,18 @@ tbody tr.selected {
   opacity: 1;
 }
 
-.street-map .map-address-points circle {
+.street-map .map-address-point-group {
+  filter: none;
   opacity: 0.78;
   pointer-events: all;
   stroke: #fff;
-  stroke-width: 0.55;
+  stroke-linejoin: miter;
+  stroke-width: 0.35;
 }
 
-.street-map .map-address-points circle:hover {
+.street-map .map-address-point-group:hover {
   opacity: 1;
-  r: 3.4;
+  stroke-width: 0.35;
 }
 
 .map-attribution {
