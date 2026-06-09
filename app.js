@@ -1,8 +1,8 @@
+window.GRATULATIONSDIENST_VERSION = "20260608-6";
+
 const STORAGE_KEY = "gratulationsdienst";
 const MONTH_KEY = "gd_month_filter";
 const API_BASE = "php-api/index.php";
-const APP_VERSION = "20260608-6";
-window.GRATULATIONSDIENST_VERSION = APP_VERSION;
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
 const todayIso = () => new Date().toISOString().slice(0, 10);
@@ -581,7 +581,6 @@ const printCurrentRun = () => {
   const firstDoc = state.generatedDocs[0];
   const template = byId(state.data.templates, firstDoc.templateId) || selectedTemplate();
   const settings = printPageSettings(template.format);
-  const base = window.location.href.replace(/[^/]*$/, "");
   const pages = printDocumentPages();
   const w = window.open("", "_blank", "width=900,height=700");
   w.document.write(`<!doctype html><html lang="de"><head>
@@ -595,7 +594,19 @@ const printCurrentRun = () => {
   </head><body>${pages}</body></html>`);
   w.document.close();
   w.addEventListener("afterprint", () => { completePrintRun(); w.close(); }, { once: true });
-  w.onload = () => setTimeout(() => { w.focus(); w.print(); }, 300);
+  const imgs = [...w.document.querySelectorAll("img")];
+  let pending = imgs.filter(i => !i.complete).length;
+  const doPrint = () => { w.focus(); w.print(); };
+  if (pending === 0) {
+    doPrint();
+  } else {
+    imgs.forEach(img => {
+      if (!img.complete) {
+        img.addEventListener("load", () => { if (--pending === 0) doPrint(); }, { once: true });
+        img.addEventListener("error", () => { if (--pending === 0) doPrint(); }, { once: true });
+      }
+    });
+  }
 };
 
 const formatDateDe = iso => {
@@ -686,16 +697,30 @@ const printSquareCardPage = (template, citizen, sender) => {
     ? `<img src="${base}assets/gratulationskarte-reinickendorf-210.jpg" style="position:absolute;top:0;left:0;width:210mm;height:210mm;display:block" alt="">`
     : "";
   return `
-  <section class="print-page format-square">
-    <div style="position:relative;width:210mm;height:210mm;overflow:hidden;background:#fff">
-      ${bgImg}
-      <div style="position:absolute;top:113mm;right:0;bottom:38mm;left:0;box-sizing:border-box;padding:8mm 18mm 0;overflow:hidden">
-        <div style="font-weight:800;font-size:12pt;line-height:1.18;margin:0 0 3mm;color:#173b38;font-family:Arial,sans-serif">${escapeHtml(rendered.subject)}</div>
-        <div style="font-size:9.5pt;line-height:1.32;white-space:pre-wrap;font-family:Arial,sans-serif">${escapeHtml(rendered.body)}</div>
-        <div style="margin-top:3mm;font-size:14pt;color:#0f5d58;font-family:'Segoe Script','Brush Script MT',cursive">${escapeHtml(sender.signature)}</div>
-      </div>
+  <div style="position:relative;width:210mm;height:210mm;page-break-after:always;break-after:page;background:#fff">
+    ${bgImg}
+    <div style="position:absolute;top:113mm;right:0;bottom:38mm;left:0;box-sizing:border-box;padding:8mm 18mm 0;overflow:hidden">
+      <div style="font-weight:800;font-size:12pt;line-height:1.18;margin:0 0 3mm;color:#173b38;font-family:Arial,sans-serif">${escapeHtml(rendered.subject)}</div>
+      <div style="font-size:9.5pt;line-height:1.32;white-space:pre-wrap;font-family:Arial,sans-serif">${escapeHtml(rendered.body)}</div>
+      <div style="margin-top:3mm;font-size:14pt;color:#0f5d58;font-family:'Segoe Script','Brush Script MT',cursive">${escapeHtml(sender.signature)}</div>
     </div>
-  </section>`;
+  </div>`;
+};
+
+const printSquareCardBack = (citizen) => {
+  const base = window.location.href.replace(/[^/]*$/, "");
+  const bgImg = state.printBackground
+    ? `<img src="${base}assets/gratulationskarte-reinickendorf-r%C3%BCckseite-210.jpg" style="position:absolute;top:0;left:0;width:210mm;height:210mm;display:block" alt="">`
+    : "";
+  return `
+  <div style="position:relative;width:210mm;height:210mm;page-break-after:always;break-after:page;background:#fff">
+    ${bgImg}
+    <div style="position:absolute;left:20mm;top:155mm;font-size:10.5pt;font-family:Arial,sans-serif;line-height:6.5mm">
+      <div>${escapeHtml(citizen.salutation || "")} ${escapeHtml(citizen.firstName || "")} ${escapeHtml(citizen.lastName || "")}</div>
+      <div>${escapeHtml(citizen.street || "")} ${escapeHtml(citizen.houseNo || "")}</div>
+      <div>${escapeHtml(citizen.postalCode || "")} Berlin-${escapeHtml(citizen.district || "")}</div>
+    </div>
+  </div>`;
 };
 
 const printDocumentPages = () => {
@@ -705,7 +730,7 @@ const printDocumentPages = () => {
     const sender = byId(state.data.senders, doc.senderId) || selectedSender();
     if (!citizen) return "";
     const format = documentFormat(template);
-    if (format.size === "square") return printSquareCardPage(template, citizen, sender);
+    if (format.size === "square") return printSquareCardPage(template, citizen, sender) + printSquareCardBack(citizen);
     return `<section class="print-page ${printFormatClass(template)}">${documentPreview(template, citizen, sender)}</section>`;
   }).join("");
 };
