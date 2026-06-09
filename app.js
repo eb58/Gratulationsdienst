@@ -93,69 +93,50 @@ const repairStoredText = value => Array.isArray(value)
   : value && typeof value === "object"
     ? Object.fromEntries(Object.entries(value).map(([key, entry]) => [key, repairStoredText(entry)]))
     : repairMojibakeText(value);
-const demoStreetAssignments = {};
-const demoStreetDistricts = {
-  "Alt-Lübars": "Lübars",
-  "Oraniendamm": "Waidmannslust",
-  "Zabel-Krüger-Damm": "Wittenau",
-  "Scharnweberstraße": "Tegel",
-  "Residenzstraße": "Reinickendorf",
-  "Hermsdorfer Damm": "Hermsdorf"
-};
+const sokoColorPalette = ["#2b7a78", "#8f6b2f", "#c44e52", "#4c78a8", "#6f4e9b", "#59a14f", "#b07aa1", "#f28e2b", "#3f6c51", "#e15759", "#7f7f7f", "#1f77b4"];
+const sokoGroupId = code => `SOKO ${code}`;
+const sokoDemoLeaderIds = Object.fromEntries(Array.from({ length: 12 }, (_, i) => [sokoGroupId(String(i + 1).padStart(2, "0")), `S-${String((i * 3) + 1).padStart(3, "0")}`]));
+const sokoCodesFromDirectory = () => [...new Set(Object.values(window.SOKO_STRASSENVERZEICHNIS || {}).flat().map(entry => entry.soko))]
+  .sort((a, b) => Number(a) - Number(b));
 const sokoColors = {
-  "SOKO 01": "#2b7a78",
-  "SOKO 02": "#8f6b2f",
-  "SOKO 03": "#c44e52",
-  "SOKO 04": "#4c78a8",
-  "SOKO 05": "#6f4e9b",
-  "SOKO 06": "#59a14f",
-  "SOKO 07": "#b07aa1",
-  "SOKO 08": "#f28e2b",
-  "SOKO 09": "#3f6c51",
-  "SOKO 10": "#e15759",
-  "SOKO 11": "#7f7f7f",
-  "SOKO 12": "#1f77b4",
+  ...Object.fromEntries(sokoCodesFromDirectory().map((code, index) => [sokoGroupId(code), sokoColorPalette[index % sokoColorPalette.length]])),
   offen: "#9aa0a6"
 };
-const fallbackStreets = [
-  { id: "STR-001", name: "Alt-Lübars", district: "Lübars", area: "Nordost", groupId: "SOKO 12" },
-  { id: "STR-002", name: "Oraniendamm", district: "Waidmannslust", area: "Nordost", groupId: "SOKO 12" },
-  { id: "STR-003", name: "Zabel-Krüger-Damm", district: "Wittenau", area: "Nordost", groupId: "SOKO 12" },
-  { id: "STR-004", name: "Scharnweberstraße", district: "Tegel", area: "West", groupId: "SOKO 07" },
-  { id: "STR-005", name: "Residenzstraße", district: "Reinickendorf", area: "Mitte", groupId: "SOKO 01" },
-  { id: "STR-006", name: "Hermsdorfer Damm", district: "Hermsdorf", area: "Nord", groupId: "SOKO 18" },
-  { id: "STR-007", name: "Neue Teststraße", district: "unbekannt", area: "offen", groupId: "" }
-];
-const buildStreetData = () => (window.REINICKENDORF_STREETS || fallbackStreets).map(street => ({
-  ...street,
-  district: demoStreetDistricts[street.name] || normalizeStreetDistrict(street.district),
-  districts: street.districts || [],
-  groupId: demoStreetAssignments[street.name] || street.groupId || ""
-}));
+const sokoStreetNames = code => Object.entries(window.SOKO_STRASSENVERZEICHNIS || {})
+  .filter(([, entries]) => entries.some(entry => entry.soko === code))
+  .map(([name]) => name);
+const buildSokoGroups = () => sokoCodesFromDirectory().map(code => {
+  const entries = Object.values(window.SOKO_STRASSENVERZEICHNIS || {}).flat().filter(entry => entry.soko === code);
+  const districts = [...new Set(entries.map(entry => entry.ortsteil))].join(" / ");
+  const sampleStreets = sokoStreetNames(code).slice(0, 3).join(", ");
+  return {
+    id: sokoGroupId(code),
+    name: `SOKO ${code}`,
+    region: [districts, sampleStreets].filter(Boolean).join(" - "),
+    leaderId: sokoDemoLeaderIds[sokoGroupId(code)] || ""
+  };
+});
+const buildStreetData = () => Object.entries(window.SOKO_STRASSENVERZEICHNIS || {}).map(([name, entries], i) => {
+  const socos = [...new Set(entries.map(e => e.soko))];
+  return {
+    id: `STR-${String(i + 1).padStart(4, "0")}`,
+    name,
+    district: entries[0].ortsteil,
+    area: "",
+    groupId: socos.length === 1 ? sokoGroupId(socos[0]) : ""
+  };
+});
 
 const sampleData = {
   citizens: [
     { id: "G-2026-001", salutation: "Frau", firstName: "Hilde", lastName: "Krüger", street: "Alt-Lübars", houseNo: "17", postalCode: "13469", district: "Lübars", birthDate: "1936-07-14", phone: "", email: "", wish: "Besuch erwünscht", notes: "Runder Geburtstag, Besuch durch SOKO vormerken.", source: "LABO CSV", updatedAt: "2026-06-06", status: "importiert" },
     { id: "G-2026-002", salutation: "Herr", firstName: "Karl", lastName: "Lehmann", street: "Oraniendamm", houseNo: "42", postalCode: "13469", district: "Waidmannslust", birthDate: "1931-07-03", phone: "030 403000", email: "", wish: "per Post", notes: "", source: "LABO CSV", updatedAt: "2026-06-06", status: "geprüft" },
-    { id: "G-2026-003", salutation: "Frau", firstName: "Elisabeth", lastName: "Sommer", street: "Scharnweberstraße", houseNo: "108", postalCode: "13405", district: "Tegel", birthDate: "1941-08-22", phone: "", email: "familie.sommer@example.test", wish: "Veranstaltungseinladung", notes: "Einladung bevorzugt per Brief.", source: "LABO CSV", updatedAt: "2026-06-06", status: "importiert" },
-    { id: "G-2026-004", salutation: "Herr", firstName: "Manfred", lastName: "Wolter", street: "Residenzstraße", houseNo: "88", postalCode: "13409", district: "Reinickendorf", birthDate: "1926-07-29", phone: "", email: "", wish: "Besuch erwünscht", notes: "100. Geburtstag, Amtsleitung informieren.", source: "LABO CSV", updatedAt: "2026-06-06", status: "geprüft" },
-    { id: "G-2026-005", salutation: "Frau", firstName: "Renate", lastName: "Berger", street: "Hermsdorfer Damm", houseNo: "14", postalCode: "13467", district: "Hermsdorf", birthDate: "1936-08-02", phone: "", email: "", wish: "per Post", notes: "", source: "LABO CSV", updatedAt: "2026-06-06", status: "importiert" },
+    { id: "G-2026-003", salutation: "Frau", firstName: "Elisabeth", lastName: "Sommer", street: "Scharnweberstr.", houseNo: "108", postalCode: "13405", district: "Reinickendorf", birthDate: "1941-08-22", phone: "", email: "familie.sommer@example.test", wish: "Veranstaltungseinladung", notes: "Einladung bevorzugt per Brief.", source: "LABO CSV", updatedAt: "2026-06-06", status: "importiert" },
+    { id: "G-2026-004", salutation: "Herr", firstName: "Manfred", lastName: "Wolter", street: "Residenzstr.", houseNo: "88", postalCode: "13409", district: "Reinickendorf", birthDate: "1926-07-29", phone: "", email: "", wish: "Besuch erwünscht", notes: "100. Geburtstag, Amtsleitung informieren.", source: "LABO CSV", updatedAt: "2026-06-06", status: "geprüft" },
+    { id: "G-2026-005", salutation: "Frau", firstName: "Renate", lastName: "Berger", street: "Hermsdorfer Damm", houseNo: "92", postalCode: "13467", district: "Hermsdorf", birthDate: "1936-08-02", phone: "", email: "", wish: "per Post", notes: "", source: "LABO CSV", updatedAt: "2026-06-06", status: "importiert" },
     { id: "G-2026-006", salutation: "Herr", firstName: "Joachim", lastName: "Neumann", street: "Zabel-Krüger-Damm", houseNo: "5", postalCode: "13469", district: "Wittenau", birthDate: "1941-07-18", phone: "", email: "", wish: "Besuch erwünscht", notes: "", source: "LABO CSV", updatedAt: "2026-06-06", status: "offen" }
   ],
-  sokoGroups: [
-    { id: "SOKO 01", name: "SOKO Reinickendorf West", region: "Reinickendorf westlich / Schäfersee", leaderId: "S-001" },
-    { id: "SOKO 02", name: "SOKO Reinickendorf Ost", region: "Reinickendorf Ost / Residenzstraße", leaderId: "S-004" },
-    { id: "SOKO 03", name: "SOKO Borsigwalde", region: "Borsigwalde / Tegel Südost", leaderId: "S-007" },
-    { id: "SOKO 04", name: "SOKO Tegel Mitte", region: "Tegel Mitte / Berliner Straße", leaderId: "S-010" },
-    { id: "SOKO 05", name: "SOKO Tegel Nord", region: "Tegel Nord / Flughafenbereich", leaderId: "S-013" },
-    { id: "SOKO 06", name: "SOKO Heiligensee", region: "Heiligensee", leaderId: "S-016" },
-    { id: "SOKO 07", name: "SOKO Konradshöhe", region: "Konradshöhe / Tegelort", leaderId: "S-019" },
-    { id: "SOKO 08", name: "SOKO Frohnau", region: "Frohnau", leaderId: "S-022" },
-    { id: "SOKO 09", name: "SOKO Hermsdorf", region: "Hermsdorf", leaderId: "S-025" },
-    { id: "SOKO 10", name: "SOKO Lübars-Waidmannslust", region: "Lübars / Waidmannslust", leaderId: "S-028" },
-    { id: "SOKO 11", name: "SOKO Wittenau", region: "Wittenau", leaderId: "S-031" },
-    { id: "SOKO 12", name: "SOKO Märkisches Viertel", region: "Märkisches Viertel", leaderId: "S-034" }
-  ],
+  sokoGroups: buildSokoGroups(),
   sokoMembers: [
     { id: "S-001", salutation: "Frau", firstName: "Andrea", lastName: "Schulz", groupId: "SOKO 01", street: "Mittelbruchzeile 12", phone: "030 401000", mobile: "", email: "andrea.schulz@example.test", bank: "DE50 1000 0000 0000 0000 01", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: true },
     { id: "S-002", salutation: "Herr", firstName: "Peter", lastName: "Klein", groupId: "SOKO 01", street: "Reginhardstraße 5", phone: "", mobile: "0170 000002", email: "peter.klein@example.test", bank: "DE23 1000 0000 0000 0000 02", allowance: "35,00", termFrom: "2025-01-01", termTo: "2028-12-31", billingAmount: "15,00", isLeader: false },
@@ -310,7 +291,35 @@ const toast = message => {
   setTimeout(() => $("#toast").classList.remove("show"), 2200);
 };
 
-const streetAssignment = citizen => state.data.streets.find(street => normalize(street.name) === normalize(citizen.street));
+const streetByName = name => state.data.streets.find(street => normalize(street.name) === normalize(name));
+const streetNameVariants = value => {
+  const name = String(value ?? "").trim();
+  return [...new Set([
+    name,
+    name.replace(/stra\u00dfe/giu, "str."),
+    name.replace(/strasse/giu, "str."),
+    name.replace(/str\./giu, "stra\u00dfe")
+  ].filter(Boolean))];
+};
+const preciseStreetAssignment = citizen => {
+  const assignment = streetNameVariants(citizen.street).map(street => {
+    try {
+      return window.findeSoko?.(street, citizen.houseNo, citizen.postalCode);
+    } catch {
+      return null;
+    }
+  }).find(Boolean);
+  return assignment ? {
+      name: assignment.strasse,
+      district: assignment.ortsteil,
+      groupId: sokoGroupId(assignment.soko)
+    } : null;
+};
+const streetAssignment = citizen => {
+  const precise = preciseStreetAssignment(citizen);
+  const street = streetByName(precise?.name || citizen.street);
+  return precise ? { ...(street || {}), ...precise } : street;
+};
 const groupForCitizen = citizen => byId(state.data.sokoGroups, streetAssignment(citizen)?.groupId);
 const leaderForGroup = group => byId(state.data.sokoMembers, group?.leaderId);
 const selectedCitizen = () => {
@@ -398,7 +407,9 @@ const radioField = (name, label, value, options, extra = "") => `
     </div>
   </div>
 `;
-const groupOptions = () => [["alle", "Alle SOKO-Gruppen"], ...state.data.sokoGroups.map(group => [group.id, group.id])];
+const sokoSelectionGroups = () => mergeById(state.data.sokoGroups, sampleData.sokoGroups, group => sampleData.sokoGroups.some(defaultGroup => defaultGroup.id === group.id));
+const sokoSelectOptions = () => sokoSelectionGroups().map(group => [group.id, `${group.id} ${group.region}`]);
+const groupOptions = () => [["alle", "Alle SOKO-Gruppen"], ...sokoSelectionGroups().map(group => [group.id, group.id])];
 const senderOptions = () => state.data.senders.map(sender => [sender.id, sender.role]);
 const templateOptions = () => state.data.templates.map(template => [template.id, template.name]);
 const occasionOptions = () => [["Geburtstag", "Geburtstag"], ["Jubiläum", "Jubiläum"], ["Einladung", "Einladung"]];
@@ -881,7 +892,7 @@ const views = {
               ${selectField("salutation", "Anrede", member.salutation, [["Frau", "Frau"], ["Herr", "Herr"], ["Divers", "Divers"]])}
               ${field("firstName", "Vorname", member.firstName)}
               ${field("lastName", "Nachname", member.lastName)}
-              ${selectField("groupId", "SOKO", member.groupId, state.data.sokoGroups.map(group => [group.id, `${group.id} ${group.region}`]))}
+              ${selectField("groupId", "SOKO", member.groupId, sokoSelectOptions())}
               ${field("street", "Adresse", member.street, "text", "full")}
               ${field("phone", "Telefon", member.phone)}
               ${field("mobile", "Handy", member.mobile)}
@@ -920,7 +931,7 @@ const views = {
               ${field("name", "Straße", street.name)}
               ${selectField("district", "Ortsteil", street.district, districtOptions(street.district))}
               ${field("area", "Planquadrat/Gebiet", street.area)}
-              ${selectField("groupId", "SOKO-Gruppe", street.groupId, [["", "offen"], ...state.data.sokoGroups.map(group => [group.id, `${group.id} ${group.region}`])])}
+              ${selectField("groupId", "SOKO-Gruppe", street.groupId, [["", "offen"], ...sokoSelectOptions()])}
               <div class="field full">
                 <button type="button" class="primary-button" data-action="save-street">Zuordnung speichern</button>
               </div>
@@ -1243,6 +1254,30 @@ const filteredMembers = () => state.data.sokoMembers.filter(member => {
   return (state.filters.groupId === "alle" || member.groupId === state.filters.groupId)
     && (!state.filters.q || haystack.includes(normalize(state.filters.q)));
 });
+const gridColumnStorageKey = gridKey => `gratulationsdienst.grid.${gridKey}.columnWidths`;
+const storedGridColumnState = gridKey => {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(gridColumnStorageKey(gridKey)) || "[]");
+    return Array.isArray(parsed) ? parsed.filter(item => item?.colId && Number.isFinite(item.width)) : [];
+  } catch {
+    return [];
+  }
+};
+const restoreGridColumnWidths = (gridKey, api) => {
+  const state = storedGridColumnState(gridKey);
+  if (state.length) api.applyColumnState?.({ state, applyOrder: false });
+};
+const saveGridColumnWidths = (gridKey, api) => {
+  const state = api.getColumnState?.()
+    ?.map(({ colId, width }) => ({ colId, width }))
+    .filter(item => item.colId && Number.isFinite(item.width));
+  if (!state?.length) return;
+  try {
+    localStorage.setItem(gridColumnStorageKey(gridKey), JSON.stringify(state));
+  } catch {
+    // localStorage may be unavailable in restricted browser modes.
+  }
+};
 const gridDefinitions = {
   citizens: () => ({
     ...baseGridOptions(),
@@ -1256,12 +1291,12 @@ const gridDefinitions = {
       status: citizen.status
     })),
     columnDefs: [
-      { headerName: "Name", field: "name", minWidth: 130, flex: 1 },
-      { headerName: "Geburtstag", field: "birthday", width: 105, valueFormatter: params => formatDate(params.value) },
-      { headerName: "Alter", field: "age", width: 70, filter: "agNumberColumnFilter" },
-      { headerName: "Adresse", field: "address", minWidth: 125, flex: 1 },
-      { headerName: "SOKO", field: "groupId", width: 94, cellRenderer: params => params.value === "offen" ? badgeCell("offen", "red") : badgeCell(params.value) },
-      { headerName: "Status", field: "status", width: 98, cellRenderer: params => statusPill(params.value) }
+      { headerName: "Name", field: "name", width: 220, minWidth: 150 },
+      { headerName: "Geburtstag", field: "birthday", width: 130, minWidth: 120, valueFormatter: params => formatDate(params.value) },
+      { headerName: "Alter", field: "age", width: 90, minWidth: 80, filter: "agNumberColumnFilter" },
+      { headerName: "Adresse", field: "address", width: 280, minWidth: 180 },
+      { headerName: "SOKO", field: "groupId", width: 115, minWidth: 105, cellRenderer: params => params.value === "offen" ? badgeCell("offen", "red") : badgeCell(params.value) },
+      { headerName: "Status", field: "status", width: 135, minWidth: 115, cellRenderer: params => statusPill(params.value) }
     ],
     getRowId: params => params.data.id,
     getRowClass: params => params.data.id === state.selectedCitizenId ? "selected" : "",
@@ -1281,11 +1316,11 @@ const gridDefinitions = {
       role: member.isLeader ? "Leitung" : "Mitglied"
     })),
     columnDefs: [
-      { headerName: "Name", field: "name", minWidth: 190, flex: 1 },
-      { headerName: "SOKO", field: "groupId", width: 125, cellRenderer: params => badgeCell(params.value) },
-      { headerName: "Kontakt", field: "contact", minWidth: 210, flex: 1 },
-      { headerName: "Berufung", field: "term", minWidth: 210 },
-      { headerName: "Rolle", field: "role", width: 130, cellRenderer: params => params.value === "Leitung" ? badgeCell(params.value, "green") : badgeCell(params.value) }
+      { headerName: "Name", field: "name", width: 230, minWidth: 170 },
+      { headerName: "SOKO", field: "groupId", width: 115, minWidth: 105, cellRenderer: params => badgeCell(params.value) },
+      { headerName: "Kontakt", field: "contact", width: 285, minWidth: 190 },
+      { headerName: "Berufung", field: "term", width: 190, minWidth: 170 },
+      { headerName: "Rolle", field: "role", width: 125, minWidth: 110, cellRenderer: params => params.value === "Leitung" ? badgeCell(params.value, "green") : badgeCell(params.value) }
     ],
     getRowId: params => params.data.id,
     getRowClass: params => params.data.id === state.selectedMemberId ? "selected" : "",
@@ -1304,10 +1339,10 @@ const gridDefinitions = {
       groupId: street.groupId || "offen"
     })),
     columnDefs: [
-      { headerName: "Straße", field: "name", minWidth: 210, flex: 1 },
-      { headerName: "Ortsteil", field: "district", minWidth: 145 },
-      { headerName: "Planquadrat/Gebiet", field: "area", minWidth: 160 },
-      { headerName: "SOKO", field: "groupId", width: 130, cellRenderer: params => params.value === "offen" ? badgeCell("offen", "red") : badgeCell(params.value) }
+      { headerName: "Straße", field: "name", width: 320, minWidth: 220 },
+      { headerName: "Ortsteil", field: "district", width: 175, minWidth: 145 },
+      { headerName: "Planquadrat/Gebiet", field: "area", width: 190, minWidth: 160 },
+      { headerName: "SOKO", field: "groupId", width: 115, minWidth: 105, cellRenderer: params => params.value === "offen" ? badgeCell("offen", "red") : badgeCell(params.value) }
     ],
     getRowId: params => params.data.id,
     getRowClass: params => params.data.id === state.selectedStreetId ? "selected" : "",
@@ -1320,11 +1355,11 @@ const gridDefinitions = {
     ...baseGridOptions(),
     rowData: state.generatedDocs,
     columnDefs: [
-      { headerName: "Empfänger", field: "recipient", minWidth: 190, flex: 1 },
-      { headerName: "Adresse", field: "address", minWidth: 230, flex: 1 },
-      { headerName: "SOKO", field: "groupId", width: 125, cellRenderer: params => params.value ? badgeCell(params.value) : badgeCell("offen", "red") },
-      { headerName: "Glückwünsche", field: "wish", width: 155 },
-      { headerName: "Vorlage", field: "templateName", minWidth: 190 }
+      { headerName: "Empfänger", field: "recipient", width: 230, minWidth: 170 },
+      { headerName: "Adresse", field: "address", width: 300, minWidth: 210 },
+      { headerName: "SOKO", field: "groupId", width: 115, minWidth: 105, cellRenderer: params => params.value ? badgeCell(params.value) : badgeCell("offen", "red") },
+      { headerName: "Glückwünsche", field: "wish", width: 160, minWidth: 135 },
+      { headerName: "Vorlage", field: "templateName", width: 230, minWidth: 180 }
     ],
     getRowId: params => params.data.id,
     getRowClass: params => params.data.citizenId === state.selectedCitizenId ? "selected" : "",
@@ -1337,23 +1372,33 @@ const gridDefinitions = {
     ...baseGridOptions(),
     rowData: state.data.importLog.map((item, index) => ({ ...item, id: `LOG-${index}` })),
     columnDefs: [
-      { headerName: "Zeit", field: "time", minWidth: 170 },
-      { headerName: "Name", field: "name", minWidth: 190, flex: 1 },
-      { headerName: "Geburtstag", field: "birthDate", width: 130, valueFormatter: params => formatDateDe(params.value) },
-      { headerName: "Alter", field: "age", width: 90 },
-      { headerName: "Ergebnis", field: "type", width: 135, cellRenderer: params => params.value === "Fehler" ? badgeCell("Fehler", "red") : params.value === "Dublette" ? badgeCell("Dublette", "gold") : badgeCell("Importiert", "green") },
-      { headerName: "Hinweis", field: "message", minWidth: 260, flex: 1 }
+      { headerName: "Zeit", field: "time", width: 180, minWidth: 165 },
+      { headerName: "Name", field: "name", width: 230, minWidth: 170 },
+      { headerName: "Straße / Hausnr.", field: "address", width: 250, minWidth: 190, valueGetter: params => params.data.address || formatStreetAddress(params.data) },
+      { headerName: "Geburtstag", field: "birthDate", width: 130, minWidth: 120, valueFormatter: params => formatDateDe(params.value) },
+      { headerName: "Alter", field: "age", width: 90, minWidth: 80 },
+      { headerName: "Ergebnis", field: "type", width: 135, minWidth: 120, cellRenderer: params => params.value === "Fehler" ? badgeCell("Fehler", "red") : params.value === "Dublette" ? badgeCell("Dublette", "gold") : badgeCell("Importiert", "green") },
+      { headerName: "SOKO", field: "groupId", width: 115, minWidth: 105, valueGetter: params => importLogSoko(params.data), cellRenderer: params => params.value ? badgeCell(params.value) : badgeCell("offen", "red") }
     ],
     getRowId: params => params.data.id
   })
 };
 const mountGrid = element => {
-  const definition = gridDefinitions[element.dataset.grid]?.();
+  const gridKey = element.dataset.grid;
+  const definition = gridDefinitions[gridKey]?.();
   if (!definition) return;
   if (!window.agGrid?.createGrid) {
     element.innerHTML = `<div class="empty-state">AG Grid konnte nicht geladen werden.</div>`;
     return;
   }
+  const onGridReady = definition.onGridReady;
+  definition.onGridReady = params => {
+    onGridReady?.(params);
+    restoreGridColumnWidths(gridKey, params.api);
+  };
+  definition.onColumnResized = params => {
+    if (params.finished) saveGridColumnWidths(gridKey, params.api);
+  };
   window.agGrid.createGrid(element, definition);
 };
 const mountGrids = () => $$("[data-grid]").forEach(mountGrid);
@@ -1375,6 +1420,8 @@ const validateEmailFields = selector => {
 const updateItem = (items, id, patch) => items.map(item => item.id === id ? { ...item, ...patch } : item);
 const nextId = (prefix, items) => `${prefix}-${String(items.length + 1).padStart(3, "0")}`;
 const csvEscape = value => `"${String(value ?? "").replaceAll('"', '""')}"`;
+const formatStreetAddress = item => [item.street, item.houseNo].filter(Boolean).join(" ");
+const importLogSoko = item => item.groupId || item.soko || String(item.message || "").match(/SOKO \d+/)?.[0] || "";
 const downloadText = (name, content, type = "text/plain;charset=utf-8") => {
   const blob = new Blob([content], { type });
   const url = URL.createObjectURL(blob);
@@ -1604,43 +1651,44 @@ const actions = {
     const femaleNames = ["Lena","Clara","Ilse","Erika","Hannelore","Marlies","Sabine","Gertrud","Elfriede","Hildegard","Irmgard","Lieselotte","Margarete","Ursula","Brigitte","Renate","Ingrid","Christa","Waltraud","Hedwig","Anni","Ruth","Hilde","Erna","Frieda"];
     const maleNames = ["Martin","Rolf","Bernd","Kurt","Günter","Hans","Werner","Heinz","Horst","Gerhard","Helmut","Walter","Friedrich","Karl","Wilhelm","Herbert","Manfred","Dieter","Klaus","Joachim","Otto","Ernst","Georg","Rudolf","Willi"];
     const lastNames = ["Bachmann","Feldmann","Wegner","Henning","Keller","Sommer","Brandes","Seifert","Lorenz","Pohl","Mertens","Reuter","Müller","Schmidt","Schneider","Fischer","Weber","Meyer","Krause","Hoffmann","Schäfer","Bauer","Koch","Richter","Klein","Wolf","Schröder","Neumann","Zimmermann","Braun","Hartmann","Lange","Schwarz","Krüger","Peters","Schulz"];
-    const streets = [
-      ["Ackerplanweg","13507","Tegel"],
-      ["Alt-Lübars","13469","Lübars"],
-      ["Auguste-Viktoria-Allee","13403","Reinickendorf"],
-      ["Hermsdorfer Damm","13467","Hermsdorf"],
-      ["Oraniendamm","13469","Waidmannslust"],
-      ["Zabel-Krüger-Damm","13469","Wittenau"],
-      ["Wilhelmsruher Damm","13439","Märkisches Viertel"],
-      ["Scharnweberstraße","13405","Tegel"],
-      ["Frohnauer Straße","13465","Frohnau"],
-      ["Heiligenseestraße","13503","Heiligensee"],
-      ["Triftstraße","13509","Wittenau"],
-      ["Residenzstraße","13409","Reinickendorf"],
-      ["Alt-Reinickendorf","13407","Reinickendorf"],
-      ["Senftenberger Ring","13439","Märkisches Viertel"],
-      ["Roedernallee","13407","Reinickendorf"],
-      ["Waidmannsluster Damm","13469","Waidmannslust"],
-      ["Flottenstraße","13407","Reinickendorf"],
-      ["Eichborndamm","13403","Reinickendorf"],
-      ["Quickborner Straße","13439","Märkisches Viertel"],
-      ["Alt-Wittenau","13435","Wittenau"],
-    ];
+    const rangeEntries = Object.entries(window.SOKO_STRASSENVERZEICHNIS || {})
+      .flatMap(([street, entries]) => entries.map(entry => ({ street, ...entry })))
+      .filter(entry => entry.von && entry.bis && entry.bis !== "999" && Number.isFinite(parseInt(entry.von, 10)) && Number.isFinite(parseInt(entry.bis, 10)));
+    const streetEntries = rangeEntries.length ? rangeEntries : [{ street: "Alt-Lübars", plz: "13469", ortsteil: "Lübars", von: "1", bis: "99", art: "F" }];
+    const houseNoForEntry = entry => {
+      const from = parseInt(entry.von, 10);
+      const to = Math.min(parseInt(entry.bis, 10), 220);
+      const numbers = Array.from({ length: Math.max(0, to - from + 1) }, (_, index) => from + index)
+        .filter(number => entry.art === "G" ? number % 2 === 0 : entry.art === "U" ? number % 2 !== 0 : true);
+      return String(pick(numbers.length ? numbers : [from]));
+    };
+    const validAddress = (attempt = 0) => {
+      const entry = pick(streetEntries);
+      const houseNo = houseNoForEntry(entry);
+      try {
+        window.findeSoko?.(entry.street, houseNo, entry.plz);
+        return { street: entry.street, houseNo, plz: entry.plz, district: entry.ortsteil };
+      } catch {
+        return attempt < 100
+          ? validAddress(attempt + 1)
+          : { street: "Frohnauer Str.", houseNo: "21", plz: "13467", district: "Hermsdorf" };
+      }
+    };
     const milestoneYears = [1921,1922,1923,1926,1931,1936,1941];
     const count = ri(8, 14);
     const lines = ["Anrede;Vorname;Nachname;Straße;Hausnummer;PLZ;Ortsteil;Geburtsdatum;Telefon;E-Mail"];
-    for (let i = 0; i < count; i++) {
+    Array.from({ length: count }).forEach(() => {
       const female = Math.random() < 0.5;
       const firstName = pick(female ? femaleNames : maleNames);
       const lastName = pick(lastNames);
-      const [street, plz, district] = pick(streets);
+      const address = validAddress();
       const year = pick(milestoneYears);
       const month = "07";
       const day = p2(ri(1, 28));
       const phone = Math.random() < 0.6 ? `030 ${ri(300,499)}${ri(1000,9999)}` : "";
       const email = Math.random() < 0.4 ? `${deAscii(firstName.toLowerCase())}.${deAscii(lastName.toLowerCase())}${ri(10,99)}@example.test` : "";
-      lines.push(`${female ? "Frau" : "Herr"};${firstName};${lastName};${street};${ri(1,160)};${plz};${district};${year}-${month}-${day};${phone};${email}`);
-    }
+      lines.push(`${female ? "Frau" : "Herr"};${firstName};${lastName};${address.street};${address.houseNo};${address.plz};${address.district};${year}-${month}-${day};${phone};${email}`);
+    });
     state.importText = lines.join("\n");
     actions["run-import"]();
   },
@@ -1656,12 +1704,14 @@ const actions = {
       const key = duplicateKey(row);
       const duplicate = !missing && acc.keys.has(key);
       const printedDuplicate = duplicate && acc.printedKeys.has(key);
-      const group = state.data.streets.find(street => normalize(street.name) === normalize(row.street))?.groupId;
+      const group = streetAssignment(row)?.groupId;
       const log = {
         time: new Date().toLocaleString("de-DE"),
         name: `${row.firstName || ""} ${row.lastName || ""}`.trim(),
+        address: formatStreetAddress(row),
         birthDate: row.birthDate || "",
         age: row.birthDate ? calculateAge(row.birthDate) : "",
+        groupId: group || "",
         type: missing ? "Fehler" : duplicate ? "Dublette" : "Importiert",
         message: missing
           ? "Pflichtfelder fehlen."

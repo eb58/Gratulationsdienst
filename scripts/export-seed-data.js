@@ -2,7 +2,7 @@ const fs = require("fs");
 const vm = require("vm");
 
 const appFile = "app.js";
-const streetsFile = "data/reinickendorf-streets.js";
+const streetsFile = "data/soko-strassenverzeichnis.js";
 const targetFile = process.argv[2] || ".tmp-seed-data.json";
 const window = {};
 const context = vm.createContext({
