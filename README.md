@@ -93,9 +93,16 @@ Apache benötigt `AllowOverride All` für das `php-api/`-Verzeichnis (wegen `.ht
 `mod_rewrite` prüfen und ggf. aktivieren:
 
 ```bash
-apache2ctl -M | grep rewrite   # rewrite_module (shared) = aktiv
+# Debian/Ubuntu:
+apache2ctl -M | grep rewrite
 a2enmod rewrite && systemctl restart apache2
+
+# CentOS/RHEL:
+httpd -M | grep rewrite
+# mod_rewrite ist dort meist standardmäßig aktiv
 ```
+
+Erscheint `rewrite_module (shared)` — aktiv. Sonst aktivieren wie oben.
 
 Beim ersten Aufruf von `/php-api/health` legt die API das Datenbankschema automatisch an.
 
