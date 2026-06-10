@@ -264,9 +264,6 @@ h3 {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-.grid.four {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-}
 
 .import-split {
   display: grid;
@@ -342,7 +339,6 @@ body.is-resizing {
 }
 
 .panel,
-.metric,
 .document-preview,
 .editor-preview {
   background: var(--panel);
@@ -356,30 +352,6 @@ body.is-resizing {
   min-width: 0;
 }
 
-.metric {
-  padding: 16px;
-}
-
-.metric span {
-  display: block;
-  color: var(--muted);
-  font-size: 13px;
-  margin-bottom: 8px;
-}
-
-.metric strong {
-  display: block;
-  font-size: 27px;
-  line-height: 1;
-}
-
-.metric em {
-  display: block;
-  color: var(--teal);
-  font-style: normal;
-  font-size: 12px;
-  margin-top: 9px;
-}
 
 .toolbar {
   display: flex;
@@ -772,31 +744,6 @@ tbody tr.selected {
   display: block;
 }
 
-.progress-list {
-  display: grid;
-  gap: 12px;
-}
-
-.progress-row {
-  display: grid;
-  grid-template-columns: 180px minmax(0, 1fr) 52px;
-  align-items: center;
-  gap: 12px;
-}
-
-.bar {
-  height: 12px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: #e8e3d8;
-}
-
-.bar span {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: linear-gradient(90deg, var(--teal), var(--green));
-}
 
 .document-preview,
 .editor-preview {
@@ -1358,7 +1305,6 @@ tbody tr.selected {
 
   .grid.two,
   .grid.three,
-  .grid.four,
   .import-split,
   .region-split,
   .citizen-split,
@@ -1414,10 +1360,6 @@ tbody tr.selected {
 
   .nav-section {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .progress-row {
-    grid-template-columns: 1fr;
   }
 
   .document-sheet {
