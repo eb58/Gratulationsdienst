@@ -307,11 +307,11 @@ export const views = {
       <div class="grid two print-target" style="margin-top:16px">
         <section class="panel">
           <h2>Druckliste</h2>
-          ${docs.length ? gridHost("documents", 500) : `<div class="empty-state">Kein Dokumentlauf erzeugt</div>`}
+          ${docs.length ? gridHost("documents", 500) : `<div class="empty-state">Keine Dokumente</div>`}
         </section>
         <section class="panel">
           <h2>Seriendruck-Vorschau</h2>
-          ${documentPreview(previewTemplate, previewCitizen, previewSender)}
+          ${docs.length ? documentPreview(previewTemplate, previewCitizen, previewSender) : `<div class="empty-state">Kein Dokument ausgewählt</div>`}
         </section>
       </div>
       <div class="print-pages print-only">
