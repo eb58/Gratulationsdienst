@@ -109,7 +109,10 @@ export const confirmDialog = () => state.dialog ? `
     </section>
   </div>
 ` : "";
-export const gridHost = (name, height = 430) => `<div class="ag-grid-host" data-grid="${name}" style="height:${height}px"></div>`;
+export const gridHost = (name, height) => {
+  const style = height ? ` style="height:${height}px"` : "";
+  return `<div class="ag-grid-host" data-grid="${name}"${style}></div>`;
+};
 
 export const sokoSelectionGroups = () => mergeById(state.data.sokoGroups, sampleData.sokoGroups, group => sampleData.sokoGroups.some(defaultGroup => defaultGroup.id === group.id));
 export const sokoSelectOptions = () => sokoSelectionGroups().map(group => [group.id, `${group.id} ${group.region}`]);

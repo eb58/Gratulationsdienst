@@ -62,20 +62,19 @@ export const views = {
     const citizen = citizens.find(item => item.id === state.selectedCitizenId) || citizens[0];
     return `
       <div class="toolbar">
-        <label class="toolbar-label">Geburtsmonat</label>
-        <select name="month" data-filter style="width:130px">${months.map(month => `<option value="${month[0]}" ${state.filters.month === month[0] ? "selected" : ""}>${month[1]}</option>`).join("")}</select>
+        <select name="month" data-filter>${months.map(month => `<option value="${month[0]}" ${state.filters.month === month[0] ? "selected" : ""}>${month[1]}</option>`).join("")}</select>
         <select name="groupId" data-filter>${groupOptions().map(group => `<option value="${group[0]}" ${state.filters.groupId === group[0] ? "selected" : ""}>${group[1]}</option>`).join("")}</select>
         <select name="age" data-filter>
           ${[["alle", "Alle Alter"], ["85", "85 Jahre"], ["90plus", "90+"], ["100", "100+"]].map(option => `<option value="${option[0]}" ${state.filters.age === option[0] ? "selected" : ""}>${option[1]}</option>`).join("")}
         </select>
       </div>
       <div class="${citizen ? "citizen-split" : ""}" ${citizen ? `style="--citizen-left:${state.citizenSplit}%"` : ""}>
-        <section class="panel">
+        <section class="panel citizen-panel">
           <h2>Jubilare</h2>
-          ${gridHost("citizens", 500)}
+          <div class="citizen-panel-scroll citizen-grid-scroll">${gridHost("citizens")}</div>
         </section>
         ${citizen ? `<div class="vertical-splitter" data-splitter="citizen" role="separator" aria-orientation="vertical" aria-label="Bereiche aufteilen" aria-valuemin="20" aria-valuemax="80" aria-valuenow="${state.citizenSplit}" tabindex="0"></div>
-        <section class="panel">
+        <section class="panel citizen-panel">
           <h2>Jubilar</h2>
           <form id="citizen-form" class="form-grid">
             <input type="hidden" name="id" value="${escapeHtml(citizen.id)}">

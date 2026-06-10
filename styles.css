@@ -56,19 +56,20 @@ button {
 }
 
 .app-shell {
-  min-height: 100vh;
+  height: 100vh;
   display: grid;
   grid-template-columns: 260px minmax(0, 1fr);
 }
 
 .sidebar {
-  min-height: 100vh;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 24px;
   padding: 22px 16px;
   background: #1f2928;
   color: #fff;
+  overflow-y: auto;
 }
 
 .brand {
@@ -135,7 +136,7 @@ button {
 .nav button:hover,
 .nav button.active {
   color: #fff;
-  background: rgba(255, 255, 255, 0.11);
+  background: #384140;
 }
 
 .sidebar-footer {
@@ -156,7 +157,11 @@ button {
 
 .main {
   min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
   padding: 24px;
+  overflow-y: auto;
 }
 
 .topbar {
@@ -247,7 +252,14 @@ h3 {
 
 
 .view {
+  flex: 1;
+  min-height: 0;
   padding-top: 22px;
+}
+
+.view-citizens {
+  display: flex;
+  flex-direction: column;
 }
 
 
@@ -279,8 +291,39 @@ h3 {
 
 .citizen-split {
   display: grid;
-  grid-template-columns: minmax(280px, var(--citizen-left, 50%)) 12px minmax(280px, 1fr);
-  align-items: start;
+  grid-template-columns: minmax(280px, calc(var(--citizen-left, 50%) - 6px)) 12px minmax(280px, calc(100% - var(--citizen-left, 50%) - 6px));
+  align-items: stretch;
+  flex: 1;
+  min-height: 420px;
+}
+
+.citizen-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.citizen-panel-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  margin-top: 12px;
+}
+
+.citizen-grid-scroll {
+  overflow: hidden;
+}
+
+.citizen-grid-scroll .ag-grid-host {
+  height: 100% !important;
+  min-height: 320px;
+}
+
+.citizen-panel form {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 .region-split {
@@ -359,6 +402,12 @@ body.is-resizing {
   align-items: center;
   gap: 10px;
   margin-bottom: 14px;
+}
+
+.toolbar select,
+.toolbar input {
+  width: auto !important;
+  min-width: 120px;
 }
 
 .toolbar-label {
@@ -1269,7 +1318,17 @@ tbody tr.selected {
 
 @media (max-width: 1080px) {
   .app-shell {
+    height: auto;
     grid-template-columns: 1fr;
+  }
+
+  .main {
+    display: block;
+    overflow: visible;
+  }
+
+  .view-citizens {
+    display: block;
   }
 
   .sidebar {
@@ -1278,6 +1337,7 @@ tbody tr.selected {
     top: 0;
     z-index: 5;
     padding: 12px;
+    overflow-y: visible;
   }
 
   .nav {
@@ -1328,15 +1388,23 @@ tbody tr.selected {
     background: var(--panel-soft);
   }
 
-  .region-split {
+  .region-split,
+  .citizen-split {
     height: auto;
     min-height: 0;
   }
 
   .region-panel,
-  .region-panel-scroll {
+  .region-panel-scroll,
+  .citizen-panel,
+  .citizen-panel-scroll {
     height: auto;
     overflow: visible;
+  }
+
+  .region-grid-scroll .ag-grid-host,
+  .citizen-grid-scroll .ag-grid-host {
+    height: 430px !important;
   }
 
   .vertical-splitter {
@@ -1386,6 +1454,12 @@ tbody tr.selected {
 
   .app-shell {
     display: block;
+    height: auto;
+  }
+
+  .main {
+    display: block;
+    overflow: visible;
   }
 
   .main,
