@@ -93,6 +93,7 @@ function collectionConfig(string $collection): array
                 'name' => ['name', 'string'],
                 'district' => ['district', 'string'],
                 'districts' => ['districts', 'json'],
+                'rules' => ['rules', 'json'],
                 'area' => ['area', 'string'],
                 'groupId' => ['group_id', 'string'],
             ],
@@ -319,7 +320,7 @@ function upsertItem(array $db, string $collection, string $id, array $item): voi
     $dbColumns = array_map(static fn ($column) => $column[0], $columns);
     $values = array_map(static fn ($apiField) => valueForDb($item[$apiField] ?? null, $columns[$apiField][1]), array_keys($columns));
 
-    if ($db['driver'] === 'mysqli') {
+    if ($db['driver'] === 'mysqli' || $db['driver'] === 'mysql') {
         $placeholders = implode(', ', array_fill(0, count($dbColumns), '?'));
         $updates = implode(', ', array_map(static fn ($column) => "{$column} = VALUES({$column})", array_filter($dbColumns, static fn ($column) => $column !== 'id')));
         executeStatement($db, 'INSERT INTO ' . $config['table'] . ' (' . implode(', ', $dbColumns) . ') VALUES (' . $placeholders . ') ON DUPLICATE KEY UPDATE ' . $updates, $values);

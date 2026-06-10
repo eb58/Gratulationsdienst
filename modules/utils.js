@@ -1,6 +1,6 @@
 export const STORAGE_KEY = "gratulationsdienst";
 export const MONTH_KEY = "gd_month_filter";
-export const API_BASE = "php-api/index.php";
+export const API_BASE = import.meta.env.VITE_API_BASE ?? "/php-api";
 export const splitStorageKey = key => `gratulationsdienst.${key}Split`;
 export const storedSplit = (key, fallback) => {
   const value = Number(localStorage.getItem(splitStorageKey(key)));
