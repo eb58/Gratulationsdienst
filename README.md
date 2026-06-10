@@ -90,6 +90,13 @@ return [
 
 Apache benötigt `AllowOverride All` für das `php-api/`-Verzeichnis (wegen `.htaccess` mit `mod_rewrite`).
 
+`mod_rewrite` prüfen und ggf. aktivieren:
+
+```bash
+apache2ctl -M | grep rewrite   # rewrite_module (shared) = aktiv
+a2enmod rewrite && systemctl restart apache2
+```
+
 Beim ersten Aufruf von `/php-api/health` legt die API das Datenbankschema automatisch an.
 
 ### 3. Frontend bauen und deployen
