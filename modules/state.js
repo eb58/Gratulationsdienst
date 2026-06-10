@@ -52,7 +52,7 @@ export const loadData = () => {
 };
 
 export const state = {
-  view: "citizens",
+  view: "import",
   data: loadData(),
   filters: { q: "", month: localStorage.getItem(MONTH_KEY) || "alle", groupId: "alle", age: "alle", status: "alle", occasion: "Geburtstag" },
   selectedCitizenId: "G-2026-001",
