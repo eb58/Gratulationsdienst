@@ -32,7 +32,6 @@ CREATE TABLE IF NOT EXISTS gd_streets (
     id VARCHAR(32) NOT NULL PRIMARY KEY,
     name VARCHAR(180) NOT NULL DEFAULT '',
     district VARCHAR(120) NOT NULL DEFAULT '',
-    districts JSON NULL,
     rules JSON NULL,
     area VARCHAR(120) NOT NULL DEFAULT '',
     group_id VARCHAR(32) NOT NULL DEFAULT '',

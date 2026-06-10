@@ -92,7 +92,6 @@ function collectionConfig(string $collection): array
                 'id' => ['id', 'string'],
                 'name' => ['name', 'string'],
                 'district' => ['district', 'string'],
-                'districts' => ['districts', 'json'],
                 'rules' => ['rules', 'json'],
                 'area' => ['area', 'string'],
                 'groupId' => ['group_id', 'string'],
