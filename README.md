@@ -60,4 +60,77 @@ Das Frontend nutzt die Collection-Endpunkte direkt. `/data` bleibt als Kompatibi
 
 Eine vorhandene alte Tabelle `gd_data_items` wird beim ersten Start einmalig in die neuen Tabellen migriert, solange die neuen Tabellen noch leer sind.
 
+## Deployment auf einem Produktivserver
+
+Voraussetzungen: Apache mit `mod_rewrite` und `mod_php` (PHP 8.1+), MySQL 5.7+ oder 8.x.
+
+### 1. Datenbank anlegen
+
+```sql
+CREATE DATABASE gratulationsdienst CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'gd_user'@'localhost' IDENTIFIED BY 'sicheres-passwort';
+GRANT ALL PRIVILEGES ON gratulationsdienst.* TO 'gd_user'@'localhost';
+```
+
+### 2. PHP-API deployen
+
+`php-api/` in ein Verzeichnis unterhalb des Webroots kopieren, z.B. `/var/www/html/php-api/`.
+
+`php-api/config.php` anlegen (aus `config.example.php`):
+
+```php
+<?php
+return [
+    'dsn'      => 'mysql:host=localhost;port=3306;dbname=gratulationsdienst;charset=utf8mb4',
+    'user'     => 'gd_user',
+    'password' => 'sicheres-passwort',
+    'options'  => [],
+];
+```
+
+Apache benötigt `AllowOverride All` für das `php-api/`-Verzeichnis (wegen `.htaccess` mit `mod_rewrite`).
+
+Beim ersten Aufruf von `/php-api/health` legt die API das Datenbankschema automatisch an.
+
+### 3. Frontend bauen und deployen
+
+In `.env.production` die API-URL prüfen — standardmäßig `/php-api` (relativer Pfad, funktioniert wenn App und API auf demselben Server laufen):
+
+```
+VITE_API_BASE=/php-api
+```
+
+Build erstellen:
+
+```powershell
+npm run build
+```
+
+Den Inhalt des Build-Ausgabeverzeichnisses (standardmäßig `dist/`) in den Webroot kopieren, z.B. nach `/var/www/html/gratulationsdienst/`.
+
+Die App ist dann erreichbar unter `https://example.com/gratulationsdienst/`.
+
+### 4. Apache-Konfiguration (Beispiel)
+
+```apache
+<Directory /var/www/html/php-api>
+    AllowOverride All
+    Require all granted
+</Directory>
+
+<Directory /var/www/html/gratulationsdienst>
+    Require all granted
+</Directory>
+```
+
+### Hinweis zu CORS
+
+Die API erlaubt aktuell alle Origins (`Access-Control-Allow-Origin: *`). Auf einem Produktivserver sollte das in `php-api/index.php` auf die tatsächliche Domain eingeschränkt werden:
+
+```php
+header('Access-Control-Allow-Origin: https://example.com');
+```
+
+---
+
 Kartendaten: OpenStreetMap-Mitwirkende. Die Strassengeometrien liegen lokal vor; die Stadtplan-Hintergrundkacheln werden bei geoeffneter Kartenansicht online von `tile.openstreetmap.org` geladen.
