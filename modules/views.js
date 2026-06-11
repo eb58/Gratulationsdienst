@@ -146,14 +146,14 @@ export const views = {
         </div>
         <div class="dashboard-metrics">
           <article class="metric-card accent-gold">
-            <span>Jubilare ${escapeHtml(selectedMonthSuffix())}</span>
-            <strong>${totals.citizens.toLocaleString("de-DE")}</strong>
+            <span>Bearbeitet ${escapeHtml(selectedMonthSuffix())}</span>
+            <strong>${totals.returns.toLocaleString("de-DE")} von ${totals.citizens.toLocaleString("de-DE")}</strong>
             <em>${escapeHtml(selectedMonthLabel())}</em>
           </article>
           <article class="metric-card accent-green">
-            <span>Bearbeitet ${escapeHtml(selectedMonthSuffix())}</span>
-            <strong>${totals.returns.toLocaleString("de-DE")}</strong>
-            <em>${totals.citizens ? Math.round((totals.returns / totals.citizens) * 100) : 0}% bearbeitet</em>
+            <span>Bearbeitungsquote ${escapeHtml(selectedMonthSuffix())}</span>
+            <strong>${totals.citizens ? Math.round((totals.returns / totals.citizens) * 100) : 0}%</strong>
+            <em>bearbeitet</em>
           </article>
           <article class="metric-card age-card">
             <span>Altersverteilung</span>
