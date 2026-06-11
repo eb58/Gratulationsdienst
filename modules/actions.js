@@ -285,7 +285,7 @@ export const actions = {
       const address = realAddresses.length ? pick(realAddresses) : null;
       return address ? { street: address.street, houseNo: address.houseNumber, plz: address.postalCode, district: address.district } : fallbackAddress();
     };
-    const milestoneYears = [1921,1922,1923,1926,1931,1936,1941];
+    const milestoneYears = [1926,1931,1936,1941];
     const count = ri(8, 14);
     const lines = ["Anrede;Vorname;Nachname;Straße;Hausnummer;PLZ;Ortsteil;Geburtsdatum;Telefon;E-Mail"];
     Array.from({ length: count }).forEach(() => {
