@@ -74,6 +74,8 @@ function collectionConfig(string $collection): array
                 'lastName' => ['last_name', 'string'],
                 'groupId' => ['group_id', 'string'],
                 'street' => ['street', 'string'],
+                'postalCode' => ['postal_code', 'string'],
+                'city' => ['city', 'string'],
                 'phone' => ['phone', 'string'],
                 'mobile' => ['mobile', 'string'],
                 'email' => ['email', 'string'],

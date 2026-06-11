@@ -1,12 +1,18 @@
 import { $, todayIso, isValidEmail, isValidIban, formatIban, updateItem, nextId, csvEscape, formatStreetAddress, downloadText, calculateAge, toast, byId } from './utils.js';
 import { normalizeStreetRules, streetDistrictSummary, streetGroupSummary, normalizeStreetDistrict, sampleData } from './domain.js';
 import { state, saveData } from './state.js';
-import { streetAssignment, filteredCitizens, documentCitizens, duplicateKey, isPrintedCitizen, selectedTemplate, selectedSender, activeCitizens } from './assignment.js';
-import { printCurrentRun, completePrintRun, renderSokoForm } from './documents.js';
+import { streetAssignment, filteredCitizens, documentCitizens, duplicateKey, isPrintedCitizen, selectedTemplate, selectedSender, activeCitizens, groupForCitizen } from './assignment.js';
+import { printCurrentRun, completePrintRun, renderSokoForm, renderSokoQuittung } from './documents.js';
 import { parseCsv, mapImportRow } from './import.js';
 import { render } from './render.js';
 
 const formValues = selector => Object.fromEntries(new FormData($(selector)).entries());
+const openPrintWindow = (body, title = "Druck") => {
+  const html = `<!doctype html><html lang="de"><head><meta charset="utf-8"><title>${title}</title><style>*{box-sizing:border-box;margin:0;padding:0}body{background:#888}@page{size:A4 portrait;margin:0}@media print{body{background:none}}</style></head><body>${body}</body></html>`;
+  const url = URL.createObjectURL(new Blob([html], { type: "text/html;charset=utf-8" }));
+  const w = globalThis.open(url, "_blank", "width=900,height=700");
+  w.addEventListener("load", () => { URL.revokeObjectURL(url); setTimeout(() => { w.focus(); w.print(); }, 400); }, { once: true });
+};
 const streetRuleFormValues = selector => [...$(selector).querySelectorAll("[data-rule-row]")].map((row, index) => {
   const value = name => row.querySelector(`[name="${name}"]`)?.value.trim() || "";
   return {
@@ -63,7 +69,7 @@ export const actions = {
   },
   "new-member": () => {
     const id = nextId("S", state.data.sokoMembers);
-    const member = { id, salutation: "Frau", firstName: "", lastName: "", groupId: state.data.sokoGroups[0].id, street: "", phone: "", mobile: "", email: "", bank: "", allowance: "35,00", termFrom: todayIso(), termTo: "2028-12-31", billingAmount: "15,00", isLeader: false };
+    const member = { id, salutation: "Frau", firstName: "", lastName: "", groupId: state.data.sokoGroups[0].id, street: "", postalCode: "", city: "", phone: "", mobile: "", email: "", bank: "", allowance: "35,00", termFrom: todayIso(), termTo: "2028-12-31", billingAmount: "15,00", isLeader: false };
     state.data.sokoMembers = [...state.data.sokoMembers, member];
     state.selectedMemberId = id;
     saveData();
@@ -204,26 +210,34 @@ export const actions = {
   },
   "print-docs": printCurrentRun,
   "toggle-print-background": e => { state.printBackground = e.target.checked; },
+  "print-quittung": e => {
+    const groupId = e.target.closest("[data-group-id]")?.dataset.groupId;
+    const citizens = activeCitizens().filter(c => groupForCitizen(c)?.id === groupId);
+    if (!citizens.length) { toast("Keine Jubilare für diese SOKO."); return; }
+    openPrintWindow(renderSokoQuittung(citizens, groupId, state.quittungBetrag, state.quittungTelefon, state.quittungMonat, state.quittungKapitel, state.quittungTitel), "Quittung");
+  },
+  "print-quittung-all": () => {
+    const citizens = activeCitizens().filter(c => groupForCitizen(c));
+    if (!citizens.length) { toast("Keine Jubilare mit SOKO-Zuordnung vorhanden."); return; }
+    const byGroup = citizens.reduce((acc, c) => {
+      const gid = groupForCitizen(c).id;
+      if (!acc[gid]) acc[gid] = [];
+      acc[gid].push(c);
+      return acc;
+    }, {});
+    const pages = Object.entries(byGroup)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([gid, gc]) => renderSokoQuittung(gc, gid, state.quittungBetrag, state.quittungTelefon, state.quittungMonat, state.quittungKapitel, state.quittungTitel))
+      .join("");
+    openPrintWindow(pages, "Quittungen");
+  },
   "soko-print": () => {
     const citizens = activeCitizens();
     if (!citizens.length) { toast("Keine Jubilare vorhanden."); return; }
     const base = globalThis.location.href.replace(/[^/]*$/, "");
     const imageSrc = `${base}assets/fragebogen-soko.png`;
     const forms = citizens.map((c, i) => renderSokoForm(c, i, imageSrc)).join("");
-    const html = `<!doctype html><html lang="de"><head>
-      <meta charset="utf-8">
-      <title>SOKO-Fragebogen</title>
-      <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: #888; }
-        @page { size: A4 portrait; margin: 0; }
-        @media print { body { background: none; } }
-      </style>
-    </head><body>${forms}</body></html>`;
-    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const w = globalThis.open(url, "_blank", "width=900,height=700");
-    w.addEventListener("load", () => { URL.revokeObjectURL(url); setTimeout(() => { w.focus(); w.print(); }, 400); }, { once: true });
+    openPrintWindow(forms, "SOKO-Fragebogen");
   },
   "export-docs": () => {
     const header = ["id", "empfaenger", "adresse", "soko", "vorlage", "absender", "datum"];

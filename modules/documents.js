@@ -204,6 +204,74 @@ export const printCurrentRun = () => {
   }, { once: true });
 };
 
+export const renderSokoQuittung = (citizens, groupId = "", betragProPerson = "8,50", telefon = "90294 4055", monat = "", kapitel = "3930", titel = "68154") => {
+  const today = formatDateDe(todayIso());
+  const month = monat || todayIso().slice(5, 7);
+  const leader = state.data.sokoMembers.find(m => m.isLeader && m.groupId === groupId);
+  const leaderAddr = [leader?.street, [leader?.postalCode, leader?.city].filter(Boolean).join(" ")].filter(Boolean).join(", ");
+  const leaderLine = leader ? `${escapeHtml(leader.salutation)} ${escapeHtml(leader.firstName)} ${escapeHtml(leader.lastName)}, ${escapeHtml(leaderAddr)}` : "";
+  const ROW_COUNT = 12;
+  const b = "border:1px solid #333";
+  const td = (style, content = "") => `<td style="${b};${style}">${content}</td>`;
+  const betragNum = Number.parseFloat(betragProPerson.replace(",", ".")) || 0;
+  const summe = (citizens.length * betragNum).toFixed(2).replace(".", ",");
+  const rows = Array.from({ length: ROW_COUNT }, (_, i) => {
+    const c = citizens[i];
+    const age = c ? calculateAge(c.birthDate) : "";
+    const name = c ? `${escapeHtml(c.lastName)}, ${escapeHtml(c.firstName)}, ${escapeHtml(c.street)} ${escapeHtml(c.houseNo)}, ${escapeHtml(c.postalCode)} Berlin` : "&nbsp;";
+    return `<tr>
+      ${td("padding:1mm 2mm;width:8mm;height:8mm;text-align:center", i + 1)}
+      ${td("padding:1mm 2mm;border-left:0;", name)}
+      ${td("padding:1mm 2mm;border-left:0;width:28mm;text-align:right", c ? `${betragProPerson} €` : "")}
+      ${td("padding:1mm 2mm;border-left:0;width:22mm;", age ? `${age}. Geb.` : "")}
+    </tr>`;
+  }).join("");
+  const label = (text) => `<div style="font-size:7.5pt;color:#555;margin-bottom:1mm">${text}</div>`;
+  return `
+  <div style="font-family:Arial,sans-serif;font-size:9pt;width:210mm;min-height:297mm;padding:12mm 15mm;box-sizing:border-box;background:white;page-break-after:always">
+    <table style="width:100%;border-collapse:collapse;margin-bottom:3mm"><tr>
+      <td style="${b};padding:2mm 3mm;width:55%">${label("Stellenzeichen")}FinPersBüD Senioren 9 / Soko</td>
+      <td style="${b};border-left:0;padding:2mm 3mm;width:25%">${label("Telefon")}${escapeHtml(telefon)}</td>
+      <td style="${b};border-left:0;padding:2mm 3mm;width:20%">${label("Datum")}${today}</td>
+    </tr></table>
+    <h2 style="font-size:12pt;font-weight:bold;margin:0 0 3mm">Quittung der Sozialkommission</h2>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:2mm"><tr>
+      <td style="${b};padding:2mm;width:38%">${label("Gesamtbetrag Euro")}<strong>${summe} €</strong></td>
+      <td style="${b};border-left:0;padding:2mm;width:12%">${label("Kapitel")}${escapeHtml(kapitel)}</td>
+      <td style="${b};border-left:0;padding:2mm;width:12%">${label("Titel")}${escapeHtml(titel)}</td>
+      <td style="${b};border-left:0;padding:2mm;width:38%">${label("Zahlungs-Beweis Nr.")}<div style="height:6mm"></div></td>
+    </tr></table>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:2mm"><tr>
+      <td style="${b};padding:2mm;width:55%">${label("Empfangsberechtigt (Vorname, Name, Anschrift)")}${leaderLine}</td>
+      <td style="${b};border-left:0;padding:3mm;width:45%;text-align:center;font-weight:bold">zur Weiterzahlung an<br>untengenannte Personen</td>
+    </tr></table>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:2mm"><tr>
+      <td style="${b};padding:2mm;width:50%">${label("Zahlungspartner-Nummer")}<div style="height:5mm"></div></td>
+      <td style="${b};border-left:0;padding:2mm;width:50%">${label("Kurzzeichen")}<div style="height:5mm"></div></td>
+    </tr></table>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:3mm"><tr>
+      <td style="padding:2mm 0;width:60%"><span style="font-size:7.5pt;color:#555">Begründung: </span><strong>Zuwendung für Alters- und Ehejubilare</strong></td>
+      <td style="${b};padding:2mm;width:40%">${label("Monat")}${month}</td>
+    </tr></table>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:4mm">
+      <thead><tr>
+        <th style="${b};padding:1.5mm 2mm;text-align:left;font-size:8pt;width:8mm">Lfd.<br>Nr.</th>
+        <th style="${b};border-left:0;padding:1.5mm 2mm;text-align:left;font-size:8pt">Empfangsberechtigt (Name, Vorname, Anschrift)</th>
+        <th style="${b};border-left:0;padding:1.5mm 2mm;text-align:left;font-size:8pt;width:28mm">Betrag (Euro)</th>
+        <th style="${b};border-left:0;padding:1.5mm 2mm;text-align:left;font-size:8pt;width:22mm">Anlaß</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:10mm"><tr>
+      <td style="${b};padding:2mm 3mm;width:60%"><strong>Summe:</strong></td>
+      <td style="${b};border-left:0;padding:2mm;width:40%;text-align:right;font-weight:bold">${summe} €</td>
+    </tr></table>
+    <h3 style="font-size:10pt;font-weight:bold;margin:0 0 1mm">Quittung der Sozialkommission</h3>
+    <p style="font-size:8.5pt;margin:0 0 3mm">Obenstehenden Betrag habe ich erhalten und werde ihn für die genannten Anlässe verwenden.</p>
+    <div style="${b};padding:2mm 3mm;width:55%;min-height:15mm">${label("Unterschrift und Datum")}</div>
+  </div>`;
+};
+
 export const renderSokoForm = (citizen, index, imageSrc) => {
   const group = groupForCitizen(citizen);
   const age = calculateAge(citizen.birthDate);

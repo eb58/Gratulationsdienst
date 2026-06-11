@@ -1,8 +1,8 @@
-import { escapeHtml, normalize, formatDate, byId } from './utils.js';
+import { escapeHtml, normalize, formatDate, byId, birthdayMonth } from './utils.js';
 import { months, sokoColors, streetGroupDisplay } from './domain.js';
 import { state } from './state.js';
-import { selectedCitizen, selectedTemplate, selectedSender, selectedMember, selectedStreet, filteredCitizens, activeCitizens } from './assignment.js';
-import { field, emailField, ibanField, selectField, textField, checkField, radioField, streetRuleRows, statusPill, assignmentPill, confirmDialog, gridHost, groupOptions, sokoSelectOptions, senderOptions, templateOptions, occasionOptions, formatOptions } from './fields.js';
+import { selectedCitizen, selectedTemplate, selectedSender, selectedMember, selectedStreet, filteredCitizens, activeCitizens, groupForCitizen } from './assignment.js';
+import { field, emailField, ibanField, selectField, textField, checkField, radioField, streetRuleRows, assignmentPill, gridHost, groupOptions, sokoSelectOptions, senderOptions, templateOptions, occasionOptions, formatOptions } from './fields.js';
 import { streetMapSvg, addressPointData, assignedAddressPoints } from './map.js';
 import { documentPreview } from './documents.js';
 import { render } from './render.js'; // Zyklus OK: render wird nur in Callbacks aufgerufen
@@ -15,6 +15,7 @@ export const viewTitles = {
   senders: "Stammdaten: Absender",
   templates: "Stammdaten: Vorlagen",
   documents: "Dokumentlauf",
+  quittung: "Quittungsdruck",
   import: "LABO-Import"
 };
 
@@ -132,7 +133,9 @@ export const views = {
               ${field("firstName", "Vorname", member.firstName)}
               ${field("lastName", "Nachname", member.lastName)}
               ${selectField("groupId", "SOKO", member.groupId, sokoSelectOptions())}
-              ${field("street", "Adresse", member.street, "text", "full")}
+              ${field("street", "Straße", member.street, "text", "full")}
+              ${field("postalCode", "PLZ", member.postalCode)}
+              ${field("city", "Ort", member.city)}
               ${field("phone", "Telefon", member.phone)}
               ${field("mobile", "Handy", member.mobile)}
               ${emailField("email", "E-Mail", member.email)}
@@ -318,6 +321,71 @@ export const views = {
         ${docs.length ? `<!-- Druckseiten werden beim Drucken generiert -->` : ""}
       </div>
     `;
+  },
+
+  quittung: () => {
+    const citizens = activeCitizens().filter(c => groupForCitizen(c) && birthdayMonth(c.birthDate) === state.quittungMonat);
+    const byGroup = citizens.reduce((acc, c) => {
+      const group = groupForCitizen(c);
+      const key = group.id;
+      if (!acc[key]) acc[key] = { group, citizens: [] };
+      acc[key].citizens.push(c);
+      return acc;
+    }, {});
+    const groups = Object.values(byGroup).sort((a, b) => a.group.id.localeCompare(b.group.id));
+    const betrag = state.quittungBetrag;
+    const betragNum = Number.parseFloat(betrag.replace(",", ".")) || 0;
+    const rows = groups.map(({ group, citizens: gc }) => {
+      const summe = (gc.length * betragNum).toFixed(2).replace(".", ",");
+      return `<tr>
+        <td>${escapeHtml(group.id)}</td>
+        <td>${gc.length}</td>
+        <td style="text-align:right">${summe} €</td>
+        <td><button type="button" class="primary-button" style="min-height:30px;padding:0 12px" data-action="print-quittung" data-group-id="${escapeHtml(group.id)}">Drucken</button></td>
+      </tr>`;
+    }).join("");
+    return `
+    <div class="toolbar">
+      <label>Für Monat</label>
+      <select data-bind="quittungMonat">
+        ${months.filter(([v]) => v !== "alle").map(([v, l]) => `<option value="${v}"${state.quittungMonat === v ? " selected" : ""}>${escapeHtml(l)}</option>`).join("")}
+      </select>
+    </div>
+    <div class="quittung-split" style="--quittung-left:${state.quittungSplit}%">
+      <section class="panel">
+        <h2>Einstellungen</h2>
+        <div class="form-grid">
+          <div class="field">
+            <label>Betrag pro Jubilar (€)</label>
+            <input type="text" data-bind="quittungBetrag" value="${escapeHtml(state.quittungBetrag)}" style="max-width:120px">
+          </div>
+          <div class="field">
+            <label>Telefon</label>
+            <input type="text" data-bind="quittungTelefon" value="${escapeHtml(state.quittungTelefon)}" style="max-width:160px">
+          </div>
+          <div class="field">
+            <label>Kapitel</label>
+            <input type="text" data-bind="quittungKapitel" value="${escapeHtml(state.quittungKapitel)}" style="max-width:100px">
+          </div>
+          <div class="field">
+            <label>Titel</label>
+            <input type="text" data-bind="quittungTitel" value="${escapeHtml(state.quittungTitel)}" style="max-width:100px">
+          </div>
+        </div>
+        ${groups.length ? `<div class="button-row" style="margin-top:12px">
+          <button type="button" class="primary-button" data-action="print-quittung-all">Alle drucken</button>
+        </div>` : ""}
+      </section>
+      <div class="vertical-splitter" data-splitter="quittung" role="separator" aria-orientation="vertical" aria-label="Einstellungen und Liste aufteilen" aria-valuemin="20" aria-valuemax="80" aria-valuenow="${state.quittungSplit}" tabindex="0"></div>
+      <section class="panel">
+        <h2>SOKOs</h2>
+        ${groups.length ? `
+        <table class="data-table" style="width:100%">
+          <thead><tr><th>SOKO</th><th>Jubilare</th><th style="text-align:right">Gesamt</th><th></th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>` : `<div class="empty-state">Keine Jubilare mit SOKO-Zuordnung vorhanden</div>`}
+      </section>
+    </div>`;
   },
 
   import: () => `

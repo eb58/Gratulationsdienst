@@ -24,6 +24,8 @@ document.addEventListener("input", event => {
     if (input.name === "month") localStorage.setItem(MONTH_KEY, input.value);
     render();
   }
+  const bound = event.target.closest("[data-bind]");
+  if (bound) state[bound.dataset.bind] = bound.value;
   const email = event.target.closest("input[type='email']");
   if (email) email.classList.toggle("invalid", !isValidEmail(email.value));
 });
@@ -73,6 +75,8 @@ document.addEventListener("keydown", event => {
 document.addEventListener("change", event => {
   if (event.target.dataset.action) { actions[event.target.dataset.action]?.(event); return; }
   if (event.target.matches("#doc-template, #doc-sender, #doc-month, #doc-group")) { actions["generate-docs"](); return; }
+  const bound = event.target.closest("[data-bind]");
+  if (bound) { state[bound.dataset.bind] = bound.value; render(); return; }
   const file = event.target.matches("#import-file") ? event.target.files[0] : null;
   if (file) file.text().then(text => { state.importText = text; actions["run-import"](); });
 });

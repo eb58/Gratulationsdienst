@@ -14,6 +14,8 @@ CREATE TABLE IF NOT EXISTS gd_soko_members (
     last_name VARCHAR(120) NOT NULL DEFAULT '',
     group_id VARCHAR(32) NOT NULL DEFAULT '',
     street VARCHAR(255) NOT NULL DEFAULT '',
+    postal_code VARCHAR(16) NOT NULL DEFAULT '',
+    city VARCHAR(120) NOT NULL DEFAULT '',
     phone VARCHAR(80) NOT NULL DEFAULT '',
     mobile VARCHAR(80) NOT NULL DEFAULT '',
     email VARCHAR(160) NOT NULL DEFAULT '',

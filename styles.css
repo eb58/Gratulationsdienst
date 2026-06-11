@@ -232,9 +232,9 @@ h3 {
 }
 
 .ghost-button {
-  color: var(--ink);
-  background: var(--panel);
-  border-color: var(--line);
+  color: #fff;
+  background: var(--teal);
+  border-color: var(--teal);
 }
 
 .danger-button {
@@ -332,6 +332,14 @@ h3 {
   align-items: stretch;
   height: min(760px, calc(100vh - 190px));
   min-height: 560px;
+}
+
+.quittung-split {
+  display: grid;
+  grid-template-columns: minmax(280px, var(--quittung-left, 38%)) 12px minmax(300px, 1fr);
+  align-items: stretch;
+  height: min(700px, calc(100vh - 190px));
+  min-height: 480px;
 }
 
 .region-panel {
@@ -1367,6 +1375,7 @@ tbody tr.selected {
   .grid.three,
   .import-split,
   .region-split,
+  .quittung-split,
   .citizen-split,
   .toolbar,
   .form-grid,
@@ -1389,6 +1398,7 @@ tbody tr.selected {
   }
 
   .region-split,
+  .quittung-split,
   .citizen-split {
     height: auto;
     min-height: 0;

@@ -95,6 +95,7 @@ export const demoIban = memberNo => {
   const checkDigits = String(98 - ibanMod97(ibanToNumeric(`${bban}DE00`))).padStart(2, "0");
   return formatIban(`DE${checkDigits}${bban}`);
 };
+const demoPLZ = ["13403", "13405", "13409", "13435", "13437", "13465", "13467", "13469", "13503", "13507", "13509"];
 export const buildSokoMembers = () => sokoCodesFromDirectory().flatMap((code, groupIndex) => [0, 1].map(memberIndex => {
   const memberNo = (groupIndex * 2) + memberIndex;
   const firstName = demoMemberFirstNames[memberNo % demoMemberFirstNames.length];
@@ -107,6 +108,8 @@ export const buildSokoMembers = () => sokoCodesFromDirectory().flatMap((code, gr
     lastName,
     groupId: sokoGroupId(code),
     street: `${streets[memberIndex % Math.max(streets.length, 1)] || "Eichborndamm"} ${12 + groupIndex + memberIndex}`,
+    postalCode: demoPLZ[groupIndex % demoPLZ.length],
+    city: "Berlin",
     phone: memberIndex ? "" : `030 ${String(401000 + groupIndex).padStart(6, "0")}`,
     mobile: memberIndex ? `0170 ${String(200000 + memberNo).padStart(6, "0")}` : "",
     email: `${demoEmailPart(firstName)}.${demoEmailPart(lastName)}.${code}@example.test`,
