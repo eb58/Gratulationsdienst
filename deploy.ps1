@@ -13,7 +13,7 @@ Write-Host "Lade Frontend hoch..." -ForegroundColor Cyan
 scp -r -P $port $sshOpt "$buildDir\*" "${user}@${server}:${webroot}/gratulationsdienst/"
 
 Write-Host "Lade PHP-API hoch..." -ForegroundColor Cyan
-scp -P $port $sshOpt php-api/index.php php-api/schema.mysql.sql php-api/.htaccess "${user}@${server}:${webroot}/php-api/"
+scp -P $port $sshOpt php-api/index.php php-api/schema.mysql.sql php-api/.htaccess php-api/config.php "${user}@${server}:${webroot}/gratulationsdienst/php-api/"
 
 Write-Host "Setze Dateirechte..." -ForegroundColor Cyan
 $cmds = @'
