@@ -218,7 +218,7 @@ export const gridDefinitions = {
       { headerName: "Name", field: "name", colId: "name", width: 230, minWidth: 170 },
       { headerName: "Geburtstag", field: "birthDate", colId: "birthDate", width: 130, minWidth: 120, valueFormatter: params => formatDateDe(params.value) },
       { headerName: "Alter", field: "age", colId: "age", width: 80, minWidth: 70, filter: "agNumberColumnFilter" },
-      { headerName: "Straße / Hausnr.", field: "address", width: 250, minWidth: 190, valueGetter: params => params.data.address || formatStreetAddress(params.data) },
+      { headerName: "Adresse", field: "address", width: 250, minWidth: 190, valueGetter: params => params.data.address || formatStreetAddress(params.data) },
       { headerName: "Ergebnis", field: "type", width: 135, minWidth: 120, cellRenderer: params => params.value === "Fehler" ? badgeCell("Fehler", "red") : params.value === "Dublette" ? badgeCell("Dublette", "gold") : badgeCell("Importiert", "green") },
       { headerName: "SOKO", field: "groupId", width: 115, minWidth: 105, valueGetter: params => importLogSoko(params.data), cellRenderer: params => params.value ? badgeCell(params.value) : badgeCell("offen", "red") }
     ],
