@@ -4,4 +4,7 @@ return [
     'user' => 'wp_user',
     'password' => 'passwd',
     'options' => [],
+    'app_url' => 'http://localhost:5173/gratulationsdienst/',
+    'mail_from' => 'noreply@example.test',
+    'mail_from_name' => 'Gratulationsdienst Reinickendorf',
 ];

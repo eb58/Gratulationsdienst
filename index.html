@@ -30,7 +30,7 @@
             <button type="button" data-nav="documents">Dokumentlauf</button>
           </div>
         </details>
-        <details class="nav-section nav-section-collapsible">
+        <details class="nav-section nav-section-collapsible" data-admin-only>
           <summary class="nav-section-title">Stammdatenpflege</summary>
           <div class="nav-section-items">
             <button type="button" data-nav="soko">SOKO Mitglieder</button>
@@ -42,6 +42,13 @@
             <button type="button" data-action="reset-data">Beispieldaten</button>
           </div>
         </details>
+        <details class="nav-section nav-section-collapsible" data-admin-only>
+          <summary class="nav-section-title">Sicherheit</summary>
+          <div class="nav-section-items">
+            <button type="button" data-nav="profile">Mein Zugang</button>
+            <button type="button" data-nav="users" data-admin-only>Benutzerverwaltung</button>
+          </div>
+        </details>
       </nav>
     </aside>
 
@@ -50,6 +57,7 @@
         <div>
           <h1 id="page-title">Dashboard</h1>
         </div>
+        <div id="topbar-actions" class="topbar-actions"></div>
       </header>
       <section id="view" class="view" aria-live="polite"></section>
     </main>

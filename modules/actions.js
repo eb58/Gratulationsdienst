@@ -1,12 +1,22 @@
 import { $, todayIso, isValidEmail, isValidIban, formatIban, updateItem, nextId, csvEscape, formatStreetAddress, downloadText, calculateAge, toast, byId } from './utils.js';
 import { normalizeStreetRules, streetDistrictSummary, streetGroupSummary, normalizeStreetDistrict, sampleData } from './domain.js';
-import { state, saveData } from './state.js';
+import { state, saveData, apiRequest, setAuthSession, clearAuthSession, loadCollectionData } from './state.js';
 import { streetAssignment, filteredCitizens, documentCitizens, duplicateKey, isPrintedCitizen, selectedTemplate, selectedSender, activeCitizens, groupForCitizen } from './assignment.js';
 import { printCurrentRun, completePrintRun, renderSokoForm, renderSokoQuittung } from './documents.js';
 import { parseCsv, mapImportRow } from './import.js';
 import { render } from './render.js';
 
 const formValues = selector => Object.fromEntries(new FormData($(selector)).entries());
+const authDone = session => {
+  setAuthSession(session);
+  render();
+  loadCollectionData();
+};
+const authFail = error => {
+  state.auth.message = error.message || "Aktion fehlgeschlagen.";
+  render();
+  toast(state.auth.message);
+};
 const openPrintWindow = (body, title = "Druck") => {
   const html = `<!doctype html><html lang="de"><head><meta charset="utf-8"><title>${title}</title><style>*{box-sizing:border-box;margin:0;padding:0}body{background:#888}@page{size:A4 portrait;margin:0}@media print{body{background:none}}</style></head><body>${body}</body></html>`;
   const url = URL.createObjectURL(new Blob([html], { type: "text/html;charset=utf-8" }));
@@ -40,6 +50,132 @@ const validateEmailFields = selector => {
 };
 
 export const actions = {
+  "auth-show-reset": () => { state.auth.mode = "reset"; state.auth.message = ""; render(); },
+  "auth-show-login": () => { state.auth.mode = "login"; state.auth.message = ""; state.auth.resetToken = ""; render(); },
+  "auth-cancel-mfa": () => { state.auth.mfaTicket = ""; state.auth.message = ""; render(); },
+  "auth-setup": async () => {
+    try {
+      authDone(await apiRequest("/auth/setup", { method: "POST", body: JSON.stringify(formValues("#auth-setup-form")) }));
+    } catch (error) { authFail(error); }
+  },
+  "auth-login": async () => {
+    try {
+      const result = await apiRequest("/auth/login", { method: "POST", body: JSON.stringify(formValues("#auth-login-form")) });
+      if (result.mfaRequired) {
+        state.auth.mfaTicket = result.ticket;
+        state.auth.message = "";
+        render();
+        return;
+      }
+      authDone(result);
+    } catch (error) { authFail(error); }
+  },
+  "auth-mfa-login": async () => {
+    try {
+      const values = formValues("#auth-mfa-form");
+      authDone(await apiRequest("/auth/mfa/verify", { method: "POST", body: JSON.stringify({ ticket: state.auth.mfaTicket, code: values.code }) }));
+    } catch (error) { authFail(error); }
+  },
+  "auth-reset-request": async () => {
+    try {
+      const result = await apiRequest("/auth/password/request", { method: "POST", body: JSON.stringify(formValues("#auth-reset-request-form")) });
+      state.auth.resetToken = "";
+      state.auth.message = result.message;
+      render();
+    } catch (error) { authFail(error); }
+  },
+  "auth-reset-apply": async () => {
+    try {
+      await apiRequest("/auth/password/reset", { method: "POST", body: JSON.stringify(formValues("#auth-reset-apply-form")) });
+      state.auth.mode = "login";
+      state.auth.resetToken = "";
+      state.auth.message = "Passwort wurde geaendert.";
+      render();
+    } catch (error) { authFail(error); }
+  },
+  "auth-logout": async () => {
+    try { await apiRequest("/auth/logout", { method: "POST", body: "{}" }); } catch { /* Session ist lokal trotzdem beendet */ }
+    clearAuthSession();
+    render();
+  },
+  "mfa-setup": async () => {
+    try {
+      state.auth.mfaSetup = await apiRequest("/auth/mfa/setup", { method: "POST", body: "{}" });
+      render();
+    } catch (error) { toast(error.message); }
+  },
+  "mfa-enable": async () => {
+    try {
+      const result = await apiRequest("/auth/mfa/enable", { method: "POST", body: JSON.stringify(formValues("#mfa-enable-form")) });
+      state.auth.user = result.user;
+      state.auth.mfaSetup = null;
+      render();
+      toast("MFA aktiviert.");
+    } catch (error) { toast(error.message); }
+  },
+  "mfa-disable": async () => {
+    try {
+      const result = await apiRequest("/auth/mfa/disable", { method: "POST", body: JSON.stringify(formValues("#mfa-disable-form")) });
+      state.auth.user = result.user;
+      render();
+      toast("MFA deaktiviert.");
+    } catch (error) { toast(error.message); }
+  },
+  "load-users": async () => {
+    try {
+      state.auth.users = await apiRequest("/users");
+      state.selectedUserId = state.selectedUserId || state.auth.users[0]?.id || "";
+      render();
+    } catch (error) { toast(error.message); }
+  },
+  "new-user": () => { state.selectedUserId = "new"; state.auth.adminResetToken = ""; render(); },
+  "select-user": event => { state.selectedUserId = event.target.closest("[data-id]").dataset.id; state.auth.adminResetToken = ""; render(); },
+  "save-user": async () => {
+    try {
+      const values = formValues("#user-form");
+      const payload = { ...values, active: values.active === "true" };
+      const user = values.id
+        ? await apiRequest(`/users/${values.id}`, { method: "PUT", body: JSON.stringify(payload) })
+        : await apiRequest("/users", { method: "POST", body: JSON.stringify(payload) });
+      state.selectedUserId = user.id;
+      state.auth.users = await apiRequest("/users");
+      render();
+      toast("Benutzer gespeichert.");
+    } catch (error) { toast(error.message); }
+  },
+  "user-reset-password": async () => {
+    try {
+      const result = await apiRequest(`/users/${state.selectedUserId}/reset-password`, { method: "POST", body: "{}" });
+      state.auth.adminResetToken = result.resetToken;
+      render();
+    } catch (error) { toast(error.message); }
+  },
+  "user-reset-mfa": async () => {
+    try {
+      const user = await apiRequest(`/users/${state.selectedUserId}/mfa-reset`, { method: "POST", body: "{}" });
+      state.auth.users = state.auth.users.map(item => item.id === user.id ? user : item);
+      render();
+      toast("MFA zurueckgesetzt.");
+    } catch (error) { toast(error.message); }
+  },
+  "delete-user": () => {
+    const user = state.auth.users.find(item => item.id === state.selectedUserId);
+    if (!user) return;
+    state.dialog = { type: "delete-user", userId: user.id, title: "Benutzer loeschen", message: `Soll ${user.email} wirklich geloescht werden?`, confirmLabel: "Benutzer loeschen", confirmAction: "confirm-delete-user" };
+    render();
+  },
+  "confirm-delete-user": async () => {
+    try {
+      const userId = state.dialog?.userId;
+      state.dialog = null;
+      if (!userId) return;
+      await apiRequest(`/users/${userId}`, { method: "DELETE" });
+      state.auth.users = state.auth.users.filter(user => user.id !== userId);
+      state.selectedUserId = state.auth.users[0]?.id || "";
+      render();
+      toast("Benutzer geloescht.");
+    } catch (error) { toast(error.message); }
+  },
   "reset-data": () => {
     state.data = structuredClone(sampleData);
     state.generatedDocs = [];

@@ -120,6 +120,44 @@ CREATE TABLE IF NOT EXISTS gd_import_log (
     INDEX idx_gd_import_log_type (entry_type)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS gd_users (
+    id VARCHAR(48) NOT NULL PRIMARY KEY,
+    email VARCHAR(180) NOT NULL,
+    display_name VARCHAR(180) NOT NULL DEFAULT '',
+    role VARCHAR(24) NOT NULL DEFAULT 'user',
+    password_hash VARCHAR(255) NOT NULL,
+    mfa_enabled TINYINT(1) NOT NULL DEFAULT 0,
+    mfa_secret VARCHAR(80) NOT NULL DEFAULT '',
+    mfa_pending_secret VARCHAR(80) NOT NULL DEFAULT '',
+    active TINYINT(1) NOT NULL DEFAULT 1,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE INDEX idx_gd_users_email (email),
+    INDEX idx_gd_users_role (role),
+    INDEX idx_gd_users_active (active)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS gd_auth_tokens (
+    id VARCHAR(64) NOT NULL PRIMARY KEY,
+    user_id VARCHAR(48) NOT NULL,
+    token_hash CHAR(64) NOT NULL,
+    token_type VARCHAR(24) NOT NULL,
+    expires_at DATETIME NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE INDEX idx_gd_auth_tokens_hash (token_hash),
+    INDEX idx_gd_auth_tokens_user (user_id),
+    INDEX idx_gd_auth_tokens_type (token_type),
+    INDEX idx_gd_auth_tokens_expires (expires_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS gd_auth_rate_limits (
+    limit_key VARCHAR(160) NOT NULL PRIMARY KEY,
+    attempts INT NOT NULL DEFAULT 0,
+    first_attempt_at DATETIME NOT NULL,
+    last_attempt_at DATETIME NOT NULL,
+    INDEX idx_gd_auth_rate_limits_last (last_attempt_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS gd_api_meta (
     name VARCHAR(64) NOT NULL PRIMARY KEY,
     value VARCHAR(255) NOT NULL,

@@ -2,11 +2,18 @@
 declare(strict_types=1);
 
 const COLLECTIONS = ['citizens', 'sokoGroups', 'sokoMembers', 'streets', 'senders', 'templates', 'importLog'];
+const ADMIN_COLLECTIONS = ['sokoGroups', 'sokoMembers', 'streets', 'senders', 'templates'];
+const SESSION_TTL_SECONDS = 604800;
+const MFA_TICKET_TTL_SECONDS = 300;
+const PASSWORD_RESET_TTL_SECONDS = 900;
+const PASSWORD_RESET_RATE_LIMIT_SECONDS = 3600;
+const PASSWORD_RESET_RATE_LIMIT_MAX = 5;
+const MFA_ISSUER = 'Gratulationsdienst Reinickendorf';
 
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(204);
@@ -169,8 +176,20 @@ function dispatch(array $db): void
         respond(['ok' => true, 'driver' => $db['driver'], 'collections' => COLLECTIONS, 'schema' => 'relational']);
     }
 
+    if (($route[0] ?? '') === 'auth') {
+        handleAuth($db, $method, array_slice($route, 1));
+        return;
+    }
+
+    $user = requireAuthenticatedUser($db);
+
+    if (($route[0] ?? '') === 'users') {
+        handleUsers($db, $method, array_slice($route, 1), $user);
+        return;
+    }
+
     if (($route[0] ?? '') === 'data') {
-        handleData($db, $method);
+        handleData($db, $method, $user);
         return;
     }
 
@@ -180,10 +199,10 @@ function dispatch(array $db): void
         respond(['error' => 'Unbekannte Route.'], 404);
     }
 
-    handleCollection($db, $method, $collection, $id);
+    handleCollection($db, $method, $collection, $id, $user);
 }
 
-function handleData(array $db, string $method): void
+function handleData(array $db, string $method, array $user): void
 {
     if ($method === 'GET') {
         respond(readAll($db));
@@ -191,6 +210,11 @@ function handleData(array $db, string $method): void
 
     if ($method === 'PUT' || $method === 'POST') {
         $data = requireObject(readJson());
+        if (($user['role'] ?? '') !== 'admin') {
+            foreach (ADMIN_COLLECTIONS as $collection) {
+                if (array_key_exists($collection, $data)) respond(['error' => 'Admin-Rechte fuer Stammdaten erforderlich.'], 403);
+            }
+        }
         transaction($db, static function () use ($db, $data): void {
             foreach (COLLECTIONS as $collection) {
                 if (array_key_exists($collection, $data)) {
@@ -204,7 +228,7 @@ function handleData(array $db, string $method): void
     respond(['error' => 'Methode nicht erlaubt.'], 405);
 }
 
-function handleCollection(array $db, string $method, string $collection, ?string $id): void
+function handleCollection(array $db, string $method, string $collection, ?string $id, array $user): void
 {
     if ($method === 'GET' && $id === null) {
         respond(readCollection($db, $collection));
@@ -214,6 +238,8 @@ function handleCollection(array $db, string $method, string $collection, ?string
         $item = readItem($db, $collection, $id);
         $item ? respond($item) : respond(['error' => 'Datensatz nicht gefunden.'], 404);
     }
+
+    if ($method !== 'GET' && in_array($collection, ADMIN_COLLECTIONS, true)) requireAdmin($user);
 
     if ($method === 'PUT' && $id === null) {
         replaceCollection($db, $collection, requireList(readJson(), $collection));
@@ -242,6 +268,206 @@ function handleCollection(array $db, string $method, string $collection, ?string
     respond(['error' => 'Methode nicht erlaubt.'], 405);
 }
 
+function handleAuth(array $db, string $method, array $route): void
+{
+    cleanupAuthTokens($db);
+    $action = $route[0] ?? 'status';
+
+    if ($method === 'GET' && $action === 'status') {
+        $user = authenticatedUser($db);
+        respond([
+            'setupRequired' => !usersExist($db),
+            'authenticated' => (bool)$user,
+            'user' => $user ? publicUser($user) : null,
+        ]);
+    }
+
+    if ($method === 'POST' && $action === 'setup') {
+        if (usersExist($db)) respond(['error' => 'Die Ersteinrichtung ist bereits abgeschlossen.'], 409);
+        $data = requireObject(readJson());
+        $email = normalizedEmail($data['email'] ?? '');
+        $password = (string)($data['password'] ?? '');
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) respond(['error' => 'Gueltige E-Mail-Adresse erforderlich.'], 422);
+        if (!validPassword($password)) respond(['error' => 'Das Passwort braucht mindestens 10 Zeichen.'], 422);
+        $userId = newId('U');
+        executeStatement($db, 'INSERT INTO gd_users (id, email, display_name, role, password_hash) VALUES (?, ?, ?, ?, ?)', [
+            $userId,
+            $email,
+            trim((string)($data['displayName'] ?? 'Administration')) ?: 'Administration',
+            'admin',
+            password_hash($password, PASSWORD_DEFAULT),
+        ]);
+        respond(authResponse($db, userById($db, $userId)));
+    }
+
+    if ($method === 'POST' && $action === 'login') {
+        $data = requireObject(readJson());
+        $user = userByEmail($db, normalizedEmail($data['email'] ?? ''));
+        if (!$user || !(bool)$user['active'] || !password_verify((string)($data['password'] ?? ''), (string)$user['password_hash'])) {
+            respond(['error' => 'Anmeldung fehlgeschlagen.'], 401);
+        }
+        if ((bool)$user['mfa_enabled']) {
+            $ticket = createAuthToken($db, $user['id'], 'mfa', MFA_TICKET_TTL_SECONDS);
+            respond(['mfaRequired' => true, 'ticket' => $ticket, 'user' => publicUser($user)]);
+        }
+        respond(authResponse($db, $user));
+    }
+
+    if ($method === 'POST' && $action === 'logout') {
+        $token = bearerToken();
+        if ($token !== '') deleteAuthToken($db, $token);
+        respond(['ok' => true]);
+    }
+
+    if ($method === 'POST' && $action === 'mfa' && ($route[1] ?? '') === 'verify') {
+        $data = requireObject(readJson());
+        $tokenRow = authTokenRow($db, (string)($data['ticket'] ?? ''), 'mfa');
+        $user = $tokenRow ? userById($db, (string)$tokenRow['user_id']) : null;
+        if (!$user || !verifyTotp((string)$user['mfa_secret'], (string)($data['code'] ?? ''))) {
+            respond(['error' => 'MFA-Code ist ungueltig.'], 401);
+        }
+        deleteAuthToken($db, (string)$data['ticket']);
+        respond(authResponse($db, $user));
+    }
+
+    if ($method === 'POST' && $action === 'password' && ($route[1] ?? '') === 'request') {
+        $data = requireObject(readJson());
+        $email = normalizedEmail($data['email'] ?? '');
+        $allowed = filter_var($email, FILTER_VALIDATE_EMAIL)
+            && rateLimit($db, 'reset-email:' . hash('sha256', $email), PASSWORD_RESET_RATE_LIMIT_MAX, PASSWORD_RESET_RATE_LIMIT_SECONDS)
+            && rateLimit($db, 'reset-ip:' . hash('sha256', clientIp()), PASSWORD_RESET_RATE_LIMIT_MAX * 2, PASSWORD_RESET_RATE_LIMIT_SECONDS);
+        $user = $allowed ? userByEmail($db, $email) : null;
+        if ($user && (bool)$user['active']) {
+            executeStatement($db, "DELETE FROM gd_auth_tokens WHERE user_id = ? AND token_type = 'reset'", [$user['id']]);
+            $token = createAuthToken($db, (string)$user['id'], 'reset', PASSWORD_RESET_TTL_SECONDS);
+            sendPasswordResetMail($db, $user, $token);
+        }
+        respond([
+            'ok' => true,
+            'message' => 'Falls der Zugang existiert, wurde ein Ruecksetz-Link per E-Mail verschickt.',
+        ]);
+    }
+
+    if ($method === 'POST' && $action === 'password' && ($route[1] ?? '') === 'reset') {
+        $data = requireObject(readJson());
+        if (!rateLimit($db, 'reset-apply-ip:' . hash('sha256', clientIp()), 20, PASSWORD_RESET_RATE_LIMIT_SECONDS)) respond(['error' => 'Zu viele Versuche. Bitte spaeter erneut probieren.'], 429);
+        $tokenRow = authTokenRow($db, (string)($data['token'] ?? ''), 'reset');
+        if (!$tokenRow) respond(['error' => 'Ruecksetz-Code ist ungueltig oder abgelaufen.'], 401);
+        $password = (string)($data['password'] ?? '');
+        if (!validPassword($password)) respond(['error' => 'Das Passwort braucht mindestens 10 Zeichen.'], 422);
+        executeStatement($db, 'UPDATE gd_users SET password_hash = ? WHERE id = ?', [password_hash($password, PASSWORD_DEFAULT), $tokenRow['user_id']]);
+        executeStatement($db, 'DELETE FROM gd_auth_tokens WHERE user_id = ?', [$tokenRow['user_id']]);
+        respond(['ok' => true]);
+    }
+
+    if ($action === 'mfa') {
+        $user = requireAuthenticatedUser($db);
+        $mfaAction = $route[1] ?? '';
+
+        if ($method === 'POST' && $mfaAction === 'setup') {
+            $secret = base32Secret();
+            executeStatement($db, 'UPDATE gd_users SET mfa_pending_secret = ? WHERE id = ?', [$secret, $user['id']]);
+            respond([
+                'secret' => $secret,
+                'otpauthUrl' => otpauthUrl((string)$user['email'], $secret),
+            ]);
+        }
+
+        if ($method === 'POST' && $mfaAction === 'enable') {
+            $data = requireObject(readJson());
+            $freshUser = userById($db, (string)$user['id']);
+            $secret = (string)($freshUser['mfa_pending_secret'] ?? '');
+            if ($secret === '' || !verifyTotp($secret, (string)($data['code'] ?? ''))) respond(['error' => 'MFA-Code ist ungueltig.'], 422);
+            executeStatement($db, "UPDATE gd_users SET mfa_enabled = 1, mfa_secret = ?, mfa_pending_secret = '' WHERE id = ?", [$secret, $user['id']]);
+            respond(['ok' => true, 'user' => publicUser(userById($db, (string)$user['id']))]);
+        }
+
+        if ($method === 'POST' && $mfaAction === 'disable') {
+            $data = requireObject(readJson());
+            $freshUser = userById($db, (string)$user['id']);
+            if (!password_verify((string)($data['password'] ?? ''), (string)$freshUser['password_hash'])) respond(['error' => 'Passwort ist ungueltig.'], 401);
+            if ((bool)$freshUser['mfa_enabled'] && !verifyTotp((string)$freshUser['mfa_secret'], (string)($data['code'] ?? ''))) respond(['error' => 'MFA-Code ist ungueltig.'], 401);
+            executeStatement($db, "UPDATE gd_users SET mfa_enabled = 0, mfa_secret = '', mfa_pending_secret = '' WHERE id = ?", [$user['id']]);
+            respond(['ok' => true, 'user' => publicUser(userById($db, (string)$user['id']))]);
+        }
+    }
+
+    respond(['error' => 'Methode nicht erlaubt.'], 405);
+}
+
+function handleUsers(array $db, string $method, array $route, array $currentUser): void
+{
+    requireAdmin($currentUser);
+    $id = $route[0] ?? null;
+    $subAction = $route[1] ?? null;
+
+    if ($method === 'GET' && $id === null) {
+        respond(array_map('publicUser', users($db)));
+    }
+
+    if ($method === 'POST' && $id === null) {
+        $data = requireObject(readJson());
+        $email = normalizedEmail($data['email'] ?? '');
+        $password = (string)($data['password'] ?? '');
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) respond(['error' => 'Gueltige E-Mail-Adresse erforderlich.'], 422);
+        if (!validPassword($password)) respond(['error' => 'Das Passwort braucht mindestens 10 Zeichen.'], 422);
+        if (!validRole((string)($data['role'] ?? 'user'))) respond(['error' => 'Unbekannte Rolle.'], 422);
+        $userId = newId('U');
+        executeStatement($db, 'INSERT INTO gd_users (id, email, display_name, role, password_hash, active) VALUES (?, ?, ?, ?, ?, ?)', [
+            $userId,
+            $email,
+            trim((string)($data['displayName'] ?? '')),
+            (string)($data['role'] ?? 'user'),
+            password_hash($password, PASSWORD_DEFAULT),
+            !empty($data['active']) ? 1 : 0,
+        ]);
+        respond(publicUser(userById($db, $userId)), 201);
+    }
+
+    if (!$id) respond(['error' => 'Benutzer nicht gefunden.'], 404);
+
+    if ($method === 'PUT' && $subAction === null) {
+        $data = requireObject(readJson());
+        $existing = userById($db, $id);
+        if (!$existing) respond(['error' => 'Benutzer nicht gefunden.'], 404);
+        $role = (string)($data['role'] ?? $existing['role']);
+        $active = !empty($data['active']) ? 1 : 0;
+        if (!validRole($role)) respond(['error' => 'Unbekannte Rolle.'], 422);
+        if ($id === $currentUser['id'] && ($role !== 'admin' || !$active)) respond(['error' => 'Der eigene Admin-Zugang darf nicht entzogen werden.'], 422);
+        executeStatement($db, 'UPDATE gd_users SET email = ?, display_name = ?, role = ?, active = ? WHERE id = ?', [
+            normalizedEmail($data['email'] ?? $existing['email']),
+            trim((string)($data['displayName'] ?? $existing['display_name'])),
+            $role,
+            $active,
+            $id,
+        ]);
+        respond(publicUser(userById($db, $id)));
+    }
+
+    if ($method === 'POST' && $subAction === 'reset-password') {
+        $existing = userById($db, $id);
+        if (!$existing) respond(['error' => 'Benutzer nicht gefunden.'], 404);
+        executeStatement($db, "DELETE FROM gd_auth_tokens WHERE user_id = ? AND token_type = 'reset'", [$id]);
+        respond(['resetToken' => createAuthToken($db, $id, 'reset', PASSWORD_RESET_TTL_SECONDS)]);
+    }
+
+    if ($method === 'POST' && $subAction === 'mfa-reset') {
+        $existing = userById($db, $id);
+        if (!$existing) respond(['error' => 'Benutzer nicht gefunden.'], 404);
+        executeStatement($db, "UPDATE gd_users SET mfa_enabled = 0, mfa_secret = '', mfa_pending_secret = '' WHERE id = ?", [$id]);
+        executeStatement($db, "DELETE FROM gd_auth_tokens WHERE user_id = ? AND token_type = 'mfa'", [$id]);
+        respond(publicUser(userById($db, $id)));
+    }
+
+    if ($method === 'DELETE' && $subAction === null) {
+        if ($id === $currentUser['id']) respond(['error' => 'Der eigene Benutzer kann nicht geloescht werden.'], 422);
+        executeStatement($db, 'DELETE FROM gd_auth_tokens WHERE user_id = ?', [$id]);
+        respond(['deleted' => executeStatement($db, 'DELETE FROM gd_users WHERE id = ?', [$id]) > 0]);
+    }
+
+    respond(['error' => 'Methode nicht erlaubt.'], 405);
+}
+
 function db(): array
 {
     $configFile = __DIR__ . '/config.php';
@@ -249,6 +475,7 @@ function db(): array
     $dsn = (string)$config['dsn'];
 
     if (str_starts_with($dsn, 'mysql:') && !extension_loaded('pdo_mysql')) {
+        if (!extension_loaded('mysqli')) throw new RuntimeException('PHP braucht die Erweiterung pdo_mysql oder mysqli fuer die MySQL-Verbindung.');
         mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
         $parts = parseDsn($dsn);
         $mysqli = new mysqli(
@@ -259,13 +486,13 @@ function db(): array
             (int)($parts['port'] ?? 3306)
         );
         $mysqli->set_charset($parts['charset'] ?? 'utf8mb4');
-        return ['driver' => 'mysqli', 'mysqli' => $mysqli];
+        return ['driver' => 'mysqli', 'mysqli' => $mysqli, 'config' => $config];
     }
 
     $pdo = new PDO($dsn, $config['user'], $config['password'], $config['options'] ?? []);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-    return ['driver' => $pdo->getAttribute(PDO::ATTR_DRIVER_NAME), 'pdo' => $pdo];
+    return ['driver' => $pdo->getAttribute(PDO::ATTR_DRIVER_NAME), 'pdo' => $pdo, 'config' => $config];
 }
 
 function initSchema(array $db): void
@@ -372,6 +599,275 @@ function valueFromDb(mixed $value, string $type): mixed
     if ($type === 'json') return $value ? json_decode((string)$value, true, flags: JSON_THROW_ON_ERROR) : [];
     if ($type === 'int') return $value === null ? null : (int)$value;
     return $value ?? '';
+}
+
+function usersExist(array $db): bool
+{
+    $row = fetchOne($db, 'SELECT COUNT(*) AS count_rows FROM gd_users');
+    return (int)($row['count_rows'] ?? 0) > 0;
+}
+
+function users(array $db): array
+{
+    $sql = 'SELECT id, email, display_name, role, mfa_enabled, active, created_at, updated_at FROM gd_users ORDER BY role, email';
+    if ($db['driver'] === 'mysqli') return $db['mysqli']->query($sql)->fetch_all(MYSQLI_ASSOC);
+    return $db['pdo']->query($sql)->fetchAll();
+}
+
+function userById(array $db, string $id): ?array
+{
+    return fetchOne($db, 'SELECT * FROM gd_users WHERE id = ?', [$id]);
+}
+
+function userByEmail(array $db, string $email): ?array
+{
+    return fetchOne($db, 'SELECT * FROM gd_users WHERE email = ?', [$email]);
+}
+
+function publicUser(array $user): array
+{
+    return [
+        'id' => $user['id'],
+        'email' => $user['email'],
+        'displayName' => $user['display_name'] ?? $user['displayName'] ?? '',
+        'role' => $user['role'],
+        'mfaEnabled' => (bool)($user['mfa_enabled'] ?? $user['mfaEnabled'] ?? false),
+        'active' => (bool)($user['active'] ?? true),
+        'createdAt' => $user['created_at'] ?? '',
+        'updatedAt' => $user['updated_at'] ?? '',
+    ];
+}
+
+function authResponse(array $db, array $user): array
+{
+    return [
+        'authenticated' => true,
+        'token' => createAuthToken($db, (string)$user['id'], 'session', SESSION_TTL_SECONDS),
+        'user' => publicUser($user),
+    ];
+}
+
+function requireAuthenticatedUser(array $db): array
+{
+    $user = authenticatedUser($db);
+    if (!$user) respond(['error' => 'Anmeldung erforderlich.'], 401);
+    return $user;
+}
+
+function authenticatedUser(array $db): ?array
+{
+    $token = bearerToken();
+    if ($token === '') return null;
+    $hash = tokenHash($token);
+    return fetchOne($db, "
+        SELECT u.*
+        FROM gd_auth_tokens t
+        JOIN gd_users u ON u.id = t.user_id
+        WHERE t.token_hash = ? AND t.token_type = 'session' AND t.expires_at > CURRENT_TIMESTAMP AND u.active = 1
+    ", [$hash]);
+}
+
+function requireAdmin(array $user): void
+{
+    if (($user['role'] ?? '') !== 'admin') respond(['error' => 'Admin-Rechte erforderlich.'], 403);
+}
+
+function bearerToken(): string
+{
+    $header = $_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '';
+    if ($header === '' && function_exists('getallheaders')) {
+        $headers = getallheaders();
+        $header = $headers['Authorization'] ?? $headers['authorization'] ?? '';
+    }
+    return preg_match('/^Bearer\s+(.+)$/i', (string)$header, $match) ? trim($match[1]) : '';
+}
+
+function createAuthToken(array $db, string $userId, string $type, int $ttl): string
+{
+    $token = bin2hex(random_bytes(32));
+    executeStatement($db, 'INSERT INTO gd_auth_tokens (id, user_id, token_hash, token_type, expires_at) VALUES (?, ?, ?, ?, ?)', [
+        newId('T'),
+        $userId,
+        tokenHash($token),
+        $type,
+        sqlDateTime(time() + $ttl),
+    ]);
+    return $token;
+}
+
+function authTokenRow(array $db, string $token, string $type): ?array
+{
+    if ($token === '') return null;
+    return fetchOne($db, 'SELECT * FROM gd_auth_tokens WHERE token_hash = ? AND token_type = ? AND expires_at > CURRENT_TIMESTAMP', [tokenHash($token), $type]);
+}
+
+function deleteAuthToken(array $db, string $token): void
+{
+    if ($token !== '') executeStatement($db, 'DELETE FROM gd_auth_tokens WHERE token_hash = ?', [tokenHash($token)]);
+}
+
+function cleanupAuthTokens(array $db): void
+{
+    executeStatement($db, 'DELETE FROM gd_auth_tokens WHERE expires_at <= CURRENT_TIMESTAMP');
+}
+
+function rateLimit(array $db, string $key, int $maxAttempts, int $windowSeconds): bool
+{
+    cleanupRateLimits($db, $windowSeconds);
+    $now = time();
+    $row = fetchOne($db, 'SELECT attempts, first_attempt_at FROM gd_auth_rate_limits WHERE limit_key = ?', [$key]);
+    if (!$row || strtotime((string)$row['first_attempt_at']) <= $now - $windowSeconds) {
+        upsertRateLimit($db, $key, 1, sqlDateTime($now), sqlDateTime($now));
+        return true;
+    }
+    $attempts = (int)$row['attempts'] + 1;
+    upsertRateLimit($db, $key, $attempts, (string)$row['first_attempt_at'], sqlDateTime($now));
+    return $attempts <= $maxAttempts;
+}
+
+function upsertRateLimit(array $db, string $key, int $attempts, string $firstAttemptAt, string $lastAttemptAt): void
+{
+    if ($db['driver'] === 'mysqli' || $db['driver'] === 'mysql') {
+        executeStatement($db, 'INSERT INTO gd_auth_rate_limits (limit_key, attempts, first_attempt_at, last_attempt_at) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE attempts = VALUES(attempts), first_attempt_at = VALUES(first_attempt_at), last_attempt_at = VALUES(last_attempt_at)', [$key, $attempts, $firstAttemptAt, $lastAttemptAt]);
+        return;
+    }
+    executeStatement($db, 'INSERT INTO gd_auth_rate_limits (limit_key, attempts, first_attempt_at, last_attempt_at) VALUES (?, ?, ?, ?) ON CONFLICT(limit_key) DO UPDATE SET attempts = excluded.attempts, first_attempt_at = excluded.first_attempt_at, last_attempt_at = excluded.last_attempt_at', [$key, $attempts, $firstAttemptAt, $lastAttemptAt]);
+}
+
+function cleanupRateLimits(array $db, int $windowSeconds): void
+{
+    executeStatement($db, 'DELETE FROM gd_auth_rate_limits WHERE last_attempt_at <= ?', [sqlDateTime(time() - $windowSeconds)]);
+}
+
+function sendPasswordResetMail(array $db, array $user, string $token): void
+{
+    $config = appConfig($db);
+    if (trim((string)($config['app_url'] ?? '')) === '') {
+        error_log('Reset-Mail konnte nicht versendet werden: app_url ist nicht konfiguriert.');
+        return;
+    }
+    $url = resetUrl($config, $token);
+    $subject = 'Passwort zuruecksetzen';
+    $message = "Hallo " . trim((string)($user['display_name'] ?: $user['email'])) . ",\n\n"
+        . "fuer Ihren Zugang zum Gratulationsdienst wurde ein Passwort-Reset angefordert.\n\n"
+        . "Bitte oeffnen Sie innerhalb von 15 Minuten diesen Link:\n{$url}\n\n"
+        . "Wenn Sie den Reset nicht angefordert haben, ignorieren Sie diese Nachricht.\n";
+    $headers = [
+        'From: ' . mailFromHeader($config),
+        'Content-Type: text/plain; charset=UTF-8',
+    ];
+    if (!function_exists('mail')) {
+        error_log('Reset-Mail konnte nicht versendet werden: PHP mail() ist nicht verfuegbar.');
+        return;
+    }
+    if (!mail((string)$user['email'], $subject, $message, implode("\r\n", $headers))) error_log('Reset-Mail konnte nicht versendet werden.');
+}
+
+function resetUrl(array $config, string $token): string
+{
+    $base = rtrim((string)($config['app_url'] ?? ''), '/') . '/';
+    return $base . '?resetToken=' . rawurlencode($token);
+}
+
+function mailFromHeader(array $config): string
+{
+    $email = (string)($config['mail_from'] ?? 'noreply@example.test');
+    $name = trim((string)($config['mail_from_name'] ?? ''));
+    return $name === '' ? $email : sprintf('"%s" <%s>', addcslashes($name, '"\\'), $email);
+}
+
+function appConfig(array $db): array
+{
+    return $db['config'] ?? [];
+}
+
+function clientIp(): string
+{
+    return (string)($_SERVER['REMOTE_ADDR'] ?? 'unknown');
+}
+
+function tokenHash(string $token): string
+{
+    return hash('sha256', $token);
+}
+
+function sqlDateTime(int $timestamp): string
+{
+    return date('Y-m-d H:i:s', $timestamp);
+}
+
+function normalizedEmail(mixed $value): string
+{
+    return strtolower(trim((string)$value));
+}
+
+function validPassword(string $password): bool
+{
+    return strlen($password) >= 10;
+}
+
+function validRole(string $role): bool
+{
+    return in_array($role, ['admin', 'user'], true);
+}
+
+function newId(string $prefix): string
+{
+    return $prefix . '-' . bin2hex(random_bytes(8));
+}
+
+function base32Secret(int $length = 20): string
+{
+    $alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+    $bytes = random_bytes($length);
+    return implode('', array_map(static fn ($byte) => $alphabet[ord($byte) & 31], str_split($bytes)));
+}
+
+function otpauthUrl(string $email, string $secret): string
+{
+    $label = rawurlencode(MFA_ISSUER . ':' . $email);
+    return "otpauth://totp/{$label}?secret={$secret}&issuer=" . rawurlencode(MFA_ISSUER) . '&algorithm=SHA1&digits=6&period=30';
+}
+
+function verifyTotp(string $secret, string $code): bool
+{
+    $code = preg_replace('/\s+/', '', $code);
+    if (!preg_match('/^\d{6}$/', $code)) return false;
+    $counter = intdiv(time(), 30);
+    foreach ([-1, 0, 1] as $offset) {
+        if (hash_equals(totpCode($secret, $counter + $offset), $code)) return true;
+    }
+    return false;
+}
+
+function totpCode(string $secret, int $counter): string
+{
+    $key = base32Decode($secret);
+    $binaryCounter = pack('N*', 0) . pack('N*', $counter);
+    $hash = hash_hmac('sha1', $binaryCounter, $key, true);
+    $offset = ord($hash[19]) & 0xf;
+    $value = ((ord($hash[$offset]) & 0x7f) << 24)
+        | ((ord($hash[$offset + 1]) & 0xff) << 16)
+        | ((ord($hash[$offset + 2]) & 0xff) << 8)
+        | (ord($hash[$offset + 3]) & 0xff);
+    return str_pad((string)($value % 1000000), 6, '0', STR_PAD_LEFT);
+}
+
+function base32Decode(string $secret): string
+{
+    $alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+    $bits = '';
+    foreach (str_split(strtoupper($secret)) as $char) {
+        if ($char === '=') continue;
+        $value = strpos($alphabet, $char);
+        if ($value === false) return '';
+        $bits .= str_pad(decbin($value), 5, '0', STR_PAD_LEFT);
+    }
+    $bytes = '';
+    foreach (str_split($bits, 8) as $chunk) {
+        if (strlen($chunk) === 8) $bytes .= chr(bindec($chunk));
+    }
+    return $bytes;
 }
 
 function fetchOne(array $db, string $sql, array $values = []): ?array

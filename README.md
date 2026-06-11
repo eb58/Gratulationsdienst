@@ -85,8 +85,13 @@ return [
     'user'     => 'gd_user',
     'password' => 'sicheres-passwort',
     'options'  => [],
+    'app_url'  => 'https://example.org/gratulationsdienst/',
+    'mail_from' => 'noreply@example.org',
+    'mail_from_name' => 'Gratulationsdienst Reinickendorf',
 ];
 ```
+
+`app_url` wird fuer Passwort-Reset-Links verwendet. Die PHP-Umgebung muss fuer Self-Service-Passwort-Reset E-Mails ueber `mail()` versenden koennen.
 
 Apache benötigt `AllowOverride All` für das `php-api/`-Verzeichnis (wegen `.htaccess` mit `mod_rewrite`).
 

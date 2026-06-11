@@ -5,6 +5,7 @@ import { selectedCitizen, selectedTemplate, selectedSender, selectedMember, sele
 import { field, emailField, ibanField, selectField, textField, checkField, radioField, streetRuleRows, assignmentPill, gridHost, groupOptions, sokoSelectOptions, senderOptions, templateOptions, occasionOptions, formatOptions } from './fields.js';
 import { streetMapSvg, addressPointData, assignedAddressPoints } from './map.js';
 import { documentPreview } from './documents.js';
+import { qrCodeSvg } from './qr.js';
 import { render } from './render.js'; // Zyklus OK: render wird nur in Callbacks aufgerufen
 
 export const viewTitles = {
@@ -18,7 +19,71 @@ export const viewTitles = {
   documents: "Dokumentlauf",
   quittung: "Quittungsdruck",
   quittungStamm: "Stammdaten: Quittung",
-  import: "LABO-Import"
+  import: "LABO-Import",
+  profile: "Mein Zugang",
+  users: "Benutzerverwaltung"
+};
+
+export const authView = () => {
+  if (!state.auth.ready) return `<section class="auth-panel"><h2>Anmeldung wird geprüft</h2><div class="empty-state">Bitte warten...</div></section>`;
+  const notice = state.auth.message ? `<div class="alert">${escapeHtml(state.auth.message)}</div>` : "";
+  if (state.auth.setupRequired) return `
+    <section class="auth-panel">
+      <h2>Ersten Admin-Zugang anlegen</h2>
+      ${notice}
+      <form id="auth-setup-form" class="form-grid">
+        ${field("displayName", "Name", "Administration")}
+        ${field("email", "E-Mail", "", "email")}
+        ${field("password", "Passwort", "", "password", "full", 'autocomplete="new-password"')}
+        <div class="field full"><button type="button" class="primary-button" data-action="auth-setup">Admin anlegen</button></div>
+      </form>
+    </section>
+  `;
+  if (state.auth.mfaTicket) return `
+    <section class="auth-panel">
+      <h2>Zweiter Faktor</h2>
+      ${notice}
+      <form id="auth-mfa-form" class="form-grid">
+        ${field("code", "Authenticator-Code", "", "text", "full", 'inputmode="numeric" autocomplete="one-time-code"')}
+        <div class="field full button-row">
+          <button type="button" class="primary-button" data-action="auth-mfa-login">Anmelden</button>
+          <button type="button" class="ghost-button" data-action="auth-cancel-mfa">Zurück</button>
+        </div>
+      </form>
+    </section>
+  `;
+  if (state.auth.mode === "reset") return `
+    <section class="auth-panel">
+      <h2>Passwort zurücksetzen</h2>
+      ${notice}
+      <form id="auth-reset-request-form" class="form-grid">
+        ${field("email", "E-Mail", "", "email", "full")}
+        <div class="field full"><button type="button" class="ghost-button" data-action="auth-reset-request">Reset-Link per E-Mail anfordern</button></div>
+      </form>
+      <form id="auth-reset-apply-form" class="form-grid">
+        ${field("token", "Rücksetz-Token", state.auth.resetToken || "", "text", "full")}
+        ${field("password", "Neues Passwort", "", "password", "full", 'autocomplete="new-password"')}
+        <div class="field full button-row">
+          <button type="button" class="primary-button" data-action="auth-reset-apply">Passwort setzen</button>
+          <button type="button" class="ghost-button" data-action="auth-show-login">Zur Anmeldung</button>
+        </div>
+      </form>
+    </section>
+  `;
+  return `
+    <section class="auth-panel">
+      <h2>Anmelden</h2>
+      ${notice}
+      <form id="auth-login-form" class="form-grid">
+        ${field("email", "E-Mail", "", "email", "full", 'autocomplete="username"')}
+        ${field("password", "Passwort", "", "password", "full", 'autocomplete="current-password"')}
+        <div class="field full button-row">
+          <button type="button" class="primary-button" data-action="auth-login">Anmelden</button>
+          <button type="button" class="ghost-button" data-action="auth-show-reset">Passwort vergessen</button>
+        </div>
+      </form>
+    </section>
+  `;
 };
 
 export const regionAssignmentContent = () => {
@@ -72,7 +137,7 @@ const dashboardRows = () => state.data.sokoGroups.map(group => {
 });
 const ageDistribution = citizens => {
   const groups = [
-    { key: "85-89", label: "85-89", color: "#d09b2c", count: 0 },
+    { key: "85", label: "85", color: "#d09b2c", count: 0 },
     { key: "90-99", label: "90-99", color: "#0f5d58", count: 0 },
     { key: "100+", label: "100+", color: "#b64036", count: 0 }
   ];
@@ -148,7 +213,7 @@ export const views = {
           <article class="metric-card accent-gold">
             <span>Bearbeitet ${escapeHtml(selectedMonthSuffix())}</span>
             <strong>${totals.returns.toLocaleString("de-DE")} von ${totals.citizens.toLocaleString("de-DE")}</strong>
-            <em>bearbeited</em>
+            <em>bearbeitet</em>
           </article>
           <article class="metric-card accent-green">
             <span>Bearbeitungsquote ${escapeHtml(selectedMonthSuffix())}</span>
@@ -577,5 +642,100 @@ export const views = {
         </div>
       </section>
     </div>
-  `
+  `,
+
+  profile: () => {
+    const user = state.auth.user;
+    const setup = state.auth.mfaSetup;
+    return `
+      <div class="grid two">
+        <section class="panel">
+          <h2>Zugang</h2>
+          <div class="data-list">
+            <div><span>Name</span><strong>${escapeHtml(user.displayName || "-")}</strong></div>
+            <div><span>E-Mail</span><strong>${escapeHtml(user.email)}</strong></div>
+            <div><span>Rolle</span><strong>${user.role === "admin" ? "Admin" : "User"}</strong></div>
+            <div><span>MFA</span><strong>${user.mfaEnabled ? "aktiv" : "nicht aktiv"}</strong></div>
+          </div>
+        </section>
+        <section class="panel">
+          <h2>Multi-Faktor-Authentisierung</h2>
+          ${user.mfaEnabled ? `
+            <form id="mfa-disable-form" class="form-grid">
+              ${field("password", "Passwort", "", "password", "full")}
+              ${field("code", "Authenticator-Code", "", "text", "full", 'inputmode="numeric" autocomplete="one-time-code"')}
+              <div class="field full"><button type="button" class="danger-button" data-action="mfa-disable">MFA deaktivieren</button></div>
+            </form>
+          ` : `
+            <p class="muted">MFA nutzt zeitbasierte Einmalcodes aus einer Authenticator-App.</p>
+            <button type="button" class="primary-button" data-action="mfa-setup">MFA einrichten</button>
+            ${setup ? `
+              <div class="mfa-qr-panel">
+                ${qrCodeSvg(setup.otpauthUrl)}
+                <div>
+                  <strong>QR-Code scannen</strong>
+                  <span class="muted">Authenticator-App öffnen, Konto hinzufügen und diesen Code scannen.</span>
+                </div>
+              </div>
+              <div class="reset-token mfa-secret">
+                <span>Geheimer Schlüssel</span>
+                <code>${escapeHtml(setup.secret)}</code>
+                <small>${escapeHtml(setup.otpauthUrl)}</small>
+              </div>
+              <form id="mfa-enable-form" class="form-grid">
+                ${field("code", "Code aus der Authenticator-App", "", "text", "full", 'inputmode="numeric" autocomplete="one-time-code"')}
+                <div class="field full"><button type="button" class="primary-button" data-action="mfa-enable">MFA aktivieren</button></div>
+              </form>
+            ` : ""}
+          `}
+        </section>
+      </div>
+    `;
+  },
+
+  users: () => {
+    const users = state.auth.users || [];
+    const selected = state.selectedUserId === "new"
+      ? { id: "", email: "", displayName: "", role: "user", active: true, mfaEnabled: false }
+      : users.find(user => user.id === state.selectedUserId) || users[0];
+    return `
+      <div class="toolbar">
+        <button type="button" class="ghost-button" data-action="load-users">Aktualisieren</button>
+        <button type="button" class="primary-button" data-action="new-user">Neuer Benutzer</button>
+      </div>
+      ${state.auth.adminResetToken ? `<div class="alert">Rücksetz-Code: <code>${escapeHtml(state.auth.adminResetToken)}</code></div>` : ""}
+      <div class="grid two">
+        <section class="panel">
+          <h2>Benutzer</h2>
+          <div class="list">
+            ${users.map(user => `
+              <button type="button" class="list-item ${selected?.id === user.id ? "selected" : ""}" data-action="select-user" data-id="${escapeHtml(user.id)}">
+                <div><strong>${escapeHtml(user.displayName || user.email)}</strong><span class="muted">${escapeHtml(user.email)}</span></div>
+                <span class="pill ${user.active ? user.role === "admin" ? "green" : "" : "red"}">${escapeHtml(user.active ? user.role : "inaktiv")}</span>
+              </button>
+            `).join("") || `<div class="empty-state">Noch keine Benutzer geladen</div>`}
+          </div>
+        </section>
+        <section class="panel">
+          <h2>${state.selectedUserId === "new" ? "Benutzer anlegen" : "Benutzer bearbeiten"}</h2>
+          ${selected ? `
+            <form id="user-form" class="form-grid">
+              <input type="hidden" name="id" value="${escapeHtml(selected.id)}">
+              ${field("displayName", "Name", selected.displayName || "")}
+              ${field("email", "E-Mail", selected.email || "", "email")}
+              ${selectField("role", "Rolle", selected.role || "user", [["user", "User"], ["admin", "Admin"]])}
+              ${selectField("active", "Status", String(selected.active !== false), [["true", "Aktiv"], ["false", "Inaktiv"]])}
+              ${state.selectedUserId === "new" ? field("password", "Startpasswort", "", "password", "full", 'autocomplete="new-password"') : ""}
+              <div class="field full button-row">
+                <button type="button" class="primary-button" data-action="save-user">Speichern</button>
+                ${selected.id ? `<button type="button" class="ghost-button" data-action="user-reset-password">Passwort-Reset</button>` : ""}
+                ${selected.id && selected.mfaEnabled ? `<button type="button" class="ghost-button" data-action="user-reset-mfa">MFA zurücksetzen</button>` : ""}
+                ${selected.id && selected.id !== state.auth.user.id ? `<button type="button" class="danger-button" data-action="delete-user">Löschen</button>` : ""}
+              </div>
+            </form>
+          ` : `<div class="empty-state">Bitte Benutzer anlegen oder laden</div>`}
+        </section>
+      </div>
+    `;
+  }
 };

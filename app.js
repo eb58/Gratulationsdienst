@@ -1,4 +1,4 @@
-import { state, loadCollectionData } from './modules/state.js';
+import { canAccessView, isAdmin, state, loadAuthStatus, loadCollectionData } from './modules/state.js';
 import { splitStorageKey, MONTH_KEY, QUITTUNG_MONTH_KEY, isValidEmail } from './modules/utils.js';
 import { viewTitles } from './modules/views.js';
 import { render } from './modules/render.js';
@@ -6,13 +6,20 @@ import { actions } from './modules/actions.js';
 
 window.GRATULATIONSDIENST_VERSION = "20260608-6";
 
+const initialParams = new URLSearchParams(location.search);
+
 document.addEventListener("click", event => {
   const nav = event.target.closest("[data-nav]");
   const action = event.target.closest("[data-action]");
+  const adminOnly = event.target.closest("[data-admin-only]");
+  if ((nav || action) && adminOnly && !isAdmin()) return;
   if (nav) {
+    if (!state.auth.user) return;
+    if (!canAccessView(nav.dataset.nav)) return;
     state.view = nav.dataset.nav;
     render();
     if (state.view === "documents") actions["generate-docs"]();
+    if (state.view === "users") actions["load-users"]();
   }
   if (action) actions[action.dataset.action]?.(event);
 });
@@ -29,6 +36,8 @@ document.addEventListener("input", event => {
   const email = event.target.closest("input[type='email']");
   if (email) email.classList.toggle("invalid", !isValidEmail(email.value));
 });
+
+document.addEventListener("submit", event => event.preventDefault());
 
 document.addEventListener("pointerdown", event => {
   const splitter = event.target.closest("[data-splitter]");
@@ -86,8 +95,23 @@ document.addEventListener("change", event => {
   if (file) file.text().then(text => { state.importText = text; actions["run-import"](); });
 });
 
-state.view = viewTitles[new URLSearchParams(location.search).get("view")]
-  ? new URLSearchParams(location.search).get("view")
+state.view = viewTitles[initialParams.get("view")]
+  ? initialParams.get("view")
   : state.view;
+if (initialParams.get("resetToken")) {
+  localStorage.removeItem("gd_auth_token");
+  state.auth.token = "";
+  state.auth.user = null;
+  state.auth.mode = "reset";
+  state.auth.resetToken = initialParams.get("resetToken");
+}
 render();
-loadCollectionData();
+loadAuthStatus().then(() => {
+  if (initialParams.get("resetToken")) {
+    state.auth.mode = "reset";
+    state.auth.resetToken = initialParams.get("resetToken");
+  }
+  render();
+  if (state.auth.user) loadCollectionData();
+  if (state.auth.user && state.view === "users") actions["load-users"]();
+});

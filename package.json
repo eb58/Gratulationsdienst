@@ -23,5 +23,8 @@
   "homepage": "https://github.com/eb58/Gratulationsdienst#readme",
   "devDependencies": {
     "vite": "^8.0.16"
+  },
+  "dependencies": {
+    "qrcode": "^1.5.4"
   }
 }

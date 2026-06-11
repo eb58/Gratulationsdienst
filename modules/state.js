@@ -40,6 +40,17 @@ export const loadData = () => {
 export const state = {
   view: "dashboard",
   data: loadData(),
+  auth: {
+    ready: location.protocol === "file:",
+    setupRequired: false,
+    mode: "login",
+    token: localStorage.getItem("gd_auth_token") || "",
+    user: location.protocol === "file:" ? { id: "demo", email: "demo@local", displayName: "Demo", role: "admin", mfaEnabled: false, active: true } : null,
+    mfaTicket: "",
+    resetToken: "",
+    users: [],
+    mfaSetup: null
+  },
   filters: { q: "", month: localStorage.getItem(MONTH_KEY) || "alle", groupId: "alle", age: "alle", status: "alle", occasion: "Geburtstag" },
   selectedCitizenId: "G-2026-001",
   selectedMemberId: "S-001",
@@ -59,17 +70,67 @@ export const state = {
   generatedDocs: [],
   printBackground: true,
   dashboardSort: { key: "group", dir: "asc" },
+  selectedUserId: "",
   gridApis: {},
   dialog: null
 };
 
 export const apiCollections = ["citizens", "sokoGroups", "sokoMembers", "streets", "senders", "templates", "importLog"];
+export const adminCollections = ["sokoGroups", "sokoMembers", "streets", "senders", "templates"];
+export const adminViews = ["soko", "regions", "map", "senders", "templates", "quittungStamm", "users"];
 export const persistedCollections = ["citizens", "sokoGroups", "sokoMembers", "streets", "senders", "templates"];
 export const hasBackendData = data => data && persistedCollections.some(key => Array.isArray(data[key]) && data[key].length);
-export const apiRequest = (path, options = {}) => fetch(`${API_BASE}${path}`, {
-  ...options,
-  headers: { "Content-Type": "application/json", ...options.headers }
-}).then(response => response.ok ? response.json() : Promise.reject(new Error(`API ${response.status}`)));
+export const isAdmin = () => state.auth.user?.role === "admin";
+export const canAccessView = view => !adminViews.includes(view) || isAdmin();
+export const writableCollections = () => isAdmin()
+  ? apiCollections
+  : apiCollections.filter(collection => !adminCollections.includes(collection));
+export const setAuthSession = session => {
+  state.auth.ready = true;
+  state.auth.setupRequired = false;
+  state.auth.mode = "login";
+  state.auth.token = session.token || "";
+  state.auth.user = session.user || null;
+  state.auth.mfaTicket = "";
+  state.auth.resetToken = "";
+  state.auth.mfaSetup = null;
+  if (state.auth.token) localStorage.setItem("gd_auth_token", state.auth.token);
+};
+export const clearAuthSession = () => {
+  localStorage.removeItem("gd_auth_token");
+  state.auth = { ...state.auth, ready: true, token: "", user: null, mfaTicket: "", users: [], mfaSetup: null };
+};
+export const apiRequest = (path, options = {}) => {
+  const headers = { "Content-Type": "application/json", ...options.headers };
+  if (state.auth.token && !headers.Authorization) headers.Authorization = `Bearer ${state.auth.token}`;
+  return fetch(`${API_BASE}${path}`, { ...options, headers }).then(async response => {
+    const payload = await response.json().catch(() => ({}));
+    if (response.ok) return payload;
+    if (response.status === 401 && !path.startsWith("/auth")) clearAuthSession();
+    throw Object.assign(new Error(payload.error || `API ${response.status}`), { status: response.status, payload });
+  });
+};
+export const loadAuthStatus = () => {
+  if (location.protocol === "file:") return Promise.resolve(state.auth);
+  return apiRequest("/auth/status")
+    .then(status => {
+      state.auth.ready = true;
+      state.auth.setupRequired = !!status.setupRequired;
+      state.auth.user = status.authenticated ? status.user : null;
+      state.auth.mode = status.setupRequired ? "setup" : "login";
+      if (!status.authenticated) {
+        state.auth.token = "";
+        localStorage.removeItem("gd_auth_token");
+      }
+      return state.auth;
+    })
+    .catch(error => {
+      state.auth.ready = true;
+      state.auth.user = null;
+      console.warn("Anmeldestatus nicht verfuegbar.", error);
+      return state.auth;
+    });
+};
 export const loadBackendCollection = collection => apiRequest(`/${collection}`).then(items => [collection, items]);
 export const saveBackendCollection = (collection, items) => apiRequest(`/${collection}`, {
   method: "PUT",
@@ -78,7 +139,8 @@ export const saveBackendCollection = (collection, items) => apiRequest(`/${colle
 
 export const saveCollectionData = data => location.protocol === "file:"
   ? Promise.resolve()
-  : Promise.all(apiCollections.map(collection => saveBackendCollection(collection, data[collection] || [])))
+  : !state.auth.token ? Promise.resolve()
+  : Promise.all(writableCollections().map(collection => saveBackendCollection(collection, data[collection] || [])))
     .catch(error => console.warn("Datenbank-Speicherung nicht verfügbar.", error));
 
 export const saveData = () => {
@@ -88,6 +150,7 @@ export const saveData = () => {
 
 export const loadCollectionData = () => {
   if (location.protocol === "file:") return;
+  if (!state.auth.user || !state.auth.token) return;
   Promise.all(apiCollections.map(loadBackendCollection))
     .then(entries => {
       const data = Object.fromEntries(entries);
