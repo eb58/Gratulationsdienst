@@ -47,6 +47,13 @@ export const actions = {
     render();
     toast("Beispieldaten wurden neu geladen.");
   },
+  "sort-dashboard": event => {
+    const key = event.target.closest("[data-sort-key]")?.dataset.sortKey;
+    if (!key) return;
+    const sameKey = state.dashboardSort?.key === key;
+    state.dashboardSort = { key, dir: sameKey && state.dashboardSort.dir === "desc" ? "asc" : "desc" };
+    render();
+  },
   "select-citizen": event => {
     state.selectedCitizenId = event.target.closest("[data-id]").dataset.id;
     render();
@@ -311,7 +318,7 @@ export const actions = {
         name: `${row.firstName || ""} ${row.lastName || ""}`.trim(),
         address: formatStreetAddress(row),
         birthDate: row.birthDate || "",
-        age: row.birthDate ? calculateAge(row.birthDate) : "",
+        age: row.age || (row.birthDate ? calculateAge(row.birthDate) : ""),
         groupId: group || "",
         type: missing ? "Fehler" : duplicate ? "Dublette" : "Importiert",
         message: missing ? "Pflichtfelder fehlen." : duplicate ? (printedDuplicate ? "Bestehender Datensatz wurde bereits gedruckt." : "Bestehender Datensatz bleibt erhalten.") : (group ? `Zugeordnet zu ${group}.` : "Straße ohne SOKO-Zuordnung.")

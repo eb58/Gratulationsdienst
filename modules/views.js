@@ -1,4 +1,4 @@
-import { escapeHtml, normalize, formatDate, byId, birthdayMonth } from './utils.js';
+import { escapeHtml, normalize, formatDate, byId, birthdayMonth, calculateAge } from './utils.js';
 import { months, sokoColors, streetGroupDisplay } from './domain.js';
 import { state } from './state.js';
 import { selectedCitizen, selectedTemplate, selectedSender, selectedMember, selectedStreet, filteredCitizens, activeCitizens, groupForCitizen } from './assignment.js';
@@ -8,6 +8,7 @@ import { documentPreview } from './documents.js';
 import { render } from './render.js'; // Zyklus OK: render wird nur in Callbacks aufgerufen
 
 export const viewTitles = {
+  dashboard: "Dashboard",
   citizens: "Jubilare prüfen",
   soko: "Stammdaten: SOKO Mitglieder",
   regions: "Stammdaten: SOKO Straßen & Zuständigkeit",
@@ -58,7 +59,171 @@ export const renderRegionAssignment = () => {
   element.innerHTML = regionAssignmentContent();
 };
 
+const selectedMonthLabel = () => months.find(([value]) => value === state.filters.month)?.[1] || "Alle Monate";
+const selectedMonthSuffix = () => state.filters.month === "alle" ? "in allen Monaten" : `im ${selectedMonthLabel()}`;
+const isQuestionnaireReturned = citizen => normalize(citizen.status).startsWith("gepr") || citizen.status === "gedruckt";
+const dashboardCitizens = () => activeCitizens().filter(citizen => state.filters.month === "alle" || birthdayMonth(citizen.birthDate) === state.filters.month);
+const dashboardRows = () => state.data.sokoGroups.map(group => {
+  const citizens = dashboardCitizens().filter(citizen => groupForCitizen(citizen)?.id === group.id);
+  const returns = citizens.filter(isQuestionnaireReturned).length;
+  const members = state.data.sokoMembers.filter(member => member.groupId === group.id).length;
+  const rate = citizens.length ? Math.round((returns / citizens.length) * 100) : 0;
+  return { group, members, citizens: citizens.length, returns, open: citizens.length - returns, rate };
+});
+const ageDistribution = citizens => {
+  const groups = [
+    { key: "85-89", label: "85-89", color: "#d09b2c", count: 0 },
+    { key: "90-99", label: "90-99", color: "#0f5d58", count: 0 },
+    { key: "100+", label: "100+", color: "#b64036", count: 0 }
+  ];
+  citizens.forEach(citizen => {
+    const age = calculateAge(citizen.birthDate);
+    const group = age >= 100 ? groups[2] : age >= 90 ? groups[1] : groups[0];
+    group.count += 1;
+  });
+  return groups;
+};
+const ageDistributionChart = citizens => {
+  const groups = ageDistribution(citizens);
+  const total = groups.reduce((sum, group) => sum + group.count, 0);
+  const segments = groups.reduce((acc, group) => {
+    const value = total ? (group.count / total) * 100 : 0;
+    return {
+      offset: acc.offset + value,
+      html: `${acc.html}<circle class="age-chart-segment" cx="32" cy="32" r="15.9" pathLength="100" stroke="${group.color}" stroke-dasharray="${value} ${100 - value}" stroke-dashoffset="${-acc.offset}"></circle>`
+    };
+  }, { offset: 0, html: "" }).html;
+  return `
+    <div class="age-card-body">
+      <svg class="age-chart" viewBox="0 0 64 64" role="img" aria-label="Altersverteilung">
+        <circle class="age-chart-track" cx="32" cy="32" r="15.9"></circle>
+        ${segments}
+        <text x="32" y="35">${total}</text>
+      </svg>
+      <div class="age-legend">
+        ${groups.map(group => `<span><i style="background:${group.color}"></i>${escapeHtml(group.label)} <strong>${group.count}</strong></span>`).join("")}
+      </div>
+    </div>
+  `;
+};
+const dashboardSortValue = (row, key) => key === "group" ? row.group.id : Number(row[key] ?? 0);
+const sortedDashboardRows = rows => {
+  const { key = "group", dir = "asc" } = state.dashboardSort || {};
+  const direction = dir === "asc" ? 1 : -1;
+  return [...rows].sort((a, b) => {
+    const aValue = dashboardSortValue(a, key);
+    const bValue = dashboardSortValue(b, key);
+    const result = typeof aValue === "string" ? aValue.localeCompare(bValue) : aValue - bValue;
+    return result ? result * direction : a.group.id.localeCompare(b.group.id);
+  });
+};
+const dashboardSortButton = (key, label) => {
+  const active = state.dashboardSort?.key === key;
+  const dir = state.dashboardSort?.dir === "asc" ? "asc" : "desc";
+  return `<button type="button" class="table-sort ${active ? "active" : ""}" data-action="sort-dashboard" data-sort-key="${key}">${escapeHtml(label)}<span>${active ? dir === "asc" ? "▲" : "▼" : "↕"}</span></button>`;
+};
 export const views = {
+  dashboard: () => {
+    const rows = dashboardRows();
+    const citizens = dashboardCitizens();
+    const totals = rows.reduce((acc, row) => ({
+      members: acc.members + row.members,
+      citizens: acc.citizens + row.citizens,
+      returns: acc.returns + row.returns,
+      open: acc.open + row.open
+    }), { members: 0, citizens: 0, returns: 0, open: 0 });
+    const maxMembers = Math.max(1, ...rows.map(row => row.members));
+    const maxCitizens = Math.max(1, ...rows.map(row => row.citizens));
+    const topRows = rows
+      .filter(row => row.members || row.citizens)
+      .sort((a, b) => b.citizens - a.citizens || a.group.id.localeCompare(b.group.id));
+    const tableRows = sortedDashboardRows(topRows);
+    return `
+      <div class="dashboard">
+        <div class="toolbar dashboard-toolbar">
+          <span class="toolbar-label">Ausgewählter Monat</span>
+          <select name="month" data-filter>${months.map(month => `<option value="${month[0]}" ${state.filters.month === month[0] ? "selected" : ""}>${month[1]}</option>`).join("")}</select>
+        </div>
+        <div class="dashboard-metrics">
+          <article class="metric-card accent-gold">
+            <span>Jubilare ${escapeHtml(selectedMonthSuffix())}</span>
+            <strong>${totals.citizens.toLocaleString("de-DE")}</strong>
+            <em>${escapeHtml(selectedMonthLabel())}</em>
+          </article>
+          <article class="metric-card accent-green">
+            <span>Bearbeitet ${escapeHtml(selectedMonthSuffix())}</span>
+            <strong>${totals.returns.toLocaleString("de-DE")}</strong>
+            <em>${totals.citizens ? Math.round((totals.returns / totals.citizens) * 100) : 0}% bearbeitet</em>
+          </article>
+          <article class="metric-card age-card">
+            <span>Altersverteilung</span>
+            ${ageDistributionChart(citizens)}
+          </article>
+          <article class="metric-card accent-teal">
+            <span>SOKO-Gruppen</span>
+            <strong>${rows.length.toLocaleString("de-DE")}</strong>
+            <em>aktive Zuständigkeiten</em>
+          </article>
+          <article class="metric-card accent-blue">
+            <span>Mitglieder</span>
+            <strong>${totals.members.toLocaleString("de-DE")}</strong>
+            <em>über alle SOKO</em>
+          </article>
+        </div>
+        <section class="panel dashboard-panel">
+          <div class="section-head">
+            <div>
+              <h2>SOKO Statistiken</h2>
+              <p>${escapeHtml(selectedMonthLabel())}: Jubilare und bearbeitete Fragebögen je SOKO</p>
+            </div>
+            <span class="pill ${totals.open ? "gold" : "green"}">${totals.open.toLocaleString("de-DE")} offen</span>
+          </div>
+          ${topRows.length ? `
+            <div class="dashboard-table-wrap">
+              <table class="dashboard-table">
+                <thead>
+                  <tr>
+                    <th>${dashboardSortButton("group", "SOKO")}</th>
+                    <th>${dashboardSortButton("members", "Mitglieder")}</th>
+                    <th>${dashboardSortButton("citizens", "Jubilare")}</th>
+                    <th>${dashboardSortButton("returns", "Bearbeitet")}</th>
+                    <th>${dashboardSortButton("rate", "Quote")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${tableRows.map(row => `
+                    <tr>
+                      <td>
+                        <div class="soko-cell">
+                          <span class="soko-swatch" style="background:${escapeHtml(sokoColors[row.group.id] || sokoColors.offen)}"></span>
+                          <div class="soko-line"><strong>${escapeHtml(row.group.id)}</strong><span>${escapeHtml(row.group.region || row.group.name)}</span></div>
+                        </div>
+                      </td>
+                      <td>
+                        <div class="bar-cell">
+                          <strong>${row.members.toLocaleString("de-DE")}</strong>
+                          <span class="stat-bar members"><i style="width:${Math.round((row.members / maxMembers) * 100)}%"></i></span>
+                        </div>
+                      </td>
+                      <td>
+                        <div class="bar-cell">
+                          <strong>${row.citizens.toLocaleString("de-DE")}</strong>
+                          <span class="stat-bar"><i style="width:${Math.round((row.citizens / maxCitizens) * 100)}%"></i></span>
+                        </div>
+                      </td>
+                      <td>${row.returns.toLocaleString("de-DE")} <span class="muted">/ ${row.open.toLocaleString("de-DE")} offen</span></td>
+                      <td><span class="pill ${row.rate >= 80 ? "green" : row.rate >= 50 ? "gold" : "red"}">${row.rate}%</span></td>
+                    </tr>
+                  `).join("")}
+                </tbody>
+              </table>
+            </div>
+          ` : `<div class="empty-state">Keine SOKO-Statistiken für diesen Monat</div>`}
+        </section>
+      </div>
+    `;
+  },
+
   citizens: () => {
     const citizens = filteredCitizens();
     const citizen = citizens.find(item => item.id === state.selectedCitizenId) || citizens[0];

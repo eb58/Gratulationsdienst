@@ -1,4 +1,4 @@
-import { normalize, escapeHtml, formatDate, formatDateDe, formatStreetAddress } from './utils.js';
+import { normalize, escapeHtml, formatDate, formatDateDe, formatStreetAddress, calculateAge } from './utils.js';
 import { streetGroupDisplay } from './domain.js';
 import { state } from './state.js';
 import { filteredCitizens, groupForCitizen, selectedCitizen } from './assignment.js';
@@ -82,24 +82,50 @@ const filteredMembers = () => state.data.sokoMembers.filter(member => {
 });
 
 const importLogSoko = item => item.groupId || item.soko || String(item.message || "").match(/SOKO \d+/)?.[0] || "";
+const importLogCitizen = item => {
+  const name = normalize(item.name);
+  const address = normalize(item.address || formatStreetAddress(item));
+  const byName = state.data.citizens.filter(citizen => normalize(`${citizen.firstName} ${citizen.lastName}`) === name);
+  return address
+    ? byName.find(citizen => normalize(formatStreetAddress(citizen)) === address)
+    : byName.length === 1 ? byName[0] : null;
+};
+const importLogRow = (item, index) => {
+  const citizen = item.birthDate && item.age && item.address ? null : importLogCitizen(item);
+  const birthDate = item.birthDate || citizen?.birthDate || "";
+  const address = item.address || (citizen ? formatStreetAddress(citizen) : "");
+  return {
+    ...item,
+    id: `LOG-${index}`,
+    address,
+    birthDate,
+    age: item.age || (birthDate ? calculateAge(birthDate) : "")
+  };
+};
 
-const gridColumnStorageKey = gridKey => `gratulationsdienst.grid.${gridKey}.columnWidths`;
-const storedGridColumnState = gridKey => {
+const legacyGridColumnStorageKey = gridKey => `gratulationsdienst.grid.${gridKey}.columnWidths`;
+const gridStateStorageKey = gridKey => `gratulationsdienst.grid.${gridKey}.state`;
+const storedGridState = gridKey => {
   try {
-    const parsed = JSON.parse(localStorage.getItem(gridColumnStorageKey(gridKey)) || "[]");
-    return Array.isArray(parsed) ? parsed.filter(item => item?.colId && Number.isFinite(item.width)) : [];
-  } catch { return []; }
+    const parsed = JSON.parse(localStorage.getItem(gridStateStorageKey(gridKey)) || "null");
+    if (parsed?.columnState?.length) return parsed;
+  } catch { /* gespeicherter Grid-State nicht lesbar */ }
+  try {
+    const columnState = JSON.parse(localStorage.getItem(legacyGridColumnStorageKey(gridKey)) || "[]");
+    return { columnState: Array.isArray(columnState) ? columnState.filter(item => item?.colId && Number.isFinite(item.width)) : [] };
+  } catch { return { columnState: [] }; }
 };
-const restoreGridColumnWidths = (gridKey, api) => {
-  const colState = storedGridColumnState(gridKey);
-  if (colState.length) api.applyColumnState?.({ state: colState, applyOrder: false });
+const restoreGridState = (gridKey, api) => {
+  const gridState = storedGridState(gridKey);
+  if (gridState.columnState?.length) api.applyColumnState?.({ state: gridState.columnState, applyOrder: false });
+  if (gridState.filterModel && Object.keys(gridState.filterModel).length) api.setFilterModel?.(gridState.filterModel);
 };
-const saveGridColumnWidths = (gridKey, api) => {
-  const colState = api.getColumnState?.()
-    ?.map(({ colId, width }) => ({ colId, width }))
+const saveGridState = (gridKey, api) => {
+  const columnState = api.getColumnState?.()
+    ?.map(({ colId, width, sort, sortIndex }) => ({ colId, width, sort, sortIndex }))
     .filter(item => item.colId && Number.isFinite(item.width));
-  if (!colState?.length) return;
-  try { localStorage.setItem(gridColumnStorageKey(gridKey), JSON.stringify(colState)); } catch { /* localStorage nicht verfügbar */ }
+  if (!columnState?.length) return;
+  try { localStorage.setItem(gridStateStorageKey(gridKey), JSON.stringify({ columnState, filterModel: api.getFilterModel?.() || {} })); } catch { /* localStorage nicht verfuegbar */ }
 };
 
 export const gridDefinitions = {
@@ -124,7 +150,7 @@ export const gridDefinitions = {
     ],
     getRowId: params => params.data.id,
     getRowClass: params => params.data.id === state.selectedCitizenId ? "selected" : "",
-    onRowClicked: params => { state.selectedCitizenId = params.data.id; render(); }
+    onRowClicked: params => { saveGridState("citizens", params.api); state.selectedCitizenId = params.data.id; render(); }
   }),
   members: () => ({
     ...baseGridOptions(),
@@ -186,13 +212,13 @@ export const gridDefinitions = {
   }),
   importLog: () => ({
     ...baseGridOptions(),
-    rowData: state.data.importLog.map((item, index) => ({ ...item, id: `LOG-${index}` })),
+    rowData: state.data.importLog.map(importLogRow),
     columnDefs: [
-      { headerName: "Zeit", field: "time", width: 180, minWidth: 165 },
-      { headerName: "Name", field: "name", width: 230, minWidth: 170 },
+      { headerName: "Zeit", field: "time", colId: "time", width: 180, minWidth: 165 },
+      { headerName: "Name", field: "name", colId: "name", width: 230, minWidth: 170 },
+      { headerName: "Geburtstag", field: "birthDate", colId: "birthDate", width: 130, minWidth: 120, valueFormatter: params => formatDateDe(params.value) },
+      { headerName: "Alter", field: "age", colId: "age", width: 80, minWidth: 70, filter: "agNumberColumnFilter" },
       { headerName: "Straße / Hausnr.", field: "address", width: 250, minWidth: 190, valueGetter: params => params.data.address || formatStreetAddress(params.data) },
-      { headerName: "Geburtstag", field: "birthDate", width: 130, minWidth: 120, valueFormatter: params => formatDateDe(params.value) },
-      { headerName: "Alter", field: "age", width: 90, minWidth: 80 },
       { headerName: "Ergebnis", field: "type", width: 135, minWidth: 120, cellRenderer: params => params.value === "Fehler" ? badgeCell("Fehler", "red") : params.value === "Dublette" ? badgeCell("Dublette", "gold") : badgeCell("Importiert", "green") },
       { headerName: "SOKO", field: "groupId", width: 115, minWidth: 105, valueGetter: params => importLogSoko(params.data), cellRenderer: params => params.value ? badgeCell(params.value) : badgeCell("offen", "red") }
     ],
@@ -212,9 +238,14 @@ export const mountGrid = element => {
   definition.onGridReady = params => {
     onGridReady?.(params);
     state.gridApis[gridKey] = params.api;
-    restoreGridColumnWidths(gridKey, params.api);
+    restoreGridState(gridKey, params.api);
   };
-  definition.onColumnResized = params => { if (params.finished) saveGridColumnWidths(gridKey, params.api); };
+  const onColumnResized = definition.onColumnResized;
+  const onSortChanged = definition.onSortChanged;
+  const onFilterChanged = definition.onFilterChanged;
+  definition.onColumnResized = params => { onColumnResized?.(params); if (params.finished) saveGridState(gridKey, params.api); };
+  definition.onSortChanged = params => { onSortChanged?.(params); saveGridState(gridKey, params.api); };
+  definition.onFilterChanged = params => { onFilterChanged?.(params); saveGridState(gridKey, params.api); };
   window.agGrid.createGrid(element, definition);
 };
 export const mountGrids = () => [...document.querySelectorAll("[data-grid]")].forEach(mountGrid);

@@ -136,6 +136,10 @@ function collectionConfig(string $collection): array
                 'id' => ['id', 'string'],
                 'time' => ['entry_time', 'string'],
                 'name' => ['name', 'string'],
+                'address' => ['address', 'string'],
+                'birthDate' => ['birth_date', 'date'],
+                'age' => ['age', 'int'],
+                'groupId' => ['group_id', 'string'],
                 'type' => ['entry_type', 'string'],
                 'message' => ['message', 'string'],
             ],
@@ -267,6 +271,11 @@ function db(): array
 function initSchema(array $db): void
 {
     executeSqlScript($db, file_get_contents(__DIR__ . '/schema.mysql.sql'));
+    ensureColumn($db, 'gd_import_log', 'address', "ALTER TABLE gd_import_log ADD COLUMN address VARCHAR(255) NOT NULL DEFAULT '' AFTER name");
+    ensureColumn($db, 'gd_import_log', 'birth_date', 'ALTER TABLE gd_import_log ADD COLUMN birth_date DATE NULL AFTER address');
+    ensureColumn($db, 'gd_import_log', 'age', 'ALTER TABLE gd_import_log ADD COLUMN age INT NULL AFTER birth_date');
+    ensureColumn($db, 'gd_import_log', 'group_id', "ALTER TABLE gd_import_log ADD COLUMN group_id VARCHAR(32) NOT NULL DEFAULT '' AFTER age");
+    ensureIndex($db, 'gd_import_log', 'idx_gd_import_log_group', 'ALTER TABLE gd_import_log ADD INDEX idx_gd_import_log_group (group_id)');
 }
 
 function readAll(array $db): array
@@ -435,6 +444,32 @@ function executeSqlScript(array $db, string $sql): void
         return;
     }
     $db['pdo']->exec($sql);
+}
+
+function ensureColumn(array $db, string $table, string $column, string $sql): void
+{
+    if ($db['driver'] === 'mysqli') {
+        $stmt = $db['mysqli']->prepare("SHOW COLUMNS FROM {$table} LIKE ?");
+        $stmt->bind_param('s', $column);
+        $stmt->execute();
+        if (!$stmt->get_result()->fetch_assoc()) $db['mysqli']->query($sql);
+        return;
+    }
+
+    if (!fetchOne($db, "SHOW COLUMNS FROM {$table} LIKE ?", [$column])) executeStatement($db, $sql);
+}
+
+function ensureIndex(array $db, string $table, string $index, string $sql): void
+{
+    if ($db['driver'] === 'mysqli') {
+        $stmt = $db['mysqli']->prepare("SHOW INDEX FROM {$table} WHERE Key_name = ?");
+        $stmt->bind_param('s', $index);
+        $stmt->execute();
+        if (!$stmt->get_result()->fetch_assoc()) $db['mysqli']->query($sql);
+        return;
+    }
+
+    if (!fetchOne($db, "SHOW INDEX FROM {$table} WHERE Key_name = ?", [$index])) executeStatement($db, $sql);
 }
 
 function migrateLegacyCollections(array $db): void

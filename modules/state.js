@@ -38,7 +38,7 @@ export const loadData = () => {
 };
 
 export const state = {
-  view: "import",
+  view: "dashboard",
   data: loadData(),
   filters: { q: "", month: localStorage.getItem(MONTH_KEY) || "alle", groupId: "alle", age: "alle", status: "alle", occasion: "Geburtstag" },
   selectedCitizenId: "G-2026-001",
@@ -58,6 +58,7 @@ export const state = {
   regionSplit: storedSplit("region", 58),
   generatedDocs: [],
   printBackground: true,
+  dashboardSort: { key: "group", dir: "asc" },
   gridApis: {},
   dialog: null
 };
