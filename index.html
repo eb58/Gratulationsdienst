@@ -20,23 +20,27 @@
         </div>
       </div>
       <nav class="nav" aria-label="Hauptnavigation">
-        <div class="nav-section">
-          <span class="nav-section-title">Tagesgeschäft</span>
-          <button type="button" data-nav="import">LABO-Import</button>
-          <button type="button" data-nav="citizens">Jubilare prüfen</button>
-          <button type="button" data-nav="quittung">Quittungsdruck</button>
-          <button type="button" data-nav="documents">Dokumentlauf</button>
-        </div>
-        <div class="nav-section">
-          <span class="nav-section-title">Stammdatenpflege</span>
-          <button type="button" data-nav="soko">SOKO</button>
-          <button type="button" data-nav="regions">SOKO Straßen & Zuständigkeit</button>
-          <button type="button" data-nav="map">SOKO-Karte</button>
-          <button type="button" data-nav="senders">Absender</button>
-          <button type="button" data-nav="templates">Vorlagen</button>
-          <button type="button" data-nav="quittungStamm">Quittung</button>
-          <button type="button" data-action="reset-data">Beispieldaten</button>
-        </div>
+        <details class="nav-section nav-section-collapsible" open>
+          <summary class="nav-section-title">Tagesgeschäft</summary>
+          <div class="nav-section-items">
+            <button type="button" data-nav="import">LABO-Import</button>
+            <button type="button" data-nav="citizens">Jubilare prüfen</button>
+            <button type="button" data-nav="quittung">Quittungsdruck</button>
+            <button type="button" data-nav="documents">Dokumentlauf</button>
+          </div>
+        </details>
+        <details class="nav-section nav-section-collapsible">
+          <summary class="nav-section-title">Stammdatenpflege</summary>
+          <div class="nav-section-items">
+            <button type="button" data-nav="soko">SOKO</button>
+            <button type="button" data-nav="regions">SOKO Straßen & Zuständigkeit</button>
+            <button type="button" data-nav="map">SOKO-Karte</button>
+            <button type="button" data-nav="senders">Absender</button>
+            <button type="button" data-nav="templates">Vorlagen</button>
+            <button type="button" data-nav="quittungStamm">Quittung</button>
+            <button type="button" data-action="reset-data">Beispieldaten</button>
+          </div>
+        </details>
       </nav>
     </aside>
 

@@ -113,14 +113,40 @@ button {
   gap: 6px;
 }
 
-.nav-section-title {
+details.nav-section {
   display: block;
+}
+
+.nav-section-items {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.nav-section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: 6px 12px 5px;
   color: #fff;
   font-size: 15px;
   font-weight: 850;
   letter-spacing: 0;
   text-transform: none;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+.nav-section-title::-webkit-details-marker { display: none; }
+.nav-section-title::after {
+  content: "▾";
+  font-size: 12px;
+  opacity: 0.7;
+  transition: transform 0.15s;
+}
+details.nav-section:not([open]) .nav-section-title::after {
+  transform: rotate(-90deg);
 }
 
 .nav button {
