@@ -628,7 +628,6 @@ export const views = {
                 <span>Aus CSV laden</span>
                 <em>${state.importText ? "Datei geladen oder Daten eingefügt" : "Noch keine Datei geladen"}</em>
               </label>
-              <button type="button" class="ghost-button" data-action="sample-import">Beispiel laden</button>
             </div>
             <input id="import-file" class="file-input" type="file" accept=".csv,text/csv">
           </div>

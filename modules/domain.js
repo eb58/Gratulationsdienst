@@ -1,5 +1,3 @@
-import { normalize, ibanMod97, ibanToNumeric, formatIban, normalizeIban } from './utils.js';
-
 export const months = [
   ["alle", "Alle Monate"],
   ["01", "Januar"],
@@ -41,8 +39,6 @@ export const sokoColorPalette = ["#2b7a78", "#8f6b2f", "#c44e52", "#4c78a8", "#6
 export const sokoGroupId = code => `SOKO ${code}`;
 export const sokoCodesFromDirectory = () => [...new Set(Object.values(window.SOKO_STRASSENVERZEICHNIS || {}).flat().map(entry => entry.soko))]
   .sort((a, b) => Number(a) - Number(b));
-export const sokoMemberId = (groupIndex, memberIndex) => `S-${String((groupIndex * 2) + memberIndex + 1).padStart(3, "0")}`;
-export const sokoLeaderId = code => sokoMemberId(sokoCodesFromDirectory().indexOf(code), 0);
 export const sokoColors = {
   ...Object.fromEntries(sokoCodesFromDirectory().map((code, index) => [sokoGroupId(code), sokoColorPalette[index % sokoColorPalette.length]])),
   offen: "#9aa0a6"
@@ -78,49 +74,14 @@ export const streetRangeLabel = rule => [rule.von || "alle", rule.bis || "alle"]
 export const buildSokoGroups = () => sokoCodesFromDirectory().map(code => {
   const entries = Object.values(window.SOKO_STRASSENVERZEICHNIS || {}).flat().filter(entry => entry.soko === code);
   const districts = [...new Set(entries.map(entry => entry.ortsteil))].join(" / ");
-  const sampleStreets = sokoStreetNames(code).slice(0, 3).join(", ");
+  const streetPreview = sokoStreetNames(code).slice(0, 3).join(", ");
   return {
     id: sokoGroupId(code),
     name: `SOKO ${code}`,
-    region: [districts, sampleStreets].filter(Boolean).join(" - "),
-    leaderId: sokoLeaderId(code)
+    region: [districts, streetPreview].filter(Boolean).join(" - "),
+    leaderId: ""
   };
 });
-
-export const demoMemberFirstNames = ["Andrea", "Peter", "Ursula", "Uwe", "Marion", "Dieter", "Birgit", "Ralf", "Claudia", "Thomas", "Heike", "Norbert", "Sabine", "Frank", "Gisela", "Stefan", "Petra", "Michael", "Monika", "Juergen", "Anja", "Martin", "Renate", "Klaus", "Inge", "Werner", "Brigitte", "Joachim", "Hilde", "Manfred", "Elisabeth", "Karl"];
-export const demoMemberLastNames = ["Schulz", "Klein", "Falk", "Scholz", "Berndt", "Krause", "Meyer", "Krueger", "Richter", "Brandt", "Sommer", "Peters", "Koch", "Wagner", "Kranz", "Moeller", "Hahn", "Berger", "Seidel", "Neumann", "Vogel", "Becker", "Lange", "Fischer", "Lorenz", "Wolf", "Hoffmann", "Schmidt", "Zimmermann", "Braun", "Hartmann", "Weber"];
-export const demoEmailPart = value => String(value).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replaceAll("ß", "ss").replace(/[^a-z0-9]+/g, "");
-export const demoIban = memberNo => {
-  const bban = `10000000${String(memberNo + 1).padStart(10, "0")}`;
-  const checkDigits = String(98 - ibanMod97(ibanToNumeric(`${bban}DE00`))).padStart(2, "0");
-  return formatIban(`DE${checkDigits}${bban}`);
-};
-const demoPLZ = ["13403", "13405", "13409", "13435", "13437", "13465", "13467", "13469", "13503", "13507", "13509"];
-export const buildSokoMembers = () => sokoCodesFromDirectory().flatMap((code, groupIndex) => [0, 1].map(memberIndex => {
-  const memberNo = (groupIndex * 2) + memberIndex;
-  const firstName = demoMemberFirstNames[memberNo % demoMemberFirstNames.length];
-  const lastName = demoMemberLastNames[memberNo % demoMemberLastNames.length];
-  const streets = sokoStreetNames(code);
-  return {
-    id: sokoMemberId(groupIndex, memberIndex),
-    salutation: memberNo % 2 ? "Herr" : "Frau",
-    firstName,
-    lastName,
-    groupId: sokoGroupId(code),
-    street: `${streets[memberIndex % Math.max(streets.length, 1)] || "Eichborndamm"} ${12 + groupIndex + memberIndex}`,
-    postalCode: demoPLZ[groupIndex % demoPLZ.length],
-    city: "Berlin",
-    phone: memberIndex ? "" : `030 ${String(401000 + groupIndex).padStart(6, "0")}`,
-    mobile: memberIndex ? `0170 ${String(200000 + memberNo).padStart(6, "0")}` : "",
-    email: `${demoEmailPart(firstName)}.${demoEmailPart(lastName)}.${code}@example.test`,
-    bank: demoIban(memberNo),
-    allowance: "35,00",
-    termFrom: "2025-01-01",
-    termTo: "2028-12-31",
-    billingAmount: "15,00",
-    isLeader: memberIndex === 0
-  };
-}));
 
 export const buildStreetData = () => Object.entries(window.SOKO_STRASSENVERZEICHNIS || {}).map(([name, entries], i) => {
   const rules = normalizeStreetRules(entries, i);
@@ -133,17 +94,10 @@ export const buildStreetData = () => Object.entries(window.SOKO_STRASSENVERZEICH
   };
 });
 
-export const sampleData = {
-  citizens: [
-    { id: "G-2026-001", salutation: "Frau", firstName: "Hilde", lastName: "Krüger", street: "Alt-Lübars", houseNo: "17", postalCode: "13469", district: "Lübars", birthDate: "1936-07-14", phone: "", email: "", wish: "Besuch erwünscht", notes: "Runder Geburtstag, Besuch durch SOKO vormerken.", source: "LABO CSV", updatedAt: "2026-06-06", status: "importiert" },
-    { id: "G-2026-002", salutation: "Herr", firstName: "Karl", lastName: "Lehmann", street: "Oraniendamm", houseNo: "42", postalCode: "13469", district: "Waidmannslust", birthDate: "1931-07-03", phone: "030 403000", email: "", wish: "per Post", notes: "", source: "LABO CSV", updatedAt: "2026-06-06", status: "geprüft" },
-    { id: "G-2026-003", salutation: "Frau", firstName: "Elisabeth", lastName: "Sommer", street: "Scharnweberstr.", houseNo: "108", postalCode: "13405", district: "Reinickendorf", birthDate: "1941-08-22", phone: "", email: "familie.sommer@example.test", wish: "Veranstaltungseinladung", notes: "Einladung bevorzugt per Brief.", source: "LABO CSV", updatedAt: "2026-06-06", status: "importiert" },
-    { id: "G-2026-004", salutation: "Herr", firstName: "Manfred", lastName: "Wolter", street: "Residenzstr.", houseNo: "88", postalCode: "13409", district: "Reinickendorf", birthDate: "1926-07-29", phone: "", email: "", wish: "Besuch erwünscht", notes: "100. Geburtstag, Amtsleitung informieren.", source: "LABO CSV", updatedAt: "2026-06-06", status: "geprüft" },
-    { id: "G-2026-005", salutation: "Frau", firstName: "Renate", lastName: "Berger", street: "Hermsdorfer Damm", houseNo: "92", postalCode: "13467", district: "Hermsdorf", birthDate: "1936-08-02", phone: "", email: "", wish: "per Post", notes: "", source: "LABO CSV", updatedAt: "2026-06-06", status: "importiert" },
-    { id: "G-2026-006", salutation: "Herr", firstName: "Joachim", lastName: "Neumann", street: "Zabel-Krüger-Damm", houseNo: "5", postalCode: "13469", district: "Wittenau", birthDate: "1941-07-18", phone: "", email: "", wish: "Besuch erwünscht", notes: "", source: "LABO CSV", updatedAt: "2026-06-06", status: "importiert" }
-  ],
+export const defaultData = {
+  citizens: [],
   sokoGroups: buildSokoGroups(),
-  sokoMembers: buildSokoMembers(),
+  sokoMembers: [],
   streets: buildStreetData(),
   senders: [
     { id: "A-001", role: "Bezirksbürgermeisterin", name: "Bezirksbürgermeisterin Reinickendorf", department: "Bezirksamt Reinickendorf von Berlin", address: "Eichborndamm 215, 13437 Berlin", phone: "030 90294-0", email: "gratulationsdienst@example.test", logo: "Bezirksamt Reinickendorf", signature: "Emine Demirbüken-Wegner", color: "#0f5d58" },

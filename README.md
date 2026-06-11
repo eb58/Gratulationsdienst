@@ -19,8 +19,6 @@ Statischer Browser-Prototyp fuer das Hauptmodul aus dem Pflichtenheft.
 - Gedruckte Jubilare werden als `gedruckt` markiert und aus der aktiven Jubilarliste ausgeblendet; Dubletten werden auch gegen bereits gedruckte Jubiläen erkannt
 - AG Grid Community fuer Listen, Sortierung, Filter und Pagination
 
-Die Browseroberflaeche speichert aktuell weiter lokal im `localStorage`. Ueber `Beispieldaten` werden die Daten zurueckgesetzt.
-
 ## PHP-API und Datenbank
 
 Die Backend-Schicht liegt unter `php-api/`.

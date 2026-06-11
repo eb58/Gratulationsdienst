@@ -1,5 +1,5 @@
 import { escapeHtml, isValidEmail, normalizeIban, isValidIban } from './utils.js';
-import { sokoCodesFromDirectory, sokoGroupId, sampleData } from './domain.js';
+import { sokoCodesFromDirectory, sokoGroupId, defaultData } from './domain.js';
 import { state, mergeById } from './state.js';
 import { groupForCitizen } from './assignment.js';
 
@@ -114,7 +114,7 @@ export const gridHost = (name, height) => {
   return `<div class="ag-grid-host" data-grid="${name}"${style}></div>`;
 };
 
-export const sokoSelectionGroups = () => mergeById(state.data.sokoGroups, sampleData.sokoGroups, group => sampleData.sokoGroups.some(defaultGroup => defaultGroup.id === group.id));
+export const sokoSelectionGroups = () => mergeById(state.data.sokoGroups, defaultData.sokoGroups, group => defaultData.sokoGroups.some(defaultGroup => defaultGroup.id === group.id));
 export const sokoSelectOptions = () => sokoSelectionGroups().map(group => [group.id, `${group.id} ${group.region}`]);
 export const groupOptions = () => [["alle", "Alle SOKO-Gruppen"], ...sokoSelectionGroups().map(group => [group.id, group.id])];
 export const senderOptions = () => state.data.senders.map(sender => [sender.id, sender.role]);

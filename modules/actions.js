@@ -1,5 +1,5 @@
 import { $, todayIso, isValidEmail, isValidIban, formatIban, updateItem, nextId, csvEscape, formatStreetAddress, downloadText, calculateAge, toast, byId } from './utils.js';
-import { normalizeStreetRules, streetDistrictSummary, streetGroupSummary, normalizeStreetDistrict, sampleData } from './domain.js';
+import { normalizeStreetRules, streetDistrictSummary, streetGroupSummary, normalizeStreetDistrict } from './domain.js';
 import { state, saveData, apiRequest, setAuthSession, clearAuthSession, loadCollectionData } from './state.js';
 import { streetAssignment, filteredCitizens, documentCitizens, duplicateKey, isPrintedCitizen, selectedTemplate, selectedSender, activeCitizens, groupForCitizen } from './assignment.js';
 import { printCurrentRun, completePrintRun, renderSokoForm, renderSokoQuittung } from './documents.js';
@@ -175,13 +175,6 @@ export const actions = {
       render();
       toast("Benutzer geloescht.");
     } catch (error) { toast(error.message); }
-  },
-  "reset-data": () => {
-    state.data = structuredClone(sampleData);
-    state.generatedDocs = [];
-    saveData();
-    render();
-    toast("Beispieldaten wurden neu geladen.");
   },
   "sort-dashboard": event => {
     const key = event.target.closest("[data-sort-key]")?.dataset.sortKey;
@@ -386,58 +379,6 @@ export const actions = {
     const header = ["id", "empfaenger", "adresse", "soko", "vorlage", "absender", "datum"];
     const rows = state.generatedDocs.map(doc => [doc.id, doc.recipient, doc.address, doc.groupId, doc.templateName, doc.sender, doc.createdAt]);
     downloadText("dokumentlauf.csv", [header, ...rows].map(row => row.map(csvEscape).join(";")).join("\n"), "text/csv;charset=utf-8");
-  },
-  "sample-import": () => {
-    const pick = arr => arr[Math.floor(Math.random() * arr.length)];
-    const ri = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
-    const p2 = n => String(n).padStart(2, "0");
-    const deAscii = s => s.replaceAll("ä","ae").replaceAll("ö","oe").replaceAll("ü","ue").replaceAll("ß","ss");
-    const femaleNames = ["Lena","Clara","Ilse","Erika","Hannelore","Marlies","Sabine","Gertrud","Elfriede","Hildegard","Irmgard","Lieselotte","Margarete","Ursula","Brigitte","Renate","Ingrid","Christa","Waltraud","Hedwig","Anni","Ruth","Hilde","Erna","Frieda"];
-    const maleNames = ["Martin","Rolf","Bernd","Kurt","Günter","Hans","Werner","Heinz","Horst","Gerhard","Helmut","Walter","Friedrich","Karl","Wilhelm","Herbert","Manfred","Dieter","Klaus","Joachim","Otto","Ernst","Georg","Rudolf","Willi"];
-    const lastNames = ["Bachmann","Feldmann","Wegner","Henning","Keller","Sommer","Brandes","Seifert","Lorenz","Pohl","Mertens","Reuter","Müller","Schmidt","Schneider","Fischer","Weber","Meyer","Krause","Hoffmann","Schäfer","Bauer","Koch","Richter","Klein","Wolf","Schröder","Neumann","Zimmermann","Braun","Hartmann","Lange","Schwarz","Krüger","Peters","Schulz"];
-    const realAddresses = (window.REINICKENDORF_ADDRESS_POINTS?.addresses || []).filter(a => a.street && a.houseNumber && a.postalCode && a.soko);
-    const rangeEntries = Object.entries(window.SOKO_STRASSENVERZEICHNIS || {})
-      .flatMap(([street, entries]) => entries.map(entry => ({ street, ...entry })))
-      .filter(entry => entry.von && entry.bis && entry.bis !== "999" && Number.isFinite(parseInt(entry.von, 10)) && Number.isFinite(parseInt(entry.bis, 10)));
-    const streetEntries = rangeEntries.length ? rangeEntries : [{ street: "Alt-Lübars", plz: "13469", ortsteil: "Lübars", von: "1", bis: "99", art: "F" }];
-    const houseNoForEntry = entry => {
-      const from = parseInt(entry.von, 10);
-      const to = Math.min(parseInt(entry.bis, 10), 220);
-      const numbers = Array.from({ length: Math.max(0, to - from + 1) }, (_, index) => from + index)
-        .filter(number => entry.art === "G" ? number % 2 === 0 : entry.art === "U" ? number % 2 !== 0 : true);
-      return String(pick(numbers.length ? numbers : [from]));
-    };
-    const fallbackAddress = (attempt = 0) => {
-      const entry = pick(streetEntries);
-      const houseNo = houseNoForEntry(entry);
-      try {
-        window.findeSoko?.(entry.street, houseNo, entry.plz);
-        return { street: entry.street, houseNo, plz: entry.plz, district: entry.ortsteil };
-      } catch {
-        return attempt < 100 ? fallbackAddress(attempt + 1) : { street: "Frohnauer Str.", houseNo: "21", plz: "13467", district: "Hermsdorf" };
-      }
-    };
-    const validAddress = () => {
-      const address = realAddresses.length ? pick(realAddresses) : null;
-      return address ? { street: address.street, houseNo: address.houseNumber, plz: address.postalCode, district: address.district } : fallbackAddress();
-    };
-    const milestoneYears = [1926,1931,1936,1941];
-    const count = ri(8, 14);
-    const lines = ["Anrede;Vorname;Nachname;Straße;Hausnummer;PLZ;Ortsteil;Geburtsdatum;Telefon;E-Mail"];
-    Array.from({ length: count }).forEach(() => {
-      const female = Math.random() < 0.5;
-      const firstName = pick(female ? femaleNames : maleNames);
-      const lastName = pick(lastNames);
-      const address = validAddress();
-      const year = pick(milestoneYears);
-      const month = "07";
-      const day = p2(ri(1, 28));
-      const phone = Math.random() < 0.6 ? `030 ${ri(300,499)}${ri(1000,9999)}` : "";
-      const email = Math.random() < 0.4 ? `${deAscii(firstName.toLowerCase())}.${deAscii(lastName.toLowerCase())}${ri(10,99)}@example.test` : "";
-      lines.push(`${female ? "Frau" : "Herr"};${firstName};${lastName};${address.street};${address.houseNo};${address.plz};${address.district};${year}-${month}-${day};${phone};${email}`);
-    });
-    state.importText = lines.join("\n");
-    actions["run-import"]();
   },
   "run-import": () => {
     if (!state.importText) { toast("Bitte zuerst eine CSV-Datei laden."); return; }

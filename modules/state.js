@@ -1,29 +1,32 @@
 import { STORAGE_KEY, MONTH_KEY, QUITTUNG_MONTH_KEY, API_BASE, storedSplit, repairStoredText, toast } from './utils.js';
-import { sampleData, buildStreetData } from './domain.js';
+import { defaultData, buildStreetData } from './domain.js';
 import { render } from './render.js'; // Zyklus OK: render wird nur in Callbacks aufgerufen
 
-export const mergeById = (existing, defaults, keep = () => true) => [
-  ...defaults,
-  ...(existing || []).filter(item => keep(item) && !defaults.some(entry => entry.id === item.id))
-];
+export const mergeById = (existing, defaults, keep = () => true) => {
+  const existingItems = existing || [];
+  return [
+    ...defaults.map(item => ({ ...item, ...existingItems.find(entry => entry.id === item.id && keep(entry)) })),
+    ...existingItems.filter(item => keep(item) && !defaults.some(entry => entry.id === item.id))
+  ];
+};
 
 export const normalizeTemplate = template => {
-  const fallback = sampleData.templates.find(t => t.id === template.id) || {};
+  const fallback = defaultData.templates.find(t => t.id === template.id) || {};
   return { ...fallback, ...template, format: template.format || fallback.format || "DIN A4 Brief" };
 };
 
 export const normalizeTemplates = templates => [
-  ...sampleData.templates.map(template => normalizeTemplate({ ...template, ...(templates || []).find(t => t.id === template.id) })),
-  ...(templates || []).filter(template => !sampleData.templates.some(t => t.id === template.id)).map(normalizeTemplate)
+  ...defaultData.templates.map(template => normalizeTemplate({ ...template, ...(templates || []).find(t => t.id === template.id) })),
+  ...(templates || []).filter(template => !defaultData.templates.some(t => t.id === template.id)).map(normalizeTemplate)
 ];
 
 export const normalizeLoadedData = data => {
   const repaired = repairStoredText(data);
-  const activeGroupIds = new Set(sampleData.sokoGroups.map(group => group.id));
+  const activeGroupIds = new Set(defaultData.sokoGroups.map(group => group.id));
   return {
     ...repaired,
-    sokoGroups: mergeById(repaired?.sokoGroups, sampleData.sokoGroups, group => activeGroupIds.has(group.id)),
-    sokoMembers: mergeById(repaired?.sokoMembers, sampleData.sokoMembers, member => activeGroupIds.has(member.groupId)),
+    sokoGroups: mergeById(repaired?.sokoGroups, defaultData.sokoGroups, group => activeGroupIds.has(group.id)),
+    sokoMembers: mergeById(repaired?.sokoMembers, defaultData.sokoMembers, member => activeGroupIds.has(member.groupId)),
     streets: repaired?.streets?.length ? repaired.streets : buildStreetData(),
     templates: normalizeTemplates(repaired?.templates)
   };
@@ -31,9 +34,9 @@ export const normalizeLoadedData = data => {
 
 export const loadData = () => {
   try {
-    return normalizeLoadedData(JSON.parse(localStorage.getItem(STORAGE_KEY)) || structuredClone(sampleData));
+    return normalizeLoadedData(JSON.parse(localStorage.getItem(STORAGE_KEY)) || structuredClone(defaultData));
   } catch {
-    return normalizeLoadedData(structuredClone(sampleData));
+    return normalizeLoadedData(structuredClone(defaultData));
   }
 };
 
@@ -52,8 +55,8 @@ export const state = {
     mfaSetup: null
   },
   filters: { q: "", month: localStorage.getItem(MONTH_KEY) || "alle", groupId: "alle", age: "alle", status: "alle", occasion: "Geburtstag" },
-  selectedCitizenId: "G-2026-001",
-  selectedMemberId: "S-001",
+  selectedCitizenId: "",
+  selectedMemberId: "",
   selectedStreetId: "STR-001",
   selectedSenderId: "A-001",
   selectedTemplateId: "T-001",
