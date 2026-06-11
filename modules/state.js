@@ -1,20 +1,6 @@
 import { STORAGE_KEY, MONTH_KEY, API_BASE, storedSplit, repairStoredText, toast } from './utils.js';
-import { sampleData, buildStreetData, normalizeStreetRules, streetDistrictSummary, streetGroupSummary } from './domain.js';
+import { sampleData, buildStreetData } from './domain.js';
 import { render } from './render.js'; // Zyklus OK: render wird nur in Callbacks aufgerufen
-
-export const mergeStreetData = streets => {
-  const existingByName = Object.fromEntries((streets || []).map(street => [street.name, street]));
-  return buildStreetData().map((street, index) => {
-    const existing = existingByName[street.name];
-    const rules = normalizeStreetRules(existing?.rules?.length ? existing.rules : street.rules, index);
-    return {
-      ...street,
-      district: streetDistrictSummary(rules) || street.district,
-      groupId: streetGroupSummary(rules),
-      rules
-    };
-  });
-};
 
 export const mergeById = (existing, defaults, keep = () => true) => [
   ...defaults,
@@ -38,7 +24,7 @@ export const normalizeLoadedData = data => {
     ...repaired,
     sokoGroups: mergeById(repaired?.sokoGroups, sampleData.sokoGroups, group => activeGroupIds.has(group.id)),
     sokoMembers: mergeById(repaired?.sokoMembers, sampleData.sokoMembers, member => activeGroupIds.has(member.groupId)),
-    streets: mergeStreetData(repaired?.streets),
+    streets: repaired?.streets?.length ? repaired.streets : buildStreetData(),
     templates: normalizeTemplates(repaired?.templates)
   };
 };
