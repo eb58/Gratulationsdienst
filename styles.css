@@ -1330,7 +1330,7 @@ tbody tr.selected {
   width: min(100%, 560px);
   aspect-ratio: 1;
   padding: 0;
-  background: #fff url("assets/gratulationskarte-reinickendorf-210.jpg") center / 100% 100% no-repeat;
+  background: #fff url("/gratulationsdienst/assets/gratulationskarte-reinickendorf-210.jpg") center / 100% 100% no-repeat;
 }
 
 .square-card-preview-image {
@@ -1412,7 +1412,7 @@ tbody tr.selected {
   overflow: hidden;
   border: 1px solid #d9c8a6;
   border-radius: 8px;
-  background: #fff url("assets/gratulationskarte-reinickendorf-210.jpg") center / 100% 100% no-repeat;
+  background: #fff url("/gratulationsdienst/assets/gratulationskarte-reinickendorf-210.jpg") center / 100% 100% no-repeat;
   box-shadow: 0 16px 34px rgba(32, 36, 38, 0.12);
 }
 

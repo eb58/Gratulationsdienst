@@ -503,6 +503,14 @@ function initSchema(array $db): void
     ensureColumn($db, 'gd_import_log', 'age', 'ALTER TABLE gd_import_log ADD COLUMN age INT NULL AFTER birth_date');
     ensureColumn($db, 'gd_import_log', 'group_id', "ALTER TABLE gd_import_log ADD COLUMN group_id VARCHAR(32) NOT NULL DEFAULT '' AFTER age");
     ensureIndex($db, 'gd_import_log', 'idx_gd_import_log_group', 'ALTER TABLE gd_import_log ADD INDEX idx_gd_import_log_group (group_id)');
+    ensureColumn($db, 'gd_citizens', 'press_publication', 'ALTER TABLE gd_citizens ADD COLUMN press_publication TINYINT(1) NOT NULL DEFAULT 0 AFTER printed_year');
+    ensureColumn($db, 'gd_citizens', 'wedding_anniversary', "ALTER TABLE gd_citizens ADD COLUMN wedding_anniversary VARCHAR(80) NOT NULL DEFAULT '' AFTER press_publication");
+    ensureColumn($db, 'gd_citizens', 'wedding_date', 'ALTER TABLE gd_citizens ADD COLUMN wedding_date DATE NULL AFTER wedding_anniversary');
+    ensureColumn($db, 'gd_citizens', 'spouse_name', "ALTER TABLE gd_citizens ADD COLUMN spouse_name VARCHAR(180) NOT NULL DEFAULT '' AFTER wedding_date");
+    ensureColumn($db, 'gd_streets', 'rules', 'ALTER TABLE gd_streets ADD COLUMN rules JSON NULL AFTER district');
+    ensureColumn($db, 'gd_streets', 'area', "ALTER TABLE gd_streets ADD COLUMN area VARCHAR(120) NOT NULL DEFAULT '' AFTER rules");
+    ensureColumn($db, 'gd_streets', 'group_id', "ALTER TABLE gd_streets ADD COLUMN group_id VARCHAR(32) NOT NULL DEFAULT '' AFTER area");
+    ensureIndex($db, 'gd_streets', 'idx_gd_streets_group', 'ALTER TABLE gd_streets ADD INDEX idx_gd_streets_group (group_id)');
 }
 
 function readAll(array $db): array
