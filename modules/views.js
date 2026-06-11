@@ -148,7 +148,7 @@ export const views = {
           <article class="metric-card accent-gold">
             <span>Bearbeitet ${escapeHtml(selectedMonthSuffix())}</span>
             <strong>${totals.returns.toLocaleString("de-DE")} von ${totals.citizens.toLocaleString("de-DE")}</strong>
-            <em>${escapeHtml(selectedMonthLabel())}</em>
+            <em>bearbeited</em>
           </article>
           <article class="metric-card accent-green">
             <span>Bearbeitungsquote ${escapeHtml(selectedMonthSuffix())}</span>
