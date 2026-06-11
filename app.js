@@ -1,5 +1,5 @@
 import { state, loadCollectionData } from './modules/state.js';
-import { splitStorageKey, MONTH_KEY, isValidEmail } from './modules/utils.js';
+import { splitStorageKey, MONTH_KEY, QUITTUNG_MONTH_KEY, isValidEmail } from './modules/utils.js';
 import { viewTitles } from './modules/views.js';
 import { render } from './modules/render.js';
 import { actions } from './modules/actions.js';
@@ -76,7 +76,12 @@ document.addEventListener("change", event => {
   if (event.target.dataset.action) { actions[event.target.dataset.action]?.(event); return; }
   if (event.target.matches("#doc-template, #doc-sender, #doc-month, #doc-group")) { actions["generate-docs"](); return; }
   const bound = event.target.closest("[data-bind]");
-  if (bound) { state[bound.dataset.bind] = bound.value; render(); return; }
+  if (bound) {
+    state[bound.dataset.bind] = bound.value;
+    if (bound.dataset.bind === "quittungMonat") localStorage.setItem(QUITTUNG_MONTH_KEY, bound.value);
+    render();
+    return;
+  }
   const file = event.target.matches("#import-file") ? event.target.files[0] : null;
   if (file) file.text().then(text => { state.importText = text; actions["run-import"](); });
 });

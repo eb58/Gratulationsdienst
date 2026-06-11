@@ -1,4 +1,4 @@
-import { STORAGE_KEY, MONTH_KEY, API_BASE, storedSplit, repairStoredText, toast } from './utils.js';
+import { STORAGE_KEY, MONTH_KEY, QUITTUNG_MONTH_KEY, API_BASE, storedSplit, repairStoredText, toast } from './utils.js';
 import { sampleData, buildStreetData } from './domain.js';
 import { render } from './render.js'; // Zyklus OK: render wird nur in Callbacks aufgerufen
 
@@ -51,7 +51,7 @@ export const state = {
   quittungTelefon: "90294 4055",
   quittungKapitel: "3930",
   quittungTitel: "68154",
-  quittungMonat: new Date().toISOString().slice(5, 7),
+  quittungMonat: localStorage.getItem(QUITTUNG_MONTH_KEY) || new Date().toISOString().slice(5, 7),
   importText: "",
   importSplit: storedSplit("import", 42),
   citizenSplit: storedSplit("citizen", 50),
