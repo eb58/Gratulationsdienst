@@ -9,9 +9,9 @@ import { render } from './render.js'; // Zyklus OK: render wird nur in Callbacks
 
 export const viewTitles = {
   citizens: "Jubilare prüfen",
-  soko: "Stammdaten: SOKO",
+  soko: "Stammdaten: SOKO Mitglieder",
   regions: "Stammdaten: SOKO Straßen & Zuständigkeit",
-  map: "SOKO-Straßenkarte",
+  map: "SOKO Straßenplan",
   senders: "Stammdaten: Absender",
   templates: "Stammdaten: Vorlagen",
   documents: "Dokumentlauf",
