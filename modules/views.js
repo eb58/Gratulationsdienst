@@ -1,7 +1,7 @@
 import { escapeHtml, normalize, formatDate, byId, birthdayMonth, calculateAge } from './utils.js';
 import { months, sokoColors, streetGroupDisplay } from './domain.js';
 import { state } from './state.js';
-import { selectedCitizen, selectedTemplate, selectedSender, selectedMember, selectedStreet, filteredCitizens, activeCitizens, groupForCitizen } from './assignment.js';
+import { selectedCitizen, selectedTemplate, selectedSender, selectedMember, selectedStreet, filteredCitizens, activeCitizens, groupForCitizen, isCheckedCitizen, allReceiptCitizensChecked, receiptCitizens, receiptReviewCitizens } from './assignment.js';
 import { field, emailField, ibanField, selectField, textField, checkField, radioField, streetRuleRows, assignmentPill, gridHost, groupOptions, sokoSelectOptions, senderOptions, templateOptions, occasionOptions, formatOptions } from './fields.js';
 import { streetMapSvg, addressPointData, assignedAddressPoints } from './map.js';
 import { documentPreview } from './documents.js';
@@ -122,6 +122,46 @@ export const renderRegionAssignment = () => {
   const element = document.querySelector("#region-assignment-panel");
   if (!element) { render(); return; }
   element.innerHTML = regionAssignmentContent();
+};
+
+export const citizenDetailContent = citizen => `
+  <h2>Jubilar</h2>
+  <form id="citizen-form" class="form-grid">
+    <input type="hidden" name="id" value="${escapeHtml(citizen.id)}">
+    ${selectField("salutation", "Anrede", citizen.salutation, [["Frau", "Frau"], ["Herr", "Herr"], ["Divers", "Divers"]])}
+    ${field("firstName", "Vorname", citizen.firstName)}
+    ${field("lastName", "Nachname", citizen.lastName)}
+    ${field("birthDate", "Geburtsdatum", citizen.birthDate, "date")}
+    ${field("street", "Straße", citizen.street)}
+    ${field("houseNo", "Hausnummer", citizen.houseNo)}
+    ${field("postalCode", "PLZ", citizen.postalCode)}
+    ${field("district", "Ortsteil", citizen.district)}
+    ${field("phone", "Telefon", citizen.phone)}
+    ${emailField("email", "E-Mail", citizen.email)}
+    ${selectField("wish", "Glückwünsche", citizen.wish, [["Besuch erwünscht", "Besuch erwünscht"], ["per Post", "per Post"], ["keine", "keine"], ["offen", "offen"]], "full")}
+    ${checkField("pressPublication", "Veröffentlichung in der lokalen Presse", citizen.pressPublication, "full")}
+    ${radioField("weddingAnniversary", "Es steht bevor die", citizen.weddingAnniversary ?? "", [
+      ["", "—"],
+      ["Goldene Hochzeit", "Goldene Hochzeit"],
+      ["Diamantene Hochzeit", "Diamantene Hochzeit"],
+      ["Eiserne Hochzeit", "Eiserne Hochzeit"],
+      ["Gnadenhochzeit", "Gnadenhochzeit"]
+    ], "full")}
+    ${field("weddingDate", "am", citizen.weddingDate ?? "", "date", "hochzeit-date-field")}
+    ${field("spouseName", "Name des Ehegatten", citizen.spouseName ?? "", "text", "hochzeit-spouse-field")}
+    ${textField("notes", "Notiz", citizen.notes, "full notes-field")}
+    <div class="field full button-row">
+      <button type="button" class="primary-button" data-action="save-citizen">Speichern</button>
+    </div>
+  </form>
+`;
+
+export const renderCitizenDetail = () => {
+  const element = document.querySelector("#citizen-detail-panel");
+  const citizens = filteredCitizens();
+  const citizen = citizens.find(item => item.id === state.selectedCitizenId) || citizens[0];
+  if (!element || !citizen) { render(); return; }
+  element.innerHTML = citizenDetailContent(citizen);
 };
 
 const selectedMonthLabel = () => months.find(([value]) => value === state.filters.month)?.[1] || "Alle Monate";
@@ -306,7 +346,7 @@ export const views = {
           <div class="citizen-panel-scroll citizen-grid-scroll">${gridHost("citizens")}</div>
         </section>
         ${citizen ? `<div class="vertical-splitter" data-splitter="citizen" role="separator" aria-orientation="vertical" aria-label="Bereiche aufteilen" aria-valuemin="20" aria-valuemax="80" aria-valuenow="${state.citizenSplit}" tabindex="0"></div>
-        <section class="panel citizen-panel">
+        <section class="panel citizen-panel" id="citizen-detail-panel">
           <h2>Jubilar</h2>
           <form id="citizen-form" class="form-grid">
             <input type="hidden" name="id" value="${escapeHtml(citizen.id)}">
@@ -555,7 +595,10 @@ export const views = {
   },
 
   quittung: () => {
-    const citizens = activeCitizens().filter(c => groupForCitizen(c) && birthdayMonth(c.birthDate) === state.quittungMonat);
+    const reviewCitizens = receiptReviewCitizens();
+    const uncheckedCount = reviewCitizens.filter(citizen => !isCheckedCitizen(citizen)).length;
+    const canPrint = allReceiptCitizensChecked();
+    const citizens = receiptCitizens();
     const byGroup = citizens.reduce((acc, c) => {
       const group = groupForCitizen(c);
       const key = group.id;
@@ -572,7 +615,7 @@ export const views = {
         <td>${escapeHtml(group.id)}</td>
         <td>${gc.length}</td>
         <td style="text-align:right">${summe} €</td>
-        <td><button type="button" class="primary-button" style="min-height:30px;padding:0 12px" data-action="print-quittung" data-group-id="${escapeHtml(group.id)}">Drucken</button></td>
+        <td><button type="button" class="primary-button" style="min-height:30px;padding:0 12px" data-action="print-quittung" data-group-id="${escapeHtml(group.id)}" ${canPrint ? "" : "disabled"}>Drucken</button></td>
       </tr>`;
     }).join("");
     return `
@@ -581,15 +624,16 @@ export const views = {
       <select data-bind="quittungMonat">
         ${months.filter(([v]) => v !== "alle").map(([v, l]) => `<option value="${v}"${state.quittungMonat === v ? " selected" : ""}>${escapeHtml(l)}</option>`).join("")}
       </select>
-      ${groups.length ? `<button type="button" class="primary-button" data-action="print-quittung-all">Alle drucken</button>` : ""}
+      ${groups.length ? `<button type="button" class="primary-button" data-action="print-quittung-all" ${canPrint ? "" : "disabled"}>Alle drucken</button>` : ""}
     </div>
+    ${canPrint ? "" : `<div class="alert" style="margin-top:12px">Quittungsdruck erst möglich, wenn alle Jubilare für diesen Monat geprüft sind. Offen: ${uncheckedCount}</div>`}
     <section class="panel" style="margin-top:12px">
       <h2>SOKOs</h2>
       ${groups.length ? `
       <table class="data-table" style="width:100%">
         <thead><tr><th>SOKO</th><th>Jubilare</th><th style="text-align:right">Gesamt</th><th></th></tr></thead>
         <tbody>${rows}</tbody>
-      </table>` : `<div class="empty-state">Keine Jubilare mit SOKO-Zuordnung vorhanden</div>`}
+      </table>` : `<div class="empty-state">Keine Jubilare mit Besuchswunsch und SOKO-Zuordnung vorhanden</div>`}
     </section>`;
   },
 

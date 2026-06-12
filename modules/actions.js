@@ -1,10 +1,11 @@
 import { $, todayIso, isValidEmail, isValidIban, formatIban, updateItem, nextId, csvEscape, formatStreetAddress, downloadText, calculateAge, toast, byId } from './utils.js';
 import { normalizeStreetRules, streetDistrictSummary, streetGroupSummary, normalizeStreetDistrict } from './domain.js';
 import { state, saveData, apiRequest, setAuthSession, clearAuthSession, loadCollectionData } from './state.js';
-import { streetAssignment, filteredCitizens, documentCitizens, duplicateKey, isPrintedCitizen, selectedTemplate, selectedSender, activeCitizens, groupForCitizen } from './assignment.js';
+import { streetAssignment, filteredCitizens, documentCitizens, duplicateKey, isPrintedCitizen, selectedTemplate, selectedSender, activeCitizens, groupForCitizen, allReceiptCitizensChecked, receiptCitizens } from './assignment.js';
 import { printCurrentRun, completePrintRun, renderSokoForm, renderSokoQuittung } from './documents.js';
 import { parseCsv, mapImportRow } from './import.js';
 import { render } from './render.js';
+import { renderCitizenDetail } from './views.js';
 
 const formValues = selector => Object.fromEntries(new FormData($(selector)).entries());
 const authDone = session => {
@@ -47,6 +48,43 @@ const validateEmailFields = selector => {
   const invalid = fields.filter(input => !isValidEmail(input.value));
   fields.forEach(input => input.classList.toggle("invalid", invalid.includes(input)));
   return !invalid.length;
+};
+const currentCitizenGridRows = () => {
+  const api = state.gridApis.citizens;
+  if (!api?.forEachNodeAfterFilterAndSort) return filteredCitizens().map((citizen, index) => ({ id: citizen.id, rowIndex: index }));
+  const rows = [];
+  api.forEachNodeAfterFilterAndSort(node => { if (node.data?.id) rows.push({ id: node.data.id, rowIndex: node.rowIndex }); });
+  return rows;
+};
+const citizenGridRow = citizen => ({
+  id: citizen.id,
+  name: `${citizen.lastName}, ${citizen.firstName}`,
+  birthday: citizen.birthDate,
+  age: calculateAge(citizen.birthDate),
+  address: `${citizen.street} ${citizen.houseNo}`,
+  groupId: groupForCitizen(citizen)?.id || "offen",
+  status: citizen.status
+});
+const updateCitizenGridRow = citizen => {
+  const api = state.gridApis.citizens;
+  if (!citizen) return false;
+  if (!api?.applyTransaction) return false;
+  const node = api.getRowNode?.(citizen.id);
+  const row = citizenGridRow(citizen);
+  const visible = filteredCitizens().some(item => item.id === citizen.id);
+  if (visible && node) api.applyTransaction({ update: [row] });
+  if (visible && !node) api.applyTransaction({ add: [row] });
+  if (!visible && node) api.applyTransaction({ remove: [node.data] });
+  api.refreshClientSideRowModel?.("filter");
+  api.redrawRows?.();
+  return true;
+};
+const showCitizenGridRow = row => {
+  const api = state.gridApis.citizens;
+  if (!api || !row || !Number.isFinite(row.rowIndex)) return;
+  const pageSize = api.paginationGetPageSize?.();
+  if (pageSize) api.paginationGoToPage?.(Math.floor(row.rowIndex / pageSize));
+  requestAnimationFrame(() => api.ensureIndexVisible?.(row.rowIndex, "middle"));
 };
 
 export const actions = {
@@ -190,14 +228,21 @@ export const actions = {
   "save-citizen": () => {
     const values = formValues("#citizen-form");
     if (!validateEmailFields("#citizen-form")) { toast("Bitte eine gültige E-Mail-Adresse eingeben."); return; }
-    const currentList = filteredCitizens();
-    const currentIndex = currentList.findIndex(citizen => citizen.id === values.id);
+    const currentRows = currentCitizenGridRows();
+    const currentIds = currentRows.map(row => row.id);
+    const currentIndex = currentIds.indexOf(values.id);
     state.data.citizens = updateItem(state.data.citizens, values.id, { ...values, updatedAt: todayIso(), status: "geprüft" });
-    const nextCitizen = currentList[currentIndex + 1] || currentList[0];
-    state.selectedCitizenId = nextCitizen?.id || values.id;
+    const nextCitizenId = currentIds[currentIndex + 1] || "";
+    const reachedEnd = !nextCitizenId || currentIndex < 0;
+    state.selectedCitizenId = nextCitizenId || values.id;
     saveData();
-    render();
-    toast("Jubilar gespeichert.");
+    const gridUpdated = updateCitizenGridRow(byId(state.data.citizens, values.id));
+    if (gridUpdated) {
+      renderCitizenDetail();
+      const nextRow = currentRows.find(row => row.id === state.selectedCitizenId);
+      showCitizenGridRow(nextRow);
+    } else render();
+    toast(reachedEnd ? "Jubilar gespeichert. Ende der Liste erreicht." : "Jubilar gespeichert.");
   },
   "select-member": event => {
     state.selectedMemberId = event.target.closest("[data-id]").dataset.id;
@@ -347,14 +392,16 @@ export const actions = {
   "print-docs": printCurrentRun,
   "toggle-print-background": e => { state.printBackground = e.target.checked; },
   "print-quittung": e => {
+    if (!allReceiptCitizensChecked()) { toast("Quittungsdruck erst möglich, wenn alle Jubilare geprüft sind."); return; }
     const groupId = e.target.closest("[data-group-id]")?.dataset.groupId;
-    const citizens = activeCitizens().filter(c => groupForCitizen(c)?.id === groupId);
-    if (!citizens.length) { toast("Keine Jubilare für diese SOKO."); return; }
+    const citizens = receiptCitizens().filter(c => groupForCitizen(c)?.id === groupId);
+    if (!citizens.length) { toast("Keine Jubilare mit Besuchswunsch für diese SOKO."); return; }
     openPrintWindow(renderSokoQuittung(citizens, groupId, state.quittungBetrag, state.quittungTelefon, state.quittungMonat, state.quittungKapitel, state.quittungTitel), "Quittung");
   },
   "print-quittung-all": () => {
-    const citizens = activeCitizens().filter(c => groupForCitizen(c));
-    if (!citizens.length) { toast("Keine Jubilare mit SOKO-Zuordnung vorhanden."); return; }
+    if (!allReceiptCitizensChecked()) { toast("Quittungsdruck erst möglich, wenn alle Jubilare geprüft sind."); return; }
+    const citizens = receiptCitizens();
+    if (!citizens.length) { toast("Keine Jubilare mit Besuchswunsch und SOKO-Zuordnung vorhanden."); return; }
     const byGroup = citizens.reduce((acc, c) => {
       const gid = groupForCitizen(c).id;
       if (!acc[gid]) acc[gid] = [];

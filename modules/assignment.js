@@ -1,8 +1,10 @@
-import { normalize, calculateAge, byId } from './utils.js';
+import { normalize, calculateAge, birthdayMonth, byId } from './utils.js';
 import { sokoGroupId } from './domain.js';
 import { state } from './state.js';
 
 export const isPrintedCitizen = citizen => citizen.status === "gedruckt";
+export const isCheckedCitizen = citizen => normalize(citizen.status).startsWith("gepr") || isPrintedCitizen(citizen);
+export const wantsVisit = citizen => normalize(citizen.wish).startsWith("besuch");
 export const activeCitizens = () => state.data.citizens.filter(citizen => !isPrintedCitizen(citizen));
 export const duplicateKey = citizen => normalize([
   citizen.firstName,
@@ -88,3 +90,6 @@ export const filteredCitizens = () => activeCitizens().filter(citizen => {
     && ageOk;
 });
 export const documentCitizens = () => filteredCitizens().filter(citizen => citizen.status === "geprüft");
+export const receiptReviewCitizens = () => activeCitizens().filter(citizen => birthdayMonth(citizen.birthDate) === state.quittungMonat);
+export const allReceiptCitizensChecked = () => receiptReviewCitizens().every(isCheckedCitizen);
+export const receiptCitizens = () => receiptReviewCitizens().filter(citizen => wantsVisit(citizen) && groupForCitizen(citizen));

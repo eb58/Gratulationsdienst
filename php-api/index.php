@@ -473,12 +473,15 @@ function db(): array
     $configFile = __DIR__ . '/config.php';
     $config = file_exists($configFile) ? require $configFile : require __DIR__ . '/config.example.php';
     $dsn = (string)$config['dsn'];
+    $connectTimeout = max(1, (int)($config['connect_timeout'] ?? 5));
 
     if (str_starts_with($dsn, 'mysql:') && !extension_loaded('pdo_mysql')) {
         if (!extension_loaded('mysqli')) throw new RuntimeException('PHP braucht die Erweiterung pdo_mysql oder mysqli fuer die MySQL-Verbindung.');
         mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
         $parts = parseDsn($dsn);
-        $mysqli = new mysqli(
+        $mysqli = mysqli_init();
+        $mysqli->options(MYSQLI_OPT_CONNECT_TIMEOUT, $connectTimeout);
+        $mysqli->real_connect(
             $parts['host'] ?? 'localhost',
             $config['user'] ?? '',
             $config['password'] ?? '',
@@ -489,7 +492,8 @@ function db(): array
         return ['driver' => 'mysqli', 'mysqli' => $mysqli, 'config' => $config];
     }
 
-    $pdo = new PDO($dsn, $config['user'], $config['password'], $config['options'] ?? []);
+    $options = [PDO::ATTR_TIMEOUT => $connectTimeout] + ($config['options'] ?? []);
+    $pdo = new PDO($dsn, $config['user'], $config['password'], $options);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
     return ['driver' => $pdo->getAttribute(PDO::ATTR_DRIVER_NAME), 'pdo' => $pdo, 'config' => $config];

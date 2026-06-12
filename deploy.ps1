@@ -13,14 +13,9 @@ Write-Host "Lade Frontend hoch..." -ForegroundColor Cyan
 scp -r -P $port $sshOpt "$buildDir\*" "${user}@${server}:${webroot}/gratulationsdienst/"
 
 Write-Host "Lade PHP-API hoch..." -ForegroundColor Cyan
-scp -P $port $sshOpt php-api/index.php php-api/schema.mysql.sql php-api/.htaccess php-api/config.php "${user}@${server}:${webroot}/gratulationsdienst/php-api/"
+scp -P $port $sshOpt php-api/index.php php-api/schema.mysql.sql php-api/.htaccess "${user}@${server}:${webroot}/gratulationsdienst/php-api/"
 
 Write-Host "Setze Dateirechte..." -ForegroundColor Cyan
-$cmds = @'
-chmod -R 755 Seniorenclub/gratulationsdienst
-chmod -R 755 Seniorenclub/php-api
-find Seniorenclub/gratulationsdienst -type f -exec chmod 644 '{}' ';'
-'@
-echo $cmds | ssh -p $port $sshOpt "${user}@${server}" "bash -s"
+ssh -p $port $sshOpt "${user}@${server}" "chmod -R u=rwX,go=rX Seniorenclub/gratulationsdienst"
 
 Write-Host "Fertig! https://senioren-luebars.berlin/gratulationsdienst/" -ForegroundColor Green

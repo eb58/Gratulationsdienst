@@ -4,7 +4,7 @@ import { state } from './state.js';
 import { filteredCitizens, groupForCitizen, selectedCitizen } from './assignment.js';
 import { documentPreview } from './documents.js';
 import { render } from './render.js'; // Zyklus OK: render wird nur in Event-Callbacks aufgerufen
-import { renderRegionAssignment } from './views.js'; // Zyklus OK: lazy
+import { renderCitizenDetail, renderRegionAssignment } from './views.js'; // Zyklus OK: lazy
 
 export const gridTheme = () => window.agGrid?.themeQuartz?.withParams ? window.agGrid.themeQuartz.withParams({
   accentColor: "#0f5d58",
@@ -150,7 +150,12 @@ export const gridDefinitions = {
     ],
     getRowId: params => params.data.id,
     getRowClass: params => params.data.id === state.selectedCitizenId ? "selected" : "",
-    onRowClicked: params => { saveGridState("citizens", params.api); state.selectedCitizenId = params.data.id; render(); }
+    onRowClicked: params => {
+      saveGridState("citizens", params.api);
+      state.selectedCitizenId = params.data.id;
+      renderCitizenDetail();
+      params.api.redrawRows?.();
+    }
   }),
   members: () => ({
     ...baseGridOptions(),
