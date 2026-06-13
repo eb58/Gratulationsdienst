@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 const COLLECTIONS = ['citizens', 'sokoGroups', 'sokoMembers', 'streets', 'senders', 'templates', 'importLog'];
 const ADMIN_COLLECTIONS = ['sokoGroups', 'sokoMembers', 'streets', 'senders', 'templates'];
-const SESSION_TTL_SECONDS = 604800;
+const SESSION_TTL_SECONDS = 28800;
 const MFA_TICKET_TTL_SECONDS = 300;
 const PASSWORD_RESET_TTL_SECONDS = 900;
 const PASSWORD_RESET_RATE_LIMIT_SECONDS = 3600;

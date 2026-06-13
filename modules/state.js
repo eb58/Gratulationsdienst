@@ -2,6 +2,16 @@ import { STORAGE_KEY, MONTH_KEY, QUITTUNG_MONTH_KEY, API_BASE, storedSplit, repa
 import { defaultData, buildStreetData } from './domain.js';
 import { render } from './render.js'; // Zyklus OK: render wird nur in Callbacks aufgerufen
 
+const AUTH_TOKEN_KEY = "gd_auth_token";
+const storedAuthToken = () => {
+  localStorage.removeItem(AUTH_TOKEN_KEY);
+  return sessionStorage.getItem(AUTH_TOKEN_KEY) || "";
+};
+const clearStoredAuthToken = () => {
+  localStorage.removeItem(AUTH_TOKEN_KEY);
+  sessionStorage.removeItem(AUTH_TOKEN_KEY);
+};
+
 export const mergeById = (existing, defaults, keep = () => true) => {
   const existingItems = existing || [];
   return [
@@ -47,7 +57,7 @@ export const state = {
     ready: location.protocol === "file:",
     setupRequired: false,
     mode: "login",
-    token: localStorage.getItem("gd_auth_token") || "",
+    token: storedAuthToken(),
     user: location.protocol === "file:" ? { id: "demo", email: "demo@local", displayName: "Demo", role: "admin", mfaEnabled: false, active: true } : null,
     mfaTicket: "",
     resetToken: "",
@@ -97,10 +107,11 @@ export const setAuthSession = session => {
   state.auth.mfaTicket = "";
   state.auth.resetToken = "";
   state.auth.mfaSetup = null;
-  if (state.auth.token) localStorage.setItem("gd_auth_token", state.auth.token);
+  if (state.auth.token) sessionStorage.setItem(AUTH_TOKEN_KEY, state.auth.token);
+  else clearStoredAuthToken();
 };
 export const clearAuthSession = () => {
-  localStorage.removeItem("gd_auth_token");
+  clearStoredAuthToken();
   state.auth = { ...state.auth, ready: true, token: "", user: null, mfaTicket: "", users: [], mfaSetup: null };
 };
 export const apiRequest = (path, options = {}) => {
@@ -123,7 +134,7 @@ export const loadAuthStatus = () => {
       state.auth.mode = status.setupRequired ? "setup" : "login";
       if (!status.authenticated) {
         state.auth.token = "";
-        localStorage.removeItem("gd_auth_token");
+        clearStoredAuthToken();
       }
       return state.auth;
     })

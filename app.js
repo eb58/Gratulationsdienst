@@ -100,6 +100,7 @@ state.view = viewTitles[initialParams.get("view")]
   : state.view;
 if (initialParams.get("resetToken")) {
   localStorage.removeItem("gd_auth_token");
+  sessionStorage.removeItem("gd_auth_token");
   state.auth.token = "";
   state.auth.user = null;
   state.auth.mode = "reset";
