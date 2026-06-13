@@ -83,6 +83,7 @@ document.addEventListener("keydown", event => {
 
 document.addEventListener("change", event => {
   if (event.target.dataset.action) { actions[event.target.dataset.action]?.(event); return; }
+  if (event.target.matches('[name="wish"]')) { document.querySelector('[data-action="save-citizen"]')?.classList.remove("btn-disabled"); return; }
   if (event.target.matches("#doc-template, #doc-sender, #doc-month, #doc-group")) { actions["generate-docs"](); return; }
   const bound = event.target.closest("[data-bind]");
   if (bound) {

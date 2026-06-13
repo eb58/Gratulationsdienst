@@ -138,7 +138,7 @@ export const citizenDetailContent = citizen => `
     ${field("district", "Ortsteil", citizen.district)}
     ${field("phone", "Telefon", citizen.phone)}
     ${emailField("email", "E-Mail", citizen.email)}
-    ${selectField("wish", "Glückwünsche", citizen.wish, [["Besuch erwünscht", "Besuch erwünscht"], ["per Post", "per Post"], ["keine", "keine"], ["offen", "offen"]], "full")}
+    ${radioField("wish", "Glückwünsche", citizen.wish, [["Besuch erwünscht", "Besuch erwünscht"], ["per Post", "per Post"], ["keine", "keine"]], "full")}
     ${checkField("pressPublication", "Veröffentlichung in der lokalen Presse", citizen.pressPublication, "full")}
     ${radioField("weddingAnniversary", "Es steht bevor die", citizen.weddingAnniversary ?? "", [
       ["", "—"],
@@ -151,7 +151,7 @@ export const citizenDetailContent = citizen => `
     ${field("spouseName", "Name des Ehegatten", citizen.spouseName ?? "", "text", "hochzeit-spouse-field")}
     ${textField("notes", "Notiz", citizen.notes, "full notes-field")}
     <div class="field full button-row">
-      <button type="button" class="primary-button" data-action="save-citizen">Speichern</button>
+      <button type="button" class="primary-button${citizen.wish && citizen.wish !== "offen" ? "" : " btn-disabled"}" data-action="save-citizen">Speichern</button>
     </div>
   </form>
 `;
@@ -360,7 +360,7 @@ export const views = {
             ${field("district", "Ortsteil", citizen.district)}
             ${field("phone", "Telefon", citizen.phone)}
             ${emailField("email", "E-Mail", citizen.email)}
-            ${selectField("wish", "Glückwünsche", citizen.wish, [["Besuch erwünscht", "Besuch erwünscht"], ["per Post", "per Post"], ["keine", "keine"], ["offen", "offen"]], "full")}
+            ${radioField("wish", "Glückwünsche", citizen.wish, [["Besuch erwünscht", "Besuch erwünscht"], ["per Post", "per Post"], ["keine", "keine"]], "full")}
             ${checkField("pressPublication", "Veröffentlichung in der lokalen Presse", citizen.pressPublication, "full")}
             ${radioField("weddingAnniversary", "Es steht bevor die", citizen.weddingAnniversary ?? "", [
               ["", "—"],
@@ -373,7 +373,7 @@ export const views = {
             ${field("spouseName", "Name des Ehegatten", citizen.spouseName ?? "", "text", "hochzeit-spouse-field")}
             ${textField("notes", "Notiz", citizen.notes, "full notes-field")}
             <div class="field full button-row">
-              <button type="button" class="primary-button" data-action="save-citizen">Speichern</button>
+              <button type="button" class="primary-button${citizen.wish && citizen.wish !== "offen" ? "" : " btn-disabled"}" data-action="save-citizen">Speichern</button>
             </div>
           </form>
         </section>` : ""}

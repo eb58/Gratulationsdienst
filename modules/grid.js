@@ -150,6 +150,13 @@ export const gridDefinitions = {
     ],
     getRowId: params => params.data.id,
     getRowClass: params => params.data.id === state.selectedCitizenId ? "selected" : "",
+    onFirstDataRendered: params => {
+      const inList = filteredCitizens().some(c => c.id === state.selectedCitizenId);
+      if (!inList) {
+        const first = params.api.getDisplayedRowAtIndex(0);
+        if (first) { state.selectedCitizenId = first.data.id; renderCitizenDetail(); params.api.redrawRows?.(); }
+      }
+    },
     onRowClicked: params => {
       saveGridState("citizens", params.api);
       state.selectedCitizenId = params.data.id;

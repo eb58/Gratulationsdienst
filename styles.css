@@ -347,6 +347,11 @@ h3 {
   background: var(--teal);
 }
 
+.btn-disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .ghost-button {
   color: #fff;
   background: var(--teal);

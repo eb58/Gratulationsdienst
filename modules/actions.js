@@ -227,6 +227,7 @@ export const actions = {
   },
   "save-citizen": () => {
     const values = formValues("#citizen-form");
+    if (!values.wish || values.wish === "offen") { toast("Bitte eine Glückwunsch-Option auswählen."); return; }
     if (!validateEmailFields("#citizen-form")) { toast("Bitte eine gültige E-Mail-Adresse eingeben."); return; }
     const currentRows = currentCitizenGridRows();
     const currentIds = currentRows.map(row => row.id);
