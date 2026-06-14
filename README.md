@@ -1,6 +1,6 @@
-# Gratulationsdienst Digital - Prototyp
+# Gratulationsdienst Digital
 
-Statischer Browser-Prototyp fuer das Hauptmodul aus dem Pflichtenheft.
+Gratulationsdienst Reinickendorf
 
 ## Start
 
