@@ -1,7 +1,7 @@
 import { $, todayIso, isValidEmail, isValidIban, formatIban, updateItem, nextId, csvEscape, formatStreetAddress, downloadText, calculateAge, toast, byId } from './utils.js';
 import { normalizeStreetRules, streetDistrictSummary, streetGroupSummary, normalizeStreetDistrict } from './domain.js';
 import { state, saveData, apiRequest, setAuthSession, clearAuthSession, loadCollectionData } from './state.js';
-import { streetAssignment, filteredCitizens, documentCitizens, duplicateKey, isPrintedCitizen, selectedTemplate, selectedSender, activeCitizens, groupForCitizen, allReceiptCitizensChecked, receiptCitizens } from './assignment.js';
+import { streetAssignment, filteredCitizens, documentCitizens, duplicateKey, isPrintedCitizen, selectedTemplate, selectedSender, activeCitizens, groupForCitizen, isReceiptGroupReady, receiptCitizens, receiptCitizensForReadyGroups, ruleMatchesHouseNo } from './assignment.js';
 import { printCurrentRun, completePrintRun, renderSokoForm, renderSokoQuittung } from './documents.js';
 import { parseCsv, mapImportRow } from './import.js';
 import { render } from './render.js';
@@ -85,6 +85,86 @@ const showCitizenGridRow = row => {
   const pageSize = api.paginationGetPageSize?.();
   if (pageSize) api.paginationGoToPage?.(Math.floor(row.rowIndex / pageSize));
   requestAnimationFrame(() => api.ensureIndexVisible?.(row.rowIndex, "middle"));
+};
+const testFirstNames = ["Anna", "Bernd", "Clara", "Dieter", "Eva", "Frank", "Gisela", "Heinz", "Inge", "Jürgen", "Karin", "Lothar", "Monika", "Norbert", "Petra", "Julia", "Maria", "Georg", "Norbert", "Joachim", "Evelyn", "Hans-Peter"];
+const testLastNames = [ "Schulz", "Berger", "Klein", "Neumann", "Richter", "Wolf", "Krüger", "Hoffmann", "Werner", "Schneider", "Lehmann", "Koch", "Fischer", "Weber", "Peverali", "Brandt", "Piotrowski"];
+const numberFrom = value => Number.parseInt(String(value ?? "").match(/\d+/)?.[0] || "", 10);
+const testAssignments = () => state.data.streets.flatMap(street => (street.rules || [])
+  .filter(rule => rule.soko)
+  .map(rule => ({ street, rule })));
+const testHouseNo = (rule, offset) => String([rule.von, rule.bis, ...Array.from({ length: 220 }, (_, index) => index + 1)]
+  .map(numberFrom)
+  .find(number => Number.isFinite(number) && ruleMatchesHouseNo(rule, number)) || offset + 1);
+const testBirthDate = index => {
+  const year = Number(todayIso().slice(0, 4));
+  const age = [85, 90, 95, 100, 101][index % 5];
+  const month = state.quittungMonat || String(new Date().getMonth() + 1).padStart(2, "0");
+  const day = String((index % 28) + 1).padStart(2, "0");
+  return `${year - age}-${month}-${day}`;
+};
+const testCsvRow = (index, nameOffset, assignment) => {
+  const nameIndex = nameOffset + index;
+  return {
+  Anrede: index % 2 ? "Herr" : "Frau",
+  Vorname: testFirstNames[nameIndex % testFirstNames.length],
+  Nachname: testLastNames[Math.floor(nameIndex / testFirstNames.length) % testLastNames.length],
+  Strasse: assignment.street.name,
+  Hausnummer: testHouseNo(assignment.rule, index),
+  PLZ: assignment.rule.plz || "13437",
+  Ortsteil: assignment.rule.ortsteil || assignment.street.district || "",
+  Geburtsdatum: testBirthDate(index),
+  Telefon: `030 9000${String(index + 100).padStart(4, "0")}`,
+  Email: ""
+  };
+};
+const testCsvText = rows => {
+  const headers = ["Anrede", "Vorname", "Nachname", "Strasse", "Hausnummer", "PLZ", "Ortsteil", "Geburtsdatum", "Telefon", "Email"];
+  return [headers, ...rows.map(row => headers.map(header => row[header] || ""))]
+    .map(row => row.map(csvEscape).join(";"))
+    .join("\n");
+};
+const importMappedRows = mapped => {
+  const result = mapped.reduce((acc, row) => {
+    const missing = !row.firstName || !row.lastName || !row.birthDate || !row.street;
+    const key = duplicateKey(row);
+    const duplicate = !missing && acc.keys.has(key);
+    const printedDuplicate = duplicate && acc.printedKeys.has(key);
+    const group = streetAssignment(row)?.groupId;
+    const log = {
+      time: new Date().toLocaleString("de-DE"),
+      name: `${row.firstName || ""} ${row.lastName || ""}`.trim(),
+      address: formatStreetAddress(row),
+      birthDate: row.birthDate || "",
+      age: row.age || (row.birthDate ? calculateAge(row.birthDate) : ""),
+      groupId: group || "",
+      type: missing ? "Fehler" : duplicate ? "Dublette" : "Importiert",
+      message: missing ? "Pflichtfelder fehlen." : duplicate ? (printedDuplicate ? "Bestehender Datensatz wurde bereits gedruckt." : "Bestehender Datensatz bleibt erhalten.") : (group ? `Zugeordnet zu ${group}.` : "Straße ohne SOKO-Zuordnung.")
+    };
+    const item = { ...row, id: nextId("G-2026", [...state.data.citizens, ...acc.rows]), source: "CSV Import", updatedAt: todayIso(), status: group ? "importiert" : "offen" };
+    return {
+      rows: missing || duplicate ? acc.rows : [...acc.rows, item],
+      logs: [...acc.logs, log],
+      duplicates: duplicate ? acc.duplicates + 1 : acc.duplicates,
+      printedDuplicates: printedDuplicate ? acc.printedDuplicates + 1 : acc.printedDuplicates,
+      keys: missing || duplicate ? acc.keys : new Set([...acc.keys, key])
+    };
+  }, {
+    rows: [],
+    logs: [],
+    duplicates: 0,
+    printedDuplicates: 0,
+    keys: new Set(state.data.citizens.map(duplicateKey)),
+    printedKeys: new Set(state.data.citizens.filter(isPrintedCitizen).map(duplicateKey))
+  });
+  state.data.citizens = [...state.data.citizens, ...result.rows];
+  state.data.importLog = [...result.logs, ...state.data.importLog];
+  saveData();
+  render();
+  toast(result.printedDuplicates
+    ? `${result.rows.length} neue Datensätze importiert. ${result.duplicates} Dubletten gefunden, davon ${result.printedDuplicates} bereits gedruckt.`
+    : result.duplicates
+      ? `${result.rows.length} neue Datensätze importiert. ${result.duplicates} Dubletten gefunden.`
+      : `${result.rows.length} neue Datensätze importiert.`);
 };
 
 export const actions = {
@@ -365,6 +445,30 @@ export const actions = {
     render();
     toast("Vorlage gelöscht.");
   },
+  "clear-citizens": () => {
+    if (state.auth.user?.role !== "admin") { toast("Nur Admins können Testdaten bereinigen."); return; }
+    state.dialog = { type: "clear-citizens", title: "Jubilare löschen", message: "Sollen wirklich alle Jubilare und das Import-Protokoll gelöscht werden? Stammdaten und Benutzer bleiben erhalten.", confirmLabel: "Jubilare löschen", confirmAction: "confirm-clear-citizens" };
+    render();
+  },
+  "confirm-clear-citizens": () => {
+    state.data.citizens = [];
+    state.data.importLog = [];
+    state.selectedCitizenId = "";
+    state.generatedDocs = [];
+    state.dialog = null;
+    saveData();
+    render();
+    toast("Alle Jubilare und das Import-Protokoll wurden gelöscht.");
+  },
+  "seed-citizens": () => {
+    if (state.auth.user?.role !== "admin") { toast("Nur Admins können Testdaten erzeugen."); return; }
+    const assignments = testAssignments();
+    if (!assignments.length) { toast("Keine SOKO-Zuordnungen für Testdaten gefunden."); return; }
+    const nameOffset = state.data.citizens.length + state.data.importLog.length;
+    const csv = testCsvText(Array.from({ length: 30 }, (_, index) => testCsvRow(index, nameOffset, assignments[index % assignments.length])));
+    state.importText = csv;
+    importMappedRows(parseCsv(csv).map(mapImportRow));
+  },
   "generate-docs": () => {
     const template = byId(state.data.templates, $("#doc-template").value);
     const sender = byId(state.data.senders, $("#doc-sender").value);
@@ -393,16 +497,15 @@ export const actions = {
   "print-docs": printCurrentRun,
   "toggle-print-background": e => { state.printBackground = e.target.checked; },
   "print-quittung": e => {
-    if (!allReceiptCitizensChecked()) { toast("Quittungsdruck erst möglich, wenn alle Jubilare geprüft sind."); return; }
     const groupId = e.target.closest("[data-group-id]")?.dataset.groupId;
+    if (!isReceiptGroupReady(groupId)) { toast("Quittungsdruck erst möglich, wenn alle Jubilare dieser SOKO geprüft sind."); return; }
     const citizens = receiptCitizens().filter(c => groupForCitizen(c)?.id === groupId);
     if (!citizens.length) { toast("Keine Jubilare mit Besuchswunsch für diese SOKO."); return; }
     openPrintWindow(renderSokoQuittung(citizens, groupId, state.quittungBetrag, state.quittungTelefon, state.quittungMonat, state.quittungKapitel, state.quittungTitel), "Quittung");
   },
   "print-quittung-all": () => {
-    if (!allReceiptCitizensChecked()) { toast("Quittungsdruck erst möglich, wenn alle Jubilare geprüft sind."); return; }
-    const citizens = receiptCitizens();
-    if (!citizens.length) { toast("Keine Jubilare mit Besuchswunsch und SOKO-Zuordnung vorhanden."); return; }
+    const citizens = receiptCitizensForReadyGroups();
+    if (!citizens.length) { toast("Keine fertige SOKO mit Besuchswunsch und SOKO-Zuordnung vorhanden."); return; }
     const byGroup = citizens.reduce((acc, c) => {
       const gid = groupForCitizen(c).id;
       if (!acc[gid]) acc[gid] = [];
@@ -430,49 +533,7 @@ export const actions = {
   },
   "run-import": () => {
     if (!state.importText) { toast("Bitte zuerst eine CSV-Datei laden."); return; }
-    const rows = parseCsv(state.importText);
-    const mapped = rows.map(mapImportRow);
-    const result = mapped.reduce((acc, row) => {
-      const missing = !row.firstName || !row.lastName || !row.birthDate || !row.street;
-      const key = duplicateKey(row);
-      const duplicate = !missing && acc.keys.has(key);
-      const printedDuplicate = duplicate && acc.printedKeys.has(key);
-      const group = streetAssignment(row)?.groupId;
-      const log = {
-        time: new Date().toLocaleString("de-DE"),
-        name: `${row.firstName || ""} ${row.lastName || ""}`.trim(),
-        address: formatStreetAddress(row),
-        birthDate: row.birthDate || "",
-        age: row.age || (row.birthDate ? calculateAge(row.birthDate) : ""),
-        groupId: group || "",
-        type: missing ? "Fehler" : duplicate ? "Dublette" : "Importiert",
-        message: missing ? "Pflichtfelder fehlen." : duplicate ? (printedDuplicate ? "Bestehender Datensatz wurde bereits gedruckt." : "Bestehender Datensatz bleibt erhalten.") : (group ? `Zugeordnet zu ${group}.` : "Straße ohne SOKO-Zuordnung.")
-      };
-      const item = { ...row, id: nextId("G-2026", [...state.data.citizens, ...acc.rows]), source: "CSV Import", updatedAt: todayIso(), status: group ? "importiert" : "offen" };
-      return {
-        rows: missing || duplicate ? acc.rows : [...acc.rows, item],
-        logs: [...acc.logs, log],
-        duplicates: duplicate ? acc.duplicates + 1 : acc.duplicates,
-        printedDuplicates: printedDuplicate ? acc.printedDuplicates + 1 : acc.printedDuplicates,
-        keys: missing || duplicate ? acc.keys : new Set([...acc.keys, key])
-      };
-    }, {
-      rows: [],
-      logs: [],
-      duplicates: 0,
-      printedDuplicates: 0,
-      keys: new Set(state.data.citizens.map(duplicateKey)),
-      printedKeys: new Set(state.data.citizens.filter(isPrintedCitizen).map(duplicateKey))
-    });
-    state.data.citizens = [...state.data.citizens, ...result.rows];
-    state.data.importLog = [...result.logs, ...state.data.importLog];
-    saveData();
-    render();
-    toast(result.printedDuplicates
-      ? `${result.rows.length} neue Datensätze importiert. ${result.duplicates} Dubletten gefunden, davon ${result.printedDuplicates} bereits gedruckt.`
-      : result.duplicates
-        ? `${result.rows.length} neue Datensätze importiert. ${result.duplicates} Dubletten gefunden.`
-        : `${result.rows.length} neue Datensätze importiert.`);
+    importMappedRows(parseCsv(state.importText).map(mapImportRow));
   },
   "select-generated": event => {
     state.selectedCitizenId = event.target.closest("[data-id]").dataset.id;

@@ -1,7 +1,7 @@
-import { escapeHtml, normalize, formatDate, byId, birthdayMonth, calculateAge } from './utils.js';
+﻿import { escapeHtml, normalize, formatDate, byId, birthdayMonth, calculateAge } from './utils.js';
 import { months, sokoColors, streetGroupDisplay } from './domain.js';
 import { state } from './state.js';
-import { selectedCitizen, selectedTemplate, selectedSender, selectedMember, selectedStreet, filteredCitizens, activeCitizens, groupForCitizen, isCheckedCitizen, allReceiptCitizensChecked, receiptCitizens, receiptReviewCitizens } from './assignment.js';
+import { selectedCitizen, selectedTemplate, selectedSender, selectedMember, selectedStreet, filteredCitizens, activeCitizens, groupForCitizen, isCheckedCitizen, receiptCitizens, receiptReviewCitizensForGroup, isReceiptGroupReady } from './assignment.js';
 import { field, emailField, ibanField, selectField, textField, checkField, radioField, streetRuleRows, assignmentPill, gridHost, groupOptions, sokoSelectOptions, senderOptions, templateOptions, occasionOptions, formatOptions } from './fields.js';
 import { streetMapSvg, addressPointData, assignedAddressPoints } from './map.js';
 import { documentPreview } from './documents.js';
@@ -595,9 +595,6 @@ export const views = {
   },
 
   quittung: () => {
-    const reviewCitizens = receiptReviewCitizens();
-    const uncheckedCount = reviewCitizens.filter(citizen => !isCheckedCitizen(citizen)).length;
-    const canPrint = allReceiptCitizensChecked();
     const citizens = receiptCitizens();
     const byGroup = citizens.reduce((acc, c) => {
       const group = groupForCitizen(c);
@@ -607,14 +604,24 @@ export const views = {
       return acc;
     }, {});
     const groups = Object.values(byGroup).sort((a, b) => a.group.id.localeCompare(b.group.id));
+    const groupStatus = group => {
+      const uncheckedCount = receiptReviewCitizensForGroup(group.id).filter(citizen => !isCheckedCitizen(citizen)).length;
+      return { uncheckedCount, canPrint: isReceiptGroupReady(group.id) };
+    };
+    const unfinishedGroups = groups
+      .map(({ group }) => ({ group, ...groupStatus(group) }))
+      .filter(item => !item.canPrint);
+    const canPrintAny = groups.some(({ group }) => isReceiptGroupReady(group.id));
     const betrag = state.quittungBetrag;
     const betragNum = Number.parseFloat(betrag.replace(",", ".")) || 0;
     const rows = groups.map(({ group, citizens: gc }) => {
       const summe = (gc.length * betragNum).toFixed(2).replace(".", ",");
+      const { uncheckedCount, canPrint } = groupStatus(group);
       return `<tr>
         <td>${escapeHtml(group.id)}</td>
         <td>${gc.length}</td>
         <td style="text-align:right">${summe} €</td>
+        <td>${canPrint ? `<span class="pill green">fertig</span>` : `<span class="pill gold">${uncheckedCount} offen</span>`}</td>
         <td><button type="button" class="primary-button" style="min-height:30px;padding:0 12px" data-action="print-quittung" data-group-id="${escapeHtml(group.id)}" ${canPrint ? "" : "disabled"}>Drucken</button></td>
       </tr>`;
     }).join("");
@@ -624,14 +631,14 @@ export const views = {
       <select data-bind="quittungMonat">
         ${months.filter(([v]) => v !== "alle").map(([v, l]) => `<option value="${v}"${state.quittungMonat === v ? " selected" : ""}>${escapeHtml(l)}</option>`).join("")}
       </select>
-      ${groups.length ? `<button type="button" class="primary-button" data-action="print-quittung-all" ${canPrint ? "" : "disabled"}>Alle drucken</button>` : ""}
+      ${groups.length ? `<button type="button" class="primary-button" data-action="print-quittung-all" ${canPrintAny ? "" : "disabled"}>Alle fertigen drucken</button>` : ""}
     </div>
-    ${canPrint ? "" : `<div class="alert" style="margin-top:12px">Quittungsdruck erst möglich, wenn alle Jubilare für diesen Monat geprüft sind. Offen: ${uncheckedCount}</div>`}
+    ${unfinishedGroups.length ? `<div class="alert" style="margin-top:12px">Quittungsdruck ist pro SOKO möglich, sobald dort alle Jubilare für diesen Monat geprüft sind. Noch nicht fertig: ${unfinishedGroups.map(item => `${escapeHtml(item.group.id)} (${item.uncheckedCount} offen)`).join(", ")}</div>` : ""}
     <section class="panel" style="margin-top:12px">
       <h2>SOKOs</h2>
       ${groups.length ? `
       <table class="data-table" style="width:100%">
-        <thead><tr><th>SOKO</th><th>Jubilare</th><th style="text-align:right">Gesamt</th><th></th></tr></thead>
+        <thead><tr><th>SOKO</th><th>Jubilare</th><th style="text-align:right">Gesamt</th><th>Status</th><th></th></tr></thead>
         <tbody>${rows}</tbody>
       </table>` : `<div class="empty-state">Keine Jubilare mit Besuchswunsch und SOKO-Zuordnung vorhanden</div>`}
     </section>`;
@@ -665,16 +672,22 @@ export const views = {
     <div class="stack">
       <section class="panel">
         <h2>CSV-Import</h2>
-        <div class="form-grid">
-          <div class="field full">
-            <div class="file-action-row">
-              <label class="file-picker" for="import-file">
-                <span>Aus CSV laden</span>
-                <em>${state.importText ? "Datei geladen oder Daten eingefügt" : "Noch keine Datei geladen"}</em>
-              </label>
+        <div class="file-action-row import-action-row">
+          <label class="file-picker import-file-picker" for="import-file">
+            <span>Aus CSV laden</span>
+            <em>${state.importText ? "Datei geladen oder Daten eingefügt" : "Noch keine Datei geladen"}</em>
+          </label>
+          ${state.auth.user?.role === "admin" ? `
+            <div class="test-actions" aria-label="Testdaten-Werkzeuge">
+              <div class="test-actions-meta">
+                <span>Nur Testzwecke</span>
+                <strong>${state.data.citizens.length.toLocaleString("de-DE")} Jubilare · ${state.data.importLog.length.toLocaleString("de-DE")} Log</strong>
+              </div>
+              <button type="button" class="ghost-button test-action-button" data-action="seed-citizens">30 CSV simulieren</button>
+              <button type="button" class="danger-button test-action-button" data-action="clear-citizens">Löschen</button>
             </div>
-            <input id="import-file" class="file-input" type="file" accept=".csv,text/csv">
-          </div>
+          ` : ""}
+          <input id="import-file" class="file-input" type="file" accept=".csv,text/csv">
         </div>
       </section>
       <section class="panel">
