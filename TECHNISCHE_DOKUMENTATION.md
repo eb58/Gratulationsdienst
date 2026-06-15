@@ -258,7 +258,52 @@ php -S 127.0.0.1:8080 -t .
 - `app_url`
 - Mail-Absenderdaten
 
-## 10. Wichtige Annahmen und Grenzen
+## 10. Barrierefreiheit nach BITV 2.0
+
+Die folgende Liste ist eine technische Vorprüfung, kein formales BITV-Audit. Sie zeigt den aktuellen Stand der App gegen die wichtigsten BITV-Anforderungen.
+
+### 10.1 Wahrnehmbar
+
+- [x] Alle Formularfelder haben sichtbare Labels.
+- [x] Wichtige Statusmeldungen erscheinen als Live-Region (`role="status"`).
+- [x] Dekorative Bilder sind als dekorativ markiert oder haben passende Alternativtexte.
+- [ ] Ein formeller Kontrastnachweis für alle Zustände liegt nicht vor.
+- [ ] Es gibt noch keine dokumentierte Prüfung für Zoom bis 200 Prozent und mobile Reflow-Szenarien.
+
+### 10.2 Bedienbar
+
+- [x] Hauptfunktionen sind per Tastatur erreichbar.
+- [x] Dialoge sind semantisch als Dialoge markiert.
+- [x] Splitter und ähnliche Bedienelemente haben Tastaturzugang.
+- [ ] Ein sichtbarer Skip-Link zum Hauptinhalt fehlt.
+- [ ] Fokusmanagement in Dialogen und nach dynamischen Aktionen ist nicht systematisch abgesichert.
+- [ ] Für alle interaktiven Elemente gibt es noch keine durchgängigen `:focus-visible`-Styles.
+
+### 10.3 Verständlich
+
+- [x] Formulare, Buttons und Navigation sind sprachlich eindeutig benannt.
+- [x] Fehlermeldungen und Toasts sind inhaltlich kurz und konkret.
+- [x] Die Seitenstruktur ist in Hauptbereiche aufgeteilt.
+- [ ] Es gibt noch keine dokumentierte Prüfung auf einfache Sprache oder konsistente Hilfetexte.
+- [ ] Für Fachbegriffe wie SOKO, LABO oder Quittung fehlen teilweise erklärende Hilfen direkt in der UI.
+
+### 10.4 Robust
+
+- [x] Die App verwendet semantisches HTML für Navigation, Formulare und Dialoge.
+- [x] SVGs für Karte und QR-Code tragen ARIA-Beschriftungen.
+- [x] Statusmeldungen sind so gebaut, dass Screenreader sie erfassen können.
+- [ ] Ein systematischer Screenreader-Test mit NVDA, JAWS oder VoiceOver liegt nicht dokumentiert vor.
+- [ ] Für AG Grid gibt es noch keine geprüfte Accessibility-Konfiguration auf Komponentenniveau.
+
+### 10.5 Priorisierte Nacharbeit
+
+1. Skip-Link und Fokusführung ergänzen.
+2. Dialog-Fokus und Rückkehrfokus sauber implementieren.
+3. Kontrast, Tab-Reihenfolge und Screenreader-Ausgabe mit echten Testläufen prüfen.
+4. Externe Komponenten wie AG Grid separat auf Tastatur- und Screenreader-Verhalten prüfen.
+5. Fachbegriffe bei Bedarf mit kurzen Hilfetexten oder Tooltips absichern.
+
+## 11. Wichtige Annahmen und Grenzen
 
 - Die Anwendung ist bewusst auf Browser-Rendering ausgelegt, nicht auf eine serverseitig gerenderte Architektur.
 - Die API erlaubt im aktuellen Stand CORS für alle Origins. Festgelegt wird das in `php-api/index.php` über den Header `Access-Control-Allow-Origin`; produktiv sollte dort die tatsächliche Domain eingetragen werden.
