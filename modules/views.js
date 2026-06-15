@@ -6,7 +6,7 @@ import { field, emailField, ibanField, selectField, textField, checkField, radio
 import { streetMapSvg, addressPointData, assignedAddressPoints } from './map.js';
 import { documentPreview } from './documents.js';
 import { qrCodeSvg } from './qr.js';
-import { render } from './render.js'; // Zyklus OK: render wird nur in Callbacks aufgerufen
+import { render, applyPendingFocus } from './render.js'; // Zyklus OK: render wird nur in Callbacks aufgerufen
 
 export const viewTitles = {
   dashboard: "Dashboard",
@@ -122,6 +122,7 @@ export const renderRegionAssignment = () => {
   const element = document.querySelector("#region-assignment-panel");
   if (!element) { render(); return; }
   element.innerHTML = regionAssignmentContent();
+  applyPendingFocus();
 };
 
 export const citizenDetailContent = citizen => `
@@ -162,6 +163,7 @@ export const renderCitizenDetail = () => {
   const citizen = citizens.find(item => item.id === state.selectedCitizenId) || citizens[0];
   if (!element || !citizen) { render(); return; }
   element.innerHTML = citizenDetailContent(citizen);
+  applyPendingFocus();
 };
 
 const selectedMonthLabel = () => months.find(([value]) => value === state.filters.month)?.[1] || "Alle Monate";

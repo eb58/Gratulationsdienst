@@ -7,6 +7,20 @@ import { actions } from './modules/actions.js';
 window.GRATULATIONSDIENST_VERSION = "20260608-6";
 
 const initialParams = new URLSearchParams(location.search);
+const cssEscape = value => globalThis.CSS?.escape ? globalThis.CSS.escape(value) : String(value).replace(/"/g, '\\"');
+const focusSelectorFor = element => {
+  if (!element) return "";
+  if (element.id) return `#${cssEscape(element.id)}`;
+  if (element.dataset.nav) return `[data-nav="${cssEscape(element.dataset.nav)}"]`;
+  if (element.dataset.action) {
+    const parts = [`[data-action="${cssEscape(element.dataset.action)}"]`];
+    if (element.dataset.id) parts.push(`[data-id="${cssEscape(element.dataset.id)}"]`);
+    if (element.dataset.groupId) parts.push(`[data-group-id="${cssEscape(element.dataset.groupId)}"]`);
+    if (element.dataset.ruleId) parts.push(`[data-rule-id="${cssEscape(element.dataset.ruleId)}"]`);
+    return parts.join("");
+  }
+  return "";
+};
 
 document.addEventListener("click", event => {
   const skipLink = event.target.closest(".skip-link");
@@ -15,6 +29,7 @@ document.addEventListener("click", event => {
   const adminOnly = event.target.closest("[data-admin-only]");
   if (skipLink) {
     event.preventDefault();
+    state.focusTarget = "#view";
     document.querySelector("#view")?.focus();
     return;
   }
@@ -23,11 +38,15 @@ document.addEventListener("click", event => {
     if (!state.auth.user) return;
     if (!canAccessView(nav.dataset.nav)) return;
     state.view = nav.dataset.nav;
+    state.focusTarget = "#view";
     render();
     if (state.view === "documents") actions["generate-docs"]();
     if (state.view === "users") actions["load-users"]();
   }
-  if (action) actions[action.dataset.action]?.(event);
+  if (action) {
+    state.focusTarget = focusSelectorFor(action);
+    actions[action.dataset.action]?.(event);
+  }
 });
 
 document.addEventListener("input", event => {

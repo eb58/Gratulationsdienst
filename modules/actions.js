@@ -285,6 +285,7 @@ export const actions = {
     const user = state.auth.users.find(item => item.id === state.selectedUserId);
     if (!user) return;
     state.dialog = { type: "delete-user", userId: user.id, title: "Benutzer loeschen", message: `Soll ${user.email} wirklich geloescht werden?`, confirmLabel: "Benutzer loeschen", confirmAction: "confirm-delete-user" };
+    state.focusTarget = ".dialog-box [data-autofocus]";
     render();
   },
   "confirm-delete-user": async () => {
@@ -295,6 +296,7 @@ export const actions = {
       await apiRequest(`/users/${userId}`, { method: "DELETE" });
       state.auth.users = state.auth.users.filter(user => user.id !== userId);
       state.selectedUserId = state.auth.users[0]?.id || "";
+      state.focusTarget = "#view";
       render();
       toast("Benutzer geloescht.");
     } catch (error) { toast(error.message); }
@@ -436,16 +438,18 @@ export const actions = {
     const template = selectedTemplate();
     if (state.data.templates.length <= 1) { toast("Die letzte Vorlage kann nicht gelöscht werden."); return; }
     state.dialog = { type: "delete-template", templateId: template.id, title: "Vorlage löschen", message: `Soll die Vorlage "${template.name}" wirklich gelöscht werden? Diese Aktion kann nicht rückgängig gemacht werden.`, confirmLabel: "Vorlage löschen", confirmAction: "confirm-delete-template" };
+    state.focusTarget = ".dialog-box [data-autofocus]";
     render();
   },
-  "close-dialog": () => { state.dialog = null; render(); },
-  "confirm-complete-print": () => { state.dialog = null; completePrintRun(); },
+  "close-dialog": () => { state.dialog = null; state.focusTarget = "#view"; render(); },
+  "confirm-complete-print": () => { state.dialog = null; state.focusTarget = "#view"; completePrintRun(); },
   "confirm-delete-template": () => {
     const templateId = state.dialog?.templateId;
     if (!templateId) return;
     state.data.templates = state.data.templates.filter(item => item.id !== templateId);
     state.selectedTemplateId = state.data.templates[0].id;
     state.dialog = null;
+    state.focusTarget = "#view";
     saveData();
     render();
     toast("Vorlage gelöscht.");
@@ -453,6 +457,7 @@ export const actions = {
   "clear-citizens": () => {
     if (state.auth.user?.role !== "admin") { toast("Nur Admins können Testdaten bereinigen."); return; }
     state.dialog = { type: "clear-citizens", title: "Jubilare löschen", message: "Sollen wirklich alle Jubilare und das Import-Protokoll gelöscht werden? Stammdaten und Benutzer bleiben erhalten.", confirmLabel: "Jubilare löschen", confirmAction: "confirm-clear-citizens" };
+    state.focusTarget = ".dialog-box [data-autofocus]";
     render();
   },
   "confirm-clear-citizens": () => {
@@ -461,6 +466,7 @@ export const actions = {
     state.selectedCitizenId = "";
     state.generatedDocs = [];
     state.dialog = null;
+    state.focusTarget = "#view";
     saveData();
     render();
     toast("Alle Jubilare und das Import-Protokoll wurden gelöscht.");

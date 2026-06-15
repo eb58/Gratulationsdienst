@@ -84,6 +84,7 @@ export const state = {
   printBackground: true,
   dashboardSort: { key: "group", dir: "asc" },
   selectedUserId: "",
+  focusTarget: "",
   gridApis: {},
   dialog: null
 };

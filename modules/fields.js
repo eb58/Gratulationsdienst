@@ -96,13 +96,13 @@ export const assignmentPill = citizen => {
 };
 export const confirmDialog = () => state.dialog ? `
   <div class="dialog-backdrop" role="presentation">
-    <section class="dialog-box" role="dialog" aria-modal="true" aria-labelledby="dialog-title">
+    <section class="dialog-box" role="dialog" aria-modal="true" aria-labelledby="dialog-title" tabindex="-1">
       <div class="dialog-icon">!</div>
       <div>
         <h2 id="dialog-title">${escapeHtml(state.dialog.title)}</h2>
         <p>${escapeHtml(state.dialog.message)}</p>
         <div class="dialog-actions">
-          <button type="button" class="ghost-button" data-action="close-dialog">Abbrechen</button>
+          <button type="button" class="ghost-button" data-action="close-dialog" data-autofocus>Abbrechen</button>
           <button type="button" class="danger-button" data-action="${escapeHtml(state.dialog.confirmAction)}">${escapeHtml(state.dialog.confirmLabel)}</button>
         </div>
       </div>

@@ -4,6 +4,23 @@ import { authView, viewTitles, views } from './views.js';
 import { confirmDialog } from './fields.js';
 import { mountGrids } from './grid.js';
 
+const focusElement = selector => {
+  const element = selector ? document.querySelector(selector) : null;
+  if (element?.focus) element.focus({ preventScroll: true });
+};
+
+export const applyPendingFocus = () => {
+  const focusTarget = state.focusTarget || (state.dialog ? ".dialog-box [data-autofocus]" : "");
+  state.focusTarget = "";
+  requestAnimationFrame(() => {
+    if (focusTarget) {
+      focusElement(focusTarget);
+      return;
+    }
+    if (state.dialog) focusElement(".dialog-box");
+  });
+};
+
 export const render = () => {
   const locked = !state.auth.ready || state.auth.setupRequired || !state.auth.user;
   if (!canAccessView(state.view)) state.view = "dashboard";
@@ -23,4 +40,5 @@ export const render = () => {
   $("#view").className = `view view-${state.view}`;
   $("#view").innerHTML = locked ? authView() : `${views[state.view]()}${confirmDialog()}`;
   mountGrids();
+  applyPendingFocus();
 };
