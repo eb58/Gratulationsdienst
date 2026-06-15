@@ -261,5 +261,5 @@ php -S 127.0.0.1:8080 -t .
 ## 10. Wichtige Annahmen und Grenzen
 
 - Die Anwendung ist bewusst auf Browser-Rendering ausgelegt, nicht auf eine serverseitig gerenderte Architektur.
-- Die API erlaubt im aktuellen Stand CORS für alle Origins; produktiv sollte das eingeschränkt werden.
+- Die API erlaubt im aktuellen Stand CORS für alle Origins. Festgelegt wird das in `php-api/index.php` über den Header `Access-Control-Allow-Origin`; produktiv sollte dort die tatsächliche Domain eingetragen werden.
 - Kartenkacheln kommen von OpenStreetMap, die Geometrien und Address-Points aus den mitgelieferten Daten.

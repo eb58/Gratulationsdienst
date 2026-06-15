@@ -142,7 +142,7 @@ Die App ist dann erreichbar unter `https://example.com/gratulationsdienst/`.
 
 ### Hinweis zu CORS
 
-Die API erlaubt aktuell alle Origins (`Access-Control-Allow-Origin: *`). Auf einem Produktivserver sollte das in `php-api/index.php` auf die tatsächliche Domain eingeschränkt werden:
+Die API erlaubt aktuell alle Origins (`Access-Control-Allow-Origin: *`). Festgelegt wird das direkt in `php-api/index.php` in den HTTP-Headern ganz am Anfang der Datei. Auf einem Produktivserver sollte das dort auf die tatsächliche Domain eingeschränkt werden:
 
 ```php
 header('Access-Control-Allow-Origin: https://example.com');
