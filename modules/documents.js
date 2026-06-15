@@ -116,7 +116,7 @@ export const printSquareCardBack = citizen => {
   return `
   <div style="position:relative;width:210mm;height:210mm;page-break-after:always;break-after:page;background:#fff;transform:rotate(180deg);transform-origin:center center">
     ${bgImg}
-    <div style="position:absolute;left:20mm;top:155mm;font-size:10.5pt;font-family:Arial,sans-serif;line-height:6.5mm">
+    <div style="position:absolute;left:20mm;top:168mm;font-size:10.5pt;font-family:Arial,sans-serif;line-height:6.5mm">
       <div>${escapeHtml(citizen.salutation || "")} ${escapeHtml(citizen.firstName || "")} ${escapeHtml(citizen.lastName || "")}</div>
       <div>${escapeHtml(citizen.street || "")} ${escapeHtml(citizen.houseNo || "")}</div>
       <div>${escapeHtml(citizen.postalCode || "")} Berlin-${escapeHtml(citizen.district || "")}</div>
