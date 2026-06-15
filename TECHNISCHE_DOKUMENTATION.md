@@ -276,7 +276,7 @@ Die folgende Liste ist eine technische Vorprüfung, kein formales BITV-Audit. Si
 - [x] Dialoge sind semantisch als Dialoge markiert.
 - [x] Splitter und ähnliche Bedienelemente haben Tastaturzugang.
 - [x] Ein sichtbarer Skip-Link zum Hauptinhalt ist vorhanden.
-- [ ] Fokusmanagement in Dialogen und nach dynamischen Aktionen ist nicht systematisch abgesichert.
+- [ ] Ein einheitlicher Rückfokus nach Dialogen und nach dynamischen Renderwechseln ist noch nicht systematisch abgesichert.
 - [ ] Für alle interaktiven Elemente gibt es noch keine durchgängigen `:focus-visible`-Styles.
 
 ### 10.3 Verständlich
