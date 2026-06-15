@@ -9,9 +9,15 @@ window.GRATULATIONSDIENST_VERSION = "20260608-6";
 const initialParams = new URLSearchParams(location.search);
 
 document.addEventListener("click", event => {
+  const skipLink = event.target.closest(".skip-link");
   const nav = event.target.closest("[data-nav]");
   const action = event.target.closest("[data-action]");
   const adminOnly = event.target.closest("[data-admin-only]");
+  if (skipLink) {
+    event.preventDefault();
+    document.querySelector("#view")?.focus();
+    return;
+  }
   if ((nav || action) && adminOnly && !isAdmin()) return;
   if (nav) {
     if (!state.auth.user) return;

@@ -275,7 +275,7 @@ Die folgende Liste ist eine technische Vorprüfung, kein formales BITV-Audit. Si
 - [x] Hauptfunktionen sind per Tastatur erreichbar.
 - [x] Dialoge sind semantisch als Dialoge markiert.
 - [x] Splitter und ähnliche Bedienelemente haben Tastaturzugang.
-- [ ] Ein sichtbarer Skip-Link zum Hauptinhalt fehlt.
+- [x] Ein sichtbarer Skip-Link zum Hauptinhalt ist vorhanden.
 - [ ] Fokusmanagement in Dialogen und nach dynamischen Aktionen ist nicht systematisch abgesichert.
 - [ ] Für alle interaktiven Elemente gibt es noch keine durchgängigen `:focus-visible`-Styles.
 
