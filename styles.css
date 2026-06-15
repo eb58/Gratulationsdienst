@@ -1767,21 +1767,18 @@ tbody tr.selected {
 
 .toast {
   position: fixed;
-  left: var(--toast-left, 50%);
-  top: var(--toast-top, 50%);
+  right: 18px;
+  bottom: 18px;
   z-index: 1000;
-  max-width: min(520px, calc(100vw - 48px));
-  padding: 14px 18px;
+  max-width: min(360px, calc(100vw - 36px));
+  padding: 12px 14px;
   border-radius: 8px;
   color: #fff;
-  background: linear-gradient(135deg, #0f5d58 0%, #1f2928 100%);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  box-shadow: 0 22px 60px rgba(15, 93, 88, 0.34), 0 10px 24px rgba(32, 36, 38, 0.18);
-  font-weight: 700;
-  text-align: center;
+  background: #1f2928;
+  box-shadow: var(--shadow);
   opacity: 0;
   visibility: hidden;
-  transform: var(--toast-hidden-transform, translate(-50%, calc(-50% + 12px)) scale(0.98));
+  transform: translateY(12px);
   pointer-events: none;
   transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease;
 }
@@ -1789,7 +1786,26 @@ tbody tr.selected {
 .toast.show {
   opacity: 1;
   visibility: visible;
-  transform: var(--toast-visible-transform, translate(-50%, -50%) scale(1));
+  transform: translateY(0);
+}
+
+.toast.anchored {
+  right: auto;
+  bottom: auto;
+  left: var(--toast-left);
+  top: var(--toast-top);
+  max-width: min(520px, calc(100vw - 48px));
+  padding: 14px 18px;
+  background: linear-gradient(135deg, #0f5d58 0%, #1f2928 100%);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 22px 60px rgba(15, 93, 88, 0.34), 0 10px 24px rgba(32, 36, 38, 0.18);
+  font-weight: 700;
+  text-align: center;
+  transform: translate(-50%, 10px) scale(0.98);
+}
+
+.toast.anchored.show {
+  transform: translate(-50%, 0) scale(1);
 }
 
 .dialog-backdrop {

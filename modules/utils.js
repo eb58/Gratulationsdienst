@@ -80,10 +80,9 @@ export const toast = (message, options = {}) => {
       ? $(options.anchor)
       : options.anchor
     : null;
+  element.classList.remove("anchored");
   element.style.removeProperty("--toast-left");
   element.style.removeProperty("--toast-top");
-  element.style.removeProperty("--toast-hidden-transform");
-  element.style.removeProperty("--toast-visible-transform");
   if (anchor?.getBoundingClientRect) {
     const rect = anchor.getBoundingClientRect();
     const width = Math.min(520, window.innerWidth - 48);
@@ -93,8 +92,7 @@ export const toast = (message, options = {}) => {
     const top = below + 72 <= window.innerHeight ? below : Math.max(24, above);
     element.style.setProperty("--toast-left", `${left}px`);
     element.style.setProperty("--toast-top", `${top}px`);
-    element.style.setProperty("--toast-hidden-transform", "translate(-50%, 10px) scale(0.98)");
-    element.style.setProperty("--toast-visible-transform", "translate(-50%, 0) scale(1)");
+    element.classList.add("anchored");
   }
   element.textContent = message;
   element.classList.remove("show");

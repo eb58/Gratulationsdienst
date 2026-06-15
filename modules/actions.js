@@ -145,7 +145,7 @@ const importMappedRows = mapped => {
     const item = { ...row, id: nextId("G-2026", [...state.data.citizens, ...acc.rows]), source: "CSV Import", updatedAt: todayIso(), status: group ? "importiert" : "offen" };
     return {
       rows: missing || duplicate ? acc.rows : [...acc.rows, item],
-      logs: [...acc.logs, log],
+      logs: duplicate ? acc.logs : [...acc.logs, log],
       duplicates: duplicate ? acc.duplicates + 1 : acc.duplicates,
       printedDuplicates: printedDuplicate ? acc.printedDuplicates + 1 : acc.printedDuplicates,
       keys: missing || duplicate ? keys : [...keys, key],

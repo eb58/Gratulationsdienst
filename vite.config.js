@@ -3,7 +3,7 @@ import { defineConfig } from 'vite';
 export default defineConfig({
   base: '/gratulationsdienst/',
   build: {
-    outDir: '../../docker-container/src/gratulationsdienst',
+    outDir: '../../Documents/docker-container/src/gratulationsdienst',
     emptyOutDir: true,
   },
   server: {

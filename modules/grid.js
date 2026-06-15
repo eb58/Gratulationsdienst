@@ -224,7 +224,7 @@ export const gridDefinitions = {
   }),
   importLog: () => ({
     ...baseGridOptions(),
-    rowData: state.data.importLog.map(importLogRow),
+    rowData: state.data.importLog.filter(item => item.type !== "Dublette").map(importLogRow),
     columnDefs: [
       { headerName: "Zeit", field: "time", colId: "time", width: 180, minWidth: 165 },
       { headerName: "Name", field: "name", colId: "name", width: 230, minWidth: 170 },
