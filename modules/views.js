@@ -570,7 +570,6 @@ export const views = {
         </div>
         <div class="button-row" style="margin-top:14px">
           <button type="button" class="ghost-button" data-action="print-docs">Drucken</button>
-          <button type="button" class="ghost-button" data-action="export-docs">PDF/XLSX/XML Export</button>
           <label class="toggle-label" style="margin-left:8px">
             <input type="checkbox" data-action="toggle-print-background" ${state.printBackground ? "checked" : ""}>
             Hintergrundbild drucken
@@ -672,7 +671,6 @@ export const views = {
     <div class="stack">
       <section class="panel">
         <h2>CSV-Import</h2>
-        ${state.importNotice ? `<div class="alert import-notice">${escapeHtml(state.importNotice)}</div>` : ""}
         <div class="file-action-row import-action-row">
           <label class="file-picker import-file-picker" for="import-file">
             <span>Aus CSV laden</span>

@@ -71,10 +71,31 @@ export const downloadText = (name, content, type = "text/plain;charset=utf-8") =
   URL.revokeObjectURL(url);
 };
 let toastTimer = null;
-export const toast = message => {
+export const toast = (message, options = {}) => {
   const element = $("#toast");
   if (!element) return;
   if (toastTimer) clearTimeout(toastTimer);
+  const anchor = options.anchor
+    ? typeof options.anchor === "string"
+      ? $(options.anchor)
+      : options.anchor
+    : null;
+  element.style.removeProperty("--toast-left");
+  element.style.removeProperty("--toast-top");
+  element.style.removeProperty("--toast-hidden-transform");
+  element.style.removeProperty("--toast-visible-transform");
+  if (anchor?.getBoundingClientRect) {
+    const rect = anchor.getBoundingClientRect();
+    const width = Math.min(520, window.innerWidth - 48);
+    const left = Math.max(width / 2 + 24, Math.min(window.innerWidth - width / 2 - 24, rect.left + rect.width / 2));
+    const below = rect.bottom + 14;
+    const above = rect.top - 14;
+    const top = below + 72 <= window.innerHeight ? below : Math.max(24, above);
+    element.style.setProperty("--toast-left", `${left}px`);
+    element.style.setProperty("--toast-top", `${top}px`);
+    element.style.setProperty("--toast-hidden-transform", "translate(-50%, 10px) scale(0.98)");
+    element.style.setProperty("--toast-visible-transform", "translate(-50%, 0) scale(1)");
+  }
   element.textContent = message;
   element.classList.remove("show");
   requestAnimationFrame(() => element.classList.add("show"));

@@ -161,15 +161,16 @@ const importMappedRows = mapped => {
   });
   state.data.citizens = [...state.data.citizens, ...result.rows];
   state.data.importLog = [...result.logs, ...state.data.importLog];
-  state.importNotice = result.printedDuplicates
+  const notice = result.printedDuplicates
     ? `${result.rows.length} neue Datensätze importiert. ${result.duplicates} Dubletten ausgefiltert, davon ${result.printedDuplicates} bereits gedruckt.`
     : result.duplicates
       ? `${result.rows.length} neue Datensätze importiert. ${result.duplicates} Dubletten ausgefiltert.`
       : `${result.rows.length} neue Datensätze importiert.`;
   saveData();
   render();
-  toast(state.importNotice || "Keine neuen Datensätze importiert.");
+  importToast(notice || "Keine neuen Datensätze importiert.");
 };
+const importToast = message => toast(message, { anchor: ".import-action-row" });
 
 export const actions = {
   "auth-show-reset": () => { state.auth.mode = "reset"; state.auth.message = ""; render(); },
@@ -536,7 +537,7 @@ export const actions = {
     downloadText("dokumentlauf.csv", [header, ...rows].map(row => row.map(csvEscape).join(";")).join("\n"), "text/csv;charset=utf-8");
   },
   "run-import": () => {
-    if (!state.importText) { toast("Bitte zuerst eine CSV-Datei laden."); return; }
+    if (!state.importText) { importToast("Bitte zuerst eine CSV-Datei laden."); return; }
     importMappedRows(parseCsv(state.importText).map(mapImportRow));
   },
   "select-generated": event => {
