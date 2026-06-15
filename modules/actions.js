@@ -125,10 +125,12 @@ const testCsvText = rows => {
 };
 const importMappedRows = mapped => {
   const result = mapped.reduce((acc, row) => {
+    const keys = acc.keys || [];
+    const printedKeys = acc.printedKeys || [];
     const missing = !row.firstName || !row.lastName || !row.birthDate || !row.street;
     const key = duplicateKey(row);
-    const duplicate = !missing && acc.keys.has(key);
-    const printedDuplicate = duplicate && acc.printedKeys.has(key);
+    const duplicate = !missing && keys.includes(key);
+    const printedDuplicate = duplicate && printedKeys.includes(key);
     const group = streetAssignment(row)?.groupId;
     const log = {
       time: new Date().toLocaleString("de-DE"),
@@ -146,25 +148,27 @@ const importMappedRows = mapped => {
       logs: [...acc.logs, log],
       duplicates: duplicate ? acc.duplicates + 1 : acc.duplicates,
       printedDuplicates: printedDuplicate ? acc.printedDuplicates + 1 : acc.printedDuplicates,
-      keys: missing || duplicate ? acc.keys : new Set([...acc.keys, key])
+      keys: missing || duplicate ? keys : [...keys, key],
+      printedKeys
     };
   }, {
     rows: [],
     logs: [],
     duplicates: 0,
     printedDuplicates: 0,
-    keys: new Set(state.data.citizens.map(duplicateKey)),
-    printedKeys: new Set(state.data.citizens.filter(isPrintedCitizen).map(duplicateKey))
+    keys: state.data.citizens.map(duplicateKey),
+    printedKeys: state.data.citizens.filter(isPrintedCitizen).map(duplicateKey)
   });
   state.data.citizens = [...state.data.citizens, ...result.rows];
   state.data.importLog = [...result.logs, ...state.data.importLog];
+  state.importNotice = result.printedDuplicates
+    ? `${result.rows.length} neue Datensätze importiert. ${result.duplicates} Dubletten ausgefiltert, davon ${result.printedDuplicates} bereits gedruckt.`
+    : result.duplicates
+      ? `${result.rows.length} neue Datensätze importiert. ${result.duplicates} Dubletten ausgefiltert.`
+      : `${result.rows.length} neue Datensätze importiert.`;
   saveData();
   render();
-  toast(result.printedDuplicates
-    ? `${result.rows.length} neue Datensätze importiert. ${result.duplicates} Dubletten gefunden, davon ${result.printedDuplicates} bereits gedruckt.`
-    : result.duplicates
-      ? `${result.rows.length} neue Datensätze importiert. ${result.duplicates} Dubletten gefunden.`
-      : `${result.rows.length} neue Datensätze importiert.`);
+  toast(state.importNotice || "Keine neuen Datensätze importiert.");
 };
 
 export const actions = {

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Fuchs">
+  <rect width="64" height="64" rx="14" fill="#f5f3ee"/>
+  <path d="M14 18 22 8l10 7 10-7 8 10-4 24-14 12-14-12-4-24Z" fill="#bf5b33"/>
+  <path d="M22 16 16 12l2 10 4-6Zm20 0 6-4-2 10-4-6Z" fill="#8f3e22"/>
+  <path d="M22 30c2-7 7-11 10-11s8 4 10 11l2 11-12 9-12-9 2-11Z" fill="#f3f0e7"/>
+  <path d="M27 31c1-2 3-4 5-4s4 2 5 4l-5 5-5-5Z" fill="#202426"/>
+  <path d="M31 36h2l1 4h-4l1-4Z" fill="#202426"/>
+  <path d="M21 19 18 35l10 8-4-24h-3Zm22 0h-3l-4 24 10-8-3-16Z" fill="#a74d2a" opacity=".35"/>
+</svg>

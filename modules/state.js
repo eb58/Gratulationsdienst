@@ -77,6 +77,7 @@ export const state = {
   quittungTitel: "68154",
   quittungMonat: localStorage.getItem(QUITTUNG_MONTH_KEY) || new Date().toISOString().slice(5, 7),
   importText: "",
+  importNotice: "",
   importSplit: storedSplit("import", 42),
   citizenSplit: storedSplit("citizen", 50),
   regionSplit: storedSplit("region", 58),

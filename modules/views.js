@@ -672,6 +672,7 @@ export const views = {
     <div class="stack">
       <section class="panel">
         <h2>CSV-Import</h2>
+        ${state.importNotice ? `<div class="alert import-notice">${escapeHtml(state.importNotice)}</div>` : ""}
         <div class="file-action-row import-action-row">
           <label class="file-picker import-file-picker" for="import-file">
             <span>Aus CSV laden</span>

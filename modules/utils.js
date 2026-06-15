@@ -70,8 +70,16 @@ export const downloadText = (name, content, type = "text/plain;charset=utf-8") =
   link.click();
   URL.revokeObjectURL(url);
 };
+let toastTimer = null;
 export const toast = message => {
-  $("#toast").textContent = message;
-  $("#toast").classList.add("show");
-  setTimeout(() => $("#toast").classList.remove("show"), 2200);
+  const element = $("#toast");
+  if (!element) return;
+  if (toastTimer) clearTimeout(toastTimer);
+  element.textContent = message;
+  element.classList.remove("show");
+  requestAnimationFrame(() => element.classList.add("show"));
+  toastTimer = setTimeout(() => {
+    element.classList.remove("show");
+    toastTimer = null;
+  }, 4200);
 };

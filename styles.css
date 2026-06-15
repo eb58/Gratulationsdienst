@@ -1747,6 +1747,7 @@ tbody tr.selected {
   position: fixed;
   right: 18px;
   bottom: 18px;
+  z-index: 1000;
   max-width: min(360px, calc(100vw - 36px));
   padding: 12px 14px;
   border-radius: 8px;
@@ -1754,6 +1755,7 @@ tbody tr.selected {
   background: #1f2928;
   box-shadow: var(--shadow);
   opacity: 0;
+  visibility: hidden;
   transform: translateY(12px);
   pointer-events: none;
   transition: opacity 0.18s ease, transform 0.18s ease;
@@ -1761,6 +1763,7 @@ tbody tr.selected {
 
 .toast.show {
   opacity: 1;
+  visibility: visible;
   transform: translateY(0);
 }
 
