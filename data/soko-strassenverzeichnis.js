@@ -156,7 +156,7 @@ const SOKO_STRASSENVERZEICHNIS = Object.freeze({
   "An der Wildbahn": [
     { plz: "13503", soko: "17", ortsteil: "Heiligensee", von: "1", bis: "55A", art: "U" },
     { plz: "13503", soko: "17", ortsteil: "Heiligensee", von: "2", bis: "30", art: "G" },
-    { plz: "13503", soko: "18", ortsteil: "Heiligensee", von: "57", bis: "131", art: "U" },
+    { plz: "13503", soko: "18", ortsteil: "Heiligensee", von: "57", bis: "135", art: "U" },
     { plz: "13503", soko: "18", ortsteil: "Heiligensee", von: "32", bis: "112", art: "G" }
   ],
   "Andornsteig": [{ plz: "13503", soko: "18", ortsteil: "Heiligensee" }],
@@ -731,7 +731,7 @@ const SOKO_STRASSENVERZEICHNIS = Object.freeze({
   "Holwedestr.": [{ plz: "13507", soko: "15", ortsteil: "Tegel" }],
   "Holzhauser Str.": [
     { plz: "13509", soko: "13", ortsteil: "Tegel", von: "1", bis: "50", art: "F" },
-    { plz: "13509", soko: "21", ortsteil: "Wittenau", von: "51", bis: "180", art: "F" }
+    { plz: "13509", soko: "21", ortsteil: "Wittenau", von: "51", bis: "190", art: "F" }
   ],
   "Holzweidepfad": [{ plz: "13403", soko: "07", ortsteil: "Reinickendorf" }],
   "Hoppestr.": [{ plz: "13409", soko: "01", ortsteil: "Reinickendorf" }],
@@ -833,6 +833,7 @@ const SOKO_STRASSENVERZEICHNIS = Object.freeze({
   ],
   "Kieselbronner Weg": [{ plz: "13469", soko: "32", ortsteil: "Lübars" }],
   "Kirchgasse": [{ plz: "13507", soko: "15", ortsteil: "Tegel" }],
+  "Kirschenweg": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
   "Klamannstr.": [
     { plz: "13407", soko: "08", ortsteil: "Reinickendorf", von: "3", bis: "5A", art: "U" },
     { plz: "13407", soko: "07", ortsteil: "Reinickendorf", von: "7", bis: "15", art: "U" },
@@ -960,8 +961,8 @@ const SOKO_STRASSENVERZEICHNIS = Object.freeze({
   ],
   "Markendorfer Str.": [{ plz: "13439", soko: "27", ortsteil: "Wittenau" }],
   "Markgrafenstr.": [
-    { plz: "13465", soko: "36", ortsteil: "Frohnau", von: "1", bis: "35A", art: "U" },
-    { plz: "13465", soko: "38", ortsteil: "Frohnau", von: "30", bis: "90A", art: "G" }
+    { plz: "13465", soko: "36", ortsteil: "Frohnau", von: "1", bis: "90", art: "U" },
+    { plz: "13465", soko: "38", ortsteil: "Frohnau", von: "2", bis: "90A", art: "G" }
   ],
   "Markscheiderstr.": [{ plz: "13407", soko: "06", ortsteil: "Reinickendorf" }],
   "Markstr.": [{ plz: "13409", soko: "03", ortsteil: "Reinickendorf" }],
@@ -988,6 +989,7 @@ const SOKO_STRASSENVERZEICHNIS = Object.freeze({
     { plz: "13465", soko: "37", ortsteil: "Frohnau", von: "16", bis: "76", art: "F" }
   ],
   "Medebacher Weg": [{ plz: "13507", soko: "15", ortsteil: "Tegel" }],
+  "Mecklenburgweg": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
   "Mehlweg": [{ plz: "13469", soko: "32", ortsteil: "Lübars" }],
   "Mehringer Str.": [{ plz: "13465", soko: "38", ortsteil: "Frohnau" }],
   "Mehrower Zeile": [{ plz: "13435", soko: "27", ortsteil: "Wittenau" }],
@@ -1255,6 +1257,7 @@ const SOKO_STRASSENVERZEICHNIS = Object.freeze({
     { plz: "13465", soko: "38", ortsteil: "Frohnau", von: "30", bis: "42", art: "G" }
   ],
   "Rue Diderot (Cité Foch)": [{ plz: "13469", soko: "24", ortsteil: "Waidmannslust" }],
+  "Rue Edith Piaf": [{ plz: "13469", soko: "24", ortsteil: "Waidmannslust" }],
   "Rüdnitzer Zeile": [{ plz: "13509", soko: "21", ortsteil: "Wittenau" }],
   "Rue Dominique Larrey (Cité Pasteur)": [{ plz: "13405", soko: "09", ortsteil: "Reinickendorf" }],
   "Rue Doret (Cité Guynemer)": [{ plz: "13405", soko: "13", ortsteil: "Tegel" }],
@@ -1409,7 +1412,7 @@ const SOKO_STRASSENVERZEICHNIS = Object.freeze({
   "Seppenrader Weg": [{ plz: "13507", soko: "13", ortsteil: "Tegel" }],
   "Septimerstr.": [{ plz: "13407", soko: "08", ortsteil: "Reinickendorf" }],
   "Siedelmeisterweg": [{ plz: "13403", soko: "11", ortsteil: "Reinickendorf" }],
-  "Sigismundkorso": [{ plz: "13465", soko: "37", ortsteil: "Frohnau", von: "1", bis: "31", art: "F" }],
+  "Sigismundkorso": [{ plz: "13465", soko: "37", ortsteil: "Frohnau" }],
   "Silberhammerweg": [
     { plz: "13503", soko: "18", ortsteil: "Heiligensee", von: "1", bis: "39", art: "F" },
     { plz: "13503", soko: "19", ortsteil: "Heiligensee", von: "40", bis: "114", art: "F" }
@@ -1593,6 +1596,7 @@ const SOKO_STRASSENVERZEICHNIS = Object.freeze({
   "Vietzer Zeile": [{ plz: "13509", soko: "20", ortsteil: "Wittenau" }],
   "Virgiliusstr.": [{ plz: "13509", soko: "34", ortsteil: "Tegel" }],
   "Von-der-Gablentz-Str.": [{ plz: "13403", soko: "09", ortsteil: "Reinickendorf" }],
+  "Vor den Toren": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
   "Wachsmuthstr.": [{ plz: "13467", soko: "33", ortsteil: "Hermsdorf" }],
   "Wachstr.": [{ plz: "13507", soko: "15", ortsteil: "Tegel" }],
   "Wahnfriedstr.": [{ plz: "13465", soko: "36", ortsteil: "Frohnau" }],
@@ -1750,8 +1754,8 @@ const zerlegeHausnummer = hn => {
   return leading ? { zahl: parseInt(leading[1], 10), buchstabe: '' } : null;
 };
 const regelPasst = (regel, nummer) => {
-  if (!nummer) return false;
   if (!regel.von) return true; // kein Bereich = alle Hausnummern
+  if (!nummer) return false;
   const von = parseInt(regel.von, 10);
   const bis = parseInt(regel.bis, 10);
   const n = nummer.zahl;
