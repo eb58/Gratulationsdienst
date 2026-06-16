@@ -35,7 +35,11 @@ export const districtOptions = current => {
   return current && !reinickendorfDistricts.includes(current) ? [[current, current], ...options] : options;
 };
 
-export const sokoColorPalette = ["#2b7a78", "#8f6b2f", "#c44e52", "#4c78a8", "#6f4e9b", "#59a14f", "#b07aa1", "#f28e2b", "#3f6c51", "#e15759", "#7f7f7f", "#1f77b4"];
+export const sokoColorPalette = Array.from({ length: 42 }, (_, i) => {
+  const hue = Math.round((i * 137.508) % 360);
+  const [[sat, light]] = [[70, 40], [60, 52], [75, 35]].slice(i % 3, i % 3 + 1);
+  return `hsl(${hue}, ${sat}%, ${light}%)`;
+});
 export const sokoGroupId = code => `SOKO ${code}`;
 export const sokoCodesFromDirectory = () => [...new Set(Object.values(window.SOKO_STRASSENVERZEICHNIS || {}).flat().map(entry => entry.soko))]
   .sort((a, b) => Number(a) - Number(b));

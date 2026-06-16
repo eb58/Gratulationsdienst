@@ -3,7 +3,7 @@ import { months, sokoColors, streetGroupDisplay } from './domain.js';
 import { state } from './state.js';
 import { selectedCitizen, selectedTemplate, selectedSender, selectedMember, selectedStreet, filteredCitizens, activeCitizens, groupForCitizen, isCheckedCitizen, receiptCitizens, receiptReviewCitizensForGroup, isReceiptGroupReady } from './assignment.js';
 import { field, emailField, ibanField, selectField, textField, checkField, radioField, streetRuleRows, assignmentPill, gridHost, groupOptions, sokoSelectOptions, senderOptions, templateOptions, occasionOptions, formatOptions } from './fields.js';
-import { streetMapSvg } from './map.js';
+import { streetMapSvg, mapSegmentCounts, mapAddressPointGroups } from './map.js';
 import { documentPreview } from './documents.js';
 import { qrCodeSvg } from './qr.js';
 import { render, applyPendingFocus } from './render.js'; // Zyklus OK: render wird nur in Callbacks aufgerufen
@@ -231,11 +231,25 @@ const dashboardSortButton = (key, label) => {
 };
 export const sokoMapInfoHtml = groupId => {
   if (!groupId || groupId === "offen") return `<p class="map-soko-hint muted">Über eine SOKO auf der Karte fahren</p>`;
+  const group = state.data.sokoGroups.find(g => g.id === groupId);
   const members = state.data.sokoMembers.filter(m => m.groupId === groupId).sort((a, b) => b.isLeader - a.isLeader);
   const citizens = activeCitizens().filter(c => groupForCitizen(c)?.id === groupId && c.birthDate?.slice(5, 7) === state.mapMonth);
   const monthLabel = months.find(([v]) => v === state.mapMonth)?.[1] || state.mapMonth;
+  const addrCount = (mapAddressPointGroups()[groupId] || []).length;
+  const segCount = mapSegmentCounts()[groupId] || 0;
+  const color = sokoColors[groupId] || sokoColors.offen;
   return `
-    <h3>${escapeHtml(groupId)}</h3>
+    <div class="map-info-header">
+      <span class="map-info-swatch" style="background:${escapeHtml(color)}"></span>
+      <div>
+        <h3>${escapeHtml(groupId)}</h3>
+        ${group?.region ? `<div class="muted" style="font-size:13px">${escapeHtml(group.region)}</div>` : ""}
+      </div>
+    </div>
+    <div class="map-info-stats">
+      <span>${addrCount.toLocaleString("de-DE")} Adressen</span>
+      <span>${segCount.toLocaleString("de-DE")} Straßenabschnitte</span>
+    </div>
     <div class="map-info-box">
       <strong>Mitglieder</strong>
       ${members.length ? members.map(m => `<div>${escapeHtml(`${m.firstName} ${m.lastName}`)}${m.isLeader ? " <em>(Ltg.)</em>" : ""}</div>`).join("") : `<div class="muted">Keine Mitglieder</div>`}
@@ -465,6 +479,8 @@ export const views = {
   },
 
   map: () => {
+    const segCounts = mapSegmentCounts();
+    const addrCounts = Object.fromEntries(Object.entries(mapAddressPointGroups()).map(([g, a]) => [g, a.length]));
     return `
       <div class="panel map-main-panel">
         <div class="map-shell-wrapper">
@@ -480,7 +496,17 @@ export const views = {
           </aside>
         </div>
         <div class="map-legend">
-          ${state.data.sokoGroups.map(group => `<div class="legend-item"><span style="background:${escapeHtml(sokoColors[group.id])}"></span><strong>${escapeHtml(group.id)}</strong><em>${escapeHtml(group.region)}</em></div>`).join("")}
+          ${state.data.sokoGroups.map(group => {
+            const district = group.region.split(" - ")[0];
+            return `<div class="legend-item">
+              <span style="background:${escapeHtml(sokoColors[group.id])}"></span>
+              <div class="legend-item-body">
+                <strong>${escapeHtml(group.id)}</strong>
+                <em>${escapeHtml(district)}</em>
+                <small>${(addrCounts[group.id] || 0).toLocaleString("de-DE")} Adr. &middot; ${(segCounts[group.id] || 0).toLocaleString("de-DE")} Abschn.</small>
+              </div>
+            </div>`;
+          }).join("")}
         </div>
       </div>
     `;

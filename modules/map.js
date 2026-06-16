@@ -95,9 +95,7 @@ export const mapStreetPathGroups = (segments, project) => {
   return Object.values(groups);
 };
 export const mapStreetPathsSvg = (segments, project) => mapStreetPathGroups(segments, project).filter(group => group.groupId !== "offen").map(group => `
-  <path class="map-street-group" data-group-id="${escapeHtml(group.groupId)}" d="${group.paths.join(" ")}" style="stroke:${escapeHtml(sokoColors[group.groupId] || sokoColors.offen)}" ${group.dash ? `stroke-dasharray="12 8" stroke-dashoffset="${group.dash}"` : ""}>
-    <title>${escapeHtml(`${group.groupId}: ${group.count.toLocaleString("de-DE")} Straßenabschnitte`)}</title>
-  </path>
+  <path class="map-street-group" data-group-id="${escapeHtml(group.groupId)}" d="${group.paths.join(" ")}" style="stroke:${escapeHtml(sokoColors[group.groupId] || sokoColors.offen)}" ${group.dash ? `stroke-dasharray="12 8" stroke-dashoffset="${group.dash}"` : ""}></path>
 `).join("");
 export const mapPointPath = (addresses, project) => addresses.map(address => {
   const [x, y] = project([address.lon, address.lat]);
@@ -115,15 +113,12 @@ export const mapAddressPointGroups = () => {
   return groups;
 };
 export const mapAddressPointsSvg = project => Object.entries(mapAddressPointGroups())
-  .map(([groupId, addresses]) => `
-    <path class="map-address-point-group" data-group-id="${escapeHtml(groupId)}" d="${mapPointPath(addresses, project)}" style="fill:${escapeHtml(sokoColors[groupId] || sokoColors.offen)}">
-      <title>${escapeHtml(`${groupId}: ${addresses.length.toLocaleString("de-DE")} Adressen`)}</title>
-    </path>
-  `).join("");
+  .map(([groupId, addresses]) => `<path class="map-address-point-group" data-group-id="${escapeHtml(groupId)}" d="${mapPointPath(addresses, project)}" style="fill:${escapeHtml(sokoColors[groupId] || sokoColors.offen)}"></path>`)
+  .join("");
 export const streetMapSvg = () => {
   const data = mapData();
   const width = 1120;
-  const height = 760;
+  const height = 950;
   const viewport = mapViewport(data.bbox, width, height, 28);
   const project = coord => mapProject(coord, viewport);
   const segments = mapSegments();
