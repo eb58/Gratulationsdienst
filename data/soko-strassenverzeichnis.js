@@ -1697,12 +1697,12 @@ const SOKO_STRASSENVERZEICHNIS = Object.freeze({
   "Zwergenweg": [{ plz: "13465", soko: "37", ortsteil: "Frohnau" }]
 });
 const normalisiereStrasse = s => s.trim().toLowerCase()
-  .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
+  .replace(/\s*\([^)]*\)/g, '')
   .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
   .replace(/-/g, ' ')
   .replace(/strasse\b/g, 'str')
   .replace(/str\./g, 'str')
-  .replace(/\s+/g, ' ');
+  .replace(/\s+/g, ' ').trim();
 const strassenIndex = new Map(
   Object.keys(SOKO_STRASSENVERZEICHNIS).map(s => [normalisiereStrasse(s), s])
 );
