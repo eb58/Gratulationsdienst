@@ -538,12 +538,7 @@ export const actions = {
     const forms = citizens.map((c, i) => renderSokoForm(c, i, imageSrc)).join("");
     openPrintWindow(forms, "SOKO-Fragebogen");
   },
-  "export-docs": () => {
-    const header = ["id", "empfänger", "adresse", "soko", "vorlage", "absender", "datum"];
-    const rows = state.generatedDocs.map(doc => [doc.id, doc.recipient, doc.address, doc.groupId, doc.templateName, doc.sender, doc.createdAt]);
-    downloadText("dokumentlauf.csv", [header, ...rows].map(row => row.map(csvEscape).join(";")).join("\n"), "text/csv;charset=utf-8");
-  },
-  "run-import": () => {
+"run-import": () => {
     if (!state.importText) { importToast("Bitte zuerst eine CSV-Datei laden."); return; }
     importMappedRows(parseCsv(state.importText).map(mapImportRow));
   },
