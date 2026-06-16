@@ -113,6 +113,10 @@ export const printSquareCardBack = citizen => {
   const bgImg = state.printBackground
     ? `<img src="${base}assets/gratulationskarte-reinickendorf-r%C3%BCckseite-210.jpg" style="position:absolute;top:0;left:0;width:210mm;height:210mm;display:block" alt="">`
     : "";
+  const sokoLabel = normalize(citizen.wish || "").startsWith("besuch")
+    ? (groupForCitizen(citizen)?.id?.replace("SOKO ", "") || "")
+    : "P";
+  const birthDay = citizen.birthDate?.slice(8, 10) || "";
   return `
   <div style="position:relative;width:210mm;height:210mm;page-break-after:always;break-after:page;background:#fff;transform:rotate(180deg);transform-origin:center center">
     ${bgImg}
@@ -120,6 +124,7 @@ export const printSquareCardBack = citizen => {
       <div>${escapeHtml(citizen.salutation || "")} ${escapeHtml(citizen.firstName || "")} ${escapeHtml(citizen.lastName || "")}</div>
       <div>${escapeHtml(citizen.street || "")} ${escapeHtml(citizen.houseNo || "")}</div>
       <div>${escapeHtml(citizen.postalCode || "")} Berlin-${escapeHtml(citizen.district || "")}</div>
+      <div style="font-size:8.5pt;margin-top:1mm">${escapeHtml(sokoLabel)}&nbsp;&nbsp;${escapeHtml(birthDay)}</div>
     </div>
   </div>`;
 };
