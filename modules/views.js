@@ -766,10 +766,19 @@ export const views = {
           <h2>Benutzer</h2>
           <div class="list">
             ${users.map(user => `
-              <button type="button" class="list-item ${selected?.id === user.id ? "selected" : ""}" data-action="select-user" data-id="${escapeHtml(user.id)}">
-                <div><strong>${escapeHtml(user.displayName || user.email)}</strong><span class="muted">${escapeHtml(user.email)}</span></div>
-                <span class="pill ${user.active ? user.role === "admin" ? "green" : "" : "red"}">${escapeHtml(user.active ? user.role : "inaktiv")}</span>
-              </button>
+              <div class="list-item-row ${selected?.id === user.id ? "selected" : ""}">
+                <button type="button" class="list-item-main" data-action="select-user" data-id="${escapeHtml(user.id)}">
+                  <div><strong>${escapeHtml(user.displayName || user.email)}</strong><span class="muted">${escapeHtml(user.email)}</span></div>
+                  <span class="pill ${user.active ? user.role === "admin" ? "green" : "" : "red"}">${escapeHtml(user.active ? user.role : "inaktiv")}</span>
+                </button>
+                <div class="user-delete-slot">
+                  ${user.id !== state.auth.user?.id ? `
+                    <button type="button" class="icon-button user-delete-btn" data-action="delete-user" data-id="${escapeHtml(user.id)}" title="Benutzer löschen">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                    </button>
+                  ` : ""}
+                </div>
+              </div>
             `).join("") || `<div class="empty-state">Noch keine Benutzer geladen</div>`}
           </div>
         </section>

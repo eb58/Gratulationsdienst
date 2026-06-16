@@ -1308,6 +1308,44 @@ tbody tr.selected {
   margin-bottom: 14px;
 }
 
+.list-item-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-soft);
+}
+
+.list-item-row.selected,
+.list-item-row:has(.list-item-main:hover) {
+  border-color: #96c7bd;
+  background: #f1f7f5;
+}
+
+.user-delete-slot {
+  width: 38px;
+  flex-shrink: 0;
+  margin-right: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-delete-btn {
+  flex-shrink: 0;
+  margin-right: 6px;
+  color: var(--muted);
+  border-color: transparent;
+  background: transparent;
+}
+
+.user-delete-btn:hover {
+  color: var(--red);
+  border-color: var(--red-soft);
+  background: var(--red-soft);
+}
+
 .list-item {
   display: flex;
   justify-content: space-between;
@@ -1328,8 +1366,24 @@ tbody tr.selected {
   background: #f1f7f5;
 }
 
+.list-item-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+
 .list-item strong,
-.list-item span {
+.list-item span,
+.list-item-main strong,
+.list-item-main span {
   display: block;
 }
 

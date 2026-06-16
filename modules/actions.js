@@ -281,10 +281,11 @@ export const actions = {
       toast("MFA zurueckgesetzt.");
     } catch (error) { toast(error.message); }
   },
-  "delete-user": () => {
-    const user = state.auth.users.find(item => item.id === state.selectedUserId);
+  "delete-user": (event) => {
+    const id = event?.target?.closest("[data-id]")?.dataset.id || state.selectedUserId;
+    const user = state.auth.users.find(item => item.id === id);
     if (!user) return;
-    state.dialog = { type: "delete-user", userId: user.id, title: "Benutzer loeschen", message: `Soll ${user.email} wirklich geloescht werden?`, confirmLabel: "Benutzer loeschen", confirmAction: "confirm-delete-user" };
+    state.dialog = { type: "delete-user", userId: user.id, title: "Benutzer löschen", message: `Soll ${user.email} wirklich gelöscht werden?`, confirmLabel: "Benutzer löschen", confirmAction: "confirm-delete-user" };
     state.focusTarget = ".dialog-box [data-autofocus]";
     render();
   },
@@ -298,7 +299,7 @@ export const actions = {
       state.selectedUserId = state.auth.users[0]?.id || "";
       state.focusTarget = "#view";
       render();
-      toast("Benutzer geloescht.");
+      toast("Benutzer gelöscht.");
     } catch (error) { toast(error.message); }
   },
   "sort-dashboard": event => {
