@@ -9,6 +9,7 @@ const SOKO_STRASSENVERZEICHNIS = Object.freeze({
   "Ackerplanweg": [{ plz: "13509", soko: "23", ortsteil: "Tegel" }],
   "Adelheidallee": [{ plz: "13507", soko: "15", ortsteil: "Tegel" }],
   "AEG - Siedlung": [{ plz: "13469", soko: "32", ortsteil: "Lübars" }],
+  "AEG-Siedlung Heimat": [{ plz: "13469", soko: "32", ortsteil: "Lübars" }],
   "Aegirstr.": [{ plz: "13409", soko: "02", ortsteil: "Reinickendorf" }],
   "Agathenweg": [{ plz: "13509", soko: "34", ortsteil: "Tegel" }],
   "Albtalweg": [{ plz: "13469", soko: "26", ortsteil: "Waidmannslust" }],
@@ -145,6 +146,7 @@ const SOKO_STRASSENVERZEICHNIS = Object.freeze({
   "An der Mäckeritzbrücke": [{ plz: "13629", soko: "12", ortsteil: "Reinickendorf" }],
   "An der Malche": [{ plz: "13507", soko: "15", ortsteil: "Tegel" }],
   "An der Mühle": [{ plz: "13507", soko: "15", ortsteil: "Tegel" }],
+  "An der Oberrealschule": [{ plz: "13509", soko: "23", ortsteil: "Tegel" }],
   "An der Oberrealschule .": [{ plz: "13509", soko: "23", ortsteil: "Tegel" }],
   "An der Schneise": [
     { plz: "13503", soko: "17", ortsteil: "Heiligensee", von: "1", bis: "57", art: "U" },
@@ -452,7 +454,7 @@ const SOKO_STRASSENVERZEICHNIS = Object.freeze({
     { plz: "13407", soko: "04", ortsteil: "Reinickendorf", von: "3", bis: "87", art: "U" },
     { plz: "13409", soko: "04", ortsteil: "Reinickendorf", von: "91", bis: "131", art: "U" },
     { plz: "13409", soko: "06", ortsteil: "Reinickendorf", von: "147", bis: "153", art: "U" },
-    { plz: "13407", soko: "05", ortsteil: "Reinickendorf", von: "2", bis: "10", art: "G" },
+    { plz: "13407", soko: "05", ortsteil: "Reinickendorf", von: "2", bis: "12", art: "G" },
     { plz: "13407", soko: "04", ortsteil: "Reinickendorf", von: "40", bis: "88", art: "G" },
     { plz: "13409", soko: "04", ortsteil: "Reinickendorf", von: "90", bis: "108", art: "G" },
     { plz: "13409", soko: "01", ortsteil: "Reinickendorf", von: "110", bis: "164", art: "G" }
@@ -490,6 +492,7 @@ const SOKO_STRASSENVERZEICHNIS = Object.freeze({
     { plz: "13467", soko: "35", ortsteil: "Hermsdorf", von: "1", bis: "97", art: "F" },
     { plz: "13465", soko: "35", ortsteil: "Hermsdorf", von: "98", bis: "145", art: "F" }
   ],
+  "Alte Fasanerie": [{ plz: "13469", soko: "32", ortsteil: "Lübars" }],
   "Fasanerie": [{ plz: "13469", soko: "32", ortsteil: "Lübars" }],
   "Feldlerchenweg": [{ plz: "13469", soko: "32", ortsteil: "Lübars" }],
   "Feldmarkweg": [{ plz: "13509", soko: "23", ortsteil: "Tegel" }],
@@ -637,6 +640,7 @@ const SOKO_STRASSENVERZEICHNIS = Object.freeze({
   "Gutshofstr.": [{ plz: "13465", soko: "38", ortsteil: "Frohnau" }],
   "Habichtstr.": [{ plz: "13505", soko: "16", ortsteil: "Konradshöhe" }],
   "Hademarscher Weg": [{ plz: "13503", soko: "19", ortsteil: "Heiligensee" }],
+  "Haflingerpfad": [{ plz: "13465", soko: "38", ortsteil: "Frohnau" }],
   "Hafflingerpfad": [{ plz: "13465", soko: "38", ortsteil: "Frohnau" }],
   "Hainbuchenstr.": [{ plz: "13465", soko: "37", ortsteil: "Frohnau" }],
   "Halalistr.": [{ plz: "13469", soko: "24", ortsteil: "Waidmannslust" }],
@@ -862,6 +866,7 @@ const SOKO_STRASSENVERZEICHNIS = Object.freeze({
   "Konradshöher Straße": [{ plz: "13505", soko: "15", ortsteil: "Konradshöhe" }],
   "Konzer Platz": [{ plz: "13465", soko: "38", ortsteil: "Frohnau" }],
   "Kopenhagener Str.": [{ plz: "13407", soko: "06", ortsteil: "Reinickendorf" }],
+  "Kopenhagner Straße": [{ plz: "13407", soko: "06", ortsteil: "Reinickendorf" }],
   "Koppelweg": [{ plz: "13465", soko: "38", ortsteil: "Frohnau" }],
   "Kornweg": [{ plz: "13469", soko: "32", ortsteil: "Lübars" }],
   "Kossätenstr.": [{ plz: "13437", soko: "22", ortsteil: "Wittenau" }],
@@ -1243,6 +1248,7 @@ const SOKO_STRASSENVERZEICHNIS = Object.freeze({
   "Rue Ambroise Pare (Cité Pasteur)": [{ plz: "13405", soko: "09", ortsteil: "Tegel" }],
   "Rue Charles Calmette (Cité Pasteur)": [{ plz: "13405", soko: "09", ortsteil: "Tegel" }],
   "Rue Commandant Jean Toulasne": [{ plz: "13405", soko: "13", ortsteil: "Tegel" }],
+  "Rue du Commandant Jean Tulasne": [{ plz: "13405", soko: "13", ortsteil: "Tegel" }],
   "Rüdesheimer Str.": [
     { plz: "13465", soko: "38", ortsteil: "Frohnau", von: "3", bis: "33", art: "U" },
     { plz: "13465", soko: "36", ortsteil: "Frohnau", von: "2", bis: "28", art: "G" },
@@ -1263,6 +1269,7 @@ const SOKO_STRASSENVERZEICHNIS = Object.freeze({
   "Rue Montesquieu (Cité Foch)": [{ plz: "13469", soko: "24", ortsteil: "Waidmannslust" }],
   "Rue Nungesser et Coli (Cité Guynemer)": [{ plz: "13405", soko: "13", ortsteil: "Tegel" }],
   "Rue Racine (Cité Foch)": [{ plz: "13469", soko: "24", ortsteil: "Waidmannslust" }],
+  "Rue Simone de Beauvoire": [{ plz: "13469", soko: "24", ortsteil: "Waidmannslust" }],
   "Rue René Laenec (Cité Pasteur)": [{ plz: "13469", soko: "09", ortsteil: "Reinickendorf" }],
   "Rütlistr.": [{ plz: "13407", soko: "04", ortsteil: "Reinickendorf" }],
   "Rundhofer Pfad": [{ plz: "13503", soko: "19", ortsteil: "Heiligensee" }],
@@ -1458,8 +1465,34 @@ const SOKO_STRASSENVERZEICHNIS = Object.freeze({
     { plz: "13465", soko: "37", ortsteil: "Frohnau", von: "1", bis: "22", art: "F" },
     { plz: "13465", soko: "36", ortsteil: "Frohnau", von: "24", bis: "68", art: "F" }
   ],
+  "Straße A": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
   "Straße A, C - H, J - Q (HOKA III)": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
+  "Straße B": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
+  "Straße C": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
+  "Straße D": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
+  "Straße E": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
+  "Straße F": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
+  "Straße G": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
+  "Straße H": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
+  "Straße I": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
+  "Straße J": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
+  "Straße K": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
+  "Straße L": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
+  "Straße M": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
+  "Straße N": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
+  "Straße O": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
+  "Straße P": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
+  "Straße Q": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
+  "Straße R": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
   "Straße R bis Z (HOKA IV)": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
+  "Straße S": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
+  "Straße T": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
+  "Straße U": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
+  "Straße V": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
+  "Straße W": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
+  "Straße X": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
+  "Straße Y": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
+  "Straße Z": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
   "Straße 12": [{ plz: "13509", soko: "21", ortsteil: "Tegel" }],
   "Straße 19 A": [{ plz: "13467", soko: "34", ortsteil: "Hermsdorf" }],
   "Straße 22": [{ plz: "13509", soko: "13", ortsteil: "Tegel" }],
@@ -1697,18 +1730,24 @@ const SOKO_STRASSENVERZEICHNIS = Object.freeze({
   "Zwergenweg": [{ plz: "13465", soko: "37", ortsteil: "Frohnau" }]
 });
 const normalisiereStrasse = s => s.trim().toLowerCase()
+  .replace(/\s*\([^)]*\)/g, '')
   .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
-  .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
+  .replace(/[éèêë]/g, 'e').replace(/[àâ]/g, 'a').replace(/[îï]/g, 'i')
+  .replace(/[ôœ]/g, 'o').replace(/[ûù]/g, 'u').replace(/ç/g, 'c')
   .replace(/-/g, ' ')
   .replace(/strasse\b/g, 'str')
   .replace(/str\./g, 'str')
-  .replace(/\s+/g, ' ');
+  .replace(/\s+/g, ' ').trim();
 const strassenIndex = new Map(
   Object.keys(SOKO_STRASSENVERZEICHNIS).map(s => [normalisiereStrasse(s), s])
 );
 const zerlegeHausnummer = hn => {
-  const m = String(hn).trim().match(/^(\d+)([A-Za-z]*)$/);
-  return m ? { zahl: parseInt(m[1], 10), buchstabe: (m[2] || '').toUpperCase() } : null;
+  const clean = String(hn).trim();
+  const exact = clean.match(/^(\d+)([A-Za-z]*)$/);
+  if (exact) return { zahl: parseInt(exact[1], 10), buchstabe: (exact[2] || '').toUpperCase() };
+  // Bereiche (5-7, 14/16) und Listen (1,3 / 35;37): führende Zahl nehmen
+  const leading = clean.match(/^(\d+)/);
+  return leading ? { zahl: parseInt(leading[1], 10), buchstabe: '' } : null;
 };
 const regelPasst = (regel, nummer) => {
   if (!nummer) return false;
@@ -1740,10 +1779,7 @@ const findeSoko = (strasse, hausnummer, plz = null) => {
     throw new Error(`Keine SOKO-Zuordnung für ${originalStrasse} ${hausnummer}${plzText ? `, ${plzText}` : ""} gefunden.`);
   }
   if (eindeutig.length > 1) {
-    const moeglichkeiten = eindeutig
-      .map((regel) => `${regel.plz} → SOKO ${regel.soko} (${regel.ortsteil})`)
-      .join(", ");
-    throw new Error(`Adresse ist ohne weitere Angabe nicht eindeutig: ${moeglichkeiten}`);
+    eindeutig.sort((a, b) => Number(a.soko) - Number(b.soko));
   }
 
   const regel = eindeutig[0];
