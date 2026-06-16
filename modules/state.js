@@ -142,7 +142,7 @@ export const loadAuthStatus = () => {
     .catch(error => {
       state.auth.ready = true;
       state.auth.user = null;
-      console.warn("Anmeldestatus nicht verfuegbar.", error);
+      console.warn("Anmeldestatus nicht verfügbar.", error);
       return state.auth;
     });
 };

@@ -212,7 +212,7 @@ export const actions = {
       await apiRequest("/auth/password/reset", { method: "POST", body: JSON.stringify(formValues("#auth-reset-apply-form")) });
       state.auth.mode = "login";
       state.auth.resetToken = "";
-      state.auth.message = "Passwort wurde geaendert.";
+      state.auth.message = "Passwort wurde geändert.";
       render();
     } catch (error) { authFail(error); }
   },
@@ -539,7 +539,7 @@ export const actions = {
     openPrintWindow(forms, "SOKO-Fragebogen");
   },
   "export-docs": () => {
-    const header = ["id", "empfaenger", "adresse", "soko", "vorlage", "absender", "datum"];
+    const header = ["id", "empfänger", "adresse", "soko", "vorlage", "absender", "datum"];
     const rows = state.generatedDocs.map(doc => [doc.id, doc.recipient, doc.address, doc.groupId, doc.templateName, doc.sender, doc.createdAt]);
     downloadText("dokumentlauf.csv", [header, ...rows].map(row => row.map(csvEscape).join(";")).join("\n"), "text/csv;charset=utf-8");
   },
