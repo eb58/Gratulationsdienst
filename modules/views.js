@@ -242,7 +242,7 @@ export const sokoMapInfoHtml = groupId => {
     </div>
     <div class="map-info-box">
       <strong>Jubilare ${escapeHtml(monthLabel)}</strong>
-      ${citizens.length ? citizens.map(c => `<div>${escapeHtml(`${c.firstName} ${c.lastName}`)}</div>`).join("") : `<div class="muted">Keine Jubilare</div>`}
+      ${citizens.length ? citizens.map(c => `<div>${escapeHtml(`${c.firstName} ${c.lastName}`)} <span class="muted">(${calculateAge(c.birthDate)})</span></div>`).join("") : `<div class="muted">Keine Jubilare</div>`}
     </div>
   `;
 };
@@ -466,22 +466,22 @@ export const views = {
 
   map: () => {
     return `
-      <div class="map-view-layout">
-        <div class="panel map-main-panel">
+      <div class="panel map-main-panel">
+        <div class="map-shell-wrapper">
           <div class="map-shell">${streetMapSvg()}</div>
-          <div class="map-legend">
-            ${state.data.sokoGroups.map(group => `<div class="legend-item"><span style="background:${escapeHtml(sokoColors[group.id])}"></span><strong>${escapeHtml(group.id)}</strong><em>${escapeHtml(group.region)}</em></div>`).join("")}
-          </div>
+          <aside class="map-side-panel">
+            <div class="map-month-row">
+              <label for="map-month-select">Monat</label>
+              <select id="map-month-select">
+                ${months.filter(([v]) => v !== "alle").map(([v, l]) => `<option value="${v}"${state.mapMonth === v ? " selected" : ""}>${escapeHtml(l)}</option>`).join("")}
+              </select>
+            </div>
+            <div id="map-soko-info">${sokoMapInfoHtml("")}</div>
+          </aside>
         </div>
-        <aside class="map-side-panel">
-          <div class="map-month-row">
-            <label for="map-month-select">Monat</label>
-            <select id="map-month-select">
-              ${months.filter(([v]) => v !== "alle").map(([v, l]) => `<option value="${v}"${state.mapMonth === v ? " selected" : ""}>${escapeHtml(l)}</option>`).join("")}
-            </select>
-          </div>
-          <div id="map-soko-info">${sokoMapInfoHtml("")}</div>
-        </aside>
+        <div class="map-legend">
+          ${state.data.sokoGroups.map(group => `<div class="legend-item"><span style="background:${escapeHtml(sokoColors[group.id])}"></span><strong>${escapeHtml(group.id)}</strong><em>${escapeHtml(group.region)}</em></div>`).join("")}
+        </div>
       </div>
     `;
   },

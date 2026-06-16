@@ -1724,21 +1724,25 @@ tbody tr.selected {
   gap: 12px;
 }
 
-.map-view-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 260px;
-  gap: 20px;
-  align-items: start;
-}
-
-.map-main-panel {
-  min-width: 0;
+.map-shell-wrapper {
+  position: relative;
 }
 
 .map-side-panel {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 240px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px;
+  backdrop-filter: blur(4px);
+  box-shadow: var(--shadow);
+  z-index: 10;
 }
 
 .map-month-row {
@@ -1824,7 +1828,7 @@ tbody tr.selected {
 }
 
 .map-shell {
-  overflow: auto;
+  overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #e9e5d8;
@@ -1832,8 +1836,8 @@ tbody tr.selected {
 
 .street-map {
   display: block;
-  width: 100%;
-  min-width: 820px;
+  width: 1120px;
+  max-width: 100%;
   height: auto;
 }
 
