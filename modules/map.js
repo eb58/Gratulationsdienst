@@ -94,7 +94,7 @@ export const mapStreetPathGroups = (segments, project) => {
   });
   return Object.values(groups);
 };
-export const mapStreetPathsSvg = (segments, project) => mapStreetPathGroups(segments, project).map(group => `
+export const mapStreetPathsSvg = (segments, project) => mapStreetPathGroups(segments, project).filter(group => group.groupId !== "offen").map(group => `
   <path class="map-street-group" data-group-id="${escapeHtml(group.groupId)}" d="${group.paths.join(" ")}" style="stroke:${escapeHtml(sokoColors[group.groupId] || sokoColors.offen)}" ${group.dash ? `stroke-dasharray="12 8" stroke-dashoffset="${group.dash}"` : ""}>
     <title>${escapeHtml(`${group.groupId}: ${group.count.toLocaleString("de-DE")} Straßenabschnitte`)}</title>
   </path>
