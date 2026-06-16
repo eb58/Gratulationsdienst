@@ -1707,8 +1707,12 @@ const strassenIndex = new Map(
   Object.keys(SOKO_STRASSENVERZEICHNIS).map(s => [normalisiereStrasse(s), s])
 );
 const zerlegeHausnummer = hn => {
-  const m = String(hn).trim().match(/^(\d+)([A-Za-z]*)$/);
-  return m ? { zahl: parseInt(m[1], 10), buchstabe: (m[2] || '').toUpperCase() } : null;
+  const clean = String(hn).trim();
+  const exact = clean.match(/^(\d+)([A-Za-z]*)$/);
+  if (exact) return { zahl: parseInt(exact[1], 10), buchstabe: (exact[2] || '').toUpperCase() };
+  // Bereiche (5-7, 14/16) und Listen (1,3 / 35;37): führende Zahl nehmen
+  const leading = clean.match(/^(\d+)/);
+  return leading ? { zahl: parseInt(leading[1], 10), buchstabe: '' } : null;
 };
 const regelPasst = (regel, nummer) => {
   if (!nummer) return false;
@@ -1740,10 +1744,7 @@ const findeSoko = (strasse, hausnummer, plz = null) => {
     throw new Error(`Keine SOKO-Zuordnung für ${originalStrasse} ${hausnummer}${plzText ? `, ${plzText}` : ""} gefunden.`);
   }
   if (eindeutig.length > 1) {
-    const moeglichkeiten = eindeutig
-      .map((regel) => `${regel.plz} → SOKO ${regel.soko} (${regel.ortsteil})`)
-      .join(", ");
-    throw new Error(`Adresse ist ohne weitere Angabe nicht eindeutig: ${moeglichkeiten}`);
+    eindeutig.sort((a, b) => Number(a.soko) - Number(b.soko));
   }
 
   const regel = eindeutig[0];
