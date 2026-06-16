@@ -1243,6 +1243,7 @@ const SOKO_STRASSENVERZEICHNIS = Object.freeze({
   "Rue Ambroise Pare (Cité Pasteur)": [{ plz: "13405", soko: "09", ortsteil: "Tegel" }],
   "Rue Charles Calmette (Cité Pasteur)": [{ plz: "13405", soko: "09", ortsteil: "Tegel" }],
   "Rue Commandant Jean Toulasne": [{ plz: "13405", soko: "13", ortsteil: "Tegel" }],
+  "Rue du Commandant Jean Tulasne": [{ plz: "13405", soko: "13", ortsteil: "Tegel" }],
   "Rüdesheimer Str.": [
     { plz: "13465", soko: "38", ortsteil: "Frohnau", von: "3", bis: "33", art: "U" },
     { plz: "13465", soko: "36", ortsteil: "Frohnau", von: "2", bis: "28", art: "G" },
@@ -1263,6 +1264,7 @@ const SOKO_STRASSENVERZEICHNIS = Object.freeze({
   "Rue Montesquieu (Cité Foch)": [{ plz: "13469", soko: "24", ortsteil: "Waidmannslust" }],
   "Rue Nungesser et Coli (Cité Guynemer)": [{ plz: "13405", soko: "13", ortsteil: "Tegel" }],
   "Rue Racine (Cité Foch)": [{ plz: "13469", soko: "24", ortsteil: "Waidmannslust" }],
+  "Rue Simone de Beauvoire": [{ plz: "13469", soko: "24", ortsteil: "Waidmannslust" }],
   "Rue René Laenec (Cité Pasteur)": [{ plz: "13469", soko: "09", ortsteil: "Reinickendorf" }],
   "Rütlistr.": [{ plz: "13407", soko: "04", ortsteil: "Reinickendorf" }],
   "Rundhofer Pfad": [{ plz: "13503", soko: "19", ortsteil: "Heiligensee" }],
