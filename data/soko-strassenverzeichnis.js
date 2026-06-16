@@ -1458,8 +1458,34 @@ const SOKO_STRASSENVERZEICHNIS = Object.freeze({
     { plz: "13465", soko: "37", ortsteil: "Frohnau", von: "1", bis: "22", art: "F" },
     { plz: "13465", soko: "36", ortsteil: "Frohnau", von: "24", bis: "68", art: "F" }
   ],
+  "Straße A": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
   "Straße A, C - H, J - Q (HOKA III)": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
+  "Straße B": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
+  "Straße C": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
+  "Straße D": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
+  "Straße E": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
+  "Straße F": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
+  "Straße G": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
+  "Straße H": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
+  "Straße I": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
+  "Straße J": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
+  "Straße K": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
+  "Straße L": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
+  "Straße M": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
+  "Straße N": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
+  "Straße O": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
+  "Straße P": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
+  "Straße Q": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
+  "Straße R": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
   "Straße R bis Z (HOKA IV)": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
+  "Straße S": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
+  "Straße T": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
+  "Straße U": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
+  "Straße V": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
+  "Straße W": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
+  "Straße X": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
+  "Straße Y": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
+  "Straße Z": [{ plz: "13629", soko: "12", ortsteil: "Tegel" }],
   "Straße 12": [{ plz: "13509", soko: "21", ortsteil: "Tegel" }],
   "Straße 19 A": [{ plz: "13467", soko: "34", ortsteil: "Hermsdorf" }],
   "Straße 22": [{ plz: "13509", soko: "13", ortsteil: "Tegel" }],
@@ -1699,6 +1725,8 @@ const SOKO_STRASSENVERZEICHNIS = Object.freeze({
 const normalisiereStrasse = s => s.trim().toLowerCase()
   .replace(/\s*\([^)]*\)/g, '')
   .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
+  .replace(/[éèêë]/g, 'e').replace(/[àâ]/g, 'a').replace(/[îï]/g, 'i')
+  .replace(/[ôœ]/g, 'o').replace(/[ûù]/g, 'u').replace(/ç/g, 'c')
   .replace(/-/g, ' ')
   .replace(/strasse\b/g, 'str')
   .replace(/str\./g, 'str')
