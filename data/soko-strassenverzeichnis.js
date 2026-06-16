@@ -1394,7 +1394,6 @@ const SOKO_STRASSENVERZEICHNIS = Object.freeze({
     { plz: "13503", soko: "18", ortsteil: "Heiligensee", von: "10", bis: "114", art: "G" },
     { plz: "13503", soko: "19", ortsteil: "Heiligensee", von: "116", bis: "158", art: "G" }
   ],
-  "Schützenstr.": [{ plz: "13409", soko: "01", ortsteil: "Reinickendorf" }],
   "Schwabstedter Weg": [{ plz: "13503", soko: "17", ortsteil: "Heiligensee" }],
   "Schwabstr.": [{ plz: "13409", soko: "02", ortsteil: "Reinickendorf" }],
   "Schwartzstr.": [{ plz: "13409", soko: "02", ortsteil: "Reinickendorf" }],

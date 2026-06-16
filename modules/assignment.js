@@ -24,7 +24,11 @@ export const streetNameVariants = value => {
     name.replace(/str\./giu, "straße")
   ].filter(Boolean))];
 };
-export const streetByName = name => state.data.streets.find(street => normalize(street.name) === normalize(name));
+const stripParens = s => s.replace(/\s*\([^)]*\)/g, "").trim();
+export const streetByName = name => {
+  const norm = normalize(name);
+  return state.data.streets.find(street => normalize(street.name) === norm || normalize(stripParens(street.name)) === norm);
+};
 export const houseNumberValue = value => Number.parseInt(String(value ?? "").match(/\d+/)?.[0] || "", 10);
 export const ruleMatchesHouseNo = (rule, houseNo) => {
   const number = houseNumberValue(houseNo);

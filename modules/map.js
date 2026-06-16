@@ -27,7 +27,9 @@ export const mapSegmentGroupIds = (segment, lookup = mapStreetLookup()) => {
 };
 export const mapSegments = () => {
   const lookup = mapStreetLookup();
-  return (mapData().segments || []).map(segment => ({ ...segment, groupIds: mapSegmentGroupIds(segment, lookup) }));
+  return (mapData().segments || [])
+    .map(segment => ({ ...segment, groupIds: mapSegmentGroupIds(segment, lookup) }))
+    .filter(segment => segment.matchSource !== 'nearby' || segment.groupIds[0] !== 'offen');
 };
 export const mapSegmentCounts = () => mapSegments().reduce((counts, segment) =>
   segment.groupIds.reduce((next, groupId) => ({ ...next, [groupId]: (next[groupId] || 0) + 1 }), counts), {});
