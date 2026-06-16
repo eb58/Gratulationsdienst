@@ -10,13 +10,7 @@ export const storedSplit = (key, fallback) => {
 export const $ = selector => document.querySelector(selector);
 export const $$ = selector => [...document.querySelectorAll(selector)];
 export const todayIso = () => new Date().toISOString().slice(0, 10);
-export const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, char => ({
-  "&": "&amp;",
-  "<": "&lt;",
-  ">": "&gt;",
-  '"': "&quot;",
-  "'": "&#039;"
-})[char]);
+export const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[char]);
 export const normalize = value => String(value ?? "").trim().toLowerCase();
 export const byId = (items, id) => items.find(item => item.id === id);
 export const formatDate = value => value ? new Intl.DateTimeFormat("de-DE").format(new Date(value)) : "";
