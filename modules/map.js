@@ -93,7 +93,7 @@ export const mapStreetPathGroups = (segments, project) => {
   return Object.values(groups);
 };
 export const mapStreetPathsSvg = (segments, project) => mapStreetPathGroups(segments, project).map(group => `
-  <path class="map-street-group" d="${group.paths.join(" ")}" style="stroke:${escapeHtml(sokoColors[group.groupId] || sokoColors.offen)}" ${group.dash ? `stroke-dasharray="12 8" stroke-dashoffset="${group.dash}"` : ""}>
+  <path class="map-street-group" data-group-id="${escapeHtml(group.groupId)}" d="${group.paths.join(" ")}" style="stroke:${escapeHtml(sokoColors[group.groupId] || sokoColors.offen)}" ${group.dash ? `stroke-dasharray="12 8" stroke-dashoffset="${group.dash}"` : ""}>
     <title>${escapeHtml(`${group.groupId}: ${group.count.toLocaleString("de-DE")} Straßenabschnitte`)}</title>
   </path>
 `).join("");
@@ -114,7 +114,7 @@ export const mapAddressPointGroups = () => {
 };
 export const mapAddressPointsSvg = project => Object.entries(mapAddressPointGroups())
   .map(([groupId, addresses]) => `
-    <path class="map-address-point-group" d="${mapPointPath(addresses, project)}" style="fill:${escapeHtml(sokoColors[groupId] || sokoColors.offen)}">
+    <path class="map-address-point-group" data-group-id="${escapeHtml(groupId)}" d="${mapPointPath(addresses, project)}" style="fill:${escapeHtml(sokoColors[groupId] || sokoColors.offen)}">
       <title>${escapeHtml(`${groupId}: ${addresses.length.toLocaleString("de-DE")} Adressen`)}</title>
     </path>
   `).join("");

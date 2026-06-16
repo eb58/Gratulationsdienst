@@ -1,6 +1,6 @@
 import { canAccessView, isAdmin, state, loadAuthStatus, loadCollectionData } from './modules/state.js';
-import { splitStorageKey, MONTH_KEY, QUITTUNG_MONTH_KEY, isValidEmail } from './modules/utils.js';
-import { viewTitles } from './modules/views.js';
+import { splitStorageKey, MONTH_KEY, QUITTUNG_MONTH_KEY, MAP_MONTH_KEY, isValidEmail } from './modules/utils.js';
+import { viewTitles, sokoMapInfoHtml } from './modules/views.js';
 import { render } from './modules/render.js';
 import { actions } from './modules/actions.js';
 
@@ -110,6 +110,13 @@ document.addEventListener("change", event => {
   if (event.target.dataset.action) { actions[event.target.dataset.action]?.(event); return; }
   if (event.target.matches('[name="wish"]')) { document.querySelector('[data-action="save-citizen"]')?.classList.remove("btn-disabled"); return; }
   if (event.target.matches("#doc-template, #doc-sender, #doc-month, #doc-group")) { actions["generate-docs"](); return; }
+  if (event.target.matches("#map-month-select")) {
+    state.mapMonth = event.target.value;
+    localStorage.setItem(MAP_MONTH_KEY, event.target.value);
+    const info = document.querySelector("#map-soko-info");
+    if (info) info.innerHTML = sokoMapInfoHtml(info.dataset.groupId || "");
+    return;
+  }
   const bound = event.target.closest("[data-bind]");
   if (bound) {
     state[bound.dataset.bind] = bound.value;
@@ -119,6 +126,26 @@ document.addEventListener("change", event => {
   }
   const file = event.target.matches("#import-file") ? event.target.files[0] : null;
   if (file) file.text().then(text => { state.importText = text; actions["run-import"](); });
+});
+
+document.addEventListener("mouseover", event => {
+  const mapGroup = event.target.closest("[data-group-id]");
+  if (!mapGroup) return;
+  const info = document.querySelector("#map-soko-info");
+  if (!info) return;
+  info.dataset.groupId = mapGroup.dataset.groupId;
+  info.innerHTML = sokoMapInfoHtml(mapGroup.dataset.groupId);
+});
+
+document.addEventListener("mouseout", event => {
+  const mapGroup = event.target.closest("[data-group-id]");
+  if (!mapGroup) return;
+  const related = event.relatedTarget?.closest("[data-group-id]");
+  if (related === mapGroup) return;
+  const info = document.querySelector("#map-soko-info");
+  if (!info) return;
+  info.dataset.groupId = "";
+  info.innerHTML = sokoMapInfoHtml("");
 });
 
 state.view = viewTitles[initialParams.get("view")]

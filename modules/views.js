@@ -3,7 +3,7 @@ import { months, sokoColors, streetGroupDisplay } from './domain.js';
 import { state } from './state.js';
 import { selectedCitizen, selectedTemplate, selectedSender, selectedMember, selectedStreet, filteredCitizens, activeCitizens, groupForCitizen, isCheckedCitizen, receiptCitizens, receiptReviewCitizensForGroup, isReceiptGroupReady } from './assignment.js';
 import { field, emailField, ibanField, selectField, textField, checkField, radioField, streetRuleRows, assignmentPill, gridHost, groupOptions, sokoSelectOptions, senderOptions, templateOptions, occasionOptions, formatOptions } from './fields.js';
-import { streetMapSvg, addressPointData, assignedAddressPoints } from './map.js';
+import { streetMapSvg } from './map.js';
 import { documentPreview } from './documents.js';
 import { qrCodeSvg } from './qr.js';
 import { render, applyPendingFocus } from './render.js'; // Zyklus OK: render wird nur in Callbacks aufgerufen
@@ -13,7 +13,7 @@ export const viewTitles = {
   citizens: "Jubilare prüfen",
   soko: "Stammdaten: SOKO Mitglieder",
   regions: "Stammdaten: SOKO Straßen & Zuständigkeit",
-  map: "SOKO Straßenplan",
+  map: "SOKO Straßenplan Reinickendorf",
   senders: "Stammdaten: Absender",
   templates: "Stammdaten: Vorlagen",
   documents: "Dokumentlauf",
@@ -229,6 +229,24 @@ const dashboardSortButton = (key, label) => {
   const dir = state.dashboardSort?.dir === "asc" ? "asc" : "desc";
   return `<button type="button" class="table-sort ${active ? "active" : ""}" data-action="sort-dashboard" data-sort-key="${key}">${escapeHtml(label)}<span>${active ? dir === "asc" ? "▲" : "▼" : "↕"}</span></button>`;
 };
+export const sokoMapInfoHtml = groupId => {
+  if (!groupId || groupId === "offen") return `<p class="map-soko-hint muted">Über eine SOKO auf der Karte fahren</p>`;
+  const members = state.data.sokoMembers.filter(m => m.groupId === groupId).sort((a, b) => b.isLeader - a.isLeader);
+  const citizens = activeCitizens().filter(c => groupForCitizen(c)?.id === groupId && c.birthDate?.slice(5, 7) === state.mapMonth);
+  const monthLabel = months.find(([v]) => v === state.mapMonth)?.[1] || state.mapMonth;
+  return `
+    <h3>${escapeHtml(groupId)}</h3>
+    <div class="map-info-box">
+      <strong>Mitglieder</strong>
+      ${members.length ? members.map(m => `<div>${escapeHtml(`${m.firstName} ${m.lastName}`)}${m.isLeader ? " <em>(Ltg.)</em>" : ""}</div>`).join("") : `<div class="muted">Keine Mitglieder</div>`}
+    </div>
+    <div class="map-info-box">
+      <strong>Jubilare ${escapeHtml(monthLabel)}</strong>
+      ${citizens.length ? citizens.map(c => `<div>${escapeHtml(`${c.firstName} ${c.lastName}`)}</div>`).join("") : `<div class="muted">Keine Jubilare</div>`}
+    </div>
+  `;
+};
+
 export const views = {
   dashboard: () => {
     const rows = dashboardRows();
@@ -447,20 +465,23 @@ export const views = {
   },
 
   map: () => {
-    const addressCount = addressPointData().addresses?.length || 0;
-    const assignedCount = assignedAddressPoints().length;
     return `
-      <div class="panel">
-        <div class="section-head">
-          <div>
-            <h2>Straßenkarte Reinickendorf</h2>
-            <p>${assignedCount.toLocaleString("de-DE")} von ${addressCount.toLocaleString("de-DE")} OSM-Adressen einer SOKO zugeordnet</p>
+      <div class="map-view-layout">
+        <div class="panel map-main-panel">
+          <div class="map-shell">${streetMapSvg()}</div>
+          <div class="map-legend">
+            ${state.data.sokoGroups.map(group => `<div class="legend-item"><span style="background:${escapeHtml(sokoColors[group.id])}"></span><strong>${escapeHtml(group.id)}</strong><em>${escapeHtml(group.region)}</em></div>`).join("")}
           </div>
         </div>
-        <div class="map-shell">${streetMapSvg()}</div>
-        <div class="map-legend">
-          ${state.data.sokoGroups.map(group => `<div class="legend-item"><span style="background:${escapeHtml(sokoColors[group.id])}"></span><strong>${escapeHtml(group.id)}</strong><em>${escapeHtml(group.region)}</em></div>`).join("")}
-        </div>
+        <aside class="map-side-panel">
+          <div class="map-month-row">
+            <label for="map-month-select">Monat</label>
+            <select id="map-month-select">
+              ${months.filter(([v]) => v !== "alle").map(([v, l]) => `<option value="${v}"${state.mapMonth === v ? " selected" : ""}>${escapeHtml(l)}</option>`).join("")}
+            </select>
+          </div>
+          <div id="map-soko-info">${sokoMapInfoHtml("")}</div>
+        </aside>
       </div>
     `;
   },

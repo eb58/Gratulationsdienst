@@ -1724,6 +1724,75 @@ tbody tr.selected {
   gap: 12px;
 }
 
+.map-view-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  gap: 20px;
+  align-items: start;
+}
+
+.map-main-panel {
+  min-width: 0;
+}
+
+.map-side-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.map-month-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.map-month-row label {
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.map-month-row select {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.map-info-box {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-soft);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.map-info-box strong {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 700;
+  color: var(--teal);
+}
+
+.map-soko-hint {
+  font-size: 13px;
+  margin: 0;
+}
+
+#map-soko-info h3 {
+  margin: 0 0 12px;
+  font-size: 16px;
+}
+
+#map-soko-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .map-legend {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
