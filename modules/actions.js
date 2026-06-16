@@ -278,7 +278,7 @@ export const actions = {
       const user = await apiRequest(`/users/${state.selectedUserId}/mfa-reset`, { method: "POST", body: "{}" });
       state.auth.users = state.auth.users.map(item => item.id === user.id ? user : item);
       render();
-      toast("MFA zurueckgesetzt.");
+      toast("MFA zurückgesetzt.");
     } catch (error) { toast(error.message); }
   },
   "delete-user": (event) => {
