@@ -86,8 +86,8 @@ export const mapStreetPathGroups = (segments, project) => {
     const path = mapPath(segment.coords, project);
     segment.groupIds.forEach((groupId, index) => {
       const dash = segment.groupIds.length > 1 ? `${index * 6}` : "";
-      const key = `${groupId}|${dash}`;
-      groups[key] = groups[key] || { groupId, dash, paths: [], count: 0 };
+      const key = `${groupId}|${segment.name}|${dash}`;
+      groups[key] = groups[key] || { groupId, streetName: segment.name, dash, paths: [], count: 0 };
       groups[key].paths.push(path);
       groups[key].count += 1;
     });
@@ -95,7 +95,7 @@ export const mapStreetPathGroups = (segments, project) => {
   return Object.values(groups);
 };
 export const mapStreetPathsSvg = (segments, project) => mapStreetPathGroups(segments, project).filter(group => group.groupId !== "offen").map(group => `
-  <path class="map-street-group" data-group-id="${escapeHtml(group.groupId)}" d="${group.paths.join(" ")}" style="stroke:${escapeHtml(sokoColors[group.groupId] || sokoColors.offen)}" ${group.dash ? `stroke-dasharray="12 8" stroke-dashoffset="${group.dash}"` : ""}></path>
+  <path class="map-street-group" data-group-id="${escapeHtml(group.groupId)}" data-street-name="${escapeHtml(group.streetName || '')}" d="${group.paths.join(" ")}" style="stroke:${escapeHtml(sokoColors[group.groupId] || sokoColors.offen)}" ${group.dash ? `stroke-dasharray="12 8" stroke-dashoffset="${group.dash}"` : ""}></path>
 `).join("");
 export const mapPointPath = (addresses, project) => addresses.map(address => {
   const [x, y] = project([address.lon, address.lat]);
@@ -117,17 +117,23 @@ export const mapAddressPointsSvg = project => Object.entries(mapAddressPointGrou
   .join("");
 export const streetMapSvg = () => {
   const data = mapData();
+  if (!data.bbox.length) return `<div class="empty-state">Keine Kartendaten geladen</div>`;
+  const padding = 28;
+  const zoom = 13;
+  const [minLon, minLat, maxLon, maxLat] = data.bbox;
+  const tl = lonLatToWorld([minLon, maxLat], zoom);
+  const br = lonLatToWorld([maxLon, minLat], zoom);
   const width = 1120;
-  const height = 950;
-  const viewport = mapViewport(data.bbox, width, height, 28);
+  const height = Math.round((br[1] - tl[1]) / (br[0] - tl[0]) * (width - 2 * padding) + 2 * padding);
+  const viewport = mapViewport(data.bbox, width, height, padding, zoom);
   const project = coord => mapProject(coord, viewport);
   const segments = mapSegments();
-  return data.bbox.length ? `
+  return `
     <svg class="street-map" viewBox="0 0 ${width} ${height}" role="img" aria-label="Straßenkarte Reinickendorf nach SOKO-Zuständigkeit">
       <rect class="map-background" width="${width}" height="${height}" rx="0"></rect>
       <g class="map-tiles">${mapTileImages(data.bbox, viewport)}</g>
       <g class="map-streets">${mapStreetPathsSvg(segments, project)}</g>
       <g class="map-address-points">${mapAddressPointsSvg(project)}</g>
     </svg>
-  ` : `<div class="empty-state">Keine Kartendaten geladen</div>`;
+  `;
 };

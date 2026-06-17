@@ -229,7 +229,7 @@ const dashboardSortButton = (key, label) => {
   const dir = state.dashboardSort?.dir === "asc" ? "asc" : "desc";
   return `<button type="button" class="table-sort ${active ? "active" : ""}" data-action="sort-dashboard" data-sort-key="${key}">${escapeHtml(label)}<span>${active ? dir === "asc" ? "▲" : "▼" : "↕"}</span></button>`;
 };
-export const sokoMapInfoHtml = groupId => {
+export const sokoMapInfoHtml = (groupId, streetName = "") => {
   if (!groupId || groupId === "offen") return `<p class="map-soko-hint muted">Über eine SOKO auf der Karte fahren</p>`;
   const group = state.data.sokoGroups.find(g => g.id === groupId);
   const members = state.data.sokoMembers.filter(m => m.groupId === groupId).sort((a, b) => b.isLeader - a.isLeader);
@@ -243,9 +243,10 @@ export const sokoMapInfoHtml = groupId => {
       <span class="map-info-swatch" style="background:${escapeHtml(color)}"></span>
       <div>
         <h3>${escapeHtml(groupId)}</h3>
-        ${group?.region ? `<div class="muted" style="font-size:13px">${escapeHtml(group.region)}</div>` : ""}
+        ${group?.region ? `<div class="muted" style="font-size:13px">${escapeHtml(group.region.split(" - ")[0])}</div>` : ""}
       </div>
     </div>
+    ${streetName ? `<div class="map-info-street">${escapeHtml(streetName)}</div>` : ""}
     <div class="map-info-stats">
       <span>${addrCount.toLocaleString("de-DE")} Adressen</span>
       <span>${segCount.toLocaleString("de-DE")} Straßenabschnitte</span>

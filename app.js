@@ -134,7 +134,7 @@ document.addEventListener("mouseover", event => {
   const info = document.querySelector("#map-soko-info");
   if (!info) return;
   info.dataset.groupId = mapGroup.dataset.groupId;
-  info.innerHTML = sokoMapInfoHtml(mapGroup.dataset.groupId);
+  info.innerHTML = sokoMapInfoHtml(mapGroup.dataset.groupId, mapGroup.dataset.streetName || "");
 });
 
 document.addEventListener("mouseout", event => {
