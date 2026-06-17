@@ -101,14 +101,14 @@ export const mapStreetPathGroups = (segments, project) => {
   });
   return Object.values(groups);
 };
-export const mapStreetPathsSvg = (segments, project) => mapStreetPathGroups(segments, project).filter(group => group.groupId !== "offen").map(group => `
-  <path class="map-street-group" data-group-id="${escapeHtml(group.groupId)}" data-street-name="${escapeHtml(group.streetName || '')}" d="${group.paths.join(" ")}" style="stroke:${escapeHtml(sokoColors[group.groupId] || sokoColors.offen)}" ${group.dash ? `stroke-dasharray="12 8" stroke-dashoffset="${group.dash}"` : ""}></path>
-`).join("");
-export const mapPointPath = (addresses, project) => addresses.map(address => {
-  const [x, y] = project([address.lon, address.lat]);
-  const left = (x - 1.3).toFixed(1);
-  const top = (y - 1.3).toFixed(1);
-  return `M${left} ${top}h2.6v2.6h-2.6z`;
+export const mapStreetPathsSvg = (segments, project) => mapStreetPathGroups(segments, project).filter(group => group.groupId !== "offen").map(group => {
+  const d = group.paths.join(" ");
+  const dash = group.dash ? `stroke-dasharray="12 8" stroke-dashoffset="${group.dash}"` : "";
+  return `
+  <g class="map-street-group" data-group-id="${escapeHtml(group.groupId)}" data-street-name="${escapeHtml(group.streetName || '')}">
+    <path class="map-street-hit" d="${d}"></path>
+    <path class="map-street-line" d="${d}" style="stroke:${escapeHtml(sokoColors[group.groupId] || sokoColors.offen)}" ${dash}></path>
+  </g>`;
 }).join("");
 export const mapAddressPointGroups = () => {
   const groups = {};
@@ -119,9 +119,26 @@ export const mapAddressPointGroups = () => {
   });
   return groups;
 };
-export const mapAddressPointsSvg = project => Object.entries(mapAddressPointGroups())
-  .map(([groupId, addresses]) => `<path class="map-address-point-group" data-group-id="${escapeHtml(groupId)}" d="${mapPointPath(addresses, project)}" style="fill:${escapeHtml(sokoColors[groupId] || sokoColors.offen)}"></path>`)
-  .join("");
+let addressHitIndex = [];
+export const findNearestAddress = (x, y, maxDist) => {
+  let best = null, bestDist = maxDist * maxDist;
+  addressHitIndex.forEach(point => {
+    const dist = (point.x - x) ** 2 + (point.y - y) ** 2;
+    if (dist < bestDist) { bestDist = dist; best = point; }
+  });
+  return best;
+};
+export const mapAddressPointsSvg = project => {
+  addressHitIndex = [];
+  return Object.entries(mapAddressPointGroups()).map(([groupId, addresses]) => {
+    const d = addresses.map(address => {
+      const [x, y] = project([address.lon, address.lat]);
+      addressHitIndex.push({ x, y, groupId, label: `${address.street} ${address.houseNumber || ""}`.trim() });
+      return `M${(x - 1.3).toFixed(1)} ${(y - 1.3).toFixed(1)}h2.6v2.6h-2.6z`;
+    }).join("");
+    return `<path class="map-address-point-group" data-group-id="${escapeHtml(groupId)}" d="${d}" style="fill:${escapeHtml(sokoColors[groupId] || sokoColors.offen)}"></path>`;
+  }).join("");
+};
 export const streetMapSvg = () => {
   const data = mapData();
   if (!data.bbox.length) return `<div class="empty-state">Keine Kartendaten geladen</div>`;

@@ -1915,7 +1915,20 @@ tbody tr.selected {
   filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.9));
 }
 
-.street-map path:hover {
+.street-map .map-street-hit {
+  stroke: transparent;
+  stroke-width: 22;
+  vector-effect: non-scaling-stroke;
+  opacity: 1;
+  pointer-events: stroke;
+  filter: none;
+}
+
+.street-map .map-street-line {
+  pointer-events: none;
+}
+
+.street-map .map-street-group:hover .map-street-line {
   stroke-width: 6;
   opacity: 1;
 }

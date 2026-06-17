@@ -1,6 +1,7 @@
 import { canAccessView, isAdmin, state, loadAuthStatus, loadCollectionData } from './modules/state.js';
 import { splitStorageKey, MONTH_KEY, QUITTUNG_MONTH_KEY, MAP_MONTH_KEY, isValidEmail } from './modules/utils.js';
 import { viewTitles, sokoMapInfoHtml } from './modules/views.js';
+import { findNearestAddress } from './modules/map.js';
 import { render } from './modules/render.js';
 import { actions } from './modules/actions.js';
 
@@ -134,6 +135,7 @@ document.addEventListener("mouseover", event => {
   const info = document.querySelector("#map-soko-info");
   if (!info) return;
   info.dataset.groupId = mapGroup.dataset.groupId;
+  info.dataset.hoverToken = "";
   info.innerHTML = sokoMapInfoHtml(mapGroup.dataset.groupId, mapGroup.dataset.streetName || "");
 });
 
@@ -145,7 +147,26 @@ document.addEventListener("mouseout", event => {
   const info = document.querySelector("#map-soko-info");
   if (!info) return;
   info.dataset.groupId = "";
+  info.dataset.hoverToken = "";
   info.innerHTML = sokoMapInfoHtml("");
+});
+
+document.addEventListener("mousemove", event => {
+  const svg = event.target.closest(".street-map");
+  if (!svg) return;
+  const info = document.querySelector("#map-soko-info");
+  const ctm = info && svg.getScreenCTM();
+  if (!ctm) return;
+  const pt = svg.createSVGPoint();
+  pt.x = event.clientX;
+  pt.y = event.clientY;
+  const { x, y } = pt.matrixTransform(ctm.inverse());
+  const nearest = findNearestAddress(x, y, 16 / ctm.a);
+  const token = nearest ? `${nearest.groupId}|${nearest.label}` : "";
+  if (!nearest || info.dataset.hoverToken === token) return;
+  info.dataset.hoverToken = token;
+  info.dataset.groupId = nearest.groupId;
+  info.innerHTML = sokoMapInfoHtml(nearest.groupId, nearest.label);
 });
 
 state.view = viewTitles[initialParams.get("view")]
