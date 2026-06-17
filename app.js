@@ -25,6 +25,7 @@ const focusSelectorFor = element => {
 
 document.addEventListener("click", event => {
   const skipLink = event.target.closest(".skip-link");
+  const navToggle = event.target.closest("[data-nav-toggle]");
   const nav = event.target.closest("[data-nav]");
   const action = event.target.closest("[data-action]");
   const adminOnly = event.target.closest("[data-admin-only]");
@@ -34,12 +35,20 @@ document.addEventListener("click", event => {
     document.querySelector("#view")?.focus();
     return;
   }
+  if (navToggle) {
+    const open = document.body.classList.toggle("nav-open");
+    navToggle.setAttribute("aria-expanded", String(open));
+    navToggle.setAttribute("aria-label", open ? "Menü schließen" : "Menü öffnen");
+    return;
+  }
   if ((nav || action) && adminOnly && !isAdmin()) return;
   if (nav) {
     if (!state.auth.user) return;
     if (!canAccessView(nav.dataset.nav)) return;
     state.view = nav.dataset.nav;
     state.focusTarget = "#view";
+    document.body.classList.remove("nav-open");
+    document.querySelector("[data-nav-toggle]")?.setAttribute("aria-expanded", "false");
     render();
     if (state.view === "documents") actions["generate-docs"]();
     if (state.view === "users") actions["load-users"]();
