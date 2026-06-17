@@ -13,10 +13,17 @@ export const mapStreetLookup = () => state.data.streets.reduce((lookup, street) 
   streetNameVariants(street.name).forEach(name => { lookup[normalize(name)] = street; });
   return lookup;
 }, {});
+const tokenBoundary = /[\s/(),-]/;
+const tokenIncludes = (haystack, needle) => {
+  const index = haystack.indexOf(needle);
+  return index >= 0
+    && (index === 0 || tokenBoundary.test(haystack[index - 1]))
+    && (index + needle.length === haystack.length || tokenBoundary.test(haystack[index + needle.length]));
+};
 export const mapStreetByName = (name, lookup = mapStreetLookup()) => {
   const variants = streetNameVariants(name);
   return variants.map(variant => lookup[normalize(variant)]).find(Boolean)
-    || state.data.streets.find(street => variants.some(variant => normalize(street.name).includes(normalize(variant)) || normalize(variant).includes(normalize(street.name))));
+    || state.data.streets.find(street => variants.some(variant => tokenIncludes(normalize(street.name), normalize(variant)) || tokenIncludes(normalize(variant), normalize(street.name))));
 };
 export const mapSegmentGroupIds = (segment, lookup = mapStreetLookup()) => {
   const street = mapStreetByName(segment.name, lookup);
