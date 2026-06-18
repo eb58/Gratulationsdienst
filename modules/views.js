@@ -425,37 +425,40 @@ export const views = {
         <button type="button" class="ghost-button" data-action="new-member">Neues Mitglied</button>
         <button type="button" class="ghost-button" data-action="export-soko">XLSX/CSV Export</button>
       </div>
-      <div class="grid two">
-        <section class="panel">
+      <div class="soko-split" style="--soko-left:${state.sokoSplit}%">
+        <section class="panel template-panel">
           <h2>Mitglieder und Leitungen</h2>
-          ${gridHost("members", 500)}
+          <div class="soko-grid-scroll">${gridHost("members", 500)}</div>
         </section>
-        <section class="panel">
+        <div class="vertical-splitter" data-splitter="soko" role="separator" aria-orientation="vertical" aria-label="Mitgliederliste und Erfassung aufteilen" aria-valuemin="20" aria-valuemax="80" aria-valuenow="${state.sokoSplit}" tabindex="0"></div>
+        <section class="panel template-panel">
           <h2>Erfassungsmaske</h2>
-          ${member ? `
-            <form id="member-form" class="form-grid">
-              <input type="hidden" name="id" value="${escapeHtml(member.id)}">
-              ${selectField("salutation", "Anrede", member.salutation, [["Frau", "Frau"], ["Herr", "Herr"]])}
-              ${field("firstName", "Vorname", member.firstName)}
-              ${field("lastName", "Nachname", member.lastName)}
-              ${selectField("groupId", "SOKO", member.groupId, sokoSelectOptions())}
-              ${field("street", "Straße", member.street, "text", "full")}
-              ${field("postalCode", "PLZ", member.postalCode)}
-              ${field("city", "Ort", member.city)}
-              ${field("phone", "Telefon", member.phone)}
-              ${field("mobile", "Handy", member.mobile)}
-              ${emailField("email", "E-Mail", member.email)}
-              ${ibanField("bank", "Bankverbindung / IBAN", member.bank, "full")}
-              ${field("allowance", "Aufwandspauschale", member.allowance)}
-              ${field("billingAmount", "Abrechnungsbetrag", member.billingAmount)}
-              ${field("termFrom", "Berufung von", member.termFrom, "date")}
-              ${field("termTo", "Berufung bis", member.termTo, "date")}
-              ${selectField("isLeader", "Rolle", String(member.isLeader), [["false", "Mitglied"], ["true", "Leitung"]], "full")}
-              <div class="field full">
-                <button type="button" class="primary-button" data-action="save-member">Speichern</button>
-              </div>
-            </form>
-          ` : `<div class="empty-state">Kein Mitglied ausgewählt</div>`}
+          <div class="template-panel-scroll">
+            ${member ? `
+              <form id="member-form" class="form-grid">
+                <input type="hidden" name="id" value="${escapeHtml(member.id)}">
+                ${selectField("salutation", "Anrede", member.salutation, [["Frau", "Frau"], ["Herr", "Herr"]])}
+                ${field("firstName", "Vorname", member.firstName)}
+                ${field("lastName", "Nachname", member.lastName)}
+                ${selectField("groupId", "SOKO", member.groupId, sokoSelectOptions())}
+                ${field("street", "Straße", member.street, "text", "full")}
+                ${field("postalCode", "PLZ", member.postalCode)}
+                ${field("city", "Ort", member.city)}
+                ${field("phone", "Telefon", member.phone)}
+                ${field("mobile", "Handy", member.mobile)}
+                ${emailField("email", "E-Mail", member.email)}
+                ${ibanField("bank", "Bankverbindung / IBAN", member.bank, "full")}
+                ${field("allowance", "Aufwandspauschale", member.allowance)}
+                ${field("billingAmount", "Abrechnungsbetrag", member.billingAmount)}
+                ${field("termFrom", "Berufung von", member.termFrom, "date")}
+                ${field("termTo", "Berufung bis", member.termTo, "date")}
+                ${selectField("isLeader", "Rolle", String(member.isLeader), [["false", "Mitglied"], ["true", "Leitung"]], "full")}
+                <div class="field full">
+                  <button type="button" class="primary-button" data-action="save-member">Speichern</button>
+                </div>
+              </form>
+            ` : `<div class="empty-state">Kein Mitglied ausgewählt</div>`}
+          </div>
         </section>
       </div>
     `;
@@ -516,35 +519,40 @@ export const views = {
   senders: () => {
     const sender = selectedSender();
     return `
-      <div class="grid two">
-        <section class="panel">
+      <div class="sender-split" style="--sender-left:${state.senderSplit}%">
+        <section class="panel template-panel">
           <h2>Profile</h2>
-          <div class="list">
-            ${state.data.senders.map(item => `
-              <button type="button" class="list-item" data-action="select-sender" data-id="${escapeHtml(item.id)}">
-                <div><strong>${escapeHtml(item.role)}</strong><span class="muted">${escapeHtml(item.department)}</span></div>
-                <span class="pill" style="background:${escapeHtml(item.color)}22;color:${escapeHtml(item.color)}">${escapeHtml(item.logo)}</span>
-              </button>
-            `).join("")}
+          <div class="template-panel-scroll">
+            <div class="list">
+              ${state.data.senders.map(item => `
+                <button type="button" class="list-item" data-action="select-sender" data-id="${escapeHtml(item.id)}">
+                  <div><strong>${escapeHtml(item.role)}</strong><span class="muted">${escapeHtml(item.department)}</span></div>
+                  <span class="pill" style="background:${escapeHtml(item.color)}22;color:${escapeHtml(item.color)}">${escapeHtml(item.logo)}</span>
+                </button>
+              `).join("")}
+            </div>
           </div>
         </section>
-        <section class="panel">
+        <div class="vertical-splitter" data-splitter="sender" role="separator" aria-orientation="vertical" aria-label="Absenderliste und Formular aufteilen" aria-valuemin="20" aria-valuemax="80" aria-valuenow="${state.senderSplit}" tabindex="0"></div>
+        <section class="panel template-panel">
           <h2>Profilverwaltung</h2>
-          <form id="sender-form" class="form-grid">
-            <input type="hidden" name="id" value="${escapeHtml(sender.id)}">
-            ${field("role", "Rolle", sender.role)}
-            ${field("name", "Name", sender.name)}
-            ${field("department", "Organisation", sender.department, "text", "full")}
-            ${field("address", "Adresse", sender.address, "text", "full")}
-            ${field("phone", "Telefon", sender.phone)}
-            ${emailField("email", "E-Mail", sender.email)}
-            ${field("logo", "Logo/Briefkopf", sender.logo)}
-            ${field("signature", "Unterschrift", sender.signature)}
-            ${field("color", "Akzentfarbe", sender.color, "color", "full")}
-            <div class="field full">
-              <button type="button" class="primary-button" data-action="save-sender">Speichern</button>
-            </div>
-          </form>
+          <div class="template-panel-scroll">
+            <form id="sender-form" class="form-grid">
+              <input type="hidden" name="id" value="${escapeHtml(sender.id)}">
+              ${field("role", "Rolle", sender.role)}
+              ${field("name", "Name", sender.name)}
+              ${field("department", "Organisation", sender.department, "text", "full")}
+              ${field("address", "Adresse", sender.address, "text", "full")}
+              ${field("phone", "Telefon", sender.phone)}
+              ${emailField("email", "E-Mail", sender.email)}
+              ${field("logo", "Logo/Briefkopf", sender.logo)}
+              ${field("signature", "Unterschrift", sender.signature)}
+              ${field("color", "Akzentfarbe", sender.color, "color", "full")}
+              <div class="field full">
+                <button type="button" class="primary-button" data-action="save-sender">Speichern</button>
+              </div>
+            </form>
+          </div>
         </section>
       </div>
     `;

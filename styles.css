@@ -545,6 +545,33 @@ h3 {
   margin-top: 12px;
 }
 
+.soko-split {
+  display: grid;
+  grid-template-columns: minmax(280px, var(--soko-left, 58%)) 12px minmax(320px, 1fr);
+  align-items: stretch;
+  height: min(700px, calc(100vh - 250px));
+  min-height: 500px;
+}
+
+.soko-grid-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  margin-top: 12px;
+}
+
+.soko-grid-scroll .ag-grid-host {
+  height: 100% !important;
+}
+
+.sender-split {
+  display: grid;
+  grid-template-columns: minmax(220px, var(--sender-left, 38%)) 12px minmax(360px, 1fr);
+  align-items: stretch;
+  height: min(700px, calc(100vh - 190px));
+  min-height: 480px;
+}
+
 .region-panel {
   display: flex;
   flex-direction: column;
@@ -2218,6 +2245,8 @@ tbody tr.selected {
   .quittung-split,
   .citizen-split,
   .template-split,
+  .soko-split,
+  .sender-split,
   .toolbar,
   .form-grid,
   .form-grid.three,
@@ -2241,7 +2270,9 @@ tbody tr.selected {
   .region-split,
   .quittung-split,
   .citizen-split,
-  .template-split {
+  .template-split,
+  .soko-split,
+  .sender-split {
     height: auto;
     min-height: 0;
   }
