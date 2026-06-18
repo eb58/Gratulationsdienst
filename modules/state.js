@@ -86,6 +86,7 @@ export const state = {
   importSplit: storedSplit("import", 42),
   citizenSplit: storedSplit("citizen", 50),
   regionSplit: storedSplit("region", 58),
+  templateSplit: storedSplit("template", 40),
   generatedDocs: [],
   printBackground: true,
   dashboardSort: { key: "group", dir: "asc" },

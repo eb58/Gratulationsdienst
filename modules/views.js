@@ -129,7 +129,7 @@ export const citizenDetailContent = citizen => `
   <h2>Jubilar</h2>
   <form id="citizen-form" class="form-grid">
     <input type="hidden" name="id" value="${escapeHtml(citizen.id)}">
-    ${selectField("salutation", "Anrede", citizen.salutation, [["Frau", "Frau"], ["Herr", "Herr"], ["Divers", "Divers"]])}
+    ${selectField("salutation", "Anrede", citizen.salutation, [["Frau", "Frau"], ["Herr", "Herr"]])}
     ${field("firstName", "Vorname", citizen.firstName)}
     ${field("lastName", "Nachname", citizen.lastName)}
     ${field("birthDate", "Geburtsdatum", citizen.birthDate, "date")}
@@ -385,7 +385,7 @@ export const views = {
           <h2>Jubilar</h2>
           <form id="citizen-form" class="form-grid">
             <input type="hidden" name="id" value="${escapeHtml(citizen.id)}">
-            ${selectField("salutation", "Anrede", citizen.salutation, [["Frau", "Frau"], ["Herr", "Herr"], ["Divers", "Divers"]])}
+            ${selectField("salutation", "Anrede", citizen.salutation, [["Frau", "Frau"], ["Herr", "Herr"]])}
             ${field("firstName", "Vorname", citizen.firstName)}
             ${field("lastName", "Nachname", citizen.lastName)}
             ${field("birthDate", "Geburtsdatum", citizen.birthDate, "date")}
@@ -435,7 +435,7 @@ export const views = {
           ${member ? `
             <form id="member-form" class="form-grid">
               <input type="hidden" name="id" value="${escapeHtml(member.id)}">
-              ${selectField("salutation", "Anrede", member.salutation, [["Frau", "Frau"], ["Herr", "Herr"], ["Divers", "Divers"]])}
+              ${selectField("salutation", "Anrede", member.salutation, [["Frau", "Frau"], ["Herr", "Herr"]])}
               ${field("firstName", "Vorname", member.firstName)}
               ${field("lastName", "Nachname", member.lastName)}
               ${selectField("groupId", "SOKO", member.groupId, sokoSelectOptions())}
@@ -555,45 +555,50 @@ export const views = {
     const citizen = selectedCitizen();
     const sender = byId(state.data.senders, template.senderId) || selectedSender();
     return `
-      <div class="grid two">
-        <section class="panel">
+      <div class="template-split" style="--template-left:${state.templateSplit}%">
+        <section class="panel template-panel">
           <div class="section-head">
             <h2>Vorlagen</h2>
             <button type="button" class="ghost-button" data-action="new-template">Neue Vorlage</button>
           </div>
-          <div class="list">
-            ${state.data.templates.map(item => `
-              <button type="button" class="list-item ${item.id === template.id ? "selected" : ""}" data-action="select-template" data-id="${escapeHtml(item.id)}">
-                <div><strong>${escapeHtml(item.name)}</strong><span class="muted">${escapeHtml(item.occasion)} · ${escapeHtml(item.format)}</span></div>
-                <span class="pill">${escapeHtml(item.id)}</span>
-              </button>
-            `).join("")}
+          <div class="template-panel-scroll">
+            <div class="list">
+              ${state.data.templates.map(item => `
+                <button type="button" class="list-item ${item.id === template.id ? "selected" : ""}" data-action="select-template" data-id="${escapeHtml(item.id)}">
+                  <div><strong>${escapeHtml(item.name)}</strong><span class="muted">${escapeHtml(item.occasion)} · ${escapeHtml(item.format)}</span></div>
+                  <span class="pill">${escapeHtml(item.id)}</span>
+                </button>
+              `).join("")}
+            </div>
           </div>
         </section>
-        <section class="panel">
-          <h2>Editor</h2>
-          <form id="template-form" class="form-grid">
-            <input type="hidden" name="id" value="${escapeHtml(template.id)}">
-            ${field("name", "Vorlagenname", template.name)}
-            ${selectField("occasion", "Anlass", template.occasion, occasionOptions())}
-            ${selectField("format", "Format", template.format, formatOptions())}
-            ${selectField("senderId", "Standard-Absender", template.senderId, senderOptions())}
-            ${field("subject", "Betreff/Titel", template.subject, "text", "full")}
-            <div class="field full">
-              <label>Platzhalter</label>
-              <div class="placeholder-row">
-                ${["{{anrede}}", "{{vorname}}", "{{nachname}}", "{{alter}}", "{{geburtstag}}", "{{soko}}", "{{absender}}"].map(token => `<button type="button" data-action="insert-token" data-token="${escapeHtml(token)}">${escapeHtml(token)}</button>`).join("")}
+        <div class="vertical-splitter" data-splitter="template" role="separator" aria-orientation="vertical" aria-label="Vorlagenliste und Editor aufteilen" aria-valuemin="20" aria-valuemax="80" aria-valuenow="${state.templateSplit}" tabindex="0"></div>
+        <section class="panel template-panel">
+          <div class="template-panel-scroll">
+            <h2>Editor</h2>
+            <form id="template-form" class="form-grid">
+              <input type="hidden" name="id" value="${escapeHtml(template.id)}">
+              ${field("name", "Vorlagenname", template.name)}
+              ${selectField("occasion", "Anlass", template.occasion, occasionOptions())}
+              ${selectField("format", "Format", template.format, formatOptions())}
+              ${selectField("senderId", "Standard-Absender", template.senderId, senderOptions())}
+              ${field("subject", "Betreff/Titel", template.subject, "text", "full")}
+              <div class="field full">
+                <label>Platzhalter</label>
+                <div class="placeholder-row">
+                  ${["{{anrede}}", "{{vorname}}", "{{nachname}}", "{{alter}}", "{{geburtstag}}", "{{soko}}", "{{absender}}"].map(token => `<button type="button" data-action="insert-token" data-token="${escapeHtml(token)}">${escapeHtml(token)}</button>`).join("")}
+                </div>
               </div>
+              ${textField("body", "Text", template.body, "full")}
+              <div class="field full">
+                <button type="button" class="primary-button" data-action="save-template">Vorlage speichern</button>
+                <button type="button" class="ghost-button danger-button" data-action="delete-template">Vorlage löschen</button>
+              </div>
+            </form>
+            <div style="margin-top:16px">
+              <h2>Vorschau</h2>
+              ${documentPreview(template, citizen, sender)}
             </div>
-            ${textField("body", "Text", template.body, "full")}
-            <div class="field full">
-              <button type="button" class="primary-button" data-action="save-template">Vorlage speichern</button>
-              <button type="button" class="ghost-button danger-button" data-action="delete-template">Vorlage löschen</button>
-            </div>
-          </form>
-          <div style="margin-top:16px">
-            <h2>Vorschau</h2>
-            ${documentPreview(template, citizen, sender)}
           </div>
         </section>
       </div>

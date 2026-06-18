@@ -523,6 +523,28 @@ h3 {
   min-height: 480px;
 }
 
+.template-split {
+  display: grid;
+  grid-template-columns: minmax(260px, var(--template-left, 40%)) 12px minmax(400px, 1fr);
+  align-items: stretch;
+  height: min(760px, calc(100vh - 190px));
+  min-height: 560px;
+}
+
+.template-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.template-panel-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  margin-top: 12px;
+}
+
 .region-panel {
   display: flex;
   flex-direction: column;
@@ -2195,6 +2217,7 @@ tbody tr.selected {
   .region-split,
   .quittung-split,
   .citizen-split,
+  .template-split,
   .toolbar,
   .form-grid,
   .form-grid.three,
@@ -2217,7 +2240,8 @@ tbody tr.selected {
 
   .region-split,
   .quittung-split,
-  .citizen-split {
+  .citizen-split,
+  .template-split {
     height: auto;
     min-height: 0;
   }

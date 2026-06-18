@@ -652,7 +652,6 @@ const SOKO_STRASSENVERZEICHNIS = Object.freeze({
   "Habichtstr.": [{ plz: "13505", soko: "16", ortsteil: "Konradshöhe" }],
   "Hademarscher Weg": [{ plz: "13503", soko: "19", ortsteil: "Heiligensee" }],
   "Haflingerpfad": [{ plz: "13465", soko: "38", ortsteil: "Frohnau" }],
-  "Hafflingerpfad": [{ plz: "13465", soko: "38", ortsteil: "Frohnau" }],
   "Hainbuchenstr.": [{ plz: "13465", soko: "37", ortsteil: "Frohnau" }],
   "Halalistr.": [{ plz: "13469", soko: "24", ortsteil: "Waidmannslust" }],
   "Hallichpromenade": [{ plz: "13437", soko: "22", ortsteil: "Wittenau" }],
