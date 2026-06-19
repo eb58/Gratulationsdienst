@@ -102,8 +102,8 @@ export const confirmDialog = () => state.dialog ? `
         <h2 id="dialog-title">${escapeHtml(state.dialog.title)}</h2>
         <p>${escapeHtml(state.dialog.message)}</p>
         <div class="dialog-actions">
-          <button type="button" class="ghost-button" data-action="close-dialog" data-autofocus>Abbrechen</button>
-          <button type="button" class="danger-button" data-action="${escapeHtml(state.dialog.confirmAction)}">${escapeHtml(state.dialog.confirmLabel)}</button>
+          <button type="button" class="ghost-button" data-action="close-dialog" data-autofocus>${escapeHtml(state.dialog.cancelLabel || "Abbrechen")}</button>
+          <button type="button" class="${state.dialog.destructive === false ? "primary-button" : "danger-button"}" data-action="${escapeHtml(state.dialog.confirmAction)}">${escapeHtml(state.dialog.confirmLabel)}</button>
         </div>
       </div>
     </section>

@@ -79,7 +79,7 @@ export const selectedSender = () => byId(state.data.senders, state.selectedSende
 export const selectedMember = () => byId(state.data.sokoMembers, state.selectedMemberId) || state.data.sokoMembers[0];
 export const selectedStreet = () => byId(state.data.streets, state.selectedStreetId) || state.data.streets[0];
 
-export const filteredCitizens = () => activeCitizens().filter(citizen => {
+export const filteredCitizens = () => state.data.citizens.filter(citizen => {
   const haystack = normalize([citizen.firstName, citizen.lastName, citizen.street, citizen.district, citizen.wish].join(" "));
   const age = calculateAge(citizen.birthDate);
   const group = groupForCitizen(citizen);

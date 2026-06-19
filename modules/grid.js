@@ -85,7 +85,10 @@ const importLogSoko = item => item.groupId || item.soko || String(item.message |
 const importLogCitizen = item => {
   const name = normalize(item.name);
   const address = normalize(item.address || formatStreetAddress(item));
-  const byName = state.data.citizens.filter(citizen => normalize(`${citizen.firstName} ${citizen.lastName}`) === name);
+  const byName = state.data.citizens.filter(citizen => [
+    normalize(`${citizen.firstName} ${citizen.lastName}`),
+    normalize(`${citizen.lastName}, ${citizen.firstName}`)
+  ].includes(name));
   return address
     ? byName.find(citizen => normalize(formatStreetAddress(citizen)) === address)
     : byName.length === 1 ? byName[0] : null;
@@ -97,6 +100,9 @@ const importLogRow = (item, index) => {
   return {
     ...item,
     id: `LOG-${index}`,
+    name: item.lastName || item.firstName
+      ? [item.lastName, item.firstName].filter(Boolean).join(", ")
+      : citizen ? `${citizen.lastName}, ${citizen.firstName}` : item.name,
     address,
     birthDate,
     age: item.age || (birthDate ? calculateAge(birthDate) : "")

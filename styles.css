@@ -448,6 +448,11 @@ h3 {
   flex-direction: column;
 }
 
+.view-import {
+  display: flex;
+  flex-direction: column;
+}
+
 
 .grid {
   display: grid;
@@ -473,6 +478,30 @@ h3 {
   display: flex;
   flex-direction: column;
   gap: 24px;
+}
+
+.import-view-stack,
+.import-log-content {
+  flex: 1;
+  min-height: 0;
+}
+
+.import-log-panel,
+.import-log-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.import-log-panel {
+  flex: 1;
+  min-height: 360px;
+}
+
+.import-log-content .ag-grid-host,
+.import-log-content .empty-state {
+  flex: 1;
+  height: 100%;
+  min-height: 320px;
 }
 
 .citizen-split {

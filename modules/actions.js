@@ -120,8 +120,18 @@ const showCitizenGridRow = row => {
   if (pageSize) api.paginationGoToPage?.(Math.floor(row.rowIndex / pageSize));
   requestAnimationFrame(() => api.ensureIndexVisible?.(row.rowIndex, "middle"));
 };
-const testFirstNames = ["Anna", "Bernd", "Clara", "Dieter", "Eva", "Frank", "Gisela", "Heinz", "Inge", "Jürgen", "Karin", "Lothar", "Monika", "Norbert", "Petra", "Julia", "Maria", "Georg", "Norbert", "Joachim", "Evelyn", "Hans-Peter"];
-const testLastNames = [ "Schulz", "Berger", "Klein", "Neumann", "Richter", "Wolf", "Krüger", "Hoffmann", "Werner", "Schneider", "Lehmann", "Koch", "Fischer", "Weber", "Peverali", "Brandt", "Piotrowski"];
+const testFirstNames = [
+  ["Frau", "Anna"], ["Herr", "Bernd"], ["Frau", "Clara"], ["Herr", "Dieter"], ["Frau", "Eva"],
+  ["Herr", "Frank"], ["Frau", "Gisela"], ["Herr", "Heinz"], ["Frau", "Inge"], ["Herr", "Jürgen"],
+  ["Frau", "Karin"], ["Herr", "Lothar"], ["Frau", "Monika"], ["Herr", "Norbert"], ["Frau", "Petra"],
+  ["Frau", "Julia"], ["Frau", "Maria"], ["Herr", "Georg"], ["Herr", "Joachim"], ["Frau", "Evelyn"],
+  ["Herr", "Hans-Peter"], ["Frau", "Sabine"], ["Herr", "Wolfgang"], ["Frau", "Renate"], ["Herr", "Klaus"],
+  ["Frau", "Ursula"], ["Herr", "Manfred"], ["Frau", "Brigitte"], ["Herr", "Peter"], ["Frau", "Helga"],
+  ["Herr", "Rainer"], ["Frau", "Christine"], ["Herr", "Günter"], ["Frau", "Barbara"], ["Herr", "Horst"],
+  ["Frau", "Waltraud"], ["Herr", "Werner"], ["Frau", "Margot"], ["Herr", "Uwe"], ["Frau", "Erika"]
+];
+const testLastNames = ["Schulz", "Berger", "Klein", "Neumann", "Richter", "Wolf", "Krüger", "Hoffmann", "Werner", "Schneider", "Lehmann", "Koch", "Fischer", "Weber", "Peverali", "Brandt", "Piotrowski", "Meyer", "Wagner", "Becker", "Schmidt", "Bauer", "Schäfer", "Krause", "Hartmann", "Lange", "Schröder", "Zimmermann", "König", "Walter", "Peters", "Möller", "Jung", "Hahn", "Vogel", "Keller", "Günther", "Frank", "Roth", "Lorenz"];
+const shuffledTestValues = values => values.map(value => ({ value, order: Math.random() })).sort((a, b) => a.order - b.order).map(item => item.value);
 const numberFrom = value => Number.parseInt(String(value ?? "").match(/\d+/)?.[0] || "", 10);
 const testAssignments = () => state.data.streets.flatMap(street => (street.rules || [])
   .filter(rule => rule.soko)
@@ -136,12 +146,10 @@ const testBirthDate = index => {
   const day = String((index % 28) + 1).padStart(2, "0");
   return `${year - age}-${month}-${day}`;
 };
-const testCsvRow = (index, nameOffset, assignment) => {
-  const nameIndex = nameOffset + index;
-  return {
-  Anrede: index % 2 ? "Herr" : "Frau",
-  Vorname: testFirstNames[nameIndex % testFirstNames.length],
-  Nachname: testLastNames[Math.floor(nameIndex / testFirstNames.length) % testLastNames.length],
+const testCsvRow = (index, name, assignment) => ({
+  Anrede: name.salutation,
+  Vorname: name.firstName,
+  Nachname: name.lastName,
   Strasse: assignment.street.name,
   Hausnummer: testHouseNo(assignment.rule, index),
   PLZ: assignment.rule.plz || "13437",
@@ -149,8 +157,7 @@ const testCsvRow = (index, nameOffset, assignment) => {
   Geburtsdatum: testBirthDate(index),
   Telefon: `030 9000${String(index + 100).padStart(4, "0")}`,
   Email: ""
-  };
-};
+});
 const testCsvText = rows => {
   const headers = ["Anrede", "Vorname", "Nachname", "Strasse", "Hausnummer", "PLZ", "Ortsteil", "Geburtsdatum", "Telefon", "Email"];
   return [headers, ...rows.map(row => headers.map(header => row[header] || ""))]
@@ -168,7 +175,9 @@ const importMappedRows = mapped => {
     const group = streetAssignment(row)?.groupId;
     const log = {
       time: new Date().toLocaleString("de-DE"),
-      name: `${row.firstName || ""} ${row.lastName || ""}`.trim(),
+      firstName: row.firstName || "",
+      lastName: row.lastName || "",
+      name: [row.lastName, row.firstName].filter(Boolean).join(", "),
       address: formatStreetAddress(row),
       birthDate: row.birthDate || "",
       age: row.age || (row.birthDate ? calculateAge(row.birthDate) : ""),
@@ -354,7 +363,8 @@ export const actions = {
     const currentRows = currentCitizenGridRows();
     const currentIds = currentRows.map(row => row.id);
     const currentIndex = currentIds.indexOf(values.id);
-    state.data.citizens = updateItem(state.data.citizens, values.id, { ...values, updatedAt: todayIso(), status: "geprüft" });
+    const status = isPrintedCitizen(byId(state.data.citizens, values.id)) ? "gedruckt" : "geprüft";
+    state.data.citizens = updateItem(state.data.citizens, values.id, { ...values, updatedAt: todayIso(), status });
     const nextCitizenId = currentIds[currentIndex + 1] || "";
     const reachedEnd = !nextCitizenId || currentIndex < 0;
     state.selectedCitizenId = nextCitizenId || values.id;
@@ -578,8 +588,9 @@ export const actions = {
     if (state.auth.user?.role !== "admin") { toast("Nur Admins können Testdaten erzeugen."); return; }
     const assignments = testAssignments();
     if (!assignments.length) { toast("Keine SOKO-Zuordnungen für Testdaten gefunden."); return; }
-    const nameOffset = state.data.citizens.length + state.data.importLog.length;
-    const csv = testCsvText(Array.from({ length: 30 }, (_, index) => testCsvRow(index, nameOffset, assignments[index % assignments.length])));
+    const firstNames = shuffledTestValues(testFirstNames);
+    const lastNames = shuffledTestValues(testLastNames);
+    const csv = testCsvText(Array.from({ length: 30 }, (_, index) => testCsvRow(index, { salutation: firstNames[index][0], firstName: firstNames[index][1], lastName: lastNames[index] }, assignments[index % assignments.length])));
     state.importText = csv;
     importMappedRows(parseCsv(csv).map(mapImportRow));
   },

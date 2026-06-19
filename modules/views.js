@@ -412,6 +412,9 @@ export const views = {
         <select name="age" data-filter>
           ${[["alle", "Alle Alter"], ["85", "85 Jahre"], ["90plus", "90+"], ["100", "100+"]].map(option => `<option value="${option[0]}" ${state.filters.age === option[0] ? "selected" : ""}>${option[1]}</option>`).join("")}
         </select>
+        <select name="status" data-filter>
+          ${[["alle", "Alle Status"], ["offen", "offen"], ["geprüft", "geprüft"], ["gedruckt", "gedruckt"]].map(option => `<option value="${option[0]}" ${state.filters.status === option[0] ? "selected" : ""}>${option[1]}</option>`).join("")}
+        </select>
       </div>
       <div class="${citizen ? "citizen-split" : ""}" ${citizen ? `style="--citizen-left:${state.citizenSplit}%"` : ""}>
         <section class="panel citizen-panel">
@@ -782,7 +785,7 @@ export const views = {
   `,
 
   import: () => `
-    <div class="stack">
+    <div class="stack import-view-stack">
       <section class="panel">
         <h2>CSV-Import</h2>
         <div class="file-action-row import-action-row">
@@ -803,9 +806,11 @@ export const views = {
           <input id="import-file" class="file-input" type="file" accept=".csv,text/csv">
         </div>
       </section>
-      <section class="panel">
+      <section class="panel import-log-panel">
         <h2>Import-Protokoll</h2>
-        ${state.data.importLog.length ? gridHost("importLog", 500) : `<div class="empty-state">Noch kein Import-Protokoll</div>`}
+        <div class="import-log-content">
+          ${state.data.importLog.length ? gridHost("importLog") : `<div class="empty-state">Noch kein Import-Protokoll</div>`}
+        </div>
         <div class="button-row" style="margin-top:12px">
           <button type="button" class="primary-button" data-action="soko-print">SOKO-Druck</button>
         </div>

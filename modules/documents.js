@@ -225,7 +225,7 @@ export const printCurrentRun = () => {
     URL.revokeObjectURL(url);
     w.addEventListener("afterprint", () => {
       w.close();
-      state.dialog = { type: "confirm-print", title: "Druck abgeschlossen?", message: "Wurden alle Dokumente erfolgreich gedruckt?", confirmLabel: "Als gedruckt markieren", confirmAction: "confirm-complete-print" };
+      state.dialog = { type: "confirm-print", title: "Druck abgeschlossen?", message: "Wurden alle Dokumente erfolgreich gedruckt?", cancelLabel: "Nein", confirmLabel: "Ja", confirmAction: "confirm-complete-print", destructive: false };
       render();
     }, { once: true });
     const imgs = [...w.document.querySelectorAll("img")];
