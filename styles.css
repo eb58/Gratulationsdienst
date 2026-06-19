@@ -772,6 +772,7 @@ body.is-resizing {
 .field {
   display: grid;
   gap: 6px;
+  align-content: start;
 }
 
 .field.full {
