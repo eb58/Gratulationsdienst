@@ -9,6 +9,13 @@ const PASSWORD_RESET_TTL_SECONDS = 900;
 const PASSWORD_RESET_RATE_LIMIT_SECONDS = 3600;
 const PASSWORD_RESET_RATE_LIMIT_MAX = 5;
 const MFA_ISSUER = 'Gratulationsdienst Reinickendorf';
+const RECEIPT_SETTINGS_NAME = 'receipt';
+const DEFAULT_RECEIPT_SETTINGS = [
+    'quittungBetrag' => '8,50',
+    'quittungTelefon' => '90294 4055',
+    'quittungKapitel' => '3930',
+    'quittungTitel' => '68154',
+];
 
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
@@ -193,6 +200,11 @@ function dispatch(array $db): void
         return;
     }
 
+    if (($route[0] ?? '') === 'settings') {
+        handleSettings($db, $method, array_slice($route, 1), $user);
+        return;
+    }
+
     $collection = $route[0] ?? '';
     $id = $route[1] ?? null;
     if (!in_array($collection, COLLECTIONS, true)) {
@@ -263,6 +275,25 @@ function handleCollection(array $db, string $method, string $collection, ?string
 
     if ($method === 'DELETE' && $id !== null) {
         respond(['deleted' => deleteItem($db, $collection, $id)]);
+    }
+
+    respond(['error' => 'Methode nicht erlaubt.'], 405);
+}
+
+function handleSettings(array $db, string $method, array $route, array $user): void
+{
+    $name = $route[0] ?? '';
+    if ($name !== RECEIPT_SETTINGS_NAME) respond(['error' => 'Unbekannte Einstellung.'], 404);
+
+    if ($method === 'GET') {
+        respond(readReceiptSettings($db));
+    }
+
+    if ($method === 'PUT') {
+        requireAdmin($user);
+        $settings = receiptSettingsFromPayload(requireObject(readJson()));
+        saveReceiptSettings($db, $settings);
+        respond(readReceiptSettings($db));
     }
 
     respond(['error' => 'Methode nicht erlaubt.'], 405);
@@ -523,6 +554,32 @@ function readAll(array $db): array
         ...$data,
         $collection => readCollection($db, $collection),
     ], []);
+}
+
+function receiptSettingsFromPayload(array $payload): array
+{
+    return array_reduce(array_keys(DEFAULT_RECEIPT_SETTINGS), static fn ($settings, $key) => [
+        ...$settings,
+        $key => trim((string)($payload[$key] ?? DEFAULT_RECEIPT_SETTINGS[$key])),
+    ], []);
+}
+
+function readReceiptSettings(array $db): array
+{
+    $row = fetchOne($db, 'SELECT value FROM gd_settings WHERE name = ?', [RECEIPT_SETTINGS_NAME]);
+    if (!$row) return DEFAULT_RECEIPT_SETTINGS;
+    $payload = json_decode((string)($row['value'] ?? ''), true);
+    return receiptSettingsFromPayload(is_array($payload) ? $payload : []);
+}
+
+function saveReceiptSettings(array $db, array $settings): void
+{
+    $payload = json_encode(receiptSettingsFromPayload($settings), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+    if ($db['driver'] === 'mysqli' || $db['driver'] === 'mysql') {
+        executeStatement($db, 'INSERT INTO gd_settings (name, value) VALUES (?, ?) ON DUPLICATE KEY UPDATE value = VALUES(value)', [RECEIPT_SETTINGS_NAME, $payload]);
+        return;
+    }
+    executeStatement($db, 'INSERT INTO gd_settings (name, value) VALUES (?, ?) ON CONFLICT(name) DO UPDATE SET value = excluded.value', [RECEIPT_SETTINGS_NAME, $payload]);
 }
 
 function readCollection(array $db, string $collection): array
@@ -1086,5 +1143,7 @@ function routes(): array
         'DELETE /{collection}/{id}',
         'GET /data',
         'PUT /data',
+        'GET /settings/receipt',
+        'PUT /settings/receipt',
     ];
 }

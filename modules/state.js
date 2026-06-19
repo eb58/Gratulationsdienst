@@ -17,9 +17,17 @@ const defaultQuittungSettings = {
   quittungKapitel: "3930",
   quittungTitel: "68154"
 };
+const quittungSettingKeys = Object.keys(defaultQuittungSettings);
+const normalizeQuittungSettings = settings => Object.fromEntries(quittungSettingKeys.map(key => [key, String(settings?.[key] ?? defaultQuittungSettings[key])]));
+const applyQuittungSettings = settings => {
+  const normalized = normalizeQuittungSettings(settings);
+  Object.assign(state, normalized);
+  localStorage.setItem(QUITTUNG_SETTINGS_KEY, JSON.stringify(normalized));
+  return normalized;
+};
 const storedQuittungSettings = () => {
   try {
-    return { ...defaultQuittungSettings, ...JSON.parse(localStorage.getItem(QUITTUNG_SETTINGS_KEY)) };
+    return normalizeQuittungSettings(JSON.parse(localStorage.getItem(QUITTUNG_SETTINGS_KEY)));
   } catch {
     return defaultQuittungSettings;
   }
@@ -175,6 +183,17 @@ export const saveBackendCollection = (collection, items) => apiRequest(`/${colle
   method: "PUT",
   body: JSON.stringify(items)
 });
+export const saveQuittungSettings = settings => {
+  const normalized = normalizeQuittungSettings(settings);
+  if (location.protocol === "file:" || !state.auth.token) return Promise.resolve(applyQuittungSettings(normalized));
+  return apiRequest("/settings/receipt", {
+    method: "PUT",
+    body: JSON.stringify(normalized)
+  }).then(applyQuittungSettings);
+};
+export const loadBackendQuittungSettings = () => location.protocol === "file:" || !state.auth.user || !state.auth.token
+  ? Promise.resolve(null)
+  : apiRequest("/settings/receipt").then(applyQuittungSettings);
 
 export const saveCollectionData = data => location.protocol === "file:"
   ? Promise.resolve()
@@ -190,11 +209,18 @@ export const saveData = () => {
 export const loadCollectionData = () => {
   if (location.protocol === "file:") return;
   if (!state.auth.user || !state.auth.token) return;
-  Promise.all(apiCollections.map(loadBackendCollection))
-    .then(entries => {
+  Promise.all([
+    Promise.all(apiCollections.map(loadBackendCollection)),
+    loadBackendQuittungSettings().catch(error => {
+      console.warn("Quittungs-Einstellungen konnten nicht geladen werden.", error);
+      return null;
+    })
+  ])
+    .then(([entries]) => {
       const data = Object.fromEntries(entries);
       if (!hasBackendData(data)) {
         saveCollectionData(state.data);
+        render();
         return;
       }
       state.data = normalizeLoadedData(data);

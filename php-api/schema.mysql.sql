@@ -158,6 +158,12 @@ CREATE TABLE IF NOT EXISTS gd_auth_rate_limits (
     INDEX idx_gd_auth_rate_limits_last (last_attempt_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS gd_settings (
+    name VARCHAR(64) NOT NULL PRIMARY KEY,
+    value JSON NULL,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS gd_api_meta (
     name VARCHAR(64) NOT NULL PRIMARY KEY,
     value VARCHAR(255) NOT NULL,

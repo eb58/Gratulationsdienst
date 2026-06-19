@@ -42,6 +42,7 @@ Danach:
 - `PUT http://127.0.0.1:8080/php-api/index.php/{collection}` ersetzt eine komplette Collection-Liste
 - `POST http://127.0.0.1:8080/php-api/index.php/{collection}` legt einen Datensatz an
 - `GET/PUT/DELETE http://127.0.0.1:8080/php-api/index.php/{collection}/{id}`
+- `GET/PUT http://127.0.0.1:8080/php-api/index.php/settings/receipt` liest bzw. speichert die Quittungs-Stammdaten
 
 Unterstützte Collections: `citizens`, `sokoGroups`, `sokoMembers`, `streets`, `senders`, `templates`, `importLog`.
 
@@ -54,6 +55,7 @@ Das Frontend nutzt die Collection-Endpunkte direkt. `/data` bleibt als Kompatibi
 - `gd_senders`
 - `gd_templates`
 - `gd_import_log`
+- `gd_settings`
 - `gd_api_meta`
 
 Eine vorhandene alte Tabelle `gd_data_items` wird beim ersten Start einmalig in die neuen Tabellen migriert, solange die neuen Tabellen noch leer sind.

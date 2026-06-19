@@ -1,6 +1,6 @@
-import { $, QUITTUNG_SETTINGS_KEY, todayIso, isValidEmail, isValidIban, formatIban, updateItem, nextId, csvEscape, formatStreetAddress, downloadText, calculateAge, toast, byId, normalize } from './utils.js';
+import { $, todayIso, isValidEmail, isValidIban, formatIban, updateItem, nextId, csvEscape, formatStreetAddress, downloadText, calculateAge, toast, byId, normalize } from './utils.js';
 import { normalizeStreetRules, streetDistrictSummary, streetGroupSummary, normalizeStreetDistrict } from './domain.js';
-import { state, saveData, apiRequest, setAuthSession, clearAuthSession, loadCollectionData } from './state.js';
+import { state, saveData, saveQuittungSettings, apiRequest, setAuthSession, clearAuthSession, loadCollectionData } from './state.js';
 import { streetAssignment, filteredCitizens, documentCitizens, duplicateKey, isPrintedCitizen, selectedTemplate, selectedSender, selectedMember, activeCitizens, groupForCitizen, isReceiptGroupReady, receiptCitizens, receiptCitizensForReadyGroups, ruleMatchesHouseNo } from './assignment.js';
 import { printCurrentRun, completePrintRun, renderSokoForm, renderSokoQuittung } from './documents.js';
 import { parseCsv, mapImportRow } from './import.js';
@@ -555,10 +555,12 @@ export const actions = {
   "toggle-print-background": e => { state.printBackground = e.target.checked; },
   "save-quittung-settings": () => {
     const settings = quittungSettingsFromForm();
-    Object.assign(state, settings);
-    localStorage.setItem(QUITTUNG_SETTINGS_KEY, JSON.stringify(settings));
-    render();
-    toast("Quittungs-Einstellungen gespeichert.");
+    saveQuittungSettings(settings)
+      .then(() => {
+        render();
+        toast("Quittungs-Einstellungen gespeichert.");
+      })
+      .catch(error => toast(error.message || "Quittungs-Einstellungen konnten nicht gespeichert werden."));
   },
   "print-quittung": e => {
     const groupId = e.target.closest("[data-group-id]")?.dataset.groupId;
