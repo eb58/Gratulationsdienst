@@ -140,6 +140,8 @@ function collectionConfig(string $collection): array
                 'senderId' => ['sender_id', 'string'],
                 'subject' => ['subject', 'string'],
                 'body' => ['body', 'string'],
+                'backgroundImage' => ['background_image', 'string'],
+                'backBackgroundImage' => ['back_background_image', 'string'],
                 'updatedAt' => ['updated_at_date', 'date'],
             ],
         ],
@@ -546,6 +548,8 @@ function initSchema(array $db): void
     ensureColumn($db, 'gd_streets', 'area', "ALTER TABLE gd_streets ADD COLUMN area VARCHAR(120) NOT NULL DEFAULT '' AFTER rules");
     ensureColumn($db, 'gd_streets', 'group_id', "ALTER TABLE gd_streets ADD COLUMN group_id VARCHAR(32) NOT NULL DEFAULT '' AFTER area");
     ensureIndex($db, 'gd_streets', 'idx_gd_streets_group', 'ALTER TABLE gd_streets ADD INDEX idx_gd_streets_group (group_id)');
+    ensureColumn($db, 'gd_templates', 'background_image', 'ALTER TABLE gd_templates ADD COLUMN background_image LONGTEXT NULL AFTER body');
+    ensureColumn($db, 'gd_templates', 'back_background_image', 'ALTER TABLE gd_templates ADD COLUMN back_background_image LONGTEXT NULL AFTER background_image');
 }
 
 function readAll(array $db): array

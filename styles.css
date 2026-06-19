@@ -443,6 +443,11 @@ h3 {
   flex-direction: column;
 }
 
+.view-templates {
+  display: flex;
+  flex-direction: column;
+}
+
 
 .grid {
   display: grid;
@@ -527,8 +532,8 @@ h3 {
   display: grid;
   grid-template-columns: minmax(260px, var(--template-left, 40%)) 12px minmax(400px, 1fr);
   align-items: stretch;
-  height: min(760px, calc(100vh - 190px));
-  min-height: 560px;
+  flex: 1;
+  min-height: 0;
 }
 
 .template-panel {
@@ -926,6 +931,10 @@ input[type="checkbox"].toggle:checked::after {
 .file-action-row .ghost-button {
   min-height: 48px;
   white-space: nowrap;
+}
+
+.template-background-field {
+  min-width: 0;
 }
 
 .import-action-row {
@@ -1485,11 +1494,33 @@ tbody tr.selected {
   display: grid;
   justify-items: center;
   justify-content: center;
+  width: 100%;
   max-height: min(760px, calc(100vh - 150px));
   overflow: auto;
 }
 
+.document-preview-stack {
+  display: grid;
+  gap: 18px;
+}
+
+.document-preview-side {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.document-preview-side h3 {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
 .document-sheet {
+  position: relative;
   width: min(100%, 620px);
   aspect-ratio: 210 / 297;
   min-height: 0;
@@ -1499,6 +1530,21 @@ tbody tr.selected {
   background:
     linear-gradient(90deg, rgba(15, 93, 88, 0.08), rgba(15, 93, 88, 0) 28%),
     #fff;
+}
+
+.template-background-image {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+.document-content {
+  position: relative;
+  z-index: 1;
 }
 
 .document-preview.format-a4-landscape .document-sheet {
@@ -1551,11 +1597,16 @@ tbody tr.selected {
 }
 
 .document-preview.format-square .document-sheet {
-  position: relative;
-  width: min(100%, 560px);
+  width: 560px;
+  max-width: 100%;
   aspect-ratio: 1;
   padding: 0;
-  background: #fff url("/gratulationsdienst/assets/gratulationskarte-reinickendorf-210.jpg") center / 100% 100% no-repeat;
+  background: #fff;
+}
+
+.document-preview.format-square {
+  max-height: none;
+  overflow: visible;
 }
 
 .square-card-preview-image {
@@ -1632,12 +1683,35 @@ tbody tr.selected {
   font-size: 17px;
 }
 
+.document-preview.square-card-back .document-sheet {
+  width: 560px;
+  max-width: 100%;
+  aspect-ratio: 1;
+  padding: 0;
+  background: #fff;
+}
+
+.square-back-address {
+  position: absolute;
+  top: 80%;
+  left: 9.5%;
+  z-index: 1;
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.square-back-meta {
+  font-size: 11px !important;
+  margin-top: 4px !important;
+}
+
 .document-preview.birthday-card .document-sheet {
   position: relative;
   overflow: hidden;
   border: 1px solid #d9c8a6;
   border-radius: 8px;
-  background: #fff url("/gratulationsdienst/assets/gratulationskarte-reinickendorf-210.jpg") center / 100% 100% no-repeat;
+  background: #fff;
   box-shadow: 0 16px 34px rgba(32, 36, 38, 0.12);
 }
 
@@ -1647,6 +1721,7 @@ tbody tr.selected {
 
 .document-preview.birthday-card .card-age-mark {
   position: absolute;
+  z-index: 1;
   right: 18px;
   bottom: 12px;
   color: rgba(15, 93, 88, 0.08);
@@ -1693,6 +1768,10 @@ tbody tr.selected {
 
 .document-preview.birthday-card .signature {
   color: var(--teal);
+}
+
+.document-preview .document-sheet.has-template-background {
+  background: #fff;
 }
 
 .document-preview.format-a5-landscape.birthday-card .document-sheet {
@@ -2406,12 +2485,28 @@ tbody tr.selected {
   }
 
   .print-page .document-sheet {
+    position: relative;
     width: 210mm;
     height: 297mm;
+    overflow: hidden;
     padding: 14mm;
     border: 0;
     box-shadow: none;
     background: #fff;
+  }
+
+  .print-page .template-background-image {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .print-page .document-content {
+    position: relative;
+    z-index: 1;
   }
 
   .print-page.format-a5 .document-sheet {

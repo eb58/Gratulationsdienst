@@ -9,8 +9,30 @@ import { renderCitizenDetail } from './views.js';
 import { cancelDirtyFormLeave, confirmDirtyFormLeave } from './dirtyForms.js';
 
 const formValues = selector => Object.fromEntries(new FormData($(selector)).entries());
+const TEMPLATE_BACKGROUND_MAX_BYTES = 1_500_000;
 const quittungSettingKeys = ["quittungBetrag", "quittungTelefon", "quittungKapitel", "quittungTitel"];
 const quittungSettingsFromForm = () => Object.fromEntries(quittungSettingKeys.map(key => [key, $(`[data-bind="${key}"]`)?.value ?? state[key]]));
+const readFileAsDataUrl = file => new Promise((resolve, reject) => {
+  const reader = new FileReader();
+  reader.addEventListener("load", () => resolve(String(reader.result || "")), { once: true });
+  reader.addEventListener("error", () => reject(reader.error || new Error("Datei konnte nicht gelesen werden.")), { once: true });
+  reader.readAsDataURL(file);
+});
+const isTemplateBackgroundFile = file => String(file?.type || "").startsWith("image/") || /\.(png|jpe?g|webp|svg)$/i.test(file?.name || "");
+const templateBackgroundFields = new Set(["backgroundImage", "backBackgroundImage"]);
+const templateBackgroundField = event => {
+  const field = event.target.closest?.("[data-background-field]")?.dataset.backgroundField || event.target.dataset.backgroundField;
+  return templateBackgroundFields.has(field) ? field : "backgroundImage";
+};
+const templateBackgroundSide = field => field === "backBackgroundImage" ? "Rückseite" : "Vorderseite";
+const templateFormValues = () => $("#template-form") ? { ...selectedTemplate(), ...formValues("#template-form") } : selectedTemplate();
+const saveTemplatePatch = patch => {
+  const values = { ...templateFormValues(), ...patch, updatedAt: todayIso() };
+  state.data.templates = updateItem(state.data.templates, values.id, values);
+  state.selectedTemplateId = values.id;
+  saveData();
+  render();
+};
 const authDone = session => {
   setAuthSession(session);
   render();
@@ -453,19 +475,42 @@ export const actions = {
   "new-template": () => {
     const id = nextId("T", state.data.templates);
     const template = { id, name: "Neue Vorlage", occasion: "Geburtstag", format: "DIN A4 Brief", senderId: selectedSender().id, subject: "Herzliche Glückwünsche zum {{alter}}. Geburtstag", body: "{{anrede}} {{nachname}},\n\nzu Ihrem {{alter}}. Geburtstag gratulieren wir Ihnen sehr herzlich.\n\nMit freundlichen Grüßen\n{{absender}}", updatedAt: todayIso() };
-    state.data.templates = [...state.data.templates, template];
+    state.data.templates = [...state.data.templates, { ...template, backgroundImage: "", backBackgroundImage: "" }];
     state.selectedTemplateId = id;
     saveData();
     render();
     toast("Neue Vorlage angelegt.");
   },
   "save-template": () => {
-    const values = formValues("#template-form");
-    state.data.templates = updateItem(state.data.templates, values.id, { ...values, updatedAt: todayIso() });
-    state.selectedTemplateId = values.id;
-    saveData();
-    render();
+    saveTemplatePatch({});
     toast("Vorlage gespeichert.");
+  },
+  "upload-template-background": event => {
+    const file = event.target.files?.[0];
+    const field = templateBackgroundField(event);
+    const side = templateBackgroundSide(field);
+    if (!file) return;
+    if (!isTemplateBackgroundFile(file)) {
+      event.target.value = "";
+      toast("Bitte eine Bilddatei auswählen.");
+      return;
+    }
+    if (file.size > TEMPLATE_BACKGROUND_MAX_BYTES) {
+      event.target.value = "";
+      toast("Bitte ein Bild bis 1,5 MB auswählen.");
+      return;
+    }
+    readFileAsDataUrl(file)
+      .then(backgroundImage => {
+        saveTemplatePatch({ [field]: backgroundImage });
+        toast(`Hintergrundbild ${side} gespeichert.`);
+      })
+      .catch(() => toast("Hintergrundbild konnte nicht gelesen werden."));
+  },
+  "remove-template-background": event => {
+    const field = templateBackgroundField(event);
+    saveTemplatePatch({ [field]: "" });
+    toast(`Hintergrundbild ${templateBackgroundSide(field)} entfernt.`);
   },
   "delete-template": () => {
     const template = selectedTemplate();

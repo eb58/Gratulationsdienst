@@ -43,7 +43,13 @@ export const mergeById = (existing, defaults, keep = () => true) => {
 
 export const normalizeTemplate = template => {
   const fallback = defaultData.templates.find(t => t.id === template.id) || {};
-  return { ...fallback, ...template, format: template.format || fallback.format || "DIN A4 Brief" };
+  return {
+    ...fallback,
+    ...template,
+    format: template.format || fallback.format || "DIN A4 Brief",
+    backgroundImage: template.backgroundImage || fallback.backgroundImage || "",
+    backBackgroundImage: template.backBackgroundImage || fallback.backBackgroundImage || ""
+  };
 };
 
 export const normalizeTemplates = templates => [

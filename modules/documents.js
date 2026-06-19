@@ -37,6 +37,23 @@ export const documentDesignClass = template => {
   if (format.size === "square") return "square-greeting-card";
   return format.size === "a5" && normalize(template.occasion) === "geburtstag" ? "birthday-card" : "";
 };
+export const templateBackgroundImage = template => String(template.backgroundImage || "").trim();
+export const templateBackBackgroundImage = template => String(template.backBackgroundImage || "").trim();
+const templateBackgroundLayer = backgroundImage => {
+  return backgroundImage ? `<img class="template-background-image" src="${escapeHtml(backgroundImage)}" alt="" aria-hidden="true">` : "";
+};
+const squareBackAddress = citizen => {
+  const sokoLabel = normalize(citizen.wish || "").startsWith("besuch")
+    ? (groupForCitizen(citizen)?.id?.replace("SOKO ", "") || "")
+    : "P";
+  const birthDay = citizen.birthDate?.slice(8, 10) || "";
+  return `
+    <div>${escapeHtml(citizen.salutation || "")} ${escapeHtml(citizen.firstName || "")} ${escapeHtml(citizen.lastName || "")}</div>
+    <div>${escapeHtml(citizen.street || "")} ${escapeHtml(citizen.houseNo || "")}</div>
+    <div>${escapeHtml(citizen.postalCode || "")} Berlin-${escapeHtml(citizen.district || "")}</div>
+    <div class="square-back-meta" style="font-size:8.5pt;margin-top:1mm">${escapeHtml(sokoLabel)}&nbsp;&nbsp;${escapeHtml(birthDay)}</div>
+  `;
+};
 export const compactBirthdayCardBody = citizen => [
   `{citizen.salutation} ${citizen.lastName},`,
   `zu Ihrem ${calculateAge(citizen.birthDate)}. Geburtstag gratulieren wir sehr herzlich.`,
@@ -57,36 +74,58 @@ export const documentPreview = (template = selectedTemplate(), citizen = selecte
   const designClass = documentDesignClass(template);
   const isCompactCard = designClass && format.orientation === "landscape";
   const isSquareGreetingCard = format.size === "square";
+  const backgroundImage = templateBackgroundImage(template);
+  const hasTemplateBackground = !!backgroundImage;
   const rendered = renderTemplate(template, citizen, sender);
   const body = isCompactCard ? compactBirthdayCardBody(citizen) : rendered.body;
   return `
     <div class="document-preview ${format.className} ${designClass} ${isCompactCard ? "compact-card" : ""}">
-      <div class="document-sheet">
+      <div class="document-sheet ${hasTemplateBackground ? "has-template-background" : ""}">
+        ${!isSquareGreetingCard ? templateBackgroundLayer(backgroundImage) : ""}
         ${designClass === "birthday-card" ? `<div class="card-age-mark" aria-hidden="true">${escapeHtml(calculateAge(citizen.birthDate))}</div>` : ""}
         ${isSquareGreetingCard ? `
-          <img class="square-card-preview-image" src="assets/gratulationskarte-reinickendorf-210.jpg" alt="" aria-hidden="true">
+          ${backgroundImage ? `<img class="square-card-preview-image" src="${escapeHtml(backgroundImage)}" alt="" aria-hidden="true">` : ""}
           <div class="square-greeting">
             <div class="doc-title">${escapeHtml(rendered.subject)}</div>
             <div class="doc-body">${escapeHtml(body)}</div>
             <div class="signature">${escapeHtml(sender.signature)}</div>
           </div>
         ` : `
-          <div class="doc-letterhead" style="border-color:${escapeHtml(sender.color)}">
-            <div>
-              <strong style="color:${escapeHtml(sender.color)}">${escapeHtml(sender.logo)}</strong>
-              <div class="doc-address">${escapeHtml(sender.department)}<br>${escapeHtml(sender.address)}</div>
+          <div class="document-content">
+            <div class="doc-letterhead" style="border-color:${escapeHtml(sender.color)}">
+              <div>
+                <strong style="color:${escapeHtml(sender.color)}">${escapeHtml(sender.logo)}</strong>
+                <div class="doc-address">${escapeHtml(sender.department)}<br>${escapeHtml(sender.address)}</div>
+              </div>
+              <div class="doc-meta">${escapeHtml(sender.phone)}<br>${escapeHtml(sender.email)}</div>
             </div>
-            <div class="doc-meta">${escapeHtml(sender.phone)}<br>${escapeHtml(sender.email)}</div>
+            <div class="doc-address">
+              ${escapeHtml(citizen.salutation)} ${escapeHtml(citizen.firstName)} ${escapeHtml(citizen.lastName)}<br>
+              ${escapeHtml(citizen.street)} ${escapeHtml(citizen.houseNo)}<br>
+              ${escapeHtml(citizen.postalCode)} Berlin
+            </div>
+            <div class="doc-title">${escapeHtml(rendered.subject)}</div>
+            <div class="doc-body">${escapeHtml(body)}</div>
+            <div class="signature">${escapeHtml(sender.signature)}</div>
           </div>
-          <div class="doc-address">
-            ${escapeHtml(citizen.salutation)} ${escapeHtml(citizen.firstName)} ${escapeHtml(citizen.lastName)}<br>
-            ${escapeHtml(citizen.street)} ${escapeHtml(citizen.houseNo)}<br>
-            ${escapeHtml(citizen.postalCode)} Berlin
-          </div>
-          <div class="doc-title">${escapeHtml(rendered.subject)}</div>
-          <div class="doc-body">${escapeHtml(body)}</div>
-          <div class="signature">${escapeHtml(sender.signature)}</div>
         `}
+      </div>
+    </div>
+  `;
+};
+
+export const documentBackPreview = (template = selectedTemplate(), citizen = selectedCitizen(), options = {}) => {
+  if (!citizen) return "";
+  const includeBlank = options.includeBlank ?? false;
+  const format = documentFormat(template);
+  const isSquareGreetingCard = format.size === "square";
+  const backgroundImage = templateBackBackgroundImage(template);
+  if (!includeBlank && !isSquareGreetingCard && !backgroundImage) return "";
+  return `
+    <div class="document-preview document-back-preview ${format.className} ${isSquareGreetingCard ? "square-card-back" : ""}">
+      <div class="document-sheet ${backgroundImage ? "has-template-background" : ""}">
+        ${backgroundImage ? `<img class="${isSquareGreetingCard ? "square-card-preview-image" : "template-background-image"}" src="${escapeHtml(backgroundImage)}" alt="" aria-hidden="true">` : ""}
+        ${isSquareGreetingCard ? `<div class="square-back-address">${squareBackAddress(citizen)}</div>` : ""}
       </div>
     </div>
   `;
@@ -94,9 +133,9 @@ export const documentPreview = (template = selectedTemplate(), citizen = selecte
 
 export const printSquareCardPage = (template, citizen, sender) => {
   const rendered = renderTemplate(template, citizen, sender);
-  const base = globalThis.location.href.replace(/[^/]*$/, "");
-  const bgImg = state.printBackground
-    ? `<img src="${base}assets/gratulationskarte-reinickendorf-210.jpg" style="position:absolute;top:0;left:0;width:210mm;height:210mm;display:block" alt="">`
+  const backgroundImage = templateBackgroundImage(template);
+  const bgImg = state.printBackground && backgroundImage
+    ? `<img src="${escapeHtml(backgroundImage)}" style="position:absolute;top:0;left:0;width:210mm;height:210mm;display:block" alt="">`
     : "";
   return `
   <div style="position:relative;width:210mm;height:210mm;page-break-after:always;break-after:page;background:#fff">
@@ -108,23 +147,16 @@ export const printSquareCardPage = (template, citizen, sender) => {
     </div>
   </div>`;
 };
-export const printSquareCardBack = citizen => {
-  const base = globalThis.location.href.replace(/[^/]*$/, "");
-  const bgImg = state.printBackground
-    ? `<img src="${base}assets/gratulationskarte-reinickendorf-r%C3%BCckseite-210.jpg" style="position:absolute;top:0;left:0;width:210mm;height:210mm;display:block" alt="">`
+export const printSquareCardBack = (template, citizen) => {
+  const backgroundImage = templateBackBackgroundImage(template);
+  const bgImg = state.printBackground && backgroundImage
+    ? `<img src="${escapeHtml(backgroundImage)}" style="position:absolute;top:0;left:0;width:210mm;height:210mm;display:block" alt="">`
     : "";
-  const sokoLabel = normalize(citizen.wish || "").startsWith("besuch")
-    ? (groupForCitizen(citizen)?.id?.replace("SOKO ", "") || "")
-    : "P";
-  const birthDay = citizen.birthDate?.slice(8, 10) || "";
   return `
   <div style="position:relative;width:210mm;height:210mm;page-break-after:always;break-after:page;background:#fff;transform:rotate(180deg);transform-origin:center center">
     ${bgImg}
     <div style="position:absolute;left:20mm;top:168mm;font-size:10.5pt;font-family:Arial,sans-serif;line-height:6.5mm">
-      <div>${escapeHtml(citizen.salutation || "")} ${escapeHtml(citizen.firstName || "")} ${escapeHtml(citizen.lastName || "")}</div>
-      <div>${escapeHtml(citizen.street || "")} ${escapeHtml(citizen.houseNo || "")}</div>
-      <div>${escapeHtml(citizen.postalCode || "")} Berlin-${escapeHtml(citizen.district || "")}</div>
-      <div style="font-size:8.5pt;margin-top:1mm">${escapeHtml(sokoLabel)}&nbsp;&nbsp;${escapeHtml(birthDay)}</div>
+      ${squareBackAddress(citizen)}
     </div>
   </div>`;
 };
@@ -134,9 +166,12 @@ export const printDocumentPages = () => state.generatedDocs.map(doc => {
   const sender = byId(state.data.senders, doc.senderId) || selectedSender();
   if (!citizen) return "";
   const format = documentFormat(template);
+  const printTemplate = state.printBackground ? template : { ...template, backgroundImage: "", backBackgroundImage: "" };
+  const frontPage = `<section class="print-page ${printFormatClass(template)}">${documentPreview(printTemplate, citizen, sender)}</section>`;
+  const backPage = documentBackPreview(printTemplate, citizen, { includeBlank: false });
   return format.size === "square"
-    ? printSquareCardPage(template, citizen, sender) + printSquareCardBack(citizen)
-    : `<section class="print-page ${printFormatClass(template)}">${documentPreview(template, citizen, sender)}</section>`;
+    ? printSquareCardPage(printTemplate, citizen, sender) + printSquareCardBack(printTemplate, citizen)
+    : `${frontPage}${backPage ? `<section class="print-page ${printFormatClass(template)}">${backPage}</section>` : ""}`;
 }).join("");
 
 export const preparePrint = () => {

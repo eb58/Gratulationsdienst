@@ -4,7 +4,7 @@ import { state } from './state.js';
 import { selectedCitizen, selectedTemplate, selectedSender, selectedMember, selectedStreet, filteredCitizens, activeCitizens, groupForCitizen, isCheckedCitizen, receiptCitizens, receiptReviewCitizensForGroup, isReceiptGroupReady } from './assignment.js';
 import { field, emailField, ibanField, selectField, textField, checkField, radioField, streetRuleRows, assignmentPill, gridHost, groupOptions, sokoSelectOptions, senderOptions, templateOptions, occasionOptions, formatOptions } from './fields.js';
 import { streetMapSvg, mapSegmentCounts, mapAddressPointGroups } from './map.js';
-import { documentPreview } from './documents.js';
+import { documentBackPreview, documentPreview } from './documents.js';
 import { qrCodeSvg } from './qr.js';
 import { render, applyPendingFocus } from './render.js'; // Zyklus OK: render wird nur in Callbacks aufgerufen
 import { rememberDirtyFormBaselines } from './dirtyForms.js';
@@ -23,6 +23,41 @@ export const viewTitles = {
   import: "LABO-Import",
   profile: "Mein Zugang",
   users: "Benutzerverwaltung"
+};
+
+const templateBackgroundInput = (field, label, hasImage) => {
+  const inputId = `template-${field}`;
+  return `
+    <div class="field template-background-field">
+      <label for="${escapeHtml(inputId)}">${escapeHtml(label)}</label>
+      <div class="file-action-row">
+        <label class="file-picker" for="${escapeHtml(inputId)}">
+          <span>Bild auswählen</span>
+          <em>${hasImage ? "Hintergrundbild hinterlegt" : "PNG, JPG, WebP oder SVG bis 1,5 MB"}</em>
+        </label>
+        ${hasImage ? `<button type="button" class="ghost-button danger-button" data-action="remove-template-background" data-background-field="${escapeHtml(field)}">Entfernen</button>` : ""}
+      </div>
+      <input id="${escapeHtml(inputId)}" class="file-input" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" data-action="upload-template-background" data-background-field="${escapeHtml(field)}">
+    </div>
+  `;
+};
+
+const documentPreviewStack = (template, citizen, sender) => {
+  const backPreview = documentBackPreview(template, citizen);
+  return `
+    <div class="document-preview-stack">
+      <div class="document-preview-side">
+        <h3>Vorderseite</h3>
+        ${documentPreview(template, citizen, sender)}
+      </div>
+      ${backPreview ? `
+        <div class="document-preview-side">
+          <h3>Rückseite</h3>
+          ${backPreview}
+        </div>
+      ` : ""}
+    </div>
+  `;
 };
 
 export const authView = () => {
@@ -566,6 +601,8 @@ export const views = {
     const template = selectedTemplate();
     const citizen = selectedCitizen();
     const sender = byId(state.data.senders, template.senderId) || selectedSender();
+    const hasFrontBackgroundImage = !!template.backgroundImage;
+    const hasBackBackgroundImage = !!template.backBackgroundImage;
     return `
       <div class="template-split" style="--template-left:${state.templateSplit}%">
         <section class="panel template-panel">
@@ -594,6 +631,8 @@ export const views = {
               ${selectField("occasion", "Anlass", template.occasion, occasionOptions())}
               ${selectField("format", "Format", template.format, formatOptions())}
               ${selectField("senderId", "Standard-Absender", template.senderId, senderOptions())}
+              ${templateBackgroundInput("backgroundImage", "Hintergrundbild Vorderseite", hasFrontBackgroundImage)}
+              ${templateBackgroundInput("backBackgroundImage", "Hintergrundbild Rückseite", hasBackBackgroundImage)}
               ${field("subject", "Betreff/Titel", template.subject, "text", "full")}
               <div class="field full">
                 <label>Platzhalter</label>
@@ -609,7 +648,7 @@ export const views = {
             </form>
             <div style="margin-top:16px">
               <h2>Vorschau</h2>
-              ${documentPreview(template, citizen, sender)}
+              ${documentPreviewStack(template, citizen, sender)}
             </div>
           </div>
         </section>
@@ -651,7 +690,7 @@ export const views = {
         </section>
         <section class="panel">
           <h2>Seriendruck-Vorschau</h2>
-          ${docs.length ? documentPreview(previewTemplate, previewCitizen, previewSender) : `<div class="empty-state">Kein Dokument ausgewählt</div>`}
+          ${docs.length ? documentPreviewStack(previewTemplate, previewCitizen, previewSender) : `<div class="empty-state">Kein Dokument ausgewählt</div>`}
         </section>
       </div>
       <div class="print-pages print-only">
