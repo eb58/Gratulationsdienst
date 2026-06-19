@@ -3,6 +3,7 @@ import { canAccessView, state } from './state.js';
 import { authView, viewTitles, views } from './views.js';
 import { confirmDialog } from './fields.js';
 import { mountGrids } from './grid.js';
+import { rememberDirtyFormBaselines } from './dirtyForms.js';
 
 const focusElement = selector => {
   const element = selector ? document.querySelector(selector) : null;
@@ -42,5 +43,12 @@ export const render = () => {
   $("#view").className = `view view-${state.view}`;
   $("#view").innerHTML = locked ? authView() : `${views[state.view]()}${confirmDialog()}`;
   mountGrids();
+  rememberDirtyFormBaselines($("#view"));
+  applyPendingFocus();
+};
+
+export const renderDialog = () => {
+  document.querySelector(".dialog-backdrop")?.remove();
+  $("#view").insertAdjacentHTML("beforeend", confirmDialog());
   applyPendingFocus();
 };

@@ -1,6 +1,7 @@
 export const STORAGE_KEY = "gratulationsdienst";
 export const MONTH_KEY = "gd_month_filter";
 export const QUITTUNG_MONTH_KEY = "gd_quittung_month";
+export const QUITTUNG_SETTINGS_KEY = "gd_quittung_settings";
 export const MAP_MONTH_KEY = "gd_map_month";
 export const API_BASE = import.meta.env.VITE_API_BASE ?? "/php-api";
 export const splitStorageKey = key => `gratulationsdienst.${key}Split`;

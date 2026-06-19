@@ -2,8 +2,9 @@ import { canAccessView, isAdmin, state, loadAuthStatus, loadCollectionData } fro
 import { splitStorageKey, MONTH_KEY, QUITTUNG_MONTH_KEY, MAP_MONTH_KEY, isValidEmail } from './modules/utils.js';
 import { viewTitles, sokoMapInfoHtml } from './modules/views.js';
 import { findNearestAddress } from './modules/map.js';
-import { render } from './modules/render.js';
+import { render, renderDialog } from './modules/render.js';
 import { actions } from './modules/actions.js';
+import { hasDirtyForm, requestDirtyFormLeave, trackDirtyFormChange } from './modules/dirtyForms.js';
 
 window.GRATULATIONSDIENST_VERSION = "20260608-6";
 
@@ -21,6 +22,52 @@ const focusSelectorFor = element => {
     return parts.join("");
   }
   return "";
+};
+const closeNav = () => {
+  document.body.classList.remove("nav-open");
+  document.querySelector("[data-nav-toggle]")?.setAttribute("aria-expanded", "false");
+};
+const guardedActionIds = {
+  "select-citizen": id => id !== state.selectedCitizenId,
+  "select-member": id => id !== state.selectedMemberId,
+  "select-street": id => id !== state.selectedStreetId,
+  "select-sender": id => id !== state.selectedSenderId,
+  "select-template": id => id !== state.selectedTemplateId,
+  "select-user": id => id !== state.selectedUserId
+};
+const guardedActions = new Set(["new-member", "delete-member", "new-template", "new-user", "load-users", "user-reset-password", "user-reset-mfa", "delete-user", "delete-template", "auth-logout"]);
+const actionLeavesDirtyMask = action => {
+  const id = action.closest("[data-id]")?.dataset.id || "";
+  const actionName = action.dataset.action;
+  return guardedActionIds[actionName]?.(id) || guardedActions.has(actionName);
+};
+const afterViewChange = () => {
+  if (state.view === "documents") actions["generate-docs"]();
+  if (state.view === "users") actions["load-users"]();
+};
+const goToView = view => {
+  state.view = view;
+  state.focusTarget = "#view";
+  closeNav();
+  render();
+  afterViewChange();
+};
+const applyFilter = (name, value) => {
+  state.filters[name] = value;
+  if (name === "month") localStorage.setItem(MONTH_KEY, value);
+  render();
+};
+const updateFilter = input => {
+  const previous = state.filters[input.name] ?? "";
+  const next = input.value;
+  if (String(previous) === next) return true;
+  if (hasDirtyForm()) {
+    input.value = previous;
+    if (!requestDirtyFormLeave(() => applyFilter(input.name, next))) renderDialog();
+    return false;
+  }
+  applyFilter(input.name, next);
+  return true;
 };
 
 document.addEventListener("click", event => {
@@ -45,26 +92,29 @@ document.addEventListener("click", event => {
   if (nav) {
     if (!state.auth.user) return;
     if (!canAccessView(nav.dataset.nav)) return;
-    state.view = nav.dataset.nav;
-    state.focusTarget = "#view";
-    document.body.classList.remove("nav-open");
-    document.querySelector("[data-nav-toggle]")?.setAttribute("aria-expanded", "false");
-    render();
-    if (state.view === "documents") actions["generate-docs"]();
-    if (state.view === "users") actions["load-users"]();
+    if (nav.dataset.nav === state.view) { closeNav(); return; }
+    if (!requestDirtyFormLeave(() => goToView(nav.dataset.nav))) renderDialog();
+    return;
   }
   if (action) {
-    state.focusTarget = focusSelectorFor(action);
-    actions[action.dataset.action]?.(event);
+    const runAction = () => {
+      state.focusTarget = focusSelectorFor(action);
+      actions[action.dataset.action]?.(event);
+    };
+    if (actionLeavesDirtyMask(action)) {
+      if (!requestDirtyFormLeave(runAction)) renderDialog();
+      return;
+    }
+    runAction();
   }
 });
 
 document.addEventListener("input", event => {
+  trackDirtyFormChange(event);
   const input = event.target.closest("[data-filter]");
   if (input) {
-    state.filters[input.name] = input.value;
-    if (input.name === "month") localStorage.setItem(MONTH_KEY, input.value);
-    render();
+    updateFilter(input);
+    return;
   }
   const bound = event.target.closest("[data-bind]");
   if (bound) state[bound.dataset.bind] = bound.value;
@@ -118,6 +168,9 @@ document.addEventListener("keydown", event => {
 
 document.addEventListener("change", event => {
   if (event.target.dataset.action) { actions[event.target.dataset.action]?.(event); return; }
+  const dirtyTracked = trackDirtyFormChange(event);
+  const input = event.target.closest("[data-filter]");
+  if (input) { updateFilter(input); return; }
   if (event.target.matches('[name="wish"]')) { document.querySelector('[data-action="save-citizen"]')?.classList.remove("btn-disabled"); return; }
   if (event.target.matches("#doc-template, #doc-sender, #doc-month, #doc-group")) { actions["generate-docs"](); return; }
   if (event.target.matches("#map-month-select")) {
@@ -131,11 +184,18 @@ document.addEventListener("change", event => {
   if (bound) {
     state[bound.dataset.bind] = bound.value;
     if (bound.dataset.bind === "quittungMonat") localStorage.setItem(QUITTUNG_MONTH_KEY, bound.value);
+    if (dirtyTracked) return;
     render();
     return;
   }
   const file = event.target.matches("#import-file") ? event.target.files[0] : null;
   if (file) file.text().then(text => { state.importText = text; actions["run-import"](); });
+});
+
+globalThis.addEventListener("beforeunload", event => {
+  if (!hasDirtyForm()) return;
+  event.preventDefault();
+  event.returnValue = "";
 });
 
 document.addEventListener("mouseover", event => {

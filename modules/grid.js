@@ -2,9 +2,9 @@ import { normalize, escapeHtml, formatDate, formatDateDe, formatStreetAddress, c
 import { streetGroupDisplay } from './domain.js';
 import { state } from './state.js';
 import { filteredCitizens, groupForCitizen, selectedCitizen } from './assignment.js';
-import { documentPreview } from './documents.js';
-import { render } from './render.js'; // Zyklus OK: render wird nur in Event-Callbacks aufgerufen
+import { render, renderDialog } from './render.js'; // Zyklus OK: render wird nur in Event-Callbacks aufgerufen
 import { renderCitizenDetail, renderRegionAssignment } from './views.js'; // Zyklus OK: lazy
+import { requestDirtyFormLeave } from './dirtyForms.js';
 
 export const gridTheme = () => window.agGrid?.themeQuartz?.withParams ? window.agGrid.themeQuartz.withParams({
   accentColor: "#0f5d58",
@@ -159,9 +159,13 @@ export const gridDefinitions = {
     },
     onRowClicked: params => {
       saveGridState("citizens", params.api);
-      state.selectedCitizenId = params.data.id;
-      renderCitizenDetail();
-      params.api.redrawRows?.();
+      if (params.data.id === state.selectedCitizenId) return;
+      const selectRow = () => {
+        state.selectedCitizenId = params.data.id;
+        renderCitizenDetail();
+        params.api.redrawRows?.();
+      };
+      if (!requestDirtyFormLeave(selectRow)) { params.api.redrawRows?.(); renderDialog(); }
     }
   }),
   members: () => ({
@@ -183,7 +187,14 @@ export const gridDefinitions = {
     ],
     getRowId: params => params.data.id,
     getRowClass: params => params.data.id === state.selectedMemberId ? "selected" : "",
-    onRowClicked: params => { state.selectedMemberId = params.data.id; render(); }
+    onRowClicked: params => {
+      if (params.data.id === state.selectedMemberId) return;
+      const selectRow = () => {
+        state.selectedMemberId = params.data.id;
+        render();
+      };
+      if (!requestDirtyFormLeave(selectRow)) { params.api.redrawRows?.(); renderDialog(); }
+    }
   }),
   streets: () => ({
     ...baseGridOptions(),
@@ -203,9 +214,13 @@ export const gridDefinitions = {
     getRowId: params => params.data.id,
     getRowClass: params => params.data.id === state.selectedStreetId ? "selected" : "",
     onRowClicked: params => {
-      state.selectedStreetId = params.data.id;
-      renderRegionAssignment();
-      state.gridApis.streets?.redrawRows?.();
+      if (params.data.id === state.selectedStreetId) return;
+      const selectRow = () => {
+        state.selectedStreetId = params.data.id;
+        renderRegionAssignment();
+        state.gridApis.streets?.redrawRows?.();
+      };
+      if (!requestDirtyFormLeave(selectRow)) { params.api.redrawRows?.(); renderDialog(); }
     }
   }),
   documents: () => ({

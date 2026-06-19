@@ -1,4 +1,4 @@
-import { STORAGE_KEY, MONTH_KEY, QUITTUNG_MONTH_KEY, MAP_MONTH_KEY, API_BASE, storedSplit, repairStoredText, toast, normalize } from './utils.js';
+import { STORAGE_KEY, MONTH_KEY, QUITTUNG_MONTH_KEY, QUITTUNG_SETTINGS_KEY, MAP_MONTH_KEY, API_BASE, storedSplit, repairStoredText, toast, normalize } from './utils.js';
 import { defaultData, buildStreetData } from './domain.js';
 import { render } from './render.js'; // Zyklus OK: render wird nur in Callbacks aufgerufen
 
@@ -10,6 +10,19 @@ const storedAuthToken = () => {
 const clearStoredAuthToken = () => {
   localStorage.removeItem(AUTH_TOKEN_KEY);
   sessionStorage.removeItem(AUTH_TOKEN_KEY);
+};
+const defaultQuittungSettings = {
+  quittungBetrag: "8,50",
+  quittungTelefon: "90294 4055",
+  quittungKapitel: "3930",
+  quittungTitel: "68154"
+};
+const storedQuittungSettings = () => {
+  try {
+    return { ...defaultQuittungSettings, ...JSON.parse(localStorage.getItem(QUITTUNG_SETTINGS_KEY)) };
+  } catch {
+    return defaultQuittungSettings;
+  }
 };
 
 export const mergeById = (existing, defaults, keep = () => true) => {
@@ -55,6 +68,8 @@ export const loadData = () => {
   }
 };
 
+const quittungSettings = storedQuittungSettings();
+
 export const state = {
   view: "dashboard",
   data: loadData(),
@@ -76,10 +91,10 @@ export const state = {
   selectedSenderId: "A-001",
   selectedTemplateId: "T-001",
   quittungSplit: storedSplit("quittung", 38),
-  quittungBetrag: "8,50",
-  quittungTelefon: "90294 4055",
-  quittungKapitel: "3930",
-  quittungTitel: "68154",
+  quittungBetrag: quittungSettings.quittungBetrag,
+  quittungTelefon: quittungSettings.quittungTelefon,
+  quittungKapitel: quittungSettings.quittungKapitel,
+  quittungTitel: quittungSettings.quittungTitel,
   quittungMonat: localStorage.getItem(QUITTUNG_MONTH_KEY) || new Date().toISOString().slice(5, 7),
   mapMonth: localStorage.getItem(MAP_MONTH_KEY) || new Date().toISOString().slice(5, 7),
   importText: "",

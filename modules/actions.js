@@ -1,13 +1,16 @@
-import { $, todayIso, isValidEmail, isValidIban, formatIban, updateItem, nextId, csvEscape, formatStreetAddress, downloadText, calculateAge, toast, byId } from './utils.js';
+import { $, QUITTUNG_SETTINGS_KEY, todayIso, isValidEmail, isValidIban, formatIban, updateItem, nextId, csvEscape, formatStreetAddress, downloadText, calculateAge, toast, byId, normalize } from './utils.js';
 import { normalizeStreetRules, streetDistrictSummary, streetGroupSummary, normalizeStreetDistrict } from './domain.js';
 import { state, saveData, apiRequest, setAuthSession, clearAuthSession, loadCollectionData } from './state.js';
-import { streetAssignment, filteredCitizens, documentCitizens, duplicateKey, isPrintedCitizen, selectedTemplate, selectedSender, activeCitizens, groupForCitizen, isReceiptGroupReady, receiptCitizens, receiptCitizensForReadyGroups, ruleMatchesHouseNo } from './assignment.js';
+import { streetAssignment, filteredCitizens, documentCitizens, duplicateKey, isPrintedCitizen, selectedTemplate, selectedSender, selectedMember, activeCitizens, groupForCitizen, isReceiptGroupReady, receiptCitizens, receiptCitizensForReadyGroups, ruleMatchesHouseNo } from './assignment.js';
 import { printCurrentRun, completePrintRun, renderSokoForm, renderSokoQuittung } from './documents.js';
 import { parseCsv, mapImportRow } from './import.js';
-import { render } from './render.js';
+import { render, renderDialog } from './render.js';
 import { renderCitizenDetail } from './views.js';
+import { cancelDirtyFormLeave, confirmDirtyFormLeave } from './dirtyForms.js';
 
 const formValues = selector => Object.fromEntries(new FormData($(selector)).entries());
+const quittungSettingKeys = ["quittungBetrag", "quittungTelefon", "quittungKapitel", "quittungTitel"];
+const quittungSettingsFromForm = () => Object.fromEntries(quittungSettingKeys.map(key => [key, $(`[data-bind="${key}"]`)?.value ?? state[key]]));
 const authDone = session => {
   setAuthSession(session);
   render();
@@ -55,6 +58,15 @@ const currentCitizenGridRows = () => {
   const rows = [];
   api.forEachNodeAfterFilterAndSort(node => { if (node.data?.id) rows.push({ id: node.data.id, rowIndex: node.rowIndex }); });
   return rows;
+};
+const memberMatchesFilters = member => {
+  const haystack = normalize([member.firstName, member.lastName, member.email, member.phone, member.mobile, member.groupId].join(" "));
+  return (!state.filters.q || haystack.includes(normalize(state.filters.q)))
+    && (state.filters.groupId === "alle" || member.groupId === state.filters.groupId);
+};
+const nextMemberIdAfterDelete = id => {
+  const remaining = state.data.sokoMembers.filter(member => member.id !== id);
+  return remaining.find(memberMatchesFilters)?.id || remaining[0]?.id || "";
 };
 const citizenGridRow = citizen => ({
   id: citizen.id,
@@ -357,6 +369,26 @@ export const actions = {
     render();
     toast("SOKO-Daten gespeichert.");
   },
+  "delete-member": () => {
+    const member = selectedMember();
+    if (!member) return;
+    const name = `${member.firstName} ${member.lastName}`.trim() || member.id;
+    state.dialog = { type: "delete-member", memberId: member.id, title: "SOKO-Mitglied löschen", message: `Soll ${name} wirklich gelöscht werden?`, confirmLabel: "Mitglied löschen", confirmAction: "confirm-delete-member" };
+    state.focusTarget = ".dialog-box [data-autofocus]";
+    render();
+  },
+  "confirm-delete-member": () => {
+    const memberId = state.dialog?.memberId;
+    if (!memberId) return;
+    state.selectedMemberId = nextMemberIdAfterDelete(memberId);
+    state.data.sokoMembers = state.data.sokoMembers.filter(member => member.id !== memberId);
+    state.data.sokoGroups = state.data.sokoGroups.map(group => group.leaderId === memberId ? { ...group, leaderId: "" } : group);
+    state.dialog = null;
+    state.focusTarget = "#view";
+    saveData();
+    render();
+    toast("SOKO-Mitglied gelöscht.");
+  },
   "export-soko": () => {
     const header = ["id", "anrede", "vorname", "nachname", "soko", "email", "telefon", "leitung"];
     const rows = state.data.sokoMembers.map(member => [member.id, member.salutation, member.firstName, member.lastName, member.groupId, member.email, member.phone || member.mobile, member.isLeader ? "ja" : "nein"]);
@@ -442,7 +474,20 @@ export const actions = {
     state.focusTarget = ".dialog-box [data-autofocus]";
     render();
   },
-  "close-dialog": () => { state.dialog = null; state.focusTarget = "#view"; render(); },
+  "close-dialog": () => {
+    const dirtyDialog = state.dialog?.type === "dirty-form";
+    cancelDirtyFormLeave();
+    state.dialog = null;
+    state.focusTarget = "#view";
+    if (dirtyDialog) { renderDialog(); return; }
+    render();
+  },
+  "confirm-discard-dirty": () => {
+    const proceed = confirmDirtyFormLeave();
+    renderDialog();
+    if (proceed) { proceed(); return; }
+    render();
+  },
   "confirm-complete-print": () => { state.dialog = null; state.focusTarget = "#view"; completePrintRun(); },
   "confirm-delete-template": () => {
     const templateId = state.dialog?.templateId;
@@ -508,6 +553,13 @@ export const actions = {
   },
   "print-docs": printCurrentRun,
   "toggle-print-background": e => { state.printBackground = e.target.checked; },
+  "save-quittung-settings": () => {
+    const settings = quittungSettingsFromForm();
+    Object.assign(state, settings);
+    localStorage.setItem(QUITTUNG_SETTINGS_KEY, JSON.stringify(settings));
+    render();
+    toast("Quittungs-Einstellungen gespeichert.");
+  },
   "print-quittung": e => {
     const groupId = e.target.closest("[data-group-id]")?.dataset.groupId;
     if (!isReceiptGroupReady(groupId)) { toast("Quittungsdruck erst möglich, wenn alle Jubilare dieser SOKO geprüft sind."); return; }

@@ -7,6 +7,7 @@ import { streetMapSvg, mapSegmentCounts, mapAddressPointGroups } from './map.js'
 import { documentPreview } from './documents.js';
 import { qrCodeSvg } from './qr.js';
 import { render, applyPendingFocus } from './render.js'; // Zyklus OK: render wird nur in Callbacks aufgerufen
+import { rememberDirtyFormBaselines } from './dirtyForms.js';
 
 export const viewTitles = {
   dashboard: "Dashboard",
@@ -122,6 +123,7 @@ export const renderRegionAssignment = () => {
   const element = document.querySelector("#region-assignment-panel");
   if (!element) { render(); return; }
   element.innerHTML = regionAssignmentContent();
+  rememberDirtyFormBaselines(element);
   applyPendingFocus();
 };
 
@@ -163,6 +165,7 @@ export const renderCitizenDetail = () => {
   const citizen = citizens.find(item => item.id === state.selectedCitizenId) || citizens[0];
   if (!element || !citizen) { render(); return; }
   element.innerHTML = citizenDetailContent(citizen);
+  rememberDirtyFormBaselines(element);
   applyPendingFocus();
 };
 
@@ -453,8 +456,9 @@ export const views = {
                 ${field("termFrom", "Berufung von", member.termFrom, "date")}
                 ${field("termTo", "Berufung bis", member.termTo, "date")}
                 ${selectField("isLeader", "Rolle", String(member.isLeader), [["false", "Mitglied"], ["true", "Leitung"]], "full")}
-                <div class="field full">
+                <div class="field full button-row">
                   <button type="button" class="primary-button" data-action="save-member">Speichern</button>
+                  <button type="button" class="ghost-button danger-button" data-action="delete-member">Löschen</button>
                 </div>
               </form>
             ` : `<div class="empty-state">Kein Mitglied ausgewählt</div>`}
@@ -709,24 +713,27 @@ export const views = {
   quittungStamm: () => `
     <section class="panel">
       <h2>Einstellungen</h2>
-      <div class="form-grid">
+      <form id="quittung-form" class="form-grid">
         <div class="field">
           <label>Betrag pro Jubilar (€)</label>
-          <input type="text" data-bind="quittungBetrag" value="${escapeHtml(state.quittungBetrag)}" style="max-width:120px">
+          <input type="text" name="quittungBetrag" data-bind="quittungBetrag" value="${escapeHtml(state.quittungBetrag)}" style="max-width:120px">
         </div>
         <div class="field">
           <label>Telefon</label>
-          <input type="text" data-bind="quittungTelefon" value="${escapeHtml(state.quittungTelefon)}" style="max-width:160px">
+          <input type="text" name="quittungTelefon" data-bind="quittungTelefon" value="${escapeHtml(state.quittungTelefon)}" style="max-width:160px">
         </div>
         <div class="field">
           <label>Kapitel</label>
-          <input type="text" data-bind="quittungKapitel" value="${escapeHtml(state.quittungKapitel)}" style="max-width:100px">
+          <input type="text" name="quittungKapitel" data-bind="quittungKapitel" value="${escapeHtml(state.quittungKapitel)}" style="max-width:100px">
         </div>
         <div class="field">
           <label>Titel</label>
-          <input type="text" data-bind="quittungTitel" value="${escapeHtml(state.quittungTitel)}" style="max-width:100px">
+          <input type="text" name="quittungTitel" data-bind="quittungTitel" value="${escapeHtml(state.quittungTitel)}" style="max-width:100px">
         </div>
-      </div>
+        <div class="field full">
+          <button type="button" class="primary-button" data-action="save-quittung-settings">Speichern</button>
+        </div>
+      </form>
     </section>
   `,
 
