@@ -509,11 +509,23 @@ export const actions = {
   },
   "remove-template-background": event => {
     const field = templateBackgroundField(event);
-    saveTemplatePatch({ [field]: "" });
-    toast(`Hintergrundbild ${templateBackgroundSide(field)} entfernt.`);
+    const side = templateBackgroundSide(field);
+    state.dialog = { type: "remove-template-background", backgroundField: field, title: `Hintergrundbild entfernen`, message: `Soll das Hintergrundbild der ${side} wirklich entfernt werden?`, confirmLabel: "Entfernen", confirmAction: "confirm-remove-template-background" };
+    state.focusTarget = ".dialog-box [data-autofocus]";
+    render();
   },
-  "delete-template": () => {
-    const template = selectedTemplate();
+  "confirm-remove-template-background": () => {
+    const field = state.dialog?.backgroundField;
+    if (!field) return;
+    const side = templateBackgroundSide(field);
+    state.dialog = null;
+    state.focusTarget = "#view";
+    saveTemplatePatch({ [field]: "" });
+    toast(`Hintergrundbild ${side} entfernt.`);
+  },
+  "delete-template": event => {
+    const id = event?.target?.closest("[data-id]")?.dataset.id;
+    const template = (id && byId(state.data.templates, id)) || selectedTemplate();
     if (state.data.templates.length <= 1) { toast("Die letzte Vorlage kann nicht gelöscht werden."); return; }
     state.dialog = { type: "delete-template", templateId: template.id, title: "Vorlage löschen", message: `Soll die Vorlage "${template.name}" wirklich gelöscht werden? Diese Aktion kann nicht rückgängig gemacht werden.`, confirmLabel: "Vorlage löschen", confirmAction: "confirm-delete-template" };
     state.focusTarget = ".dialog-box [data-autofocus]";

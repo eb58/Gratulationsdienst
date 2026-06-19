@@ -35,7 +35,7 @@ const templateBackgroundInput = (field, label, hasImage) => {
           <span>Bild auswählen</span>
           <em>${hasImage ? "Hintergrundbild hinterlegt" : "PNG, JPG, WebP oder SVG bis 1,5 MB"}</em>
         </label>
-        ${hasImage ? `<button type="button" class="ghost-button danger-button" data-action="remove-template-background" data-background-field="${escapeHtml(field)}">Entfernen</button>` : ""}
+        ${hasImage ? `<button type="button" class="icon-button user-delete-btn" data-action="remove-template-background" data-background-field="${escapeHtml(field)}" title="Hintergrundbild entfernen"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>` : ""}
       </div>
       <input id="${escapeHtml(inputId)}" class="file-input" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" data-action="upload-template-background" data-background-field="${escapeHtml(field)}">
     </div>
@@ -613,10 +613,15 @@ export const views = {
           <div class="template-panel-scroll">
             <div class="list">
               ${state.data.templates.map(item => `
-                <button type="button" class="list-item ${item.id === template.id ? "selected" : ""}" data-action="select-template" data-id="${escapeHtml(item.id)}">
-                  <div><strong>${escapeHtml(item.name)}</strong><span class="muted">${escapeHtml(item.occasion)} · ${escapeHtml(item.format)}</span></div>
-                  <span class="pill">${escapeHtml(item.id)}</span>
-                </button>
+                <div class="list-item-row ${item.id === template.id ? "selected" : ""}">
+                  <button type="button" class="list-item-main" data-action="select-template" data-id="${escapeHtml(item.id)}">
+                    <div><strong>${escapeHtml(item.name)}</strong><span class="muted">${escapeHtml(item.occasion)} · ${escapeHtml(item.format)}</span></div>
+                    <span class="pill">${escapeHtml(item.id)}</span>
+                  </button>
+                  <button type="button" class="icon-button user-delete-btn" data-action="delete-template" data-id="${escapeHtml(item.id)}" aria-label="Vorlage löschen" title="Vorlage löschen">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                  </button>
+                </div>
               `).join("")}
             </div>
           </div>
@@ -643,7 +648,6 @@ export const views = {
               ${textField("body", "Text", template.body, "full")}
               <div class="field full">
                 <button type="button" class="primary-button" data-action="save-template">Vorlage speichern</button>
-                <button type="button" class="ghost-button danger-button" data-action="delete-template">Vorlage löschen</button>
               </div>
             </form>
             <div style="margin-top:16px">
