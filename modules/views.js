@@ -683,11 +683,12 @@ export const views = {
         </div>
         <p class="muted" style="margin:12px 0 0">Es werden nur geprüfte Jubilare berücksichtigt. Aktuelle Auswahl: ${checkedCount}</p>
       </div>
-      <div class="grid two print-target" style="margin-top:16px">
+      <div class="print-split" style="margin-top:16px; --print-left:${state.printSplit}%">
         <section class="panel">
           <h2>Druckliste</h2>
           ${docs.length ? gridHost("documents", 500) : `<div class="empty-state">Keine Dokumente</div>`}
         </section>
+        <div class="vertical-splitter" data-splitter="print" role="separator" aria-orientation="vertical" aria-label="Druckliste und Vorschau aufteilen" aria-valuemin="20" aria-valuemax="80" aria-valuenow="${state.printSplit}" tabindex="0"></div>
         <section class="panel">
           <h2>Seriendruck-Vorschau</h2>
           ${docs.length ? documentPreviewStack(previewTemplate, previewCitizen, previewSender) : `<div class="empty-state">Kein Dokument ausgewählt</div>`}

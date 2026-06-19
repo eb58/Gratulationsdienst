@@ -574,6 +574,13 @@ h3 {
   grid-template-columns: minmax(220px, var(--sender-left, 38%)) 12px minmax(360px, 1fr);
   align-items: stretch;
   height: min(700px, calc(100vh - 190px));
+}
+
+.print-split {
+  display: grid;
+  grid-template-columns: minmax(260px, var(--print-left, 40%)) 12px minmax(320px, 1fr);
+  align-items: stretch;
+  height: min(700px, calc(100vh - 300px));
   min-height: 480px;
 }
 
@@ -1486,14 +1493,14 @@ tbody tr.selected {
 
 .document-preview,
 .editor-preview {
-  padding: 22px;
+  padding: 8px;
   background: #fff;
 }
 
 .document-preview {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   justify-items: center;
-  justify-content: center;
   width: 100%;
   max-height: min(760px, calc(100vh - 150px));
   overflow: auto;
@@ -1501,7 +1508,9 @@ tbody tr.selected {
 
 .document-preview-stack {
   display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
   gap: 18px;
+  align-items: start;
 }
 
 .document-preview-side {
@@ -1521,7 +1530,7 @@ tbody tr.selected {
 
 .document-sheet {
   position: relative;
-  width: min(100%, 620px);
+  width: min(100%, 440px);
   aspect-ratio: 210 / 297;
   min-height: 0;
   overflow: hidden;
@@ -1548,13 +1557,13 @@ tbody tr.selected {
 }
 
 .document-preview.format-a4-landscape .document-sheet {
-  width: min(100%, 680px);
+  width: min(100%, 480px);
   aspect-ratio: 297 / 210;
   padding: 30px;
 }
 
 .document-preview.format-a5 .document-sheet {
-  width: min(100%, 420px);
+  width: min(100%, 300px);
   aspect-ratio: 148 / 210;
   padding: 22px;
 }
@@ -1591,7 +1600,7 @@ tbody tr.selected {
 }
 
 .document-preview.format-a5-landscape .document-sheet {
-  width: min(100%, 640px);
+  width: min(100%, 460px);
   aspect-ratio: 210 / 148;
   padding: 18px 22px;
 }
@@ -2326,6 +2335,7 @@ tbody tr.selected {
   .template-split,
   .soko-split,
   .sender-split,
+  .print-split,
   .toolbar,
   .form-grid,
   .form-grid.three,
@@ -2351,7 +2361,8 @@ tbody tr.selected {
   .citizen-split,
   .template-split,
   .soko-split,
-  .sender-split {
+  .sender-split,
+  .print-split {
     height: auto;
     min-height: 0;
   }

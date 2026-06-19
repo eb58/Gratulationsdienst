@@ -118,6 +118,7 @@ export const state = {
   templateSplit: storedSplit("template", 40),
   sokoSplit: storedSplit("soko", 58),
   senderSplit: storedSplit("sender", 38),
+  printSplit: storedSplit("print", 40),
   generatedDocs: [],
   printBackground: true,
   dashboardSort: { key: "group", dir: "asc" },
