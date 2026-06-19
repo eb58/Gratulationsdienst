@@ -4,11 +4,16 @@ export const QUITTUNG_MONTH_KEY = "gd_quittung_month";
 export const QUITTUNG_SETTINGS_KEY = "gd_quittung_settings";
 export const MAP_MONTH_KEY = "gd_map_month";
 export const API_BASE = import.meta.env.VITE_API_BASE ?? "/php-api";
-export const splitStorageKey = key => `gratulationsdienst.${key}Split`;
+export const SPLITTERS_KEY = "gratulationsdienst.splitters";
+const storedSplitters = () => {
+  try { return JSON.parse(localStorage.getItem(SPLITTERS_KEY)) || {}; }
+  catch { return {}; }
+};
 export const storedSplit = (key, fallback) => {
-  const value = Number(localStorage.getItem(splitStorageKey(key)));
+  const value = Number(storedSplitters()[key]);
   return Number.isFinite(value) ? Math.max(20, Math.min(80, value)) : fallback;
 };
+export const storeSplit = (key, value) => localStorage.setItem(SPLITTERS_KEY, JSON.stringify({ ...storedSplitters(), [key]: value }));
 export const $ = selector => document.querySelector(selector);
 export const $$ = selector => [...document.querySelectorAll(selector)];
 export const todayIso = () => new Date().toISOString().slice(0, 10);

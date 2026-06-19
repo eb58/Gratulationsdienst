@@ -822,46 +822,51 @@ export const views = {
     const user = state.auth.user;
     const setup = state.auth.mfaSetup;
     return `
-      <div class="grid two">
-        <section class="panel">
+      <div class="profile-split" style="--profile-left:${state.profileSplit}%">
+        <section class="panel profile-panel">
           <h2>Zugang</h2>
-          <div class="data-list">
-            <div><span>Name</span><strong>${escapeHtml(user.displayName || "-")}</strong></div>
-            <div><span>E-Mail</span><strong>${escapeHtml(user.email)}</strong></div>
-            <div><span>Rolle</span><strong>${user.role === "admin" ? "Admin" : "User"}</strong></div>
-            <div><span>MFA</span><strong>${user.mfaEnabled ? "aktiv" : "nicht aktiv"}</strong></div>
+          <div class="profile-panel-scroll">
+            <div class="data-list">
+              <div><span>Name</span><strong>${escapeHtml(user.displayName || "-")}</strong></div>
+              <div><span>E-Mail</span><strong>${escapeHtml(user.email)}</strong></div>
+              <div><span>Rolle</span><strong>${user.role === "admin" ? "Admin" : "User"}</strong></div>
+              <div><span>MFA</span><strong>${user.mfaEnabled ? "aktiv" : "nicht aktiv"}</strong></div>
+            </div>
           </div>
         </section>
-        <section class="panel">
+        <div class="vertical-splitter" data-splitter="profile" role="separator" aria-orientation="vertical" aria-label="Zugang und Multi-Faktor-Authentisierung aufteilen" aria-valuemin="20" aria-valuemax="80" aria-valuenow="${state.profileSplit}" tabindex="0"></div>
+        <section class="panel profile-panel">
           <h2>Multi-Faktor-Authentisierung</h2>
-          ${user.mfaEnabled ? `
-            <form id="mfa-disable-form" class="form-grid">
-              ${field("password", "Passwort", "", "password", "full")}
-              ${field("code", "Authenticator-Code", "", "text", "full", 'inputmode="numeric" autocomplete="one-time-code"')}
-              <div class="field full"><button type="button" class="danger-button" data-action="mfa-disable">MFA deaktivieren</button></div>
-            </form>
-          ` : `
-            <p class="muted">MFA nutzt zeitbasierte Einmalcodes aus einer Authenticator-App.</p>
-            <button type="button" class="primary-button" data-action="mfa-setup">MFA einrichten</button>
-            ${setup ? `
-              <div class="mfa-qr-panel">
-                ${qrCodeSvg(setup.otpauthUrl)}
-                <div>
-                  <strong>QR-Code scannen</strong>
-                  <span class="muted">Authenticator-App öffnen, Konto hinzufügen und diesen Code scannen.</span>
-                </div>
-              </div>
-              <div class="reset-token mfa-secret">
-                <span>Geheimer Schlüssel</span>
-                <code>${escapeHtml(setup.secret)}</code>
-                <small>${escapeHtml(setup.otpauthUrl)}</small>
-              </div>
-              <form id="mfa-enable-form" class="form-grid">
-                ${field("code", "Code aus der Authenticator-App", "", "text", "full", 'inputmode="numeric" autocomplete="one-time-code"')}
-                <div class="field full"><button type="button" class="primary-button" data-action="mfa-enable">MFA aktivieren</button></div>
+          <div class="profile-panel-scroll">
+            ${user.mfaEnabled ? `
+              <form id="mfa-disable-form" class="form-grid">
+                ${field("password", "Passwort", "", "password", "full")}
+                ${field("code", "Authenticator-Code", "", "text", "full", 'inputmode="numeric" autocomplete="one-time-code"')}
+                <div class="field full"><button type="button" class="danger-button" data-action="mfa-disable">MFA deaktivieren</button></div>
               </form>
-            ` : ""}
-          `}
+            ` : `
+              <p class="muted">MFA nutzt zeitbasierte Einmalcodes aus einer Authenticator-App.</p>
+              <button type="button" class="primary-button" data-action="mfa-setup">MFA einrichten</button>
+              ${setup ? `
+                <div class="mfa-qr-panel">
+                  ${qrCodeSvg(setup.otpauthUrl)}
+                  <div>
+                    <strong>QR-Code scannen</strong>
+                    <span class="muted">Authenticator-App öffnen, Konto hinzufügen und diesen Code scannen.</span>
+                  </div>
+                </div>
+                <div class="reset-token mfa-secret">
+                  <span>Geheimer Schlüssel</span>
+                  <code>${escapeHtml(setup.secret)}</code>
+                  <small>${escapeHtml(setup.otpauthUrl)}</small>
+                </div>
+                <form id="mfa-enable-form" class="form-grid">
+                  ${field("code", "Code aus der Authenticator-App", "", "text", "full", 'inputmode="numeric" autocomplete="one-time-code"')}
+                  <div class="field full"><button type="button" class="primary-button" data-action="mfa-enable">MFA aktivieren</button></div>
+                </form>
+              ` : ""}
+            `}
+          </div>
         </section>
       </div>
     `;
@@ -878,45 +883,50 @@ export const views = {
         <button type="button" class="primary-button" data-action="new-user">Neuer Benutzer</button>
       </div>
       ${state.auth.adminResetToken ? `<div class="alert">Rücksetz-Code: <code>${escapeHtml(state.auth.adminResetToken)}</code></div>` : ""}
-      <div class="grid two">
-        <section class="panel">
+      <div class="users-split" style="--users-left:${state.usersSplit}%">
+        <section class="panel users-panel">
           <h2>Benutzer</h2>
-          <div class="list">
-            ${users.map(user => `
-              <div class="list-item-row ${selected?.id === user.id ? "selected" : ""}">
-                <button type="button" class="list-item-main" data-action="select-user" data-id="${escapeHtml(user.id)}">
-                  <div><strong>${escapeHtml(user.displayName || user.email)}</strong><span class="muted">${escapeHtml(user.email)}</span></div>
-                  <span class="pill ${user.active ? user.role === "admin" ? "green" : "" : "red"}">${escapeHtml(user.active ? user.role : "inaktiv")}</span>
-                </button>
-                <div class="user-delete-slot">
-                  ${user.id !== state.auth.user?.id ? `
-                    <button type="button" class="icon-button user-delete-btn" data-action="delete-user" data-id="${escapeHtml(user.id)}" title="Benutzer löschen">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-                    </button>
-                  ` : ""}
+          <div class="users-panel-scroll">
+            <div class="list">
+              ${users.map(user => `
+                <div class="list-item-row ${selected?.id === user.id ? "selected" : ""}">
+                  <button type="button" class="list-item-main" data-action="select-user" data-id="${escapeHtml(user.id)}">
+                    <div><strong>${escapeHtml(user.displayName || user.email)}</strong><span class="muted">${escapeHtml(user.email)}</span></div>
+                    <span class="pill ${user.active ? user.role === "admin" ? "green" : "" : "red"}">${escapeHtml(user.active ? user.role : "inaktiv")}</span>
+                  </button>
+                  <div class="user-delete-slot">
+                    ${user.id !== state.auth.user?.id ? `
+                      <button type="button" class="icon-button user-delete-btn" data-action="delete-user" data-id="${escapeHtml(user.id)}" title="Benutzer löschen">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                      </button>
+                    ` : ""}
+                  </div>
                 </div>
-              </div>
-            `).join("") || `<div class="empty-state">Noch keine Benutzer geladen</div>`}
+              `).join("") || `<div class="empty-state">Noch keine Benutzer geladen</div>`}
+            </div>
           </div>
         </section>
-        <section class="panel">
+        <div class="vertical-splitter" data-splitter="users" role="separator" aria-orientation="vertical" aria-label="Benutzerliste und Formular aufteilen" aria-valuemin="20" aria-valuemax="80" aria-valuenow="${state.usersSplit}" tabindex="0"></div>
+        <section class="panel users-panel">
           <h2>${state.selectedUserId === "new" ? "Benutzer anlegen" : "Benutzer bearbeiten"}</h2>
-          ${selected ? `
-            <form id="user-form" class="form-grid">
-              <input type="hidden" name="id" value="${escapeHtml(selected.id)}">
-              ${field("displayName", "Name", selected.displayName || "")}
-              ${field("email", "E-Mail", selected.email || "", "email")}
-              ${selectField("role", "Rolle", selected.role || "user", [["user", "User"], ["admin", "Admin"]])}
-              ${selectField("active", "Status", String(selected.active !== false), [["true", "Aktiv"], ["false", "Inaktiv"]])}
-              ${state.selectedUserId === "new" ? field("password", "Startpasswort", "", "password", "full", 'autocomplete="new-password"') : ""}
-              <div class="field full button-row">
-                <button type="button" class="primary-button" data-action="save-user">Speichern</button>
-                ${selected.id ? `<button type="button" class="ghost-button" data-action="user-reset-password">Passwort-Reset</button>` : ""}
-                ${selected.id && selected.mfaEnabled ? `<button type="button" class="ghost-button" data-action="user-reset-mfa">MFA zurücksetzen</button>` : ""}
-                ${selected.id && selected.id !== state.auth.user.id ? `<button type="button" class="danger-button" data-action="delete-user">Löschen</button>` : ""}
-              </div>
-            </form>
-          ` : `<div class="empty-state">Bitte Benutzer anlegen oder laden</div>`}
+          <div class="users-panel-scroll">
+            ${selected ? `
+              <form id="user-form" class="form-grid">
+                <input type="hidden" name="id" value="${escapeHtml(selected.id)}">
+                ${field("displayName", "Name", selected.displayName || "")}
+                ${field("email", "E-Mail", selected.email || "", "email")}
+                ${selectField("role", "Rolle", selected.role || "user", [["user", "User"], ["admin", "Admin"]])}
+                ${selectField("active", "Status", String(selected.active !== false), [["true", "Aktiv"], ["false", "Inaktiv"]])}
+                ${state.selectedUserId === "new" ? field("password", "Startpasswort", "", "password", "full", 'autocomplete="new-password"') : ""}
+                <div class="field full button-row">
+                  <button type="button" class="primary-button" data-action="save-user">Speichern</button>
+                  ${selected.id ? `<button type="button" class="ghost-button" data-action="user-reset-password">Passwort-Reset</button>` : ""}
+                  ${selected.id && selected.mfaEnabled ? `<button type="button" class="ghost-button" data-action="user-reset-mfa">MFA zurücksetzen</button>` : ""}
+                  ${selected.id && selected.id !== state.auth.user.id ? `<button type="button" class="danger-button" data-action="delete-user">Löschen</button>` : ""}
+                </div>
+              </form>
+            ` : `<div class="empty-state">Bitte Benutzer anlegen oder laden</div>`}
+          </div>
         </section>
       </div>
     `;

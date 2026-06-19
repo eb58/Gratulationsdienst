@@ -1,5 +1,5 @@
 import { canAccessView, isAdmin, state, loadAuthStatus, loadCollectionData } from './modules/state.js';
-import { splitStorageKey, MONTH_KEY, QUITTUNG_MONTH_KEY, MAP_MONTH_KEY, isValidEmail } from './modules/utils.js';
+import { MONTH_KEY, QUITTUNG_MONTH_KEY, MAP_MONTH_KEY, storeSplit, isValidEmail } from './modules/utils.js';
 import { viewTitles, sokoMapInfoHtml } from './modules/views.js';
 import { findNearestAddress } from './modules/map.js';
 import { render, renderDialog } from './modules/render.js';
@@ -145,7 +145,7 @@ document.addEventListener("pointerdown", event => {
     document.body.classList.remove("is-resizing");
     document.removeEventListener("pointermove", move);
     document.removeEventListener("pointerup", done);
-    localStorage.setItem(splitStorageKey(key), String(state[`${key}Split`]));
+    storeSplit(key, state[`${key}Split`]);
   };
   document.addEventListener("pointermove", move);
   document.addEventListener("pointerup", done);
@@ -163,7 +163,7 @@ document.addEventListener("keydown", event => {
   state[`${key}Split`] = next;
   split.style.setProperty(`--${key}-left`, `${next}%`);
   splitter.setAttribute("aria-valuenow", String(next));
-  localStorage.setItem(splitStorageKey(key), String(next));
+  storeSplit(key, next);
 });
 
 document.addEventListener("change", event => {

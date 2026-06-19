@@ -470,7 +470,7 @@ h3 {
 
 .import-split {
   display: grid;
-  grid-template-columns: minmax(320px, var(--import-left, 42%)) 12px minmax(420px, 1fr);
+  grid-template-columns: minmax(0, calc(var(--import-left, 50%) - 6px)) 12px minmax(0, calc(100% - var(--import-left, 50%) - 6px));
   align-items: stretch;
 }
 
@@ -506,7 +506,7 @@ h3 {
 
 .citizen-split {
   display: grid;
-  grid-template-columns: minmax(280px, calc(var(--citizen-left, 50%) - 6px)) 12px minmax(280px, calc(100% - var(--citizen-left, 50%) - 6px));
+  grid-template-columns: minmax(0, calc(var(--citizen-left, 50%) - 6px)) 12px minmax(0, calc(100% - var(--citizen-left, 50%) - 6px));
   align-items: stretch;
   flex: 1;
   min-height: 420px;
@@ -543,7 +543,7 @@ h3 {
 
 .region-split {
   display: grid;
-  grid-template-columns: minmax(360px, var(--region-left, 58%)) 12px minmax(360px, 1fr);
+  grid-template-columns: minmax(0, calc(var(--region-left, 50%) - 6px)) 12px minmax(0, calc(100% - var(--region-left, 50%) - 6px));
   align-items: stretch;
   height: min(760px, calc(100vh - 190px));
   min-height: 560px;
@@ -551,7 +551,7 @@ h3 {
 
 .quittung-split {
   display: grid;
-  grid-template-columns: minmax(280px, var(--quittung-left, 38%)) 12px minmax(300px, 1fr);
+  grid-template-columns: minmax(0, calc(var(--quittung-left, 50%) - 6px)) 12px minmax(0, calc(100% - var(--quittung-left, 50%) - 6px));
   align-items: stretch;
   height: min(700px, calc(100vh - 190px));
   min-height: 480px;
@@ -559,13 +559,37 @@ h3 {
 
 .template-split {
   display: grid;
-  grid-template-columns: minmax(260px, var(--template-left, 40%)) 12px minmax(400px, 1fr);
+  grid-template-columns: minmax(0, calc(var(--template-left, 50%) - 6px)) 12px minmax(0, calc(100% - var(--template-left, 50%) - 6px));
   align-items: stretch;
   flex: 1;
   min-height: 0;
 }
 
+.profile-split {
+  display: grid;
+  grid-template-columns: minmax(0, calc(var(--profile-left, 50%) - 6px)) 12px minmax(0, calc(100% - var(--profile-left, 50%) - 6px));
+  align-items: stretch;
+  height: min(700px, calc(100vh - 190px));
+  min-height: 480px;
+}
+
+.users-split {
+  display: grid;
+  grid-template-columns: minmax(0, calc(var(--users-left, 50%) - 6px)) 12px minmax(0, calc(100% - var(--users-left, 50%) - 6px));
+  align-items: stretch;
+  height: min(700px, calc(100vh - 190px));
+  min-height: 480px;
+}
+
 .template-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.profile-panel,
+.users-panel {
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -579,9 +603,17 @@ h3 {
   margin-top: 12px;
 }
 
+.profile-panel-scroll,
+.users-panel-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  margin-top: 12px;
+}
+
 .soko-split {
   display: grid;
-  grid-template-columns: minmax(280px, var(--soko-left, 58%)) 12px minmax(320px, 1fr);
+  grid-template-columns: minmax(0, calc(var(--soko-left, 50%) - 6px)) 12px minmax(0, calc(100% - var(--soko-left, 50%) - 6px));
   align-items: stretch;
   height: min(700px, calc(100vh - 250px));
   min-height: 500px;
@@ -600,14 +632,14 @@ h3 {
 
 .sender-split {
   display: grid;
-  grid-template-columns: minmax(220px, var(--sender-left, 38%)) 12px minmax(360px, 1fr);
+  grid-template-columns: minmax(0, calc(var(--sender-left, 50%) - 6px)) 12px minmax(0, calc(100% - var(--sender-left, 50%) - 6px));
   align-items: stretch;
   height: min(700px, calc(100vh - 190px));
 }
 
 .print-split {
   display: grid;
-  grid-template-columns: minmax(260px, var(--print-left, 40%)) 12px minmax(320px, 1fr);
+  grid-template-columns: minmax(0, calc(var(--print-left, 50%) - 6px)) 12px minmax(0, calc(100% - var(--print-left, 50%) - 6px));
   align-items: stretch;
   height: min(700px, calc(100vh - 300px));
   min-height: 480px;
@@ -2390,8 +2422,10 @@ tbody tr.selected {
   .quittung-split,
   .citizen-split,
   .template-split,
+  .profile-split,
   .soko-split,
   .sender-split,
+  .users-split,
   .print-split {
     height: auto;
     min-height: 0;
@@ -2400,7 +2434,11 @@ tbody tr.selected {
   .region-panel,
   .region-panel-scroll,
   .citizen-panel,
-  .citizen-panel-scroll {
+  .citizen-panel-scroll,
+  .profile-panel,
+  .profile-panel-scroll,
+  .users-panel,
+  .users-panel-scroll {
     height: auto;
     overflow: visible;
   }
