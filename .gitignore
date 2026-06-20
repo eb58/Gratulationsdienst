@@ -3,3 +3,5 @@ dist/
 dist-check/
 .vite/
 .claude
+src
+docker/src

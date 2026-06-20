@@ -223,40 +223,11 @@ Beim ersten Start kann eine Migration von der alten Sammelstruktur auf die neuen
 3. `saveData()` schreibt UI-Zustand in `localStorage`.
 4. Fachliche Änderungen werden in die schreibbaren Backend-Collections gespiegelt.
 
-## 9. Build und Deployment
+## 9. Build, Installation und Deployment
 
-### Lokale Entwicklung
+Vite baut das Frontend und leitet während der lokalen Entwicklung `/php-api` an das PHP-Backend weiter. Die API initialisiert und aktualisiert ihr relationales Schema beim Start anhand von `php-api/schema.mysql.sql`.
 
-```powershell
-npm install
-npm run dev
-```
-
-Vite nutzt einen Proxy von `/php-api` auf `http://localhost:8080`.
-
-### Produktiv-Build
-
-```powershell
-npm run build
-```
-
-Das Build-Ziel ist in `vite.config.js` festgelegt.
-
-### PHP-Backend lokal
-
-```powershell
-php -S 127.0.0.1:8080 -t .
-```
-
-### Konfiguration
-
-`php-api/config.php` wird aus `php-api/config.example.php` abgeleitet und enthält:
-
-- DSN
-- DB-Benutzer
-- Passwort
-- `app_url`
-- Mail-Absenderdaten
+Systemvoraussetzungen, Datenbankeinrichtung, lokale Inbetriebnahme, Produktiv-Deployment und Fehlerbehebung sind in der eigenständigen [Installationsanleitung](INSTALLATIONSANLEITUNG.md) beschrieben.
 
 ## 10. Barrierefreiheit nach BITV 2.0
 
