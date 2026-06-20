@@ -2,7 +2,7 @@ $server = "56759440.ssh.w1.strato.hosting"
 $user = "stu512072182"
 $port = 22
 $webroot = "Seniorenclub"
-$buildDir = "..\..\Documents\docker-container\src\gratulationsdienst"
+$buildDir = "docker\src\gratulationsdienst"
 $sshOpt = "-o UpdateHostKeys=no"
 
 Write-Host "Baue App..." -ForegroundColor Cyan
