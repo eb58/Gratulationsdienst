@@ -42,6 +42,12 @@ export const templateBackBackgroundImage = template => String(template.backBackg
 const templateBackgroundLayer = backgroundImage => {
   return backgroundImage ? `<img class="template-background-image" src="${escapeHtml(backgroundImage)}" alt="" aria-hidden="true">` : "";
 };
+const squareGreetingContent = (subject, body, signature) => `
+  <div class="square-greeting" style="position:absolute;top:113mm;right:0;bottom:38mm;left:0;box-sizing:border-box;padding:8mm 18mm 0;overflow:hidden;font-family:Arial,sans-serif">
+    <div class="doc-title" style="font-weight:800;font-size:12pt;line-height:1.18;margin:0 0 3mm;color:#173b38">${escapeHtml(subject)}</div>
+    <div class="doc-body" style="font-size:9.5pt;line-height:1.32;white-space:pre-wrap">${escapeHtml(body)}</div>
+    <div class="signature" style="margin-top:3mm;font-size:14pt;color:#0f5d58;font-family:'Segoe Script','Brush Script MT',cursive">${escapeHtml(signature)}</div>
+  </div>`;
 const squareBackAddress = citizen => {
   const sokoLabel = normalize(citizen.wish || "").startsWith("besuch")
     ? (groupForCitizen(citizen)?.id?.replace("SOKO ", "") || "")
@@ -85,11 +91,7 @@ export const documentPreview = (template = selectedTemplate(), citizen = selecte
         ${designClass === "birthday-card" ? `<div class="card-age-mark" aria-hidden="true">${escapeHtml(calculateAge(citizen.birthDate))}</div>` : ""}
         ${isSquareGreetingCard ? `
           ${backgroundImage ? `<img class="square-card-preview-image" src="${escapeHtml(backgroundImage)}" alt="" aria-hidden="true">` : ""}
-          <div class="square-greeting">
-            <div class="doc-title">${escapeHtml(rendered.subject)}</div>
-            <div class="doc-body">${escapeHtml(body)}</div>
-            <div class="signature">${escapeHtml(sender.signature)}</div>
-          </div>
+          ${squareGreetingContent(rendered.subject, body, sender.signature)}
         ` : `
           <div class="document-content">
             <div class="doc-letterhead" style="border-color:${escapeHtml(sender.color)}">
@@ -124,8 +126,12 @@ export const documentBackPreview = (template = selectedTemplate(), citizen = sel
   return `
     <div class="document-preview document-back-preview ${format.className} ${isSquareGreetingCard ? "square-card-back" : ""}">
       <div class="document-sheet ${backgroundImage ? "has-template-background" : ""}">
-        ${backgroundImage ? `<img class="${isSquareGreetingCard ? "square-card-preview-image" : "template-background-image"}" src="${escapeHtml(backgroundImage)}" alt="" aria-hidden="true">` : ""}
-        ${isSquareGreetingCard ? `<div class="square-back-address">${squareBackAddress(citizen)}</div>` : ""}
+        ${isSquareGreetingCard ? `
+          <div class="square-back-content">
+            ${backgroundImage ? `<img class="square-card-preview-image" src="${escapeHtml(backgroundImage)}" alt="" aria-hidden="true">` : ""}
+            <div class="square-back-address">${squareBackAddress(citizen)}</div>
+          </div>
+        ` : templateBackgroundLayer(backgroundImage)}
       </div>
     </div>
   `;
@@ -140,11 +146,7 @@ export const printSquareCardPage = (template, citizen, sender) => {
   return `
   <div style="position:relative;width:210mm;height:210mm;page-break-after:always;break-after:page;background:#fff">
     ${bgImg}
-    <div style="position:absolute;top:113mm;right:0;bottom:38mm;left:0;box-sizing:border-box;padding:8mm 18mm 0;overflow:hidden">
-      <div style="font-weight:800;font-size:12pt;line-height:1.18;margin:0 0 3mm;color:#173b38;font-family:Arial,sans-serif">${escapeHtml(rendered.subject)}</div>
-      <div style="font-size:9.5pt;line-height:1.32;white-space:pre-wrap;font-family:Arial,sans-serif">${escapeHtml(rendered.body)}</div>
-      <div style="margin-top:3mm;font-size:14pt;color:#0f5d58;font-family:'Segoe Script','Brush Script MT',cursive">${escapeHtml(sender.signature)}</div>
-    </div>
+    ${squareGreetingContent(rendered.subject, rendered.body, sender.signature)}
   </div>`;
 };
 export const printSquareCardBack = (template, citizen) => {

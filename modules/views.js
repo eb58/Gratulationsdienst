@@ -671,6 +671,7 @@ export const views = {
     const checkedCount = filteredCitizens().filter(c => c.status === "geprüft").length;
     const previewCitizen = previewDoc ? byId(state.data.citizens, previewDoc.citizenId) : filteredCitizens().find(c => c.status === "geprüft") || selectedCitizen();
     const previewTemplate = previewDoc ? byId(state.data.templates, previewDoc.templateId) || template : template;
+    const printablePreviewTemplate = state.printBackground ? previewTemplate : { ...previewTemplate, backgroundImage: "", backBackgroundImage: "" };
     const previewSender = previewDoc ? byId(state.data.senders, previewDoc.senderId) || sender : sender;
     return `
       <div class="panel">
@@ -698,7 +699,7 @@ export const views = {
         <div class="vertical-splitter" data-splitter="print" role="separator" aria-orientation="vertical" aria-label="Druckliste und Vorschau aufteilen" aria-valuemin="20" aria-valuemax="80" aria-valuenow="${state.printSplit}" tabindex="0"></div>
         <section class="panel">
           <h2>Seriendruck-Vorschau</h2>
-          ${docs.length ? documentPreviewStack(previewTemplate, previewCitizen, previewSender) : `<div class="empty-state">Kein Dokument ausgewählt</div>`}
+          ${docs.length ? documentPreviewStack(printablePreviewTemplate, previewCitizen, previewSender) : `<div class="empty-state">Kein Dokument ausgewählt</div>`}
         </section>
       </div>
       <div class="print-pages print-only">
