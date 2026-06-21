@@ -1,3 +1,5 @@
+name: gratulationsdienst
+
 services:
   # 1. PHP & Apache Webserver
   web:
