@@ -55,7 +55,7 @@ npm install
 npm run build
 ```
 
-Der Build wird unter `src/gratulationsdienst/` abgelegt. Dieses Verzeichnis bindet Docker als Webroot des Apache-Containers ein.
+Der Build wird unter `docker/src/gratulationsdienst/` abgelegt. Dieses Verzeichnis bindet Docker als Webroot des Apache-Containers ein.
 
 ### 3.3 Backend für die Docker-Datenbank konfigurieren
 
@@ -81,15 +81,23 @@ return [
 ];
 ```
 
-Der Hostname muss innerhalb von Docker `db` lauten, nicht `localhost`. Benutzer, Passwort und Datenbankname müssen mit den Werten in `docker-compose.yml` übereinstimmen. Für einen dauerhaften oder öffentlich erreichbaren Betrieb sind die Beispielpasswörter vor dem ersten Start zu ändern.
+Der Hostname muss innerhalb von Docker `db` lauten, nicht `localhost`. Benutzer, Passwort und Datenbankname müssen mit den Werten in `docker/docker-compose.yml` übereinstimmen. Für einen dauerhaften oder öffentlich erreichbaren Betrieb sind die Beispielpasswörter vor dem ersten Start zu ändern.
 
 ### 3.4 Container bauen und starten
+
+Die Docker-Dateien liegen im Verzeichnis `docker/`. Alle folgenden `docker compose`-Befehle werden dort ausgeführt. Zunächst dorthin wechseln:
+
+```powershell
+cd docker
+```
 
 Alle Dienste im Hintergrund starten:
 
 ```powershell
 docker compose up -d --build
 ```
+
+Die Option `--build` baut über den `build:`-Block in `docker/docker-compose.yml` das Image für den Dienst `web` aus `docker/Dockerfile`. Das Dockerfile erweitert das Standard-Image `php:8.2-apache` um die für diese Anwendung nötigen Bausteine: die MySQL-Treiber `pdo_mysql`/`mysqli` für die Datenbankverbindung sowie `mod_rewrite` und `AllowOverride All`, damit die `.htaccess` der API greift. Die Dienste `db` und `phpmyadmin` nutzen dagegen fertige Images von Docker Hub und werden nicht lokal gebaut. Das Dockerfile wird nie direkt aufgerufen, sondern immer über `docker compose`.
 
 Beim ersten Start werden die Images heruntergeladen, das PHP-Image gebaut und die MySQL-Datenbank initialisiert. Das kann einige Minuten dauern. Den Status zeigt:
 
@@ -137,7 +145,7 @@ phpMyAdmin ist erreichbar unter:
 http://localhost:8080/
 ```
 
-Für die Anmeldung die MySQL-Daten aus `docker-compose.yml` verwenden, standardmäßig Benutzer `eb` und Passwort `test123456!!`.
+Für die Anmeldung die MySQL-Daten aus `docker/docker-compose.yml` verwenden, standardmäßig Benutzer `eb` und Passwort `test123456!!`.
 
 ### 3.7 Container verwalten
 
@@ -165,7 +173,7 @@ Protokolle anzeigen:
 docker compose logs -f
 ```
 
-Nach einer Änderung am Frontend erneut `npm run build` ausführen. Änderungen unter `php-api/` werden durch die Docker-Verzeichnisfreigabe direkt übernommen. Nach Änderungen an `Dockerfile` oder `docker-compose.yml` neu bauen und starten:
+Nach einer Änderung am Frontend erneut `npm run build` ausführen. Änderungen unter `php-api/` werden durch die Docker-Verzeichnisfreigabe direkt übernommen. Nach Änderungen an `docker/Dockerfile` oder `docker/docker-compose.yml` neu bauen und starten:
 
 ```powershell
 docker compose up -d --build
@@ -175,10 +183,10 @@ Die Datenbank liegt im Docker-Volume `db_data`. Der Befehl `docker compose down 
 
 ### 3.8 Häufige Docker-Probleme
 
-- **Port 80 ist belegt:** Einen anderen Webserver wie XAMPP/IIS stoppen oder in `docker-compose.yml` beispielsweise `8081:80` eintragen. Die Anwendung ist dann unter `http://localhost:8081/gratulationsdienst/` erreichbar.
-- **Health-Test liefert 404:** Prüfen, ob `./php-api` im Dienst `web` nach `/var/www/html/gratulationsdienst/php-api` eingebunden ist.
+- **Port 80 ist belegt:** Einen anderen Webserver wie XAMPP/IIS stoppen oder in `docker/docker-compose.yml` beispielsweise `8081:80` eintragen. Die Anwendung ist dann unter `http://localhost:8081/gratulationsdienst/` erreichbar.
+- **Health-Test liefert 404:** Prüfen, ob `../php-api` im Dienst `web` nach `/var/www/html/gratulationsdienst/php-api` eingebunden ist.
 - **Health-Test liefert 500:** Mit `docker compose logs web` das Apache/PHP-Protokoll und mit `docker compose logs db` den Datenbankstart prüfen.
-- **Datenbankverbindung schlägt fehl:** In `php-api/config.php` muss der Datenbankhost `db` sein. Zugangsdaten müssen mit `docker-compose.yml` übereinstimmen.
+- **Datenbankverbindung schlägt fehl:** In `php-api/config.php` muss der Datenbankhost `db` sein. Zugangsdaten müssen mit `docker/docker-compose.yml` übereinstimmen.
 - **Altes Frontend wird angezeigt:** `npm run build` erneut ausführen und die Browserseite ohne Cache neu laden.
 
 ## 4. Datenbank ohne Docker einrichten
@@ -313,7 +321,7 @@ npm install
 npm run build
 ```
 
-Das aktuelle `vite.config.js` schreibt den Build nach `src/gratulationsdienst/`. Für ein klassisches Deployment kann `build.outDir` stattdessen auf ein separates Verzeichnis wie `dist` gesetzt werden. Danach den Inhalt dieses Verzeichnisses nach `/var/www/html/gratulationsdienst/` kopieren; der Ordner `php-api/` bleibt dabei erhalten.
+Das aktuelle `vite.config.js` schreibt den Build nach `docker/src/gratulationsdienst/`. Für ein klassisches Deployment kann `build.outDir` stattdessen auf ein separates Verzeichnis wie `dist` gesetzt werden. Danach den Inhalt dieses Verzeichnisses nach `/var/www/html/gratulationsdienst/` kopieren; der Ordner `php-api/` bleibt dabei erhalten.
 
 Das mitgelieferte Skript `deploy.ps1` ist auf den derzeit hinterlegten Server und dessen lokale Verzeichnisstruktur zugeschnitten. Es ist kein allgemeines Installationsskript und muss vor einer Verwendung geprüft und angepasst werden.
 

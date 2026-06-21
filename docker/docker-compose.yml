@@ -1,14 +1,16 @@
 services:
   # 1. PHP & Apache Webserver
   web:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: php_webserver
     restart: always
     ports:
       - "80:80"
     volumes:
       - ./src:/var/www/html
-      - ./php-api:/var/www/html/gratulationsdienst/php-api
+      - ../php-api:/var/www/html/gratulationsdienst/php-api
     depends_on:
       - db
 
