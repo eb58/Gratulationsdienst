@@ -1,5 +1,5 @@
 import { normalize, escapeHtml, formatDate, formatDateDe, formatStreetAddress, calculateAge } from './utils.js';
-import { streetGroupDisplay } from './domain.js';
+import { streetGroupDisplay, sokoColors } from './domain.js';
 import { state } from './state.js';
 import { filteredCitizens, groupForCitizen, selectedCitizen } from './assignment.js';
 import { render, renderDialog } from './render.js'; // Zyklus OK: render wird nur in Event-Callbacks aufgerufen
@@ -18,6 +18,22 @@ export const gridTheme = () => window.agGrid?.themeQuartz?.withParams ? window.a
 }) : undefined;
 
 export const badgeCell = (value, tone = "") => `<span class="pill ${tone}">${escapeHtml(value)}</span>`;
+const accentBadgeCell = (value, color) => `
+  <span class="pill" style="color:${color}">
+    ${escapeHtml(value)}
+  </span>
+`;
+const sokoBadgeCell = value => value === "offen"
+  ? badgeCell("offen", "red")
+  : accentBadgeCell(value, sokoColors[value] || "#0f5d58");
+const statusBadgeCell = value => {
+  const color = value === "offen" ? "#d09b2c"
+    : value === "importiert" ? "#315a8c"
+    : value === "geprüft" ? "#2f7d4f"
+    : value === "gedruckt" ? "#0f5d58"
+    : "#66706d";
+  return value === "offen" ? badgeCell(value, "gold") : accentBadgeCell(value, color);
+};
 const agTheme = () => { const theme = gridTheme(); return theme ? { theme } : {}; };
 
 export const baseGridOptions = () => ({
@@ -151,8 +167,8 @@ export const gridDefinitions = {
       { headerName: "Geburtstag", field: "birthday", width: 130, minWidth: 120, valueFormatter: params => formatDate(params.value) },
       { headerName: "Alter", field: "age", width: 90, minWidth: 80, filter: "agNumberColumnFilter" },
       { headerName: "Adresse", field: "address", width: 280, minWidth: 180 },
-      { headerName: "SOKO", field: "groupId", width: 115, minWidth: 105, cellRenderer: params => params.value === "offen" ? badgeCell("offen", "red") : badgeCell(params.value) },
-      { headerName: "Status", field: "status", width: 135, minWidth: 115, cellRenderer: params => `<span class="pill ${params.value === "offen" ? "gold" : params.value === "geprüft" ? "green" : ""}">${escapeHtml(params.value)}</span>` }
+      { headerName: "SOKO", field: "groupId", width: 115, minWidth: 105, cellRenderer: params => sokoBadgeCell(params.value) },
+      { headerName: "Status", field: "status", width: 135, minWidth: 115, cellRenderer: params => statusBadgeCell(params.value) }
     ],
     getRowId: params => params.data.id,
     getRowClass: params => params.data.id === state.selectedCitizenId ? "selected" : "",
@@ -186,7 +202,7 @@ export const gridDefinitions = {
     })),
     columnDefs: [
       { headerName: "Name", field: "name", width: 230, minWidth: 170 },
-      { headerName: "SOKO", field: "groupId", width: 115, minWidth: 105, cellRenderer: params => badgeCell(params.value) },
+      { headerName: "SOKO", field: "groupId", width: 115, minWidth: 105, cellRenderer: params => sokoBadgeCell(params.value) },
       { headerName: "Kontakt", field: "contact", width: 285, minWidth: 190 },
       { headerName: "Berufung", field: "term", width: 190, minWidth: 170 },
       { headerName: "Rolle", field: "role", width: 125, minWidth: 110, cellRenderer: params => params.value === "Leitung" ? badgeCell(params.value, "green") : badgeCell(params.value) }
@@ -215,7 +231,7 @@ export const gridDefinitions = {
       { headerName: "Straße", field: "name", width: 320, minWidth: 220 },
       { headerName: "Ortsteil", field: "district", width: 175, minWidth: 145 },
       { headerName: "Abschnitte", field: "ruleCount", width: 120, minWidth: 105, filter: "agNumberColumnFilter" },
-      { headerName: "SOKO", field: "groupId", width: 210, minWidth: 125, cellRenderer: params => params.value === "offen" ? badgeCell("offen", "red") : badgeCell(params.value) }
+      { headerName: "SOKO", field: "groupId", width: 210, minWidth: 125, cellRenderer: params => sokoBadgeCell(params.value) }
     ],
     getRowId: params => params.data.id,
     getRowClass: params => params.data.id === state.selectedStreetId ? "selected" : "",
@@ -235,7 +251,7 @@ export const gridDefinitions = {
     columnDefs: [
       { headerName: "Empfänger", field: "recipient", width: 230, minWidth: 170 },
       { headerName: "Adresse", field: "address", width: 300, minWidth: 210 },
-      { headerName: "SOKO", field: "groupId", width: 115, minWidth: 105, cellRenderer: params => params.value ? badgeCell(params.value) : badgeCell("offen", "red") },
+      { headerName: "SOKO", field: "groupId", width: 115, minWidth: 105, cellRenderer: params => params.value ? sokoBadgeCell(params.value) : badgeCell("offen", "red") },
       { headerName: "Glückwünsche", field: "wish", width: 160, minWidth: 135 },
       { headerName: "Vorlage", field: "templateName", width: 230, minWidth: 180 }
     ],
@@ -253,7 +269,7 @@ export const gridDefinitions = {
       { headerName: "Alter", field: "age", colId: "age", width: 80, minWidth: 70, filter: "agNumberColumnFilter" },
       { headerName: "Adresse", field: "address", width: 250, minWidth: 190, valueGetter: params => params.data.address || formatStreetAddress(params.data) },
       { headerName: "Ergebnis", field: "type", width: 135, minWidth: 120, cellRenderer: params => params.value === "Fehler" ? badgeCell("Fehler", "red") : params.value === "Dublette" ? badgeCell("Dublette", "gold") : badgeCell("Importiert", "green") },
-      { headerName: "SOKO", field: "groupId", width: 115, minWidth: 105, valueGetter: params => importLogSoko(params.data), cellRenderer: params => params.value ? badgeCell(params.value) : badgeCell("offen", "red") }
+      { headerName: "SOKO", field: "groupId", width: 115, minWidth: 105, valueGetter: params => importLogSoko(params.data), cellRenderer: params => params.value ? sokoBadgeCell(params.value) : badgeCell("offen", "red") }
     ],
     getRowId: params => params.data.id
   })

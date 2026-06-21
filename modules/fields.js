@@ -89,7 +89,16 @@ export const streetRuleRows = street => `
   </div>
 `;
 
-export const statusPill = status => `<span class="pill ${status === "offen" ? "gold" : status === "geprüft" ? "green" : ""}">${escapeHtml(status)}</span>`;
+export const statusPill = status => {
+  const color = status === "offen" ? "#d09b2c"
+    : status === "importiert" ? "#315a8c"
+    : status === "geprüft" ? "#2f7d4f"
+    : status === "gedruckt" ? "#0f5d58"
+    : "#66706d";
+  return status === "offen"
+    ? `<span class="pill gold">${escapeHtml(status)}</span>`
+    : `<span class="pill" style="background:color-mix(in srgb, ${color} 16%, white);color:${color};border:1px solid color-mix(in srgb, ${color} 28%, white)">${escapeHtml(status)}</span>`;
+};
 export const assignmentPill = citizen => {
   const group = groupForCitizen(citizen);
   return group ? `<span class="pill">${escapeHtml(group.id)}</span>` : `<span class="pill red">offen</span>`;

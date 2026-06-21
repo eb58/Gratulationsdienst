@@ -413,7 +413,7 @@ export const views = {
           ${[["alle", "Alle Alter"], ["85", "85 Jahre"], ["90plus", "90+"], ["100", "100+"]].map(option => `<option value="${option[0]}" ${state.filters.age === option[0] ? "selected" : ""}>${option[1]}</option>`).join("")}
         </select>
         <select name="status" data-filter>
-          ${[["alle", "Alle Status"], ["offen", "offen"], ["geprüft", "geprüft"], ["gedruckt", "gedruckt"]].map(option => `<option value="${option[0]}" ${state.filters.status === option[0] ? "selected" : ""}>${option[1]}</option>`).join("")}
+          ${[["alle", "Alle Status"], ["offen", "offen"], ["importiert", "importiert"], ["geprüft", "geprüft"], ["gedruckt", "gedruckt"]].map(option => `<option value="${option[0]}" ${state.filters.status === option[0] ? "selected" : ""}>${option[1]}</option>`).join("")}
         </select>
       </div>
       <div class="${citizen ? "citizen-split" : ""}" ${citizen ? `style="--citizen-left:${state.citizenSplit}%"` : ""}>
