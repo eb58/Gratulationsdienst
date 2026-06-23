@@ -136,6 +136,18 @@ const numberFrom = value => Number.parseInt(String(value ?? "").match(/\d+/)?.[0
 const testAssignments = () => state.data.streets.flatMap(street => (street.rules || [])
   .filter(rule => rule.soko)
   .map(rule => ({ street, rule })));
+const groupedTestAssignments = () => [...testAssignments().reduce((groups, assignment) => {
+  const group = groups.get(assignment.rule.soko) || [];
+  group.push(assignment);
+  groups.set(assignment.rule.soko, group);
+  return groups;
+}, new Map()).entries()]
+  .sort(([a], [b]) => Number(a) - Number(b))
+  .map(([soko, assignments]) => ({ soko, assignments }));
+const balancedTestAssignments = (groups, count) => Array.from({ length: count }, (_, index) => {
+  const group = groups[index % groups.length];
+  return group.assignments[Math.floor(index / groups.length) % group.assignments.length];
+});
 const testHouseNo = (rule, offset) => String([rule.von, rule.bis, ...Array.from({ length: 220 }, (_, index) => index + 1)]
   .map(numberFrom)
   .find(number => Number.isFinite(number) && ruleMatchesHouseNo(rule, number)) || offset + 1);
@@ -586,11 +598,16 @@ export const actions = {
   },
   "seed-citizens": () => {
     if (state.auth.user?.role !== "admin") { toast("Nur Admins können Testdaten erzeugen."); return; }
-    const assignments = testAssignments();
-    if (!assignments.length) { toast("Keine SOKO-Zuordnungen für Testdaten gefunden."); return; }
+    const groups = groupedTestAssignments();
+    if (!groups.length) { toast("Keine SOKO-Zuordnungen für Testdaten gefunden."); return; }
+    const rowCount = Math.max(30, groups.length);
+    const assignments = balancedTestAssignments(groups, rowCount);
     const firstNames = shuffledTestValues(testFirstNames);
     const lastNames = shuffledTestValues(testLastNames);
-    const csv = testCsvText(Array.from({ length: 30 }, (_, index) => testCsvRow(index, { salutation: firstNames[index][0], firstName: firstNames[index][1], lastName: lastNames[index] }, assignments[index % assignments.length])));
+    const csv = testCsvText(assignments.map((assignment, index) => {
+      const [salutation, firstName] = firstNames[index % firstNames.length];
+      return testCsvRow(index, { salutation, firstName, lastName: lastNames[index % lastNames.length] }, assignment);
+    }));
     state.importText = csv;
     importMappedRows(parseCsv(csv).map(mapImportRow));
   },
