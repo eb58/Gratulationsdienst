@@ -104,7 +104,6 @@ export const state = {
   selectedStreetId: "STR-001",
   selectedSenderId: "A-001",
   selectedTemplateId: "T-001",
-  quittungSplit: storedSplit("quittung", 50),
   quittungBetrag: quittungSettings.quittungBetrag,
   quittungTelefon: quittungSettings.quittungTelefon,
   quittungKapitel: quittungSettings.quittungKapitel,

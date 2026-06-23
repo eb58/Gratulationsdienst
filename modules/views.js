@@ -465,6 +465,7 @@ export const views = {
         <select name="groupId" data-filter>${groupOptions().map(group => `<option value="${group[0]}" ${state.filters.groupId === group[0] ? "selected" : ""}>${group[1]}</option>`).join("")}</select>
         <button type="button" class="ghost-button" data-action="new-member">Neues Mitglied</button>
         <button type="button" class="ghost-button" data-action="export-soko">XLSX/CSV Export</button>
+        <button type="button" class="ghost-button danger-button" data-action="reset-soko-members">Testdaten zurücksetzen</button>
       </div>
       <div class="soko-split" style="--soko-left:${state.sokoSplit}%">
         <section class="panel template-panel">
@@ -481,6 +482,7 @@ export const views = {
                 ${selectField("salutation", "Anrede", member.salutation, [["Frau", "Frau"], ["Herr", "Herr"]])}
                 ${field("firstName", "Vorname", member.firstName)}
                 ${field("lastName", "Nachname", member.lastName)}
+                ${field("birthDate", "Geburtsdatum", member.birthDate, "date")}
                 ${selectField("groupId", "SOKO", member.groupId, sokoSelectOptions())}
                 ${field("street", "Straße", member.street, "text", "full")}
                 ${field("postalCode", "PLZ", member.postalCode)}
@@ -489,10 +491,15 @@ export const views = {
                 ${field("mobile", "Handy", member.mobile)}
                 ${emailField("email", "E-Mail", member.email)}
                 ${ibanField("bank", "Bankverbindung / IBAN", member.bank, "full")}
+                ${field("accountHolder", "Kontoinhaber", member.accountHolder, "text", "full")}
                 ${field("allowance", "Aufwandspauschale", member.allowance)}
                 ${field("billingAmount", "Abrechnungsbetrag", member.billingAmount)}
                 ${field("termFrom", "Berufung von", member.termFrom, "date")}
                 ${field("termTo", "Berufung bis", member.termTo, "date")}
+                ${field("zpNr", "ZP-Nr", member.zpNr)}
+                ${field("kassenzeichen", "Kassenzeichen", member.kassenzeichen)}
+                ${field("misc", "Sonstiges", member.misc, "text", "full")}
+                ${textField("note", "Bemerkung", member.note, "full")}
                 ${selectField("isLeader", "Rolle", String(member.isLeader), [["false", "Mitglied"], ["true", "Leitung"]], "full")}
                 <div class="field full button-row">
                   <button type="button" class="primary-button" data-action="save-member">Speichern</button>

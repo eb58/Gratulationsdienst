@@ -448,6 +448,29 @@ h3 {
   flex-direction: column;
 }
 
+.view-soko {
+  display: flex;
+  flex-direction: column;
+}
+
+.view-regions {
+  display: flex;
+  flex-direction: column;
+}
+
+.view-regions > .grid.two {
+  flex: 1;
+  min-height: 0;
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.view-senders,
+.view-profile,
+.view-users {
+  display: flex;
+  flex-direction: column;
+}
+
 .view-import {
   display: flex;
   flex-direction: column;
@@ -545,16 +568,8 @@ h3 {
   display: grid;
   grid-template-columns: minmax(0, calc(var(--region-left, 50%) - 6px)) 12px minmax(0, calc(100% - var(--region-left, 50%) - 6px));
   align-items: stretch;
-  height: min(760px, calc(100vh - 190px));
-  min-height: 560px;
-}
-
-.quittung-split {
-  display: grid;
-  grid-template-columns: minmax(0, calc(var(--quittung-left, 50%) - 6px)) 12px minmax(0, calc(100% - var(--quittung-left, 50%) - 6px));
-  align-items: stretch;
-  height: min(700px, calc(100vh - 190px));
-  min-height: 480px;
+  flex: 1;
+  min-height: 0;
 }
 
 .template-split {
@@ -569,16 +584,16 @@ h3 {
   display: grid;
   grid-template-columns: minmax(0, calc(var(--profile-left, 50%) - 6px)) 12px minmax(0, calc(100% - var(--profile-left, 50%) - 6px));
   align-items: stretch;
-  height: min(700px, calc(100vh - 190px));
-  min-height: 480px;
+  flex: 1;
+  min-height: 0;
 }
 
 .users-split {
   display: grid;
   grid-template-columns: minmax(0, calc(var(--users-left, 50%) - 6px)) 12px minmax(0, calc(100% - var(--users-left, 50%) - 6px));
   align-items: stretch;
-  height: min(700px, calc(100vh - 190px));
-  min-height: 480px;
+  flex: 1;
+  min-height: 0;
 }
 
 .template-panel {
@@ -615,8 +630,8 @@ h3 {
   display: grid;
   grid-template-columns: minmax(0, calc(var(--soko-left, 50%) - 6px)) 12px minmax(0, calc(100% - var(--soko-left, 50%) - 6px));
   align-items: stretch;
-  height: min(700px, calc(100vh - 250px));
-  min-height: 500px;
+  flex: 1;
+  min-height: 0;
 }
 
 .soko-grid-scroll {
@@ -634,7 +649,8 @@ h3 {
   display: grid;
   grid-template-columns: minmax(0, calc(var(--sender-left, 50%) - 6px)) 12px minmax(0, calc(100% - var(--sender-left, 50%) - 6px));
   align-items: stretch;
-  height: min(700px, calc(100vh - 190px));
+  flex: 1;
+  min-height: 0;
 }
 
 .print-split {
@@ -2413,7 +2429,6 @@ tbody tr.selected {
   .dashboard-metrics,
   .import-split,
   .region-split,
-  .quittung-split,
   .citizen-split,
   .template-split,
   .soko-split,
@@ -2425,6 +2440,11 @@ tbody tr.selected {
   .file-action-row,
   .split-controls {
     grid-template-columns: 1fr;
+  }
+
+  .view-regions > .grid.two {
+    flex: none;
+    grid-template-rows: auto;
   }
 
   .street-rule-head {
@@ -2440,7 +2460,6 @@ tbody tr.selected {
   }
 
   .region-split,
-  .quittung-split,
   .citizen-split,
   .template-split,
   .profile-split,

@@ -1,5 +1,5 @@
 import { $, todayIso, isValidEmail, isValidIban, formatIban, updateItem, nextId, csvEscape, formatStreetAddress, downloadText, calculateAge, toast, byId, normalize } from './utils.js';
-import { normalizeStreetRules, streetDistrictSummary, streetGroupSummary, normalizeStreetDistrict } from './domain.js';
+import { normalizeStreetRules, streetDistrictSummary, streetGroupSummary, normalizeStreetDistrict, defaultData } from './domain.js';
 import { state, saveData, saveQuittungSettings, apiRequest, setAuthSession, clearAuthSession, loadCollectionData } from './state.js';
 import { streetAssignment, filteredCitizens, documentCitizens, duplicateKey, isPrintedCitizen, selectedTemplate, selectedSender, selectedMember, activeCitizens, groupForCitizen, isReceiptGroupReady, receiptCitizens, receiptCitizensForReadyGroups, ruleMatchesHouseNo } from './assignment.js';
 import { printCurrentRun, completePrintRun, renderSokoForm, renderSokoQuittung } from './documents.js';
@@ -383,7 +383,7 @@ export const actions = {
   },
   "new-member": () => {
     const id = nextId("S", state.data.sokoMembers);
-    const member = { id, salutation: "Frau", firstName: "", lastName: "", groupId: state.data.sokoGroups[0].id, street: "", postalCode: "", city: "", phone: "", mobile: "", email: "", bank: "", allowance: "35,00", termFrom: todayIso(), termTo: "2028-12-31", billingAmount: "15,00", isLeader: false };
+    const member = { id, salutation: "Frau", firstName: "", lastName: "", birthDate: "", groupId: state.data.sokoGroups[0].id, street: "", postalCode: "", city: "", phone: "", mobile: "", email: "", bank: "", accountHolder: "", allowance: "35,00", termFrom: todayIso(), termTo: "2028-12-31", billingAmount: "15,00", zpNr: "", kassenzeichen: "", misc: "", note: "", isLeader: false };
     state.data.sokoMembers = [...state.data.sokoMembers, member];
     state.selectedMemberId = id;
     saveData();
@@ -593,6 +593,21 @@ export const actions = {
     const csv = testCsvText(Array.from({ length: 30 }, (_, index) => testCsvRow(index, { salutation: firstNames[index][0], firstName: firstNames[index][1], lastName: lastNames[index] }, assignments[index % assignments.length])));
     state.importText = csv;
     importMappedRows(parseCsv(csv).map(mapImportRow));
+  },
+  "reset-soko-members": () => {
+    if (state.auth.user?.role !== "admin") { toast("Nur Admins können Testdaten zurücksetzen."); return; }
+    state.dialog = { type: "reset-soko-members", title: "SOKO-Testdaten zurücksetzen", message: "Sollen alle SOKO-Mitglieder auf die Standard-Testdaten zurückgesetzt werden? Manuell erfasste Mitglieder gehen dabei verloren.", confirmLabel: "Zurücksetzen", confirmAction: "confirm-reset-soko-members" };
+    state.focusTarget = ".dialog-box [data-autofocus]";
+    render();
+  },
+  "confirm-reset-soko-members": () => {
+    state.data.sokoMembers = structuredClone(defaultData.sokoMembers);
+    state.selectedMemberId = state.data.sokoMembers[0]?.id || "";
+    state.dialog = null;
+    state.focusTarget = "#view";
+    saveData();
+    render();
+    toast("SOKO-Mitglieder auf Testdaten zurückgesetzt.");
   },
   "generate-docs": () => {
     const template = byId(state.data.templates, $("#doc-template").value);

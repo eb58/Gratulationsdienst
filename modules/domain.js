@@ -138,16 +138,22 @@ export const buildSokoMembers = () => sokoCodesFromDirectory().flatMap((code, gr
       salutation,
       firstName,
       lastName,
+      birthDate: `${1948 + (nameIndex % 30)}-${String((nameIndex % 12) + 1).padStart(2, "0")}-15`,
       groupId: sokoGroupId(code),
       ...memberAddress(code, addrOffset),
       phone: `030 ${phoneSeq}`,
       mobile: `0160 ${mobileSeq}`,
       email: `${firstName.toLowerCase().replace(/[^a-z]/g, "")}.${lastName.toLowerCase().replace(/[^a-z]/g, "")}@reinickendorf-test.de`,
       bank: memberIban(nameIndex),
+      accountHolder: `${firstName} ${lastName}`,
       allowance: "35,00",
       termFrom: "2025-01-01",
       termTo: "2028-12-31",
       billingAmount: "15,00",
+      zpNr: `bln${String(1000000 + nameIndex * 137).slice(-7)}`,
+      kassenzeichen: String(35000 + nameIndex),
+      misc: "",
+      note: "",
       isLeader
     };
   };

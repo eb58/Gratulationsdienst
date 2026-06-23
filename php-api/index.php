@@ -86,6 +86,7 @@ function collectionConfig(string $collection): array
                 'salutation' => ['salutation', 'string'],
                 'firstName' => ['first_name', 'string'],
                 'lastName' => ['last_name', 'string'],
+                'birthDate' => ['birth_date', 'date'],
                 'groupId' => ['group_id', 'string'],
                 'street' => ['street', 'string'],
                 'postalCode' => ['postal_code', 'string'],
@@ -94,10 +95,15 @@ function collectionConfig(string $collection): array
                 'mobile' => ['mobile', 'string'],
                 'email' => ['email', 'string'],
                 'bank' => ['bank', 'string'],
+                'accountHolder' => ['account_holder', 'string'],
                 'allowance' => ['allowance', 'string'],
                 'termFrom' => ['term_from', 'date'],
                 'termTo' => ['term_to', 'date'],
                 'billingAmount' => ['billing_amount', 'string'],
+                'zpNr' => ['zp_nr', 'string'],
+                'kassenzeichen' => ['kassenzeichen', 'string'],
+                'misc' => ['misc', 'string'],
+                'note' => ['note', 'string'],
                 'isLeader' => ['is_leader', 'bool'],
             ],
         ],
@@ -550,6 +556,12 @@ function initSchema(array $db): void
     ensureIndex($db, 'gd_streets', 'idx_gd_streets_group', 'ALTER TABLE gd_streets ADD INDEX idx_gd_streets_group (group_id)');
     ensureColumn($db, 'gd_templates', 'background_image', 'ALTER TABLE gd_templates ADD COLUMN background_image LONGTEXT NULL AFTER body');
     ensureColumn($db, 'gd_templates', 'back_background_image', 'ALTER TABLE gd_templates ADD COLUMN back_background_image LONGTEXT NULL AFTER background_image');
+    ensureColumn($db, 'gd_soko_members', 'account_holder', "ALTER TABLE gd_soko_members ADD COLUMN account_holder VARCHAR(180) NOT NULL DEFAULT '' AFTER bank");
+    ensureColumn($db, 'gd_soko_members', 'birth_date', 'ALTER TABLE gd_soko_members ADD COLUMN birth_date DATE NULL AFTER last_name');
+    ensureColumn($db, 'gd_soko_members', 'zp_nr', "ALTER TABLE gd_soko_members ADD COLUMN zp_nr VARCHAR(40) NOT NULL DEFAULT '' AFTER billing_amount");
+    ensureColumn($db, 'gd_soko_members', 'kassenzeichen', "ALTER TABLE gd_soko_members ADD COLUMN kassenzeichen VARCHAR(40) NOT NULL DEFAULT '' AFTER zp_nr");
+    ensureColumn($db, 'gd_soko_members', 'misc', "ALTER TABLE gd_soko_members ADD COLUMN misc VARCHAR(255) NOT NULL DEFAULT '' AFTER kassenzeichen");
+    ensureColumn($db, 'gd_soko_members', 'note', 'ALTER TABLE gd_soko_members ADD COLUMN note TEXT NULL AFTER misc');
 }
 
 function readAll(array $db): array
