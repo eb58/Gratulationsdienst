@@ -252,6 +252,7 @@ export const renderSokoQuittung = (citizens, groupId = "", betragProPerson = "8,
   const leader = state.data.sokoMembers.find(m => m.isLeader && m.groupId === groupId);
   const leaderAddr = [leader?.street, [leader?.postalCode, leader?.city].filter(Boolean).join(" ")].filter(Boolean).join(", ");
   const leaderLine = leader ? `${escapeHtml(leader.salutation)} ${escapeHtml(leader.firstName)} ${escapeHtml(leader.lastName)}, ${escapeHtml(leaderAddr)}` : "";
+  const sokoLabel = groupId ? `Soko ${escapeHtml(groupId.replace(/^SOKO\s+/i, ""))}` : "Soko";
   const ROW_COUNT = 12;
   const b = "border:1px solid #333";
   const td = (style, content = "") => `<td style="${b};${style}">${content}</td>`;
@@ -272,7 +273,7 @@ export const renderSokoQuittung = (citizens, groupId = "", betragProPerson = "8,
   return `
   <div style="font-family:Arial,sans-serif;font-size:9pt;width:210mm;min-height:297mm;padding:12mm 15mm;box-sizing:border-box;background:white;page-break-after:always">
     <table style="width:100%;border-collapse:collapse;margin-bottom:3mm"><tr>
-      <td style="${b};padding:2mm 3mm;width:55%">${label("Stellenzeichen")}FinPersBüD Senioren 9 / Soko</td>
+      <td style="${b};padding:2mm 3mm;width:55%">${label("Stellenzeichen")}FinPersBüD Senioren 9 / ${sokoLabel}</td>
       <td style="${b};border-left:0;padding:2mm 3mm;width:25%">${label("Telefon")}${escapeHtml(telefon)}</td>
       <td style="${b};border-left:0;padding:2mm 3mm;width:20%">${label("Datum")}${today}</td>
     </tr></table>
@@ -288,7 +289,7 @@ export const renderSokoQuittung = (citizens, groupId = "", betragProPerson = "8,
       <td style="${b};border-left:0;padding:3mm;width:45%;text-align:center;font-weight:bold">zur Weiterzahlung an<br>untengenannte Personen</td>
     </tr></table>
     <table style="width:100%;border-collapse:collapse;margin-bottom:2mm"><tr>
-      <td style="${b};padding:2mm;width:50%">${label("Zahlungspartner-Nummer")}<div style="height:5mm"></div></td>
+      <td style="${b};padding:2mm;width:50%">${label("Zahlungspartner-Nummer")}${escapeHtml(leader?.zpNr || "")}<div style="height:5mm"></div></td>
       <td style="${b};border-left:0;padding:2mm;width:50%">${label("Kurzzeichen")}<div style="height:5mm"></div></td>
     </tr></table>
     <table style="width:100%;border-collapse:collapse;margin-bottom:3mm"><tr>

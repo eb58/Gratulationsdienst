@@ -496,7 +496,7 @@ export const views = {
                 ${field("billingAmount", "Abrechnungsbetrag", member.billingAmount)}
                 ${field("termFrom", "Berufung von", member.termFrom, "date")}
                 ${field("termTo", "Berufung bis", member.termTo, "date")}
-                ${field("zpNr", "ZP-Nr", member.zpNr)}
+                ${field("zpNr", "Zahlungspartner-Nummer", member.zpNr)}
                 ${field("kassenzeichen", "Kassenzeichen", member.kassenzeichen)}
                 ${field("misc", "Sonstiges", member.misc, "text", "full")}
                 ${textField("note", "Bemerkung", member.note, "full")}
