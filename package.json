@@ -1,7 +1,7 @@
 {
   "name": "gratulationsdienst-reinickendorf",
   "version": "1.0.0",
-  "description": "Statischer Browser-Prototyp fuer das Hauptmodul aus dem Pflichtenheft.",
+  "description": "Statischer Browser-Prototyp für das Hauptmodul aus dem Pflichtenheft.",
   "main": "app.js",
   "scripts": {
     "dev": "vite",

@@ -147,7 +147,7 @@ const saveGridState = (gridKey, api) => {
     ?.map(({ colId, width, sort, sortIndex }) => ({ colId, width, sort, sortIndex }))
     .filter(item => item.colId && Number.isFinite(item.width));
   if (!columnState?.length) return;
-  try { localStorage.setItem(gridStateStorageKey(gridKey), JSON.stringify({ columnState, filterModel: api.getFilterModel?.() || {} })); } catch { /* localStorage nicht verfuegbar */ }
+  try { localStorage.setItem(gridStateStorageKey(gridKey), JSON.stringify({ columnState, filterModel: api.getFilterModel?.() || {} })); } catch { /* localStorage nicht verfügbar */ }
 };
 
 export const gridDefinitions = {

@@ -232,7 +232,7 @@ function handleData(array $db, string $method, array $user): void
         $data = requireObject(readJson());
         if (($user['role'] ?? '') !== 'admin') {
             foreach (ADMIN_COLLECTIONS as $collection) {
-                if (array_key_exists($collection, $data)) respond(['error' => 'Admin-Rechte fuer Stammdaten erforderlich.'], 403);
+                if (array_key_exists($collection, $data)) respond(['error' => 'Admin-Rechte für Stammdaten erforderlich.'], 403);
             }
         }
         transaction($db, static function () use ($db, $data): void {
@@ -326,7 +326,7 @@ function handleAuth(array $db, string $method, array $route): void
         $data = requireObject(readJson());
         $email = normalizedEmail($data['email'] ?? '');
         $password = (string)($data['password'] ?? '');
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) respond(['error' => 'Gueltige E-Mail-Adresse erforderlich.'], 422);
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) respond(['error' => 'Gültige E-Mail-Adresse erforderlich.'], 422);
         if (!validPassword($password)) respond(['error' => 'Das Passwort braucht mindestens 10 Zeichen.'], 422);
         $userId = newId('U');
         executeStatement($db, 'INSERT INTO gd_users (id, email, display_name, role, password_hash) VALUES (?, ?, ?, ?, ?)', [
@@ -363,7 +363,7 @@ function handleAuth(array $db, string $method, array $route): void
         $tokenRow = authTokenRow($db, (string)($data['ticket'] ?? ''), 'mfa');
         $user = $tokenRow ? userById($db, (string)$tokenRow['user_id']) : null;
         if (!$user || !verifyTotp((string)$user['mfa_secret'], (string)($data['code'] ?? ''))) {
-            respond(['error' => 'MFA-Code ist ungueltig.'], 401);
+            respond(['error' => 'MFA-Code ist ungültig.'], 401);
         }
         deleteAuthToken($db, (string)$data['ticket']);
         respond(authResponse($db, $user));
@@ -383,15 +383,15 @@ function handleAuth(array $db, string $method, array $route): void
         }
         respond([
             'ok' => true,
-            'message' => 'Falls der Zugang existiert, wurde ein Ruecksetz-Link per E-Mail verschickt.',
+            'message' => 'Falls der Zugang existiert, wurde ein Rücksetz-Link per E-Mail verschickt.',
         ]);
     }
 
     if ($method === 'POST' && $action === 'password' && ($route[1] ?? '') === 'reset') {
         $data = requireObject(readJson());
-        if (!rateLimit($db, 'reset-apply-ip:' . hash('sha256', clientIp()), 20, PASSWORD_RESET_RATE_LIMIT_SECONDS)) respond(['error' => 'Zu viele Versuche. Bitte spaeter erneut probieren.'], 429);
+        if (!rateLimit($db, 'reset-apply-ip:' . hash('sha256', clientIp()), 20, PASSWORD_RESET_RATE_LIMIT_SECONDS)) respond(['error' => 'Zu viele Versuche. Bitte später erneut probieren.'], 429);
         $tokenRow = authTokenRow($db, (string)($data['token'] ?? ''), 'reset');
-        if (!$tokenRow) respond(['error' => 'Ruecksetz-Code ist ungueltig oder abgelaufen.'], 401);
+        if (!$tokenRow) respond(['error' => 'Rücksetz-Code ist ungültig oder abgelaufen.'], 401);
         $password = (string)($data['password'] ?? '');
         if (!validPassword($password)) respond(['error' => 'Das Passwort braucht mindestens 10 Zeichen.'], 422);
         executeStatement($db, 'UPDATE gd_users SET password_hash = ? WHERE id = ?', [password_hash($password, PASSWORD_DEFAULT), $tokenRow['user_id']]);
@@ -416,7 +416,7 @@ function handleAuth(array $db, string $method, array $route): void
             $data = requireObject(readJson());
             $freshUser = userById($db, (string)$user['id']);
             $secret = (string)($freshUser['mfa_pending_secret'] ?? '');
-            if ($secret === '' || !verifyTotp($secret, (string)($data['code'] ?? ''))) respond(['error' => 'MFA-Code ist ungueltig.'], 422);
+            if ($secret === '' || !verifyTotp($secret, (string)($data['code'] ?? ''))) respond(['error' => 'MFA-Code ist ungültig.'], 422);
             executeStatement($db, "UPDATE gd_users SET mfa_enabled = 1, mfa_secret = ?, mfa_pending_secret = '' WHERE id = ?", [$secret, $user['id']]);
             respond(['ok' => true, 'user' => publicUser(userById($db, (string)$user['id']))]);
         }
@@ -424,8 +424,8 @@ function handleAuth(array $db, string $method, array $route): void
         if ($method === 'POST' && $mfaAction === 'disable') {
             $data = requireObject(readJson());
             $freshUser = userById($db, (string)$user['id']);
-            if (!password_verify((string)($data['password'] ?? ''), (string)$freshUser['password_hash'])) respond(['error' => 'Passwort ist ungueltig.'], 401);
-            if ((bool)$freshUser['mfa_enabled'] && !verifyTotp((string)$freshUser['mfa_secret'], (string)($data['code'] ?? ''))) respond(['error' => 'MFA-Code ist ungueltig.'], 401);
+            if (!password_verify((string)($data['password'] ?? ''), (string)$freshUser['password_hash'])) respond(['error' => 'Passwort ist ungültig.'], 401);
+            if ((bool)$freshUser['mfa_enabled'] && !verifyTotp((string)$freshUser['mfa_secret'], (string)($data['code'] ?? ''))) respond(['error' => 'MFA-Code ist ungültig.'], 401);
             executeStatement($db, "UPDATE gd_users SET mfa_enabled = 0, mfa_secret = '', mfa_pending_secret = '' WHERE id = ?", [$user['id']]);
             respond(['ok' => true, 'user' => publicUser(userById($db, (string)$user['id']))]);
         }
@@ -448,7 +448,7 @@ function handleUsers(array $db, string $method, array $route, array $currentUser
         $data = requireObject(readJson());
         $email = normalizedEmail($data['email'] ?? '');
         $password = (string)($data['password'] ?? '');
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) respond(['error' => 'Gueltige E-Mail-Adresse erforderlich.'], 422);
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) respond(['error' => 'Gültige E-Mail-Adresse erforderlich.'], 422);
         if (!validPassword($password)) respond(['error' => 'Das Passwort braucht mindestens 10 Zeichen.'], 422);
         if (!validRole((string)($data['role'] ?? 'user'))) respond(['error' => 'Unbekannte Rolle.'], 422);
         $userId = newId('U');
@@ -499,7 +499,7 @@ function handleUsers(array $db, string $method, array $route, array $currentUser
     }
 
     if ($method === 'DELETE' && $subAction === null) {
-        if ($id === $currentUser['id']) respond(['error' => 'Der eigene Benutzer kann nicht geloescht werden.'], 422);
+        if ($id === $currentUser['id']) respond(['error' => 'Der eigene Benutzer kann nicht gelöscht werden.'], 422);
         executeStatement($db, 'DELETE FROM gd_auth_tokens WHERE user_id = ?', [$id]);
         respond(['deleted' => executeStatement($db, 'DELETE FROM gd_users WHERE id = ?', [$id]) > 0]);
     }
@@ -515,7 +515,7 @@ function db(): array
     $connectTimeout = max(1, (int)($config['connect_timeout'] ?? 5));
 
     if (str_starts_with($dsn, 'mysql:') && !extension_loaded('pdo_mysql')) {
-        if (!extension_loaded('mysqli')) throw new RuntimeException('PHP braucht die Erweiterung pdo_mysql oder mysqli fuer die MySQL-Verbindung.');
+        if (!extension_loaded('mysqli')) throw new RuntimeException('PHP braucht die Erweiterung pdo_mysql oder mysqli für die MySQL-Verbindung.');
         mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
         $parts = parseDsn($dsn);
         $mysqli = mysqli_init();
@@ -832,17 +832,17 @@ function sendPasswordResetMail(array $db, array $user, string $token): void
         return;
     }
     $url = resetUrl($config, $token);
-    $subject = 'Passwort zuruecksetzen';
+    $subject = 'Passwort zurücksetzen';
     $message = "Hallo " . trim((string)($user['display_name'] ?: $user['email'])) . ",\n\n"
-        . "fuer Ihren Zugang zum Gratulationsdienst wurde ein Passwort-Reset angefordert.\n\n"
-        . "Bitte oeffnen Sie innerhalb von 15 Minuten diesen Link:\n{$url}\n\n"
+        . "für Ihren Zugang zum Gratulationsdienst wurde ein Passwort-Reset angefordert.\n\n"
+        . "Bitte öffnen Sie innerhalb von 15 Minuten diesen Link:\n{$url}\n\n"
         . "Wenn Sie den Reset nicht angefordert haben, ignorieren Sie diese Nachricht.\n";
     $headers = [
         'From: ' . mailFromHeader($config),
         'Content-Type: text/plain; charset=UTF-8',
     ];
     if (!function_exists('mail')) {
-        error_log('Reset-Mail konnte nicht versendet werden: PHP mail() ist nicht verfuegbar.');
+        error_log('Reset-Mail konnte nicht versendet werden: PHP mail() ist nicht verfügbar.');
         return;
     }
     if (!mail((string)$user['email'], $subject, $message, implode("\r\n", $headers))) error_log('Reset-Mail konnte nicht versendet werden.');
@@ -1117,7 +1117,7 @@ function readJson(): mixed
 {
     $raw = file_get_contents('php://input');
     $data = json_decode($raw ?: 'null', true);
-    if (json_last_error() !== JSON_ERROR_NONE) respond(['error' => 'Ungueltiges JSON: ' . json_last_error_msg()], 400);
+    if (json_last_error() !== JSON_ERROR_NONE) respond(['error' => 'Ungültiges JSON: ' . json_last_error_msg()], 400);
     return $data;
 }
 
