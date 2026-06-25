@@ -245,12 +245,15 @@ describe('SOKO print artifacts', () => {
   });
 
   it('renders SOKO questionnaire forms with assignment, date and contact data', () => {
-    const html = renderSokoForm({ ...citizen, phone: '030 999' }, 4, 'fragebogen.png');
+    const html = renderSokoForm({ ...citizen, phone: '030 999' }, 4);
 
-    assert.match(html, /<img src="fragebogen\.png"/);
-    assert.match(html, /fragebogen\.png/);
+    assert.doesNotMatch(html, /<img\b/);
+    assert.match(html, /Bezirksamt Reinickendorf/);
     assert.match(html, /SOKO 01/);
     assert.match(html, /005 \/ 06/);
+    assert.ok(html.indexOf('005 / 06') < html.indexOf('Lfd. Nr. / Monat'));
+    assert.match(html, /left:104mm;top:22mm;width:91mm;height:58mm;[\s\S]*?005 \/ 06<\/div><\/div>/);
+    assert.match(html, /left:166mm;top:80mm;width:29mm;height:9mm;[\s\S]*?Lfd\. Nr\. \/ Monat/);
     assert.match(html, /030 999/);
   });
 });

@@ -315,24 +315,75 @@ export const renderSokoQuittung = (citizens, groupId = "", betragProPerson = "8,
   </div>`;
 };
 
-export const renderSokoForm = (citizen, index, imageSrc) => {
+export const renderSokoForm = (citizen, index) => {
   const group = groupForCitizen(citizen);
   const age = calculateAge(citizen.birthDate);
   const month = citizen.birthDate ? citizen.birthDate.slice(5, 7) : "";
-  const at = (left, top, extra = "") => `position:absolute;left:${left}mm;top:${top}mm;font-size:9.5pt;font-family:Arial,sans-serif;${extra}`;
+  const page = "position:relative;width:210mm;height:297mm;box-sizing:border-box;font-family:Arial,sans-serif;font-size:9pt;line-height:1.15;color:#111;background:#fff;page-break-after:always;overflow:hidden";
+  const pos = (left, top, width, height, extra = "") => `position:absolute;left:${left}mm;top:${top}mm;width:${width}mm;height:${height}mm;box-sizing:border-box;${extra}`;
+  const box = (left, top, width, height, content = "", extra = "") => `<div style="${pos(left, top, width, height, `border:1px solid #111;${extra}`)}">${content}</div>`;
+  const text = (left, top, width, height, content, extra = "") => `<div style="${pos(left, top, width, height, extra)}">${content}</div>`;
+  const checkbox = label => `<span style="display:inline-block;width:4mm;height:4mm;border:1px solid #111;vertical-align:-.9mm;margin-right:2mm"></span>${label}`;
+  const addr = `
+    <div>${escapeHtml(citizen.salutation || "")} ${escapeHtml(citizen.firstName || "")} ${escapeHtml(citizen.lastName || "")}</div>
+    <div>${escapeHtml(citizen.street || "")} ${escapeHtml(citizen.houseNo || "")}</div>
+    <div>${escapeHtml(citizen.postalCode || "")} Berlin-${escapeHtml(citizen.district || "")}</div>
+    ${citizen.phone ? `<div>${escapeHtml(citizen.phone)}</div>` : ""}
+  `;
   return `
-  <div style="position:relative;width:210mm;height:297mm;overflow:hidden;page-break-after:always;background:#fff">
-    ${imageSrc ? `<img src="${escapeHtml(imageSrc)}" alt="" aria-hidden="true" style="position:absolute;top:0;left:0;width:210mm;height:297mm;display:block">` : ""}
-    <span style="${at(106, 15)}">${formatDateDe(todayIso())}</span>
-    <span style="${at(165, 21)}">${formatDateDe(citizen.birthDate)}</span>
-    <div style="${at(110, 24)}line-height:5.5mm">
-      <div>${escapeHtml(citizen.salutation || "")} ${escapeHtml(citizen.firstName || "")} ${escapeHtml(citizen.lastName || "")}</div>
-      <div>${escapeHtml(citizen.street || "")} ${escapeHtml(citizen.houseNo || "")}</div>
-      <div>${escapeHtml(citizen.postalCode || "")} Berlin-${escapeHtml(citizen.district || "")}</div>
-      ${citizen.phone ? `<div>${escapeHtml(citizen.phone)}</div>` : ""}
-    </div>
-    <span style="${at(51, 27)}">${escapeHtml(group?.id || "")}</span>
-    <span style="${at(168, 72)}">${String(index + 1).padStart(3, "0")} / ${month}</span>
-    <span style="${at(17, 49)}font-size:11pt;font-weight:bold">${age}</span>
+  <div style="${page}">
+    ${text(15, 8, 102, 8, "Bezirksamt Reinickendorf von Berlin", "font-weight:bold;font-size:14pt;white-space:nowrap")}
+    ${text(15, 16, 82, 5, "Abt. Finanzen, Personal und B&uuml;rgerdienste", "font-size:8.5pt")}
+    ${text(15, 22, 40, 5, "Senioren 2", "font-size:8.5pt")}
+    ${text(15, 34, 82, 7, `UR Sozialkommission: <strong>${escapeHtml(group?.id || "")}</strong>`, "font-size:11pt")}
+
+    ${box(104, 8, 27, 14, `<div>Datum</div><div style="margin-top:2mm">${formatDateDe(todayIso())}</div>`, "padding:1.2mm;font-size:8.5pt")}
+    ${box(131, 8, 25, 14, `<div>Telefon</div><div style="margin-top:2mm">90294 4055</div>`, "padding:1.2mm;border-left:0;font-size:8.5pt")}
+    ${box(156, 8, 39, 14, `<div>Geburtsdatum</div><div style="margin-top:3.2mm">${formatDateDe(citizen.birthDate)}</div>`, "padding:1.2mm;text-align:center;border-left:0;font-size:8.5pt")}
+    ${box(104, 22, 91, 58, `${addr}<div style="position:absolute;right:4mm;bottom:1.5mm">${String(index + 1).padStart(3, "0")} / ${month}</div>`, "padding:3mm;line-height:1.25;font-size:9.5pt")}
+    ${box(166, 80, 29, 9, `<div style="margin-top:2.4mm">Lfd. Nr. / Monat</div>`, "text-align:center;font-size:9pt;line-height:1.1")}
+
+    ${box(14, 47, 86, 17, `${age}. Geburtstag d. nebenstehend Genannten`, "display:flex;align-items:center;justify-content:center;text-align:center;font-weight:bold;font-size:10.5pt")}
+    ${box(104, 94, 48, 16, "Zutreffendes ist<br>angekreuzt", "display:flex;align-items:center;justify-content:center;text-align:center;font-weight:bold;font-size:11pt")}
+
+    ${text(15, 77, 85, 7, "Sehr geehrte Damen und Herren,", "font-size:10.5pt")}
+    ${text(15, 89, 92, 14, "bitte senden Sie mir diesen <strong>Fragebogen</strong><br><strong>innerhalb von drei Wochen</strong> ausgef&uuml;llt und unterschrieben zur&uuml;ck.", "font-size:10.5pt;line-height:1.18")}
+    ${text(15, 108, 92, 7, "F&uuml;r weitere Angaben bitte die R&uuml;ckseite benutzen.", "font-size:10.5pt")}
+    ${text(16, 121, 50, 7, "Ihre Gratulationsstelle", "font-size:10.5pt")}
+
+    ${box(15, 134, 180, 7, "Von der Sozialkommission auszuf&uuml;llen", "display:flex;align-items:center;justify-content:center;font-size:11pt")}
+    ${box(15, 141, 88, 33, `
+      <div style="margin-bottom:6mm">Gl&uuml;ckw&uuml;nsche</div>
+      <div style="display:flex;gap:10mm;margin-bottom:7mm">
+        <span>${checkbox("per Post")}</span><span>${checkbox("Soko")}</span><span>${checkbox("keine")}</span>
+      </div>
+      <div>${checkbox("Ver&ouml;ffentlichung in der regionalen Presse *")}</div>
+    `, "padding:2mm;font-size:9.8pt")}
+    ${box(103, 141, 58, 33, `
+      <div style="margin-bottom:2mm">Es steht bevor die</div>
+      <div style="white-space:nowrap">${checkbox("Goldene Hochzeit&nbsp;&nbsp;&nbsp;(50 J.)")}</div>
+      <div style="white-space:nowrap">${checkbox("Diamantene Hochzeit (60 J.)")}</div>
+      <div style="white-space:nowrap">${checkbox("Eiserne Hochzeit&nbsp;&nbsp;&nbsp;&nbsp;(65 J.)")}</div>
+      <div style="white-space:nowrap">${checkbox("Gnadenhochzeit&nbsp;&nbsp;&nbsp;(70 J.)")}</div>
+    `, "padding:2mm;border-left:0;font-size:9.2pt;line-height:1.14")}
+    ${box(161, 141, 34, 33, "am (Datum)", "padding:2mm;border-left:0;font-size:9.8pt")}
+    ${box(15, 174, 88, 25, "Unterschrift der Sozialkommission und Datum", "padding:2mm;border-top:0;font-size:9.8pt")}
+    ${box(103, 174, 92, 25, "Vorname des Ehegatten, ggf. abweichender Familienname", "padding:2mm;border-top:0;border-left:0;font-size:9.8pt")}
+
+    ${box(15, 203, 180, 10, "", "")}
+    ${box(15, 213, 180, 66, `
+      <div style="font-size:11pt;text-decoration:underline;margin-bottom:17mm">*Datenschutzrechtliche Einwilligungserkl&auml;rung</div>
+      <div style="font-size:9.2pt;line-height:1.22;text-decoration:none">
+        Die Soko-Mitarbeiterin/der Soko-Mitarbeiter hat die Jubilarin/den Jubilar darauf hingewiesen, dass
+        die im Rahmen der vorstehend genannten Zwecke erhobenen pers&ouml;nlichen Daten Ihrer Person unter
+        Beachtung der EU-Datenschutzgrundverordnung und des Berliner Datenschutzgesetzes erhoben,
+        verarbeitet und genutzt werden. Sie sind zudem darauf hingewiesen worden, dass die Erhebung,
+        Verarbeitung und Nutzung Ihrer Daten auf freiwilliger Basis erfolgt und die Einwilligung auch
+        verweigert werden kann. Die Verweigerung der Einwilligung f&uuml;hrt dazu, dass keine Pressemitteilung
+        ver&ouml;ffentlicht wird. Es besteht jederzeit die M&ouml;glichkeit, die Einwilligung zu widerrufen. Mit der
+        Unterschrift der Soko-Mitarbeiterin/des Soko-Mitarbeiters wird best&auml;tigt, dass die Einwilligung zur
+        Verarbeitung der personenbezogenen Daten m&uuml;ndlich/telefonisch gegeben wurde.
+      </div>
+    `, "padding:2mm;border-top:0")}
   </div>`;
 };

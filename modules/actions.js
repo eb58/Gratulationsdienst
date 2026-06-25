@@ -612,9 +612,7 @@ export const actions = {
   "soko-print": () => {
     const citizens = activeCitizens();
     if (!citizens.length) { toast("Keine Jubilare vorhanden."); return; }
-    const base = globalThis.location.href.replace(/[^/]*$/, "");
-    const imageSrc = `${base}assets/fragebogen-soko.png`;
-    const forms = citizens.map((c, i) => renderSokoForm(c, i, imageSrc)).join("");
+    const forms = citizens.map(renderSokoForm).join("");
     openPrintWindow(forms, "SOKO-Fragebogen");
   },
 "run-import": () => {
