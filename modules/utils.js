@@ -3,7 +3,7 @@ export const MONTH_KEY = "gd_month_filter";
 export const QUITTUNG_MONTH_KEY = "gd_quittung_month";
 export const QUITTUNG_SETTINGS_KEY = "gd_quittung_settings";
 export const MAP_MONTH_KEY = "gd_map_month";
-export const API_BASE = import.meta.env.VITE_API_BASE ?? "/php-api";
+export const API_BASE = import.meta.env?.VITE_API_BASE ?? "/php-api";
 export const SPLITTERS_KEY = "gratulationsdienst.splitters";
 const storedSplitters = () => {
   try { return JSON.parse(localStorage.getItem(SPLITTERS_KEY)) || {}; }
