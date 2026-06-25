@@ -8,6 +8,7 @@
     "build": "vite build",
     "watch": "vite build --watch",
     "test": "node --test",
+    "check:directory": "node scripts/check-directory.js",
     "hooks:install": "git config core.hooksPath .githooks",
     "preview": "vite preview"
   },
