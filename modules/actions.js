@@ -1,4 +1,4 @@
-import { $, todayIso, isValidEmail, isValidIban, formatIban, updateItem, nextId, csvEscape, formatStreetAddress, downloadText, calculateAge, toast, byId, normalize } from './utils.js';
+import { $, todayIso, isValidEmail, isValidIban, formatIban, updateItem, nextId, csvEscape, formatStreetAddress, downloadText, calculateAge, toast, byId, normalize, normalizeEmail } from './utils.js';
 import { normalizeStreetRules, streetDistrictSummary, streetGroupSummary, normalizeStreetDistrict, defaultData } from './domain.js';
 import { state, saveData, saveQuittungSettings, apiRequest, setAuthSession, clearAuthSession, loadCollectionData } from './state.js';
 import { streetAssignment, filteredCitizens, documentCitizens, duplicateKey, isPrintedCitizen, selectedTemplate, selectedSender, selectedMember, activeCitizens, groupForCitizen, isReceiptGroupReady, receiptCitizens, receiptCitizensForReadyGroups, ruleMatchesHouseNo } from './assignment.js';
@@ -406,7 +406,7 @@ export const actions = {
     const values = formValues("#member-form");
     if (!validateEmailFields("#member-form")) { toast("Bitte eine gültige E-Mail-Adresse eingeben."); return; }
     if (values.bank && !isValidIban(values.bank)) { $("#bank")?.classList.add("invalid"); toast("Bitte eine gültige IBAN eingeben."); return; }
-    const patch = { ...values, bank: formatIban(values.bank), isLeader: values.isLeader === "true" };
+    const patch = { ...values, email: normalizeEmail(values.email), bank: formatIban(values.bank), isLeader: values.isLeader === "true" };
     state.data.sokoMembers = updateItem(state.data.sokoMembers, values.id, patch);
     state.data.sokoGroups = state.data.sokoGroups.map(group => patch.isLeader && group.id === patch.groupId ? { ...group, leaderId: values.id } : group);
     saveData();

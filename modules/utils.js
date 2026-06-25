@@ -19,9 +19,13 @@ export const $$ = selector => [...document.querySelectorAll(selector)];
 export const todayIso = () => new Date().toISOString().slice(0, 10);
 export const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[char]);
 export const normalize = value => String(value ?? "").trim().toLowerCase();
+export const normalizeEmail = value => String(value ?? "").trim();
 export const byId = (items, id) => items.find(item => item.id === id);
 export const formatDate = value => value ? new Intl.DateTimeFormat("de-DE").format(new Date(value)) : "";
-export const isValidEmail = value => !String(value ?? "").trim() || /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(value).trim());
+export const isValidEmail = value => {
+  const email = normalizeEmail(value);
+  return !email || /^[^\s@]+@(?:[^\s@.]+\.)+[^\s@.]{2,}$/.test(email);
+};
 export const normalizeIban = value => String(value ?? "").replace(/\s/g, "").toUpperCase();
 export const formatIban = value => normalizeIban(value).match(/.{1,4}/g)?.join(" ") || "";
 export const ibanToNumeric = value => [...value].map(char => /[A-Z]/.test(char) ? String(char.charCodeAt(0) - 55) : char).join("");

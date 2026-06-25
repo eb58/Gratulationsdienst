@@ -11,11 +11,12 @@ export const field = (name, label, value, type = "text", extra = "", inputAttrs 
 `;
 export const emailField = (name, label, value, extra = "") => {
   const valid = isValidEmail(value);
+  const hasValue = String(value ?? "").trim();
   return `
     <div class="field ${extra}">
       <label for="${name}">${label}</label>
       <input id="${name}" name="${name}" class="${valid ? "" : "invalid"}" type="email" value="${escapeHtml(value)}" placeholder="name@example.de" autocomplete="email">
-      <small class="field-hint ${valid ? "" : "error"}">${String(value ?? "").trim() ? valid ? "E-Mail gültig" : "E-Mail-Adresse ist ungültig" : ""}</small>
+      <small class="field-hint error">${hasValue && !valid ? "E-Mail-Adresse ist ungültig" : ""}</small>
     </div>
   `;
 };
