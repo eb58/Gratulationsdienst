@@ -1,10 +1,12 @@
-import { $, todayIso, isValidEmail, isValidIban, formatIban, updateItem, nextId, csvEscape, downloadText, toast, byId, normalizeEmail, normalizeAmount, normalizeDigits, isValidPostalCode } from './utils.js';
+import { $, todayIso, isValidEmail, isValidIban, formatIban, updateItem, nextId, csvEscape, downloadText, toast, byId, normalizeEmail, normalizeAmount, normalizeDigits, isValidPostalCode, calculateAge, formatStreetAddress } from './utils.js';
 import { normalizeStreetRules, streetDistrictSummary, streetGroupSummary, normalizeStreetDistrict, defaultData } from './domain.js';
 import { state, saveData, saveQuittungSettings, apiRequest, setAuthSession, clearAuthSession, loadCollectionData } from './state.js';
 import { streetAssignment, filteredCitizens, documentCitizens, isPrintedCitizen, selectedTemplate, selectedSender, selectedMember, activeCitizens, groupForCitizen, isReceiptGroupReady, receiptCitizens, receiptCitizensForReadyGroups } from './assignment.js';
 import { printCurrentRun, completePrintRun, renderSokoForm, renderSokoQuittung } from './documents.js';
 import { parseCsv, mapImportRow } from './import.js';
 import { buildImportResult, importNotice, citizenGridRow, nextMemberIdAfterDelete } from './citizens.js';
+import { parseSokoQuestionnairePdf } from './sokoQuestionnairePdf.js';
+import { applySokoQuestionnaireResults } from './sokoQuestionnaire.js';
 import { groupedTestAssignments, balancedTestAssignments, shuffledTestValues, testFirstNames, testLastNames, testCsvRow, testCsvText } from './testdata.js';
 import { render, renderDialog } from './render.js';
 import { renderCitizenDetail } from './views.js';
@@ -147,7 +149,40 @@ const importMappedRows = mapped => {
   render();
   importToast(importNotice(result) || "Keine neuen Datensätze importiert.");
 };
-const importToast = message => toast(message, { anchor: ".import-action-row" });
+const importToast = message => toast(message, { anchor: ".soko-pdf-action-row, .import-action-row" });
+const sokoPdfLogEntry = page => {
+  const citizen = page.citizen;
+  const checked = page.ok;
+  const manual = page.applied && !page.ok;
+  return {
+    time: new Date().toLocaleString("de-DE"),
+    firstName: citizen?.firstName || "",
+    lastName: citizen?.lastName || "",
+    name: citizen ? [citizen.lastName, citizen.firstName].filter(Boolean).join(", ") : page.citizenId || `PDF-Seite ${page.pageNumber}`,
+    address: citizen ? formatStreetAddress(citizen) : "",
+    birthDate: citizen?.birthDate || "",
+    age: citizen?.birthDate ? calculateAge(citizen.birthDate) : "",
+    groupId: citizen ? streetAssignment(citizen)?.groupId || "" : "",
+    type: checked ? "SOKO-PDF" : manual ? "Nacharbeit" : "Fehler",
+    message: checked
+      ? "Fragebogen erkannt und Jubilar geprüft."
+      : manual
+        ? `${page.error} Erkannte Ankreuzungen übernommen, Status bleibt unverändert.`
+        : page.error || "Fragebogen konnte nicht ausgewertet werden."
+  };
+};
+const sokoPdfNotice = pages => {
+  const checked = pages.filter(page => page.ok).length;
+  const manual = pages.filter(page => page.applied && !page.ok).length;
+  const unmatched = pages.filter(page => !page.applied && /nicht gefunden/i.test(page.error || "")).length;
+  const failed = pages.filter(page => !page.applied && !/nicht gefunden/i.test(page.error || "")).length;
+  return [
+    checked ? `${checked} Fragebögen geprüft.` : "",
+    manual ? `${manual} mit Handschrift zur Nacharbeit.` : "",
+    unmatched ? `${unmatched} erkannt, aber kein passender Jubilar gefunden.` : "",
+    failed ? `${failed} nicht lesbar.` : ""
+  ].filter(Boolean).join(" ") || "Keine Fragebögen erkannt.";
+};
 
 export const actions = {
   "auth-show-reset": () => { state.auth.mode = "reset"; state.auth.message = ""; render(); },
@@ -615,9 +650,24 @@ export const actions = {
     const forms = citizens.map(renderSokoForm).join("");
     openPrintWindow(forms, "SOKO-Fragebogen");
   },
-"run-import": () => {
+  "run-import": () => {
     if (!state.importText) { importToast("Bitte zuerst eine CSV-Datei laden."); return; }
     importMappedRows(parseCsv(state.importText).map(mapImportRow));
+  },
+  "run-soko-pdf-import": async ({ file } = {}) => {
+    if (!file) { importToast("Bitte zuerst ein SOKO-PDF laden."); return; }
+    try {
+      importToast("SOKO-PDF wird ausgewertet...");
+      const parsed = await parseSokoQuestionnairePdf(file);
+      const result = applySokoQuestionnaireResults(state.data.citizens, parsed.pages);
+      state.data.citizens = result.citizens;
+      state.data.importLog = [...result.pages.map(sokoPdfLogEntry), ...state.data.importLog];
+      saveData();
+      render();
+      importToast(sokoPdfNotice(result.pages));
+    } catch (error) {
+      importToast(error.message || "SOKO-PDF konnte nicht ausgewertet werden.");
+    }
   },
   "select-generated": event => {
     state.selectedCitizenId = event.target.closest("[data-id]").dataset.id;

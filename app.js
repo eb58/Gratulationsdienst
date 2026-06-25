@@ -45,6 +45,7 @@ const afterViewChange = () => {
   if (state.view === "documents") actions["generate-docs"]();
   if (state.view === "users") actions["load-users"]();
 };
+const isPdfFile = file => file?.type === "application/pdf" || /\.pdf$/i.test(file?.name || "");
 const goToView = view => {
   state.view = view;
   state.focusTarget = "#view";
@@ -232,8 +233,17 @@ document.addEventListener("change", event => {
     render();
     return;
   }
+  const sokoPdfFile = event.target.matches("#soko-pdf-file") ? event.target.files[0] : null;
+  if (sokoPdfFile) {
+    Promise.resolve(actions["run-soko-pdf-import"]({ file: sokoPdfFile })).finally(() => { event.target.value = ""; });
+    return;
+  }
   const file = event.target.matches("#import-file") ? event.target.files[0] : null;
-  if (file) file.text().then(text => { state.importText = text; actions["run-import"](); });
+  if (file && isPdfFile(file)) {
+    Promise.resolve(actions["run-soko-pdf-import"]({ file })).finally(() => { event.target.value = ""; });
+    return;
+  }
+  if (file) file.text().then(text => { state.importText = text; actions["run-import"](); }).finally(() => { event.target.value = ""; });
 });
 
 globalThis.addEventListener("beforeunload", event => {

@@ -415,6 +415,13 @@ export const views = {
         <select name="status" data-filter>
           ${[["alle", "Alle Status"], ["offen", "offen"], ["importiert", "importiert"], ["geprüft", "geprüft"], ["gedruckt", "gedruckt"]].map(option => `<option value="${option[0]}" ${state.filters.status === option[0] ? "selected" : ""}>${option[1]}</option>`).join("")}
         </select>
+        <div class="file-action-row soko-pdf-action-row">
+          <label class="file-picker import-file-picker" for="soko-pdf-file">
+            <span>SOKO-PDF auswerten</span>
+            <em>Gescannte Fragebögen</em>
+          </label>
+          <input id="soko-pdf-file" class="file-input" type="file" accept=".pdf,application/pdf">
+        </div>
       </div>
       <div class="${citizen ? "citizen-split" : ""}" ${citizen ? `style="--citizen-left:${state.citizenSplit}%"` : ""}>
         <section class="panel citizen-panel">

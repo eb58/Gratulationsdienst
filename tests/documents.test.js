@@ -44,6 +44,7 @@ const {
 } = documents;
 
 const citizen = {
+  id: 'G-2026-001',
   salutation: 'Frau',
   firstName: 'Erika',
   lastName: 'Mustermann',
