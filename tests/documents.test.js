@@ -247,6 +247,7 @@ describe('SOKO print artifacts', () => {
   it('renders SOKO questionnaire forms with assignment, date and contact data', () => {
     const html = renderSokoForm({ ...citizen, phone: '030 999' }, 4, 'fragebogen.png');
 
+    assert.match(html, /<img src="fragebogen\.png"/);
     assert.match(html, /fragebogen\.png/);
     assert.match(html, /SOKO 01/);
     assert.match(html, /005 \/ 06/);

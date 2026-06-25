@@ -45,11 +45,40 @@ const authFail = error => {
   render();
   toast(state.auth.message);
 };
+const revokeObjectUrl = url => {
+  try {
+    URL.revokeObjectURL(url);
+  } catch {
+    // ignore
+  }
+};
 const openPrintWindow = (body, title = "Druck") => {
   const html = `<!doctype html><html lang="de"><head><meta charset="utf-8"><title>${title}</title><style>*{box-sizing:border-box;margin:0;padding:0}body{background:#888}@page{size:A4 portrait;margin:0}@media print{body{background:none}}</style></head><body>${body}</body></html>`;
   const url = URL.createObjectURL(new Blob([html], { type: "text/html;charset=utf-8" }));
   const w = globalThis.open(url, "_blank", "width=900,height=700");
-  w.addEventListener("load", () => { URL.revokeObjectURL(url); setTimeout(() => { w.focus(); w.print(); }, 400); }, { once: true });
+  if (!w) {
+    revokeObjectUrl(url);
+    toast("Druckfenster konnte nicht geöffnet werden. Bitte Popup-Blocker prüfen.");
+    return false;
+  }
+  const printWindow = () => {
+    if (w.closed) return;
+    try {
+      w.focus();
+      w.print();
+    } catch {
+      toast("Druck konnte nicht gestartet werden.");
+    }
+  };
+  w.addEventListener("load", () => {
+    revokeObjectUrl(url);
+    setTimeout(printWindow, 400);
+  }, { once: true });
+  w.addEventListener("error", () => {
+    revokeObjectUrl(url);
+    toast("Druckfenster konnte nicht geladen werden.");
+  }, { once: true });
+  return true;
 };
 const streetRuleFormValues = selector => [...$(selector).querySelectorAll("[data-rule-row]")].map((row, index) => {
   const value = name => row.querySelector(`[name="${name}"]`)?.value.trim() || "";
