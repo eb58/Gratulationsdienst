@@ -27,14 +27,16 @@ export const groupedTestAssignments = streets => [...testAssignments(streets).re
 }, new Map()).entries()]
   .sort(([a], [b]) => Number(a) - Number(b))
   .map(([soko, assignments]) => ({ soko, assignments }));
-export const balancedTestAssignments = (groups, count) => Array.from({ length: count }, (_, index) => {
+export const balancedTestAssignments = (groups, count, rand = Math.random) => Array.from({ length: count }, (_, index) => {
   const group = groups[index % groups.length];
-  return group.assignments[Math.floor(index / groups.length) % group.assignments.length];
+  return group.assignments[Math.floor(rand() * group.assignments.length)];
 });
 
-export const testHouseNo = (rule, offset) => String([rule.von, rule.bis, ...Array.from({ length: 220 }, (_, index) => index + 1)]
-  .map(numberFrom)
-  .find(number => Number.isFinite(number) && ruleMatchesHouseNo(rule, number)) || offset + 1);
+const ruleHouseNumbers = rule => Array.from({ length: 220 }, (_, index) => index + 1).filter(number => ruleMatchesHouseNo(rule, number));
+export const testHouseNo = (rule, rand = Math.random) => {
+  const candidates = ruleHouseNumbers(rule);
+  return String(candidates.length ? candidates[Math.floor(rand() * candidates.length)] : numberFrom(rule.von) || numberFrom(rule.bis) || 1);
+};
 export const testBirthDate = (index, month) => {
   const year = Number(todayIso().slice(0, 4));
   const age = [85, 90, 95, 100, 101][index % 5];
@@ -42,12 +44,12 @@ export const testBirthDate = (index, month) => {
   const day = String((index % 28) + 1).padStart(2, "0");
   return `${year - age}-${useMonth}-${day}`;
 };
-export const testCsvRow = (index, name, assignment, month) => ({
+export const testCsvRow = (index, name, assignment, month, rand = Math.random) => ({
   Anrede: name.salutation,
   Vorname: name.firstName,
   Nachname: name.lastName,
   Strasse: assignment.street.name,
-  Hausnummer: testHouseNo(assignment.rule, index),
+  Hausnummer: testHouseNo(assignment.rule, rand),
   PLZ: assignment.rule.plz || "13437",
   Ortsteil: assignment.rule.ortsteil || assignment.street.district || "",
   Geburtsdatum: testBirthDate(index, month),

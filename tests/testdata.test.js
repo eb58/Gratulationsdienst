@@ -65,22 +65,37 @@ describe('test assignments', () => {
     assert.deepEqual(groups.map(g => g.assignments.length), [1, 1]);
   });
 
-  it('distributes assignments round-robin across groups', () => {
+  it('keeps the SOKO order even across groups (round-robin) while picking within a group', () => {
     const groups = groupedTestAssignments(streets);
-    const balanced = balancedTestAssignments(groups, 4);
+    const balanced = balancedTestAssignments(groups, 4, () => 0);
     assert.deepEqual(balanced.map(a => a.rule.soko), ['01', '02', '01', '02']);
+  });
+
+  it('randomly picks a different street within a group', () => {
+    const groups = [{ soko: '01', assignments: [{ rule: { soko: '01' }, street: { name: 'A' } }, { rule: { soko: '01' }, street: { name: 'B' } }] }];
+    assert.equal(balancedTestAssignments(groups, 1, () => 0)[0].street.name, 'A');
+    assert.equal(balancedTestAssignments(groups, 1, () => 0.99)[0].street.name, 'B');
   });
 });
 
 describe('testHouseNo', () => {
-  it('returns the first house number matching range and parity', () => {
-    assert.equal(testHouseNo({ von: '1', bis: '19', art: 'U' }, 0), '1');
-    assert.equal(testHouseNo({ von: '2', bis: '19', art: 'G' }, 0), '2');
-    assert.equal(testHouseNo({ von: '', bis: '', art: 'F' }, 0), '1');
+  it('picks a rule-conforming house number from the candidate range', () => {
+    // ungerade 1..19 -> [1,3,5,7,9,11,13,15,17,19]
+    assert.equal(testHouseNo({ von: '1', bis: '19', art: 'U' }, () => 0), '1');
+    assert.equal(testHouseNo({ von: '1', bis: '19', art: 'U' }, () => 0.99), '19');
+    // gerade 2..18
+    assert.equal(testHouseNo({ von: '2', bis: '19', art: 'G' }, () => 0), '2');
+    assert.equal(testHouseNo({ von: '2', bis: '19', art: 'G' }, () => 0.5), '10');
   });
 
-  it('falls back to offset + 1 when nothing matches', () => {
-    assert.equal(testHouseNo({ von: '1', bis: '1', art: 'G' }, 5), '6');
+  it('spreads house numbers for an open range instead of always returning 1', () => {
+    const rule = { von: '', bis: '', art: 'F' };
+    const values = new Set(Array.from({ length: 50 }, () => testHouseNo(rule)));
+    assert.ok(values.size > 10, `erwartet viele verschiedene Hausnummern, bekam ${values.size}`);
+  });
+
+  it('falls back to the rule bounds when no candidate matches', () => {
+    assert.equal(testHouseNo({ von: '500', bis: '500', art: 'F' }, () => 0), '500');
   });
 });
 
@@ -99,8 +114,8 @@ describe('testBirthDate', () => {
 
 describe('test CSV row and text', () => {
   it('maps a row with PLZ and district fallbacks', () => {
-    const assignment = streets[0].rules[0] && { street: streets[0], rule: streets[0].rules[0] };
-    const row = testCsvRow(0, { salutation: 'Frau', firstName: 'Anna', lastName: 'Berger' }, assignment, '06');
+    const assignment = { street: streets[0], rule: streets[0].rules[0] };
+    const row = testCsvRow(0, { salutation: 'Frau', firstName: 'Anna', lastName: 'Berger' }, assignment, '06', () => 0);
 
     assert.equal(row.Hausnummer, '1');
     assert.equal(row.PLZ, '13437', 'leere Regel-PLZ fällt auf Standard zurück');
