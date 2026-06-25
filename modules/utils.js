@@ -68,9 +68,14 @@ export const formatDateDe = iso => {
   const [y, m, d] = iso.split("-");
   return `${d}.${m}.${y}`;
 };
-export const repairMojibakeText = value => typeof value === "string"
-  ? value.replace(/(?:Ã.|Â.)+/gu, match => new TextDecoder().decode(Uint8Array.from([...match].map(char => char.charCodeAt(0) & 255))))
-  : value;
+const mojibakeByte = char => char === "\u0192" ? 0x83 : char.charCodeAt(0) & 255;
+const decodeMojibakeText = value => new TextDecoder().decode(Uint8Array.from([...value].map(mojibakeByte)));
+const repairMojibakeString = (value, remaining = 2) => {
+  if (!remaining || !/[ÃÂ]/u.test(value)) return value;
+  const repaired = decodeMojibakeText(value);
+  return repaired === value ? value : repairMojibakeString(repaired, remaining - 1);
+};
+export const repairMojibakeText = value => typeof value === "string" ? repairMojibakeString(value) : value;
 export const repairStoredText = value => Array.isArray(value)
   ? value.map(repairStoredText)
   : value && typeof value === "object"

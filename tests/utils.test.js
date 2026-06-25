@@ -1,14 +1,24 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
+  byId,
+  csvEscape,
+  escapeHtml,
+  formatDateDe,
+  formatStreetAddress,
   formatIban,
   isValidEmail,
   isValidIban,
   isValidPostalCode,
+  nextId,
+  normalize,
   normalizeAmount,
   normalizeDigits,
   normalizeEmail,
-  normalizeIban
+  normalizeIban,
+  repairMojibakeText,
+  repairStoredText,
+  updateItem
 } from '../modules/utils.js';
 
 describe('email validation', () => {
@@ -68,5 +78,63 @@ describe('amount normalization', () => {
     assert.equal(normalizeAmount('€ 35,00'), '35,00');
     assert.equal(normalizeAmount(',50'), '');
     assert.equal(normalizeAmount('abc'), '');
+  });
+});
+
+describe('text formatting helpers', () => {
+  it('normalizes text for comparisons', () => {
+    assert.equal(normalize('  ÄÖÜ  '), 'äöü');
+    assert.equal(normalize(null), '');
+  });
+
+  it('escapes HTML-sensitive characters', () => {
+    assert.equal(escapeHtml('<span title="A&B">\'x\'</span>'), '&lt;span title=&quot;A&amp;B&quot;&gt;&#039;x&#039;&lt;/span&gt;');
+  });
+
+  it('escapes CSV values by quoting and doubling quotes', () => {
+    assert.equal(csvEscape('Muster "A"'), '"Muster ""A"""');
+    assert.equal(csvEscape(null), '""');
+  });
+
+  it('formats ISO dates for German display', () => {
+    assert.equal(formatDateDe('2026-06-25'), '25.06.2026');
+    assert.equal(formatDateDe(''), '');
+  });
+});
+
+describe('collection helpers', () => {
+  it('finds items by id', () => {
+    const items = [{ id: 'A', value: 1 }, { id: 'B', value: 2 }];
+    assert.deepEqual(byId(items, 'B'), { id: 'B', value: 2 });
+    assert.equal(byId(items, 'C'), undefined);
+  });
+
+  it('updates matching items without mutating others', () => {
+    const items = [{ id: 'A', value: 1 }, { id: 'B', value: 2 }];
+    assert.deepEqual(updateItem(items, 'B', { value: 3, extra: true }), [
+      { id: 'A', value: 1 },
+      { id: 'B', value: 3, extra: true }
+    ]);
+  });
+
+  it('creates the next padded id from item count', () => {
+    assert.equal(nextId('S', []), 'S-001');
+    assert.equal(nextId('S', [{}, {}, {}]), 'S-004');
+  });
+});
+
+describe('address and stored text helpers', () => {
+  it('formats street addresses from street and house number', () => {
+    assert.equal(formatStreetAddress({ street: 'Eichborndamm', houseNo: '215' }), 'Eichborndamm 215');
+    assert.equal(formatStreetAddress({ street: 'Eichborndamm', houseNo: '' }), 'Eichborndamm');
+  });
+
+  it('repairs mojibake text recursively in stored data', () => {
+    assert.equal(repairMojibakeText('M\u00c3\u00bcller'), 'Müller');
+    assert.equal(repairMojibakeText('M\u00c3\u0192\u00c2\u00bcller'), 'Müller');
+    assert.deepEqual(repairStoredText({ name: 'M\u00c3\u0192\u00c2\u00bcller', list: ['G\u00c3\u00bcnter', 1] }), {
+      name: 'Müller',
+      list: ['Günter', 1]
+    });
   });
 });
