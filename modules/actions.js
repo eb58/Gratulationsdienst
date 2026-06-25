@@ -1,9 +1,10 @@
-import { $, todayIso, isValidEmail, isValidIban, formatIban, updateItem, nextId, csvEscape, formatStreetAddress, downloadText, calculateAge, toast, byId, normalize, normalizeEmail, normalizeAmount, normalizeDigits, isValidPostalCode } from './utils.js';
+import { $, todayIso, isValidEmail, isValidIban, formatIban, updateItem, nextId, csvEscape, downloadText, toast, byId, normalizeEmail, normalizeAmount, normalizeDigits, isValidPostalCode } from './utils.js';
 import { normalizeStreetRules, streetDistrictSummary, streetGroupSummary, normalizeStreetDistrict, defaultData } from './domain.js';
 import { state, saveData, saveQuittungSettings, apiRequest, setAuthSession, clearAuthSession, loadCollectionData } from './state.js';
-import { streetAssignment, filteredCitizens, documentCitizens, duplicateKey, isPrintedCitizen, selectedTemplate, selectedSender, selectedMember, activeCitizens, groupForCitizen, isReceiptGroupReady, receiptCitizens, receiptCitizensForReadyGroups, ruleMatchesHouseNo } from './assignment.js';
+import { streetAssignment, filteredCitizens, documentCitizens, isPrintedCitizen, selectedTemplate, selectedSender, selectedMember, activeCitizens, groupForCitizen, isReceiptGroupReady, receiptCitizens, receiptCitizensForReadyGroups, ruleMatchesHouseNo } from './assignment.js';
 import { printCurrentRun, completePrintRun, renderSokoForm, renderSokoQuittung } from './documents.js';
 import { parseCsv, mapImportRow } from './import.js';
+import { buildImportResult, importNotice, citizenGridRow, nextMemberIdAfterDelete } from './citizens.js';
 import { render, renderDialog } from './render.js';
 import { renderCitizenDetail } from './views.js';
 import { cancelDirtyFormLeave, confirmDirtyFormLeave } from './dirtyForms.js';
@@ -87,30 +88,12 @@ const currentCitizenGridRows = () => {
   api.forEachNodeAfterFilterAndSort(node => { if (node.data?.id) rows.push({ id: node.data.id, rowIndex: node.rowIndex }); });
   return rows;
 };
-const memberMatchesFilters = member => {
-  const haystack = normalize([member.firstName, member.lastName, member.email, member.phone, member.mobile, member.groupId].join(" "));
-  return (!state.filters.q || haystack.includes(normalize(state.filters.q)))
-    && (state.filters.groupId === "alle" || member.groupId === state.filters.groupId);
-};
-const nextMemberIdAfterDelete = id => {
-  const remaining = state.data.sokoMembers.filter(member => member.id !== id);
-  return remaining.find(memberMatchesFilters)?.id || remaining[0]?.id || "";
-};
-const citizenGridRow = citizen => ({
-  id: citizen.id,
-  name: `${citizen.lastName}, ${citizen.firstName}`,
-  birthday: citizen.birthDate,
-  age: calculateAge(citizen.birthDate),
-  address: `${citizen.street} ${citizen.houseNo}`,
-  groupId: groupForCitizen(citizen)?.id || "offen",
-  status: citizen.status
-});
 const updateCitizenGridRow = citizen => {
   const api = state.gridApis.citizens;
   if (!citizen) return false;
   if (!api?.applyTransaction) return false;
   const node = api.getRowNode?.(citizen.id);
-  const row = citizenGridRow(citizen);
+  const row = citizenGridRow(citizen, groupForCitizen(citizen));
   const visible = filteredCitizens().some(item => item.id === citizen.id);
   if (visible && node) api.applyTransaction({ update: [row] });
   if (visible && !node) api.applyTransaction({ add: [row] });
@@ -183,53 +166,12 @@ const testCsvText = rows => {
     .join("\n");
 };
 const importMappedRows = mapped => {
-  const result = mapped.reduce((acc, row) => {
-    const keys = acc.keys || [];
-    const printedKeys = acc.printedKeys || [];
-    const missing = !row.firstName || !row.lastName || !row.birthDate || !row.street;
-    const key = duplicateKey(row);
-    const duplicate = !missing && keys.includes(key);
-    const printedDuplicate = duplicate && printedKeys.includes(key);
-    const group = streetAssignment(row)?.groupId;
-    const log = {
-      time: new Date().toLocaleString("de-DE"),
-      firstName: row.firstName || "",
-      lastName: row.lastName || "",
-      name: [row.lastName, row.firstName].filter(Boolean).join(", "),
-      address: formatStreetAddress(row),
-      birthDate: row.birthDate || "",
-      age: row.age || (row.birthDate ? calculateAge(row.birthDate) : ""),
-      groupId: group || "",
-      type: missing ? "Fehler" : duplicate ? "Dublette" : "Importiert",
-      message: missing ? "Pflichtfelder fehlen." : duplicate ? (printedDuplicate ? "Bestehender Datensatz wurde bereits gedruckt." : "Bestehender Datensatz bleibt erhalten.") : (group ? `Zugeordnet zu ${group}.` : "Straße ohne SOKO-Zuordnung.")
-    };
-    const item = { ...row, id: nextId("G-2026", [...state.data.citizens, ...acc.rows]), source: "CSV Import", updatedAt: todayIso(), status: group ? "importiert" : "offen" };
-    return {
-      rows: missing || duplicate ? acc.rows : [...acc.rows, item],
-      logs: duplicate ? acc.logs : [...acc.logs, log],
-      duplicates: duplicate ? acc.duplicates + 1 : acc.duplicates,
-      printedDuplicates: printedDuplicate ? acc.printedDuplicates + 1 : acc.printedDuplicates,
-      keys: missing || duplicate ? keys : [...keys, key],
-      printedKeys
-    };
-  }, {
-    rows: [],
-    logs: [],
-    duplicates: 0,
-    printedDuplicates: 0,
-    keys: state.data.citizens.map(duplicateKey),
-    printedKeys: state.data.citizens.filter(isPrintedCitizen).map(duplicateKey)
-  });
+  const result = buildImportResult(mapped, state.data.citizens, row => streetAssignment(row)?.groupId);
   state.data.citizens = [...state.data.citizens, ...result.rows];
   state.data.importLog = [...result.logs, ...state.data.importLog];
-  const notice = result.printedDuplicates
-    ? `${result.rows.length} neue Datensätze importiert. ${result.duplicates} Dubletten ausgefiltert, davon ${result.printedDuplicates} bereits gedruckt.`
-    : result.duplicates
-      ? `${result.rows.length} neue Datensätze importiert. ${result.duplicates} Dubletten ausgefiltert.`
-      : `${result.rows.length} neue Datensätze importiert.`;
   saveData();
   render();
-  importToast(notice || "Keine neuen Datensätze importiert.");
+  importToast(importNotice(result) || "Keine neuen Datensätze importiert.");
 };
 const importToast = message => toast(message, { anchor: ".import-action-row" });
 
@@ -432,7 +374,7 @@ export const actions = {
   "confirm-delete-member": () => {
     const memberId = state.dialog?.memberId;
     if (!memberId) return;
-    state.selectedMemberId = nextMemberIdAfterDelete(memberId);
+    state.selectedMemberId = nextMemberIdAfterDelete(state.data.sokoMembers, memberId, state.filters);
     state.data.sokoMembers = state.data.sokoMembers.filter(member => member.id !== memberId);
     state.data.sokoGroups = state.data.sokoGroups.map(group => group.leaderId === memberId ? { ...group, leaderId: "" } : group);
     state.dialog = null;
