@@ -492,7 +492,7 @@ export const views = {
                 ${emailField("email", "E-Mail", member.email)}
                 ${ibanField("bank", "Bankverbindung / IBAN", member.bank, "full")}
                 ${field("accountHolder", "Kontoinhaber", member.accountHolder, "text", "full")}
-                ${field("allowance", "Aufwandspauschale", member.allowance)}
+                ${field("allowance", "Aufwandspauschale", member.allowance, "text", "", 'inputmode="decimal" data-amount-field')}
                 ${field("billingAmount", "Abrechnungsbetrag", member.billingAmount, "text", "", 'inputmode="decimal" data-amount-field')}
                 ${field("termFrom", "Berufung von", member.termFrom, "date")}
                 ${field("termTo", "Berufung bis", member.termTo, "date")}
@@ -771,7 +771,7 @@ export const views = {
       <form id="quittung-form" class="form-grid">
         <div class="field">
           <label>Betrag pro Jubilar (€)</label>
-          <input type="text" name="quittungBetrag" data-bind="quittungBetrag" value="${escapeHtml(state.quittungBetrag)}" style="max-width:120px">
+          <input type="text" name="quittungBetrag" data-bind="quittungBetrag" value="${escapeHtml(state.quittungBetrag)}" inputmode="decimal" data-amount-field style="max-width:120px">
         </div>
         <div class="field">
           <label>Telefon</label>

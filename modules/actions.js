@@ -414,7 +414,7 @@ export const actions = {
     if (!validateEmailFields("#member-form")) { toast("Bitte eine gültige E-Mail-Adresse eingeben."); return; }
     if (!validatePostalCodeFields("#member-form")) { toast("Bitte eine gültige PLZ mit 5 Ziffern eingeben."); return; }
     if (values.bank && !isValidIban(values.bank)) { $("#bank")?.classList.add("invalid"); toast("Bitte eine gültige IBAN eingeben."); return; }
-    const patch = { ...values, postalCode: normalizeDigits(values.postalCode), email: normalizeEmail(values.email), bank: formatIban(values.bank), billingAmount: normalizeAmount(values.billingAmount), isLeader: values.isLeader === "true" };
+    const patch = { ...values, postalCode: normalizeDigits(values.postalCode), email: normalizeEmail(values.email), bank: formatIban(values.bank), allowance: normalizeAmount(values.allowance), billingAmount: normalizeAmount(values.billingAmount), isLeader: values.isLeader === "true" };
     state.data.sokoMembers = updateItem(state.data.sokoMembers, values.id, patch);
     state.data.sokoGroups = state.data.sokoGroups.map(group => patch.isLeader && group.id === patch.groupId ? { ...group, leaderId: values.id } : group);
     saveData();
@@ -663,7 +663,7 @@ export const actions = {
   "print-docs": printCurrentRun,
   "toggle-print-background": e => { state.printBackground = e.target.checked; },
   "save-quittung-settings": () => {
-    const settings = quittungSettingsFromForm();
+    const settings = { ...quittungSettingsFromForm(), quittungBetrag: normalizeAmount(state.quittungBetrag) };
     saveQuittungSettings(settings)
       .then(() => {
         render();

@@ -152,8 +152,6 @@ document.addEventListener("input", event => {
     updateFilter(input);
     return;
   }
-  const bound = event.target.closest("[data-bind]");
-  if (bound) state[bound.dataset.bind] = bound.value;
   const email = event.target.closest("input[type='email']");
   if (email) updateEmailValidity(email);
   const iban = event.target.closest("[data-iban-field]");
@@ -164,6 +162,8 @@ document.addEventListener("input", event => {
   if (postalCode) updatePostalCodeValidity(postalCode);
   const digits = event.target.closest("[data-digits-field]:not([data-postal-code-field])");
   if (digits) updateDigitsInput(digits);
+  const bound = event.target.closest("[data-bind]");
+  if (bound) state[bound.dataset.bind] = bound.value;
 });
 
 document.addEventListener("submit", event => event.preventDefault());
