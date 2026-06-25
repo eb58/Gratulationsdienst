@@ -61,7 +61,7 @@ const squareBackAddress = citizen => {
   `;
 };
 export const compactBirthdayCardBody = citizen => [
-  `{citizen.salutation} ${citizen.lastName},`,
+  `${citizen.salutation} ${citizen.lastName},`,
   `zu Ihrem ${calculateAge(citizen.birthDate)}. Geburtstag gratulieren wir sehr herzlich.`,
   "Für das neue Lebensjahr wünschen wir Gesundheit, Zuversicht und viele gute Begegnungen."
 ].join("\n\n");

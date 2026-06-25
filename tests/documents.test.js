@@ -1,0 +1,114 @@
+import assert from 'node:assert/strict';
+import { beforeEach, describe, it } from 'node:test';
+
+const storage = () => {
+  const values = new Map();
+  return {
+    getItem: key => values.get(key) ?? null,
+    setItem: (key, value) => values.set(key, String(value)),
+    removeItem: key => values.delete(key),
+    clear: () => values.clear()
+  };
+};
+
+globalThis.localStorage = storage();
+globalThis.sessionStorage = storage();
+globalThis.location = { protocol: 'file:', href: 'file:///test/index.html' };
+globalThis.window = globalThis;
+globalThis.ResizeObserver = class {
+  observe() {}
+  disconnect() {}
+};
+
+const documents = await import('../modules/documents.js');
+const { state } = await import('../modules/state.js');
+
+const {
+  compactBirthdayCardBody,
+  documentDesignClass,
+  documentFormat,
+  letterSalutation,
+  printFormatClass,
+  printPageSettings,
+  renderTemplate,
+  templateBackBackgroundImage,
+  templateBackgroundImage
+} = documents;
+
+const citizen = {
+  salutation: 'Frau',
+  firstName: 'Erika',
+  lastName: 'Mustermann',
+  street: 'Musterstraße',
+  houseNo: '12',
+  postalCode: '13437',
+  district: 'Tegel',
+  birthDate: '1936-06-01',
+  wish: 'Besuch erwünscht'
+};
+
+const sender = { name: 'Bezirksamt', signature: 'Signatur' };
+
+beforeEach(() => {
+  state.data = {
+    citizens: [citizen],
+    sokoGroups: [{ id: 'SOKO 01' }],
+    sokoMembers: [],
+    streets: [{
+      name: 'Musterstraße',
+      district: 'Tegel',
+      rules: [{ plz: '13437', soko: '01', von: '1', bis: '99', art: 'F', ortsteil: 'Tegel' }]
+    }],
+    senders: [sender],
+    templates: [],
+    importLog: []
+  };
+});
+
+describe('document salutations and formats', () => {
+  it('creates formal salutations', () => {
+    assert.equal(letterSalutation('Herr'), 'Sehr geehrter Herr');
+    assert.equal(letterSalutation('Frau'), 'Sehr geehrte Frau');
+    assert.equal(letterSalutation(''), 'Sehr geehrte Damen und Herren');
+  });
+
+  it('detects page format classes and print settings', () => {
+    assert.deepEqual(documentFormat({ format: 'DIN A4 quer' }), { className: 'format-a4-landscape', orientation: 'landscape', size: 'a4' });
+    assert.deepEqual(documentFormat({ format: 'A5 Karte' }), { className: 'format-a5', orientation: 'portrait', size: 'a5' });
+    assert.equal(printFormatClass({ format: 'Quadratkarte 210 mm' }), 'format-square');
+    assert.deepEqual(printPageSettings('A5 Karte quer'), { size: 'A5 landscape', className: 'format-a5-landscape' });
+  });
+
+  it('selects design classes from format and occasion', () => {
+    assert.equal(documentDesignClass({ format: 'Quadratkarte 210 mm', occasion: 'Geburtstag' }), 'square-greeting-card');
+    assert.equal(documentDesignClass({ format: 'A5 Karte', occasion: 'Geburtstag' }), 'birthday-card');
+    assert.equal(documentDesignClass({ format: 'DIN A4 Brief', occasion: 'Einladung' }), '');
+  });
+});
+
+describe('template rendering', () => {
+  it('replaces template tokens with citizen, sender and SOKO values', () => {
+    const rendered = renderTemplate({
+      subject: 'Glückwunsch {{vorname}} {{nachname}}',
+      body: '{{anrede}} {{nachname}}\n{{strasse}}\n{{plz}} {{ortsteil}}\n{{soko}}\n{{absender}}\n{{alter}}'
+    }, citizen, sender);
+
+    assert.equal(rendered.subject, 'Glückwunsch Erika Mustermann');
+    assert.match(rendered.body, /Sehr geehrte Frau Mustermann/);
+    assert.match(rendered.body, /Musterstraße 12/);
+    assert.match(rendered.body, /13437 Tegel/);
+    assert.match(rendered.body, /SOKO 01/);
+    assert.match(rendered.body, /Bezirksamt/);
+  });
+
+  it('trims background image values', () => {
+    assert.equal(templateBackgroundImage({ backgroundImage: ' data:image/png;base64,abc ' }), 'data:image/png;base64,abc');
+    assert.equal(templateBackBackgroundImage({ backBackgroundImage: ' back ' }), 'back');
+  });
+
+  it('builds compact birthday card text with salutation and age', () => {
+    const body = compactBirthdayCardBody(citizen);
+    assert.match(body, /^Frau Mustermann,/);
+    assert.match(body, /90\. Geburtstag/);
+  });
+});
