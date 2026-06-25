@@ -71,16 +71,27 @@ const jsQrCode = context => {
 };
 const detectQr = async (canvas, context) => await barcodeDetectorQr(canvas) || jsQrCode(context);
 
-const pageMapper = (canvas, qr) => {
+const angleOfEdge = (from, to) => Math.atan2(to.y - from.y, to.x - from.x);
+const averageAngle = (a, b) => Math.atan2(Math.sin(a) + Math.sin(b), Math.cos(a) + Math.cos(b));
+// Schräglage gescannter Seiten aus den QR-Ecken (Oberkante + Linkskante), mittelpunkt- und randzonenunabhängig.
+export const pageRotation = points => points?.length === 4
+  ? averageAngle(angleOfEdge(points[0], points[1]), angleOfEdge(points[0], points[3]) - Math.PI / 2)
+  : 0;
+
+export const pageMapper = (canvas, qr) => {
   const scaleX = canvas.width / SOKO_PAGE_MM.width;
   const scaleY = canvas.height / SOKO_PAGE_MM.height;
-  const expectedCenter = {
-    x: (SOKO_QR_BOX.left + SOKO_QR_BOX.size / 2) * scaleX,
-    y: (SOKO_QR_BOX.top + SOKO_QR_BOX.size / 2) * scaleY
+  const boxCenter = { x: SOKO_QR_BOX.left + SOKO_QR_BOX.size / 2, y: SOKO_QR_BOX.top + SOKO_QR_BOX.size / 2 };
+  const points = qr?.points || [];
+  const center = points.length === 4 ? centerOf(points) : { x: boxCenter.x * scaleX, y: boxCenter.y * scaleY };
+  const angle = pageRotation(points);
+  const cos = Math.cos(angle);
+  const sin = Math.sin(angle);
+  return point => {
+    const dx = (point.x - boxCenter.x) * scaleX;
+    const dy = (point.y - boxCenter.y) * scaleY;
+    return { x: center.x + dx * cos - dy * sin, y: center.y + dx * sin + dy * cos };
   };
-  const actualCenter = qr?.points?.length === 4 ? centerOf(qr.points) : expectedCenter;
-  const offset = { x: actualCenter.x - expectedCenter.x, y: actualCenter.y - expectedCenter.y };
-  return point => ({ x: point.x * scaleX + offset.x, y: point.y * scaleY + offset.y });
 };
 const boundsForRect = (canvas, mapper, rect) => {
   const points = [
