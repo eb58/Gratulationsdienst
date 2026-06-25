@@ -8,6 +8,7 @@
     "build": "vite build",
     "watch": "vite build --watch",
     "test": "node --test --experimental-test-module-mocks",
+    "test:coverage": "node --test --experimental-test-module-mocks --experimental-test-coverage",
     "test:e2e": "node --test tests/e2e/app.e2e.js",
     "check:directory": "node scripts/check-directory.js",
     "hooks:install": "git config core.hooksPath .githooks",

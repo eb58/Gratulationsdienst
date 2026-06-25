@@ -28,9 +28,18 @@ const classList = () => {
 };
 const hint = () => ({ classList: classList(), textContent: '' });
 const fieldHost = fieldHint => ({ querySelector: selector => selector === '.field-hint' ? fieldHint : null });
+const attrs = () => {
+  const values = {};
+  return {
+    getAttribute: key => values[key],
+    setAttribute: (key, value) => { values[key] = String(value); },
+    attrs: values
+  };
+};
 const domElement = () => ({
   classList: classList(),
   dataset: {},
+  ...attrs(),
   style: {
     setProperty() {},
     removeProperty() {}
@@ -41,9 +50,20 @@ const domElement = () => ({
   hidden: false,
   querySelector: () => null,
   querySelectorAll: () => [],
-  focus() {},
+  focus() { this.focused = true; },
   insertAdjacentHTML() {}
 });
+const eventTarget = ({ dataset = {}, closest = {}, matches = () => false, value = '', files = null } = {}) => {
+  const element = {
+    dataset,
+    value,
+    files,
+    classList: classList(),
+    closest: selector => closest[selector] || null,
+    matches
+  };
+  return element;
+};
 const input = ({ value = '', type = 'text', dataset = {}, fieldHint = null } = {}) => {
   const element = {
     value,
@@ -78,8 +98,12 @@ const elements = {
   '#page-title': domElement(),
   '#topbar-actions': domElement(),
   '#view': domElement(),
-  '#toast': domElement()
+  '#toast': domElement(),
+  '#map-soko-info': domElement(),
+  '[data-action="save-citizen"]': domElement(),
+  '[data-nav-toggle]': domElement()
 };
+elements['#map-soko-info'].dataset = {};
 globalThis.document = {
   body: { classList: classList() },
   addEventListener: (type, handler) => { listeners[type] = handler; },
@@ -95,6 +119,14 @@ const { state } = await import('../modules/state.js');
 
 beforeEach(() => {
   state.quittungBetrag = '';
+  state.filters = { q: '', month: 'alle', groupId: 'alle', age: 'alle', status: 'alle', occasion: 'Geburtstag' };
+  state.auth.user = { id: 'u1', email: 'admin@example.test', role: 'admin', active: true };
+  state.view = 'dashboard';
+  state.focusTarget = '';
+  elements['#view'].focused = false;
+  elements['#map-soko-info'].dataset = {};
+  elements['#map-soko-info'].innerHTML = '';
+  localStorage.clear();
 });
 
 describe('app input validation handler', () => {
@@ -132,5 +164,203 @@ describe('app input validation handler', () => {
     assert.equal(element.value, '1343');
     assert.equal(element.classList.contains('invalid'), true);
     assert.equal(fieldHint.textContent, 'PLZ muss 5 Ziffern haben');
+  });
+});
+
+describe('app click handler', () => {
+  it('focuses the main view from the skip link', () => {
+    let prevented = false;
+    const skipLink = {};
+    const target = eventTarget({ closest: { '.skip-link': skipLink } });
+
+    listeners.click({ target, preventDefault: () => { prevented = true; } });
+
+    assert.equal(prevented, true);
+    assert.equal(state.focusTarget, '#view');
+    assert.equal(elements['#view'].focused, true);
+  });
+
+  it('toggles the mobile navigation button state', () => {
+    const toggle = { ...attrs() };
+    const target = eventTarget({ closest: { '[data-nav-toggle]': toggle } });
+
+    listeners.click({ target });
+
+    assert.equal(document.body.classList.contains('nav-open'), true);
+    assert.equal(toggle.getAttribute('aria-expanded'), 'true');
+    assert.equal(toggle.getAttribute('aria-label'), 'Menü schließen');
+  });
+
+  it('changes views through nav clicks and closes nav when already active', () => {
+    const nav = { dataset: { nav: 'import' } };
+    const target = eventTarget({ closest: { '[data-nav]': nav } });
+
+    listeners.click({ target });
+
+    assert.equal(state.view, 'import');
+
+    document.body.classList.add('nav-open');
+    listeners.click({ target });
+
+    assert.equal(document.body.classList.contains('nav-open'), false);
+  });
+
+  it('stores focus target for delegated actions', () => {
+    const action = { dataset: { action: 'unknown-action', id: 'G-1' }, closest: selector => selector === '[data-id]' ? { dataset: { id: 'G-1' } } : null };
+    const target = eventTarget({ closest: { '[data-action]': action } });
+
+    listeners.click({ target });
+
+    assert.equal(state.focusTarget, '[data-action="unknown-action"][data-id="G-1"]');
+  });
+});
+
+describe('app filter and change handlers', () => {
+  it('updates filters and persists the month filter from input events', () => {
+    const element = input({ value: '06', dataset: { filter: '1' } });
+    element.name = 'month';
+
+    listeners.input({ target: element });
+
+    assert.equal(state.filters.month, '06');
+    assert.equal(localStorage.getItem('gd_month_filter'), '06');
+  });
+
+  it('normalizes plain digit inputs and updates bound state values', () => {
+    state.customValue = '';
+    const element = input({ value: 'a12b', dataset: { digitsField: '', bind: 'customValue' } });
+
+    listeners.input({ target: element });
+
+    assert.equal(element.value, '12');
+    assert.equal(state.customValue, '12');
+  });
+
+  it('prevents form submissions', () => {
+    let prevented = false;
+
+    listeners.submit({ preventDefault: () => { prevented = true; } });
+
+    assert.equal(prevented, true);
+  });
+
+  it('enables citizen save after wish changes', () => {
+    const saveButton = elements['[data-action="save-citizen"]'];
+    saveButton.classList.add('btn-disabled');
+    const target = eventTarget({ matches: selector => selector === '[name="wish"]' });
+
+    listeners.change({ target });
+
+    assert.equal(saveButton.classList.contains('btn-disabled'), false);
+  });
+
+  it('updates map month and refreshes the map info panel', () => {
+    const target = eventTarget({ value: '07', matches: selector => selector === '#map-month-select' });
+    elements['#map-soko-info'].dataset.groupId = 'offen';
+
+    listeners.change({ target });
+
+    assert.equal(state.mapMonth, '07');
+    assert.equal(localStorage.getItem('gd_map_month'), '07');
+    assert.match(elements['#map-soko-info'].innerHTML, /Über eine SOKO/);
+  });
+
+  it('persists bound receipt month changes', () => {
+    const bound = eventTarget({ dataset: { bind: 'quittungMonat' }, value: '08' });
+    const target = eventTarget({ closest: { '[data-bind]': bound } });
+
+    listeners.change({ target });
+
+    assert.equal(state.quittungMonat, '08');
+    assert.equal(localStorage.getItem('gd_quittung_month'), '08');
+  });
+
+  it('loads import files and runs the import action', async () => {
+    const file = { text: async () => 'Vorname;Nachname\nErika;Mustermann' };
+    const target = eventTarget({ files: [file], matches: selector => selector === '#import-file' });
+
+    listeners.change({ target });
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    assert.equal(state.importText, 'Vorname;Nachname\nErika;Mustermann');
+  });
+});
+
+describe('app splitters and lifecycle handlers', () => {
+  it('resizes split panes with pointer events and persists the result', () => {
+    const split = { getBoundingClientRect: () => ({ left: 100, width: 200 }), style: { setProperty: (key, value) => { split.style[key] = value; } } };
+    const splitter = {
+      dataset: { splitter: 'print' },
+      closest: selector => selector === '.print-split' ? split : null,
+      setPointerCapture: id => { splitter.captured = id; },
+      releasePointerCapture: id => { splitter.released = id; }
+    };
+    const target = eventTarget({ closest: { '[data-splitter]': splitter } });
+    let prevented = false;
+
+    listeners.pointerdown({ target, pointerId: 7, preventDefault: () => { prevented = true; } });
+    listeners.pointermove({ clientX: 230 });
+    listeners.pointerup({});
+
+    assert.equal(prevented, true);
+    assert.equal(state.printSplit, 65);
+    assert.equal(split.style['--print-left'], '65%');
+    assert.equal(localStorage.getItem('gratulationsdienst.splitters'), '{"print":65}');
+    assert.equal(splitter.released, 7);
+  });
+
+  it('resizes split panes with keyboard arrows', () => {
+    state.templateSplit = 50;
+    const split = { style: { setProperty: (key, value) => { split.style[key] = value; } } };
+    const splitter = {
+      dataset: { splitter: 'template' },
+      closest: selector => selector === '.template-split' ? split : null,
+      setAttribute: (key, value) => { splitter[key] = value; }
+    };
+    const target = eventTarget({ closest: { '[data-splitter]': splitter } });
+    let prevented = false;
+
+    listeners.keydown({ target, key: 'ArrowRight', preventDefault: () => { prevented = true; } });
+
+    assert.equal(prevented, true);
+    assert.equal(state.templateSplit, 54);
+    assert.equal(split.style['--template-left'], '54%');
+    assert.equal(splitter['aria-valuenow'], '54');
+  });
+
+  it('marks dirty forms on beforeunload', () => {
+    const control = { name: 'firstName', value: 'Neu', type: 'text', disabled: false };
+    const form = {
+      dataset: { initialValues: JSON.stringify([['firstName', 'Erika']]) },
+      elements: [control],
+      getAttribute: key => key === 'id' ? 'citizen-form' : '',
+      querySelectorAll: () => []
+    };
+    const previousQuerySelectorAll = document.querySelectorAll;
+    document.querySelectorAll = selector => selector === 'form' ? [form] : [];
+    listeners.input({ target: { ...control, closest: selector => selector === 'form' ? form : null } });
+    const event = { preventDefault: () => { event.prevented = true; }, returnValue: undefined };
+
+    listeners.beforeunload(event);
+
+    document.querySelectorAll = previousQuerySelectorAll;
+    assert.equal(event.prevented, true);
+    assert.equal(event.returnValue, '');
+  });
+});
+
+describe('app map hover handlers', () => {
+  it('updates map info on group hover and clears it on mouseout', () => {
+    const group = { dataset: { groupId: 'offen', streetName: 'Teststraße' } };
+    const target = eventTarget({ closest: { '[data-group-id]': group } });
+
+    listeners.mouseover({ target });
+
+    assert.equal(elements['#map-soko-info'].dataset.groupId, 'offen');
+    assert.match(elements['#map-soko-info'].innerHTML, /Über eine SOKO/);
+
+    listeners.mouseout({ target, relatedTarget: null });
+
+    assert.equal(elements['#map-soko-info'].dataset.groupId, '');
   });
 });

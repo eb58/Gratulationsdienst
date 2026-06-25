@@ -25,11 +25,19 @@ const { state } = await import('../modules/state.js');
 
 const {
   compactBirthdayCardBody,
+  documentBackPreview,
   documentDesignClass,
   documentFormat,
+  documentPreview,
   letterSalutation,
+  preparePrint,
   printFormatClass,
+  printDocumentPages,
   printPageSettings,
+  printSquareCardBack,
+  printSquareCardPage,
+  renderSokoForm,
+  renderSokoQuittung,
   renderTemplate,
   templateBackBackgroundImage,
   templateBackgroundImage
@@ -47,7 +55,17 @@ const citizen = {
   wish: 'Besuch erwünscht'
 };
 
-const sender = { name: 'Bezirksamt', signature: 'Signatur' };
+const sender = {
+  id: 'A-001',
+  name: 'Bezirksamt',
+  signature: 'Signatur',
+  color: '#005f56',
+  logo: 'BA',
+  department: 'Seniorenservice',
+  address: 'Eichborndamm 215',
+  phone: '030 123',
+  email: 'kontakt@example.test'
+};
 
 beforeEach(() => {
   state.data = {
@@ -63,6 +81,11 @@ beforeEach(() => {
     templates: [],
     importLog: []
   };
+  state.generatedDocs = [];
+  state.printBackground = true;
+  state.selectedTemplateId = 'T-001';
+  state.selectedSenderId = 'A-001';
+  state.selectedCitizenId = citizen.id;
 });
 
 describe('document salutations and formats', () => {
@@ -110,5 +133,123 @@ describe('template rendering', () => {
     const body = compactBirthdayCardBody(citizen);
     assert.match(body, /^Frau Mustermann,/);
     assert.match(body, /90\. Geburtstag/);
+  });
+});
+
+describe('document previews and print pages', () => {
+  const template = {
+    id: 'T-001',
+    name: 'Test',
+    occasion: 'Geburtstag',
+    format: 'Quadratkarte 210 mm',
+    subject: 'Titel {{vorname}}',
+    body: 'Text {{nachname}}',
+    backgroundImage: 'front.png',
+    backBackgroundImage: 'back.png'
+  };
+
+  it('renders empty, front and back previews with escaped data', () => {
+    assert.match(documentPreview(template, null, sender), /Kein Jubilar/);
+
+    const front = documentPreview(template, { ...citizen, lastName: '<Mustermann>' }, sender);
+    const back = documentBackPreview(template, citizen);
+
+    assert.match(front, /square-greeting-card/);
+    assert.match(front, /front\.png/);
+    assert.match(front, /&lt;Mustermann&gt;/);
+    assert.match(back, /square-card-back/);
+    assert.match(back, /back\.png/);
+    assert.match(back, /01&nbsp;&nbsp;01/);
+  });
+
+  it('suppresses non-square back previews unless a back image or blank page is requested', () => {
+    const plain = { ...template, format: 'DIN A4 Brief', backBackgroundImage: '' };
+
+    assert.equal(documentBackPreview(plain, citizen), '');
+    assert.match(documentBackPreview(plain, citizen, { includeBlank: true }), /document-back-preview/);
+    assert.match(documentBackPreview({ ...plain, backBackgroundImage: 'back.png' }, citizen), /back\.png/);
+  });
+
+  it('renders square print pages and respects disabled background printing', () => {
+    const front = printSquareCardPage(template, citizen, sender);
+    const back = printSquareCardBack(template, citizen);
+
+    assert.match(front, /front\.png/);
+    assert.match(back, /back\.png/);
+    assert.match(back, /transform:rotate\(180deg\)/);
+
+    state.printBackground = false;
+    assert.doesNotMatch(printSquareCardPage(template, citizen, sender), /front\.png/);
+    assert.doesNotMatch(printSquareCardBack(template, citizen), /back\.png/);
+  });
+
+  it('builds print pages from generated document metadata', () => {
+    state.data.templates = [template];
+    state.generatedDocs = [
+      { citizenId: citizen.id, templateId: template.id, senderId: sender.id },
+      { citizenId: 'missing', templateId: template.id, senderId: sender.id }
+    ];
+
+    const pages = printDocumentPages();
+
+    assert.match(pages, /front\.png/);
+    assert.match(pages, /back\.png/);
+    assert.doesNotMatch(pages, /missing/);
+  });
+
+  it('prepares print CSS for the first generated document', () => {
+    const classes = new Set();
+    const removed = [];
+    const appended = [];
+    globalThis.document = {
+      body: {
+        classList: {
+          remove: (...names) => names.forEach(name => classes.delete(name)),
+          add: name => classes.add(name)
+        }
+      },
+      head: { append: element => appended.push(element) },
+      createElement: tag => ({ tag, id: '', textContent: '' }),
+      getElementById: id => id === 'dynamic-print-style' ? { remove: () => removed.push(id) } : null
+    };
+    state.data.templates = [template];
+    state.generatedDocs = [{ citizenId: citizen.id, templateId: template.id, senderId: sender.id }];
+
+    assert.equal(preparePrint(), true);
+    assert.equal(classes.has('print-format-square'), true);
+    assert.deepEqual(removed, ['dynamic-print-style']);
+    assert.match(appended[0].textContent, /210mm 210mm/);
+  });
+});
+
+describe('SOKO print artifacts', () => {
+  it('renders receipt totals, leader data and placeholder rows', () => {
+    state.data.sokoMembers = [{
+      salutation: 'Frau',
+      firstName: 'Lea',
+      lastName: 'Leitung',
+      groupId: 'SOKO 01',
+      street: 'Leiterweg 1',
+      postalCode: '13437',
+      city: 'Berlin',
+      zpNr: 'ZP-1',
+      isLeader: true
+    }];
+
+    const html = renderSokoQuittung([citizen, { ...citizen, id: 'G-2', firstName: 'Max' }], 'SOKO 01', '8,50', '030', '06', '3930', '68154');
+
+    assert.match(html, /17,00/);
+    assert.match(html, /Lea Leitung/);
+    assert.match(html, /ZP-1/);
+    assert.equal((html.match(/height:8mm/g) || []).length, 12);
+  });
+
+  it('renders SOKO questionnaire forms with assignment, date and contact data', () => {
+    const html = renderSokoForm({ ...citizen, phone: '030 999' }, 4, 'fragebogen.png');
+
+    assert.match(html, /fragebogen\.png/);
+    assert.match(html, /SOKO 01/);
+    assert.match(html, /005 \/ 06/);
+    assert.match(html, /030 999/);
   });
 });
