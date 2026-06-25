@@ -1,10 +1,11 @@
 import { $, todayIso, isValidEmail, isValidIban, formatIban, updateItem, nextId, csvEscape, downloadText, toast, byId, normalizeEmail, normalizeAmount, normalizeDigits, isValidPostalCode } from './utils.js';
 import { normalizeStreetRules, streetDistrictSummary, streetGroupSummary, normalizeStreetDistrict, defaultData } from './domain.js';
 import { state, saveData, saveQuittungSettings, apiRequest, setAuthSession, clearAuthSession, loadCollectionData } from './state.js';
-import { streetAssignment, filteredCitizens, documentCitizens, isPrintedCitizen, selectedTemplate, selectedSender, selectedMember, activeCitizens, groupForCitizen, isReceiptGroupReady, receiptCitizens, receiptCitizensForReadyGroups, ruleMatchesHouseNo } from './assignment.js';
+import { streetAssignment, filteredCitizens, documentCitizens, isPrintedCitizen, selectedTemplate, selectedSender, selectedMember, activeCitizens, groupForCitizen, isReceiptGroupReady, receiptCitizens, receiptCitizensForReadyGroups } from './assignment.js';
 import { printCurrentRun, completePrintRun, renderSokoForm, renderSokoQuittung } from './documents.js';
 import { parseCsv, mapImportRow } from './import.js';
 import { buildImportResult, importNotice, citizenGridRow, nextMemberIdAfterDelete } from './citizens.js';
+import { groupedTestAssignments, balancedTestAssignments, shuffledTestValues, testFirstNames, testLastNames, testCsvRow, testCsvText } from './testdata.js';
 import { render, renderDialog } from './render.js';
 import { renderCitizenDetail } from './views.js';
 import { cancelDirtyFormLeave, confirmDirtyFormLeave } from './dirtyForms.js';
@@ -108,62 +109,6 @@ const showCitizenGridRow = row => {
   const pageSize = api.paginationGetPageSize?.();
   if (pageSize) api.paginationGoToPage?.(Math.floor(row.rowIndex / pageSize));
   requestAnimationFrame(() => api.ensureIndexVisible?.(row.rowIndex, "middle"));
-};
-const testFirstNames = [
-  ["Frau", "Anna"], ["Herr", "Bernd"], ["Frau", "Clara"], ["Herr", "Dieter"], ["Frau", "Eva"],
-  ["Herr", "Frank"], ["Frau", "Gisela"], ["Herr", "Heinz"], ["Frau", "Inge"], ["Herr", "Jürgen"],
-  ["Frau", "Karin"], ["Herr", "Lothar"], ["Frau", "Monika"], ["Herr", "Norbert"], ["Frau", "Petra"],
-  ["Frau", "Julia"], ["Frau", "Maria"], ["Herr", "Georg"], ["Herr", "Joachim"], ["Frau", "Evelyn"],
-  ["Herr", "Hans-Peter"], ["Frau", "Sabine"], ["Herr", "Wolfgang"], ["Frau", "Renate"], ["Herr", "Klaus"],
-  ["Frau", "Ursula"], ["Herr", "Manfred"], ["Frau", "Brigitte"], ["Herr", "Peter"], ["Frau", "Helga"],
-  ["Herr", "Rainer"], ["Frau", "Christine"], ["Herr", "Günter"], ["Frau", "Barbara"], ["Herr", "Horst"],
-  ["Frau", "Waltraud"], ["Herr", "Werner"], ["Frau", "Margot"], ["Herr", "Uwe"], ["Frau", "Erika"]
-];
-const testLastNames = ["Schulz", "Berger", "Klein", "Neumann", "Richter", "Wolf", "Krüger", "Hoffmann", "Werner", "Schneider", "Lehmann", "Koch", "Fischer", "Weber", "Peverali", "Brandt", "Piotrowski", "Meyer", "Wagner", "Becker", "Schmidt", "Bauer", "Schäfer", "Krause", "Hartmann", "Lange", "Schröder", "Zimmermann", "König", "Walter", "Peters", "Möller", "Jung", "Hahn", "Vogel", "Keller", "Günther", "Frank", "Roth", "Lorenz"];
-const shuffledTestValues = values => values.map(value => ({ value, order: Math.random() })).sort((a, b) => a.order - b.order).map(item => item.value);
-const numberFrom = value => Number.parseInt(String(value ?? "").match(/\d+/)?.[0] || "", 10);
-const testAssignments = () => state.data.streets.flatMap(street => (street.rules || [])
-  .filter(rule => rule.soko)
-  .map(rule => ({ street, rule })));
-const groupedTestAssignments = () => [...testAssignments().reduce((groups, assignment) => {
-  const group = groups.get(assignment.rule.soko) || [];
-  group.push(assignment);
-  groups.set(assignment.rule.soko, group);
-  return groups;
-}, new Map()).entries()]
-  .sort(([a], [b]) => Number(a) - Number(b))
-  .map(([soko, assignments]) => ({ soko, assignments }));
-const balancedTestAssignments = (groups, count) => Array.from({ length: count }, (_, index) => {
-  const group = groups[index % groups.length];
-  return group.assignments[Math.floor(index / groups.length) % group.assignments.length];
-});
-const testHouseNo = (rule, offset) => String([rule.von, rule.bis, ...Array.from({ length: 220 }, (_, index) => index + 1)]
-  .map(numberFrom)
-  .find(number => Number.isFinite(number) && ruleMatchesHouseNo(rule, number)) || offset + 1);
-const testBirthDate = index => {
-  const year = Number(todayIso().slice(0, 4));
-  const age = [85, 90, 95, 100, 101][index % 5];
-  const month = state.quittungMonat || String(new Date().getMonth() + 1).padStart(2, "0");
-  const day = String((index % 28) + 1).padStart(2, "0");
-  return `${year - age}-${month}-${day}`;
-};
-const testCsvRow = (index, name, assignment) => ({
-  Anrede: name.salutation,
-  Vorname: name.firstName,
-  Nachname: name.lastName,
-  Strasse: assignment.street.name,
-  Hausnummer: testHouseNo(assignment.rule, index),
-  PLZ: assignment.rule.plz || "13437",
-  Ortsteil: assignment.rule.ortsteil || assignment.street.district || "",
-  Geburtsdatum: testBirthDate(index),
-  Telefon: `030 9000${String(index + 100).padStart(4, "0")}`,
-  Email: ""
-});
-const testCsvText = rows => {
-  const headers = ["Anrede", "Vorname", "Nachname", "Strasse", "Hausnummer", "PLZ", "Ortsteil", "Geburtsdatum", "Telefon", "Email"];
-  return [headers, ...rows.map(row => headers.map(header => row[header] || ""))]
-    .map(row => row.map(csvEscape).join(";"))
-    .join("\n");
 };
 const importMappedRows = mapped => {
   const result = buildImportResult(mapped, state.data.citizens, row => streetAssignment(row)?.groupId);
@@ -549,7 +494,7 @@ export const actions = {
   },
   "seed-citizens": () => {
     if (state.auth.user?.role !== "admin") { toast("Nur Admins können Testdaten erzeugen."); return; }
-    const groups = groupedTestAssignments();
+    const groups = groupedTestAssignments(state.data.streets);
     if (!groups.length) { toast("Keine SOKO-Zuordnungen für Testdaten gefunden."); return; }
     const rowCount = Math.max(30, groups.length);
     const assignments = balancedTestAssignments(groups, rowCount);
@@ -557,7 +502,7 @@ export const actions = {
     const lastNames = shuffledTestValues(testLastNames);
     const csv = testCsvText(assignments.map((assignment, index) => {
       const [salutation, firstName] = firstNames[index % firstNames.length];
-      return testCsvRow(index, { salutation, firstName, lastName: lastNames[index % lastNames.length] }, assignment);
+      return testCsvRow(index, { salutation, firstName, lastName: lastNames[index % lastNames.length] }, assignment, state.quittungMonat);
     }));
     state.importText = csv;
     importMappedRows(parseCsv(csv).map(mapImportRow));
