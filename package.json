@@ -8,6 +8,7 @@
     "build": "vite build",
     "watch": "vite build --watch",
     "test": "node --test",
+    "hooks:install": "git config core.hooksPath .githooks",
     "preview": "vite preview"
   },
   "repository": {
