@@ -320,9 +320,9 @@ export const renderSokoForm = (citizen, index, imageSrc) => {
   const age = calculateAge(citizen.birthDate);
   const month = citizen.birthDate ? citizen.birthDate.slice(5, 7) : "";
   const at = (left, top, extra = "") => `position:absolute;left:${left}mm;top:${top}mm;font-size:9.5pt;font-family:Arial,sans-serif;${extra}`;
+  const background = imageSrc ? `background:#fff url("${escapeHtml(imageSrc)}") no-repeat top left / 210mm 297mm;` : "background:#fff;";
   return `
-  <div style="position:relative;width:210mm;height:297mm;overflow:hidden;page-break-after:always;background:white">
-    <img src="${imageSrc}" style="position:absolute;top:0;left:0;width:210mm;height:297mm;display:block">
+  <div style="position:relative;width:210mm;height:297mm;overflow:hidden;page-break-after:always;${background}">
     <span style="${at(106, 15)}">${formatDateDe(todayIso())}</span>
     <span style="${at(165, 21)}">${formatDateDe(citizen.birthDate)}</span>
     <div style="${at(110, 24)}line-height:5.5mm">
