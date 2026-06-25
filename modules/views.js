@@ -2,7 +2,7 @@
 import { months, sokoColors, streetGroupDisplay } from './domain.js';
 import { state } from './state.js';
 import { selectedCitizen, selectedTemplate, selectedSender, selectedMember, selectedStreet, filteredCitizens, activeCitizens, groupForCitizen, isCheckedCitizen, receiptCitizens, receiptReviewCitizensForGroup, isReceiptGroupReady } from './assignment.js';
-import { field, emailField, ibanField, selectField, textField, checkField, radioField, streetRuleRows, assignmentPill, gridHost, groupOptions, sokoSelectOptions, senderOptions, templateOptions, occasionOptions, formatOptions } from './fields.js';
+import { field, emailField, postalCodeField, ibanField, selectField, textField, checkField, radioField, streetRuleRows, assignmentPill, gridHost, groupOptions, sokoSelectOptions, senderOptions, templateOptions, occasionOptions, formatOptions } from './fields.js';
 import { streetMapSvg, mapSegmentCounts, mapAddressPointGroups } from './map.js';
 import { documentBackPreview, documentPreview } from './documents.js';
 import { qrCodeSvg } from './qr.js';
@@ -172,7 +172,7 @@ export const citizenDetailContent = citizen => `
     ${field("birthDate", "Geburtsdatum", citizen.birthDate, "date")}
     ${field("street", "Straße", citizen.street)}
     ${field("houseNo", "Hausnummer", citizen.houseNo)}
-    ${field("postalCode", "PLZ", citizen.postalCode)}
+    ${postalCodeField("postalCode", "PLZ", citizen.postalCode)}
     ${field("district", "Ortsteil", citizen.district)}
     ${field("phone", "Telefon", citizen.phone)}
     ${emailField("email", "E-Mail", citizen.email)}
@@ -432,7 +432,7 @@ export const views = {
             ${field("birthDate", "Geburtsdatum", citizen.birthDate, "date")}
             ${field("street", "Straße", citizen.street)}
             ${field("houseNo", "Hausnummer", citizen.houseNo)}
-            ${field("postalCode", "PLZ", citizen.postalCode)}
+            ${postalCodeField("postalCode", "PLZ", citizen.postalCode)}
             ${field("district", "Ortsteil", citizen.district)}
             ${field("phone", "Telefon", citizen.phone)}
             ${emailField("email", "E-Mail", citizen.email)}
@@ -485,7 +485,7 @@ export const views = {
                 ${field("birthDate", "Geburtsdatum", member.birthDate, "date")}
                 ${selectField("groupId", "SOKO", member.groupId, sokoSelectOptions())}
                 ${field("street", "Straße", member.street, "text", "full")}
-                ${field("postalCode", "PLZ", member.postalCode)}
+                ${postalCodeField("postalCode", "PLZ", member.postalCode)}
                 ${field("city", "Ort", member.city)}
                 ${field("phone", "Telefon", member.phone)}
                 ${field("mobile", "Handy", member.mobile)}
@@ -493,7 +493,7 @@ export const views = {
                 ${ibanField("bank", "Bankverbindung / IBAN", member.bank, "full")}
                 ${field("accountHolder", "Kontoinhaber", member.accountHolder, "text", "full")}
                 ${field("allowance", "Aufwandspauschale", member.allowance)}
-                ${field("billingAmount", "Abrechnungsbetrag", member.billingAmount)}
+                ${field("billingAmount", "Abrechnungsbetrag", member.billingAmount, "text", "", 'inputmode="decimal" data-amount-field')}
                 ${field("termFrom", "Berufung von", member.termFrom, "date")}
                 ${field("termTo", "Berufung bis", member.termTo, "date")}
                 ${field("zpNr", "Zahlungspartner-Nummer", member.zpNr)}

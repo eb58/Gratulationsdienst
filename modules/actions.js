@@ -1,4 +1,4 @@
-import { $, todayIso, isValidEmail, isValidIban, formatIban, updateItem, nextId, csvEscape, formatStreetAddress, downloadText, calculateAge, toast, byId, normalize, normalizeEmail } from './utils.js';
+import { $, todayIso, isValidEmail, isValidIban, formatIban, updateItem, nextId, csvEscape, formatStreetAddress, downloadText, calculateAge, toast, byId, normalize, normalizeEmail, normalizeAmount, normalizeDigits, isValidPostalCode } from './utils.js';
 import { normalizeStreetRules, streetDistrictSummary, streetGroupSummary, normalizeStreetDistrict, defaultData } from './domain.js';
 import { state, saveData, saveQuittungSettings, apiRequest, setAuthSession, clearAuthSession, loadCollectionData } from './state.js';
 import { streetAssignment, filteredCitizens, documentCitizens, duplicateKey, isPrintedCitizen, selectedTemplate, selectedSender, selectedMember, activeCitizens, groupForCitizen, isReceiptGroupReady, receiptCitizens, receiptCitizensForReadyGroups, ruleMatchesHouseNo } from './assignment.js';
@@ -53,7 +53,7 @@ const streetRuleFormValues = selector => [...$(selector).querySelectorAll("[data
   const value = name => row.querySelector(`[name="${name}"]`)?.value.trim() || "";
   return {
     id: value("ruleId") || `custom-${index + 1}`,
-    plz: value("plz"),
+    plz: normalizeDigits(value("plz")),
     ortsteil: normalizeStreetDistrict(value("ortsteil")),
     von: value("von"),
     bis: value("bis"),
@@ -71,6 +71,12 @@ const streetPatchFromForm = selector => {
 const validateEmailFields = selector => {
   const fields = [...$(selector).querySelectorAll("input[type='email']")];
   const invalid = fields.filter(input => !isValidEmail(input.value));
+  fields.forEach(input => input.classList.toggle("invalid", invalid.includes(input)));
+  return !invalid.length;
+};
+const validatePostalCodeFields = selector => {
+  const fields = [...$(selector).querySelectorAll("[data-postal-code-field]")];
+  const invalid = fields.filter(input => !isValidPostalCode(input.value));
   fields.forEach(input => input.classList.toggle("invalid", invalid.includes(input)));
   return !invalid.length;
 };
@@ -372,11 +378,12 @@ export const actions = {
     const values = formValues("#citizen-form");
     if (!values.wish || values.wish === "offen") { toast("Bitte eine Glückwunsch-Option auswählen."); return; }
     if (!validateEmailFields("#citizen-form")) { toast("Bitte eine gültige E-Mail-Adresse eingeben."); return; }
+    if (!validatePostalCodeFields("#citizen-form")) { toast("Bitte eine gültige PLZ mit 5 Ziffern eingeben."); return; }
     const currentRows = currentCitizenGridRows();
     const currentIds = currentRows.map(row => row.id);
     const currentIndex = currentIds.indexOf(values.id);
     const status = isPrintedCitizen(byId(state.data.citizens, values.id)) ? "gedruckt" : "geprüft";
-    state.data.citizens = updateItem(state.data.citizens, values.id, { ...values, updatedAt: todayIso(), status });
+    state.data.citizens = updateItem(state.data.citizens, values.id, { ...values, postalCode: normalizeDigits(values.postalCode), updatedAt: todayIso(), status });
     const nextCitizenId = currentIds[currentIndex + 1] || "";
     const reachedEnd = !nextCitizenId || currentIndex < 0;
     state.selectedCitizenId = nextCitizenId || values.id;
@@ -405,8 +412,9 @@ export const actions = {
   "save-member": () => {
     const values = formValues("#member-form");
     if (!validateEmailFields("#member-form")) { toast("Bitte eine gültige E-Mail-Adresse eingeben."); return; }
+    if (!validatePostalCodeFields("#member-form")) { toast("Bitte eine gültige PLZ mit 5 Ziffern eingeben."); return; }
     if (values.bank && !isValidIban(values.bank)) { $("#bank")?.classList.add("invalid"); toast("Bitte eine gültige IBAN eingeben."); return; }
-    const patch = { ...values, email: normalizeEmail(values.email), bank: formatIban(values.bank), isLeader: values.isLeader === "true" };
+    const patch = { ...values, postalCode: normalizeDigits(values.postalCode), email: normalizeEmail(values.email), bank: formatIban(values.bank), billingAmount: normalizeAmount(values.billingAmount), isLeader: values.isLeader === "true" };
     state.data.sokoMembers = updateItem(state.data.sokoMembers, values.id, patch);
     state.data.sokoGroups = state.data.sokoGroups.map(group => patch.isLeader && group.id === patch.groupId ? { ...group, leaderId: values.id } : group);
     saveData();
@@ -444,6 +452,7 @@ export const actions = {
   },
   "save-street": () => {
     const { patch } = streetPatchFromForm("#street-form");
+    if (!validatePostalCodeFields("#street-form")) { toast("Bitte eine gültige PLZ mit 5 Ziffern eingeben."); return; }
     if (!patch.rules.length) { toast("Bitte mindestens einen Zuständigkeitsabschnitt erfassen."); return; }
     state.data.streets = updateItem(state.data.streets, patch.id, patch);
     saveData();
