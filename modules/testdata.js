@@ -32,9 +32,15 @@ export const balancedTestAssignments = (groups, count, rand = Math.random) => Ar
   return group.assignments[Math.floor(rand() * group.assignments.length)];
 });
 
-const ruleHouseNumbers = rule => Array.from({ length: 220 }, (_, index) => index + 1).filter(number => ruleMatchesHouseNo(rule, number));
-export const testHouseNo = (rule, rand = Math.random) => {
-  const candidates = ruleHouseNumbers(rule);
+const sokoCode = rule => String(rule.soko).padStart(2, "0");
+// Hausnummern, die nur die gewünschte Regel treffen – nicht auch eine andere SOKO derselben Straße (überlappende Bereiche im Verzeichnis)
+const ruleHouseNumbers = (rule, siblingRules = []) => {
+  const conflicts = siblingRules.filter(other => other !== rule && sokoCode(other) !== sokoCode(rule));
+  return Array.from({ length: 220 }, (_, index) => index + 1)
+    .filter(number => ruleMatchesHouseNo(rule, number) && !conflicts.some(other => ruleMatchesHouseNo(other, number)));
+};
+export const testHouseNo = (rule, rand = Math.random, siblingRules = []) => {
+  const candidates = ruleHouseNumbers(rule, siblingRules);
   return String(candidates.length ? candidates[Math.floor(rand() * candidates.length)] : numberFrom(rule.von) || numberFrom(rule.bis) || 1);
 };
 export const testBirthDate = (index, month) => {
@@ -49,7 +55,7 @@ export const testCsvRow = (index, name, assignment, month, rand = Math.random) =
   Vorname: name.firstName,
   Nachname: name.lastName,
   Strasse: assignment.street.name,
-  Hausnummer: testHouseNo(assignment.rule, rand),
+  Hausnummer: testHouseNo(assignment.rule, rand, assignment.street.rules || []),
   PLZ: assignment.rule.plz || "13437",
   Ortsteil: assignment.rule.ortsteil || assignment.street.district || "",
   Geburtsdatum: testBirthDate(index, month),
