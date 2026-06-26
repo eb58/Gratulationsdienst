@@ -39,11 +39,11 @@ describe('SOKO questionnaire simulation helpers', () => {
     assert.equal(marks.pressPublication, true);
   });
 
-  it('picks a bounded random subset of citizens', () => {
+  it('returns all citizens in random order', () => {
     const citizens = Array.from({ length: 20 }, (_, index) => ({ id: `G-${index}` }));
     const picked = pickSokoQuestionnaireSimulationCitizens(citizens, () => 0.5);
 
-    assert.equal(picked.length, 7);
+    assert.equal(picked.length, 20);
     assert.ok(picked.every(citizen => citizen.id));
   });
 

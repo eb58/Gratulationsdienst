@@ -15,7 +15,6 @@ const PX_PER_MM = 5;
 const PDF_WIDTH_PT = 595.28;
 const PDF_HEIGHT_PT = 841.89;
 const JPEG_QUALITY = 0.74;
-const MAX_SIMULATED_PAGES = 8;
 const wishKeys = ["wishPost", "wishVisit", "wishNone"];
 const weddingKeys = ["weddingGold", "weddingDiamond", "weddingIron", "weddingGrace"];
 const checkboxLabels = {
@@ -51,15 +50,12 @@ export const randomSokoQuestionnaireMarks = (random = Math.random) => ({
   ...(random() < 0.22 ? { [choice(weddingKeys, random)]: true } : {})
 });
 
-export const pickSokoQuestionnaireSimulationCitizens = (citizens, random = Math.random) => {
-  const pool = (citizens || []).filter(citizen => citizen?.id);
-  const count = Math.min(pool.length, MAX_SIMULATED_PAGES, Math.max(1, Math.ceil(pool.length * 0.35)));
-  return pool
+export const pickSokoQuestionnaireSimulationCitizens = (citizens, random = Math.random) =>
+  (citizens || [])
+    .filter(citizen => citizen?.id)
     .map(citizen => ({ citizen, order: random() }))
     .sort((a, b) => a.order - b.order)
-    .slice(0, count)
     .map(item => item.citizen);
-};
 
 const imageFromSvg = svg => new Promise((resolve, reject) => {
   const image = new Image();
@@ -265,7 +261,7 @@ export const createSokoQuestionnaireSimulation = async (citizens, options = {}) 
   const pages = await Promise.all(selected.map(async (citizen, index) => {
     const marks = options.marksByCitizenId?.[citizen.id] || randomSokoQuestionnaireMarks(random);
     const image = await drawQuestionnairePage(citizen, marks, index);
-    return { citizenId: citizen.id, image, marks, pageNumber: index + 1, createdAt };
+    return { citizenId: citizen.id, image, marks, pageNumber: 1, createdAt };
   }));
   const pdfBytes = jpegImagesToPdfBytes(pages.map(page => ({
     data: dataUrlBytes(page.image),

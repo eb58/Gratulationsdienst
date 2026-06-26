@@ -332,6 +332,11 @@ function handleQuestionnairePages(array $db, string $method, array $route): void
         respond($saved, 201);
     }
 
+    if ($method === 'DELETE') {
+        executeStatement($db, 'DELETE FROM gd_questionnaire_pages', []);
+        respond(['ok' => true]);
+    }
+
     respond(['error' => 'Methode nicht erlaubt.'], 405);
 }
 
@@ -1248,6 +1253,7 @@ function routes(): array
         'DELETE /{collection}/{id}',
         'GET /questionnaire-pages?citizenId={id}',
         'POST /questionnaire-pages',
+        'DELETE /questionnaire-pages',
         'GET /data',
         'PUT /data',
         'GET /settings/receipt',

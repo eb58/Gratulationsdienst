@@ -7,8 +7,8 @@ import { parseCsv, mapImportRow } from './import.js';
 import { buildImportResult, importNotice, citizenGridRow, nextMemberIdAfterDelete } from './citizens.js';
 import { parseSokoQuestionnairePdf } from './sokoQuestionnairePdf.js';
 import { applySokoQuestionnaireResults } from './sokoQuestionnaire.js';
-import { createSokoQuestionnaireSimulation, mergeSokoQuestionnaireImages } from './sokoQuestionnaireSimulation.js';
-import { saveQuestionnairePages } from './questionnairePages.js';
+import { createSokoQuestionnaireSimulation } from './sokoQuestionnaireSimulation.js';
+import { saveQuestionnairePages, deleteAllQuestionnairePages } from './questionnairePages.js';
 import { groupedTestAssignments, balancedTestAssignments, shuffledTestValues, testFirstNames, testLastNames, mortalityWeightedTestAges, testCsvRow, testCsvText } from './testdata.js';
 import { render, renderDialog } from './render.js';
 import { renderCitizenDetail } from './views.js';
@@ -194,10 +194,12 @@ const sokoPdfNotice = pages => {
   ].filter(Boolean).join(" ") || "Keine Fragebögen erkannt.";
 };
 
+const hasNoQuestionnaire = citizen => !citizen.sokoQuestionnaireImages?.length;
 const sokoPdfSimulationCitizens = () => {
   const rows = currentCitizenGridRows();
   const citizens = rows.map(row => byId(state.data.citizens, row.id)).filter(Boolean);
-  return citizens.length ? citizens : filteredCitizens().filter(citizen => citizen?.id);
+  const pool = citizens.length ? citizens : filteredCitizens().filter(citizen => citizen?.id);
+  return pool.filter(hasNoQuestionnaire);
 };
 const sokoQuestionnaireImagePages = (resultPages, sourcePages) => resultPages
   .map((page, index) => {
@@ -223,7 +225,6 @@ const applySokoPdfImport = async (file, generatedPages = []) => {
   const result = applySokoQuestionnaireResults(state.data.citizens, pages);
   state.data.citizens = result.citizens;
   const imagePages = sokoQuestionnaireImagePages(result.pages, generatedPages.length ? generatedPages : parsed.pages);
-  state.data.citizens = mergeSokoQuestionnaireImages(state.data.citizens, imagePages);
   await saveQuestionnairePages(imagePages);
   state.data.importLog = [...result.pages.map(sokoPdfLogEntry), ...state.data.importLog];
   return result;
@@ -590,7 +591,7 @@ export const actions = {
     state.focusTarget = ".dialog-box [data-autofocus]";
     render();
   },
-  "confirm-clear-citizens": () => {
+  "confirm-clear-citizens": async () => {
     state.data.citizens = [];
     state.data.importLog = [];
     state.selectedCitizenId = "";
@@ -599,6 +600,7 @@ export const actions = {
     state.focusTarget = "#view";
     saveData();
     render();
+    await deleteAllQuestionnairePages();
     toast("Alle Jubilare und das Import-Protokoll wurden gelöscht.");
   },
   "seed-citizens": () => {

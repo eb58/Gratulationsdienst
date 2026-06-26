@@ -56,6 +56,14 @@ export const loadQuestionnairePagesForCitizen = citizenId => {
     });
 };
 
+export const deleteAllQuestionnairePages = () => {
+  loadedCitizenIds.clear();
+  if (!hasBackend()) return Promise.resolve();
+  return apiRequest("/questionnaire-pages", { method: "DELETE" }).catch(error => {
+    console.warn("Fragebogen-Scans konnten nicht gelöscht werden.", error);
+  });
+};
+
 export const saveQuestionnairePages = pages => {
   const payload = pagesWithImages(pages);
   if (!payload.length) return Promise.resolve([]);
