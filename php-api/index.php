@@ -633,7 +633,7 @@ function saveReceiptSettings(array $db, array $settings): void
 
 function readQuestionnairePages(array $db, string $citizenId): array
 {
-    $sql = 'SELECT id, citizen_id, import_id, page_no, source, mime_type, image_data, marks, created_at FROM gd_questionnaire_pages WHERE citizen_id = ? ORDER BY created_at DESC, page_no ASC';
+    $sql = 'SELECT id, citizen_id, source, mime_type, image_data, marks, created_at FROM gd_questionnaire_pages WHERE citizen_id = ? ORDER BY created_at DESC';
     if ($db['driver'] === 'mysqli') {
         $stmt = $db['mysqli']->prepare($sql);
         bindValues($stmt, [$citizenId]);
@@ -652,19 +652,17 @@ function saveQuestionnairePage(array $db, array $page, int $index): array
     if ($citizenId === '') throw new RuntimeException('Fragebogen-Seite braucht citizenId.');
     [$mimeType, $imageData] = questionnaireImageFromDataUrl((string)($page['image'] ?? ''));
     $id = trim((string)($page['id'] ?? '')) ?: newId('QP');
-    $importId = trim((string)($page['importId'] ?? ''));
-    $pageNo = max(1, (int)($page['pageNumber'] ?? $page['pageNo'] ?? $index + 1));
     $source = substr(trim((string)($page['source'] ?? 'pdf')), 0, 40);
     $marks = json_encode($page['marks'] ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
-    $values = [$id, $citizenId, $importId, $pageNo, $source, $mimeType, $imageData, $marks];
+    $values = [$id, $citizenId, $source, $mimeType, $imageData, $marks];
 
     if ($db['driver'] === 'mysqli' || $db['driver'] === 'mysql') {
-        executeStatement($db, 'INSERT INTO gd_questionnaire_pages (id, citizen_id, import_id, page_no, source, mime_type, image_data, marks) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE citizen_id = VALUES(citizen_id), import_id = VALUES(import_id), page_no = VALUES(page_no), source = VALUES(source), mime_type = VALUES(mime_type), image_data = VALUES(image_data), marks = VALUES(marks)', $values);
-        return questionnairePageFromRow(fetchOne($db, 'SELECT id, citizen_id, import_id, page_no, source, mime_type, image_data, marks, created_at FROM gd_questionnaire_pages WHERE id = ?', [$id]) ?? []);
+        executeStatement($db, 'INSERT INTO gd_questionnaire_pages (id, citizen_id, source, mime_type, image_data, marks) VALUES (?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE citizen_id = VALUES(citizen_id), source = VALUES(source), mime_type = VALUES(mime_type), image_data = VALUES(image_data), marks = VALUES(marks)', $values);
+        return questionnairePageFromRow(fetchOne($db, 'SELECT id, citizen_id, source, mime_type, image_data, marks, created_at FROM gd_questionnaire_pages WHERE id = ?', [$id]) ?? []);
     }
 
-    executeStatement($db, 'INSERT INTO gd_questionnaire_pages (id, citizen_id, import_id, page_no, source, mime_type, image_data, marks) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET citizen_id = excluded.citizen_id, import_id = excluded.import_id, page_no = excluded.page_no, source = excluded.source, mime_type = excluded.mime_type, image_data = excluded.image_data, marks = excluded.marks', $values);
-    return questionnairePageFromRow(fetchOne($db, 'SELECT id, citizen_id, import_id, page_no, source, mime_type, image_data, marks, created_at FROM gd_questionnaire_pages WHERE id = ?', [$id]) ?? []);
+    executeStatement($db, 'INSERT INTO gd_questionnaire_pages (id, citizen_id, source, mime_type, image_data, marks) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET citizen_id = excluded.citizen_id, source = excluded.source, mime_type = excluded.mime_type, image_data = excluded.image_data, marks = excluded.marks', $values);
+    return questionnairePageFromRow(fetchOne($db, 'SELECT id, citizen_id, source, mime_type, image_data, marks, created_at FROM gd_questionnaire_pages WHERE id = ?', [$id]) ?? []);
 }
 
 function questionnaireImageFromDataUrl(string $image): array
@@ -683,8 +681,6 @@ function questionnairePageFromRow(array $row): array
     return [
         'id' => (string)($row['id'] ?? ''),
         'citizenId' => (string)($row['citizen_id'] ?? ''),
-        'importId' => (string)($row['import_id'] ?? ''),
-        'pageNumber' => (int)($row['page_no'] ?? 1),
         'source' => (string)($row['source'] ?? ''),
         'image' => 'data:' . (string)($row['mime_type'] ?? 'image/jpeg') . ';base64,' . base64_encode((string)($row['image_data'] ?? '')),
         'marks' => is_array($marks) ? $marks : [],

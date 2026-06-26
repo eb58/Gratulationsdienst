@@ -242,7 +242,6 @@ const analyzePage = async (pdf, pageNumber) => {
   const qrData = sokoQuestionnaireDataFromCode(qrValue);
   logPageDetection({ pageNumber, qrs, citizenId, canvas, scores, marks, textFields });
   return {
-    pageNumber,
     citizenId,
     qrData,
     qrValue,

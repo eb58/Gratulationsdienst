@@ -8,14 +8,10 @@ const normalizedPage = page => ({
   image: page.image || "",
   marks: page.marks || {},
   source: page.source || "pdf",
-  pageNumber: page.pageNumber || 1,
   createdAt: page.createdAt || new Date().toISOString()
 });
 const pagesWithImages = pages => pages.map(normalizedPage).filter(page => page.citizenId && page.image);
-const sortedPages = pages => [...pages].sort((a, b) => {
-  const dateOrder = String(b.createdAt || "").localeCompare(String(a.createdAt || ""));
-  return dateOrder || (Number(a.pageNumber || 0) - Number(b.pageNumber || 0));
-});
+const sortedPages = pages => [...pages].sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
 const attachPagesToCitizen = (citizenId, pages) => {
   if (!citizenId || !pages.length) return [];
   const normalized = sortedPages(pagesWithImages(pages));

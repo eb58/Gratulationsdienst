@@ -261,7 +261,7 @@ export const createSokoQuestionnaireSimulation = async (citizens, options = {}) 
   const pages = await Promise.all(selected.map(async (citizen, index) => {
     const marks = options.marksByCitizenId?.[citizen.id] || randomSokoQuestionnaireMarks(random);
     const image = await drawQuestionnairePage(citizen, marks, index);
-    return { citizenId: citizen.id, image, marks, pageNumber: 1, createdAt };
+    return { citizenId: citizen.id, image, marks, createdAt };
   }));
   const pdfBytes = jpegImagesToPdfBytes(pages.map(page => ({
     data: dataUrlBytes(page.image),
@@ -276,11 +276,10 @@ export const mergeSokoQuestionnaireImages = (citizens, pages) => {
   const byCitizen = pages.reduce((acc, page) => ({
     ...acc,
     [page.citizenId]: [...(acc[page.citizenId] || []), {
-      id: page.id || `SIM-${page.createdAt}-${page.citizenId}-${page.pageNumber || index + 1}`,
+      id: page.id || `SIM-${page.createdAt}-${page.citizenId}`,
       createdAt: page.createdAt,
       image: page.image,
       marks: page.marks,
-      pageNumber: page.pageNumber || index + 1,
       source: page.source || "simulation"
     }]
   }), {});

@@ -1,4 +1,4 @@
-import { $, todayIso, isValidEmail, isValidIban, formatIban, updateItem, nextId, csvEscape, downloadText, toast, byId, normalizeEmail, normalizeAmount, normalizeDigits, isValidPostalCode, calculateAge, formatStreetAddress, safeStorageSetItem } from './utils.js';
+import { $, todayIso, isValidEmail, isValidIban, formatIban, updateItem, nextId, csvEscape, downloadText, toast, byId, normalizeEmail, normalizeAmount, normalizeDigits, isValidPostalCode, safeStorageSetItem } from './utils.js';
 import { normalizeStreetRules, streetDistrictSummary, streetGroupSummary, normalizeStreetDistrict, defaultData } from './domain.js';
 import { state, saveData, saveQuittungSettings, apiRequest, setAuthSession, clearAuthSession, loadCollectionData } from './state.js';
 import { streetAssignment, filteredCitizens, documentCitizens, isPrintedCitizen, selectedTemplate, selectedSender, selectedMember, activeCitizens, groupForCitizen, isReceiptGroupReady, receiptCitizens, receiptCitizensForReadyGroups } from './assignment.js';
@@ -160,27 +160,6 @@ const importMappedRows = mapped => {
   importToast(importNotice(result) || "Keine neuen Datensätze importiert.");
 };
 const importToast = message => toast(message, { anchor: ".soko-pdf-action-row, .import-action-row" });
-const sokoPdfLogEntry = page => {
-  const citizen = page.citizen;
-  const checked = page.ok;
-  const manual = page.applied && !page.ok;
-  return {
-    time: new Date().toLocaleString("de-DE"),
-    firstName: citizen?.firstName || "",
-    lastName: citizen?.lastName || "",
-    name: citizen ? [citizen.lastName, citizen.firstName].filter(Boolean).join(", ") : page.citizenId || `PDF-Seite ${page.pageNumber}`,
-    address: citizen ? formatStreetAddress(citizen) : "",
-    birthDate: citizen?.birthDate || "",
-    age: citizen?.birthDate ? calculateAge(citizen.birthDate) : "",
-    groupId: citizen ? streetAssignment(citizen)?.groupId || "" : "",
-    type: checked ? "SOKO-PDF" : manual ? "Nacharbeit" : "Fehler",
-    message: checked
-      ? "Fragebogen erkannt und zur Prüfung vorgemerkt."
-      : manual
-        ? `${page.error} Erkannte Ankreuzungen übernommen, Status bleibt unverändert.`
-        : page.error || "Fragebogen konnte nicht ausgewertet werden."
-  };
-};
 const sokoPdfNotice = pages => {
   const checked = pages.filter(page => page.ok).length;
   const manual = pages.filter(page => page.applied && !page.ok).length;
@@ -212,7 +191,6 @@ const sokoQuestionnaireImagePages = (resultPages, sourcePages) => resultPages
       image,
       marks: page.marks || source.marks || {},
       source: source.source || "pdf",
-      pageNumber: page.pageNumber || source.pageNumber || index + 1,
       createdAt: source.createdAt || new Date().toISOString()
     } : null;
   })
@@ -226,7 +204,6 @@ const applySokoPdfImport = async (file, generatedPages = []) => {
   state.data.citizens = result.citizens;
   const imagePages = sokoQuestionnaireImagePages(result.pages, generatedPages.length ? generatedPages : parsed.pages);
   await saveQuestionnairePages(imagePages);
-  state.data.importLog = [...result.pages.map(sokoPdfLogEntry), ...state.data.importLog];
   return result;
 };
 
