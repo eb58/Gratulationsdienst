@@ -1,4 +1,4 @@
-import { normalize, escapeHtml, formatDate, formatDateDe, formatStreetAddress, calculateAge, safeStorageSetItem } from './utils.js';
+import { normalize, escapeHtml, formatDate, safeStorageSetItem } from './utils.js';
 import { streetGroupDisplay, sokoColors } from './domain.js';
 import { state } from './state.js';
 import { filteredCitizens, groupForCitizen, selectedCitizen } from './assignment.js';
@@ -107,33 +107,6 @@ const filteredMembers = () => state.data.sokoMembers.filter(member => {
     && (!state.filters.q || haystack.includes(normalize(state.filters.q)));
 });
 
-const importLogSoko = item => item.groupId || item.soko || String(item.message || "").match(/SOKO \d+/)?.[0] || "";
-const importLogCitizen = item => {
-  const name = normalize(item.name);
-  const address = normalize(item.address || formatStreetAddress(item));
-  const byName = state.data.citizens.filter(citizen => [
-    normalize(`${citizen.firstName} ${citizen.lastName}`),
-    normalize(`${citizen.lastName}, ${citizen.firstName}`)
-  ].includes(name));
-  return address
-    ? byName.find(citizen => normalize(formatStreetAddress(citizen)) === address)
-    : byName.length === 1 ? byName[0] : null;
-};
-const importLogRow = (item, index) => {
-  const citizen = item.birthDate && item.age && item.address ? null : importLogCitizen(item);
-  const birthDate = item.birthDate || citizen?.birthDate || "";
-  const address = item.address || (citizen ? formatStreetAddress(citizen) : "");
-  return {
-    ...item,
-    id: `LOG-${index}`,
-    name: item.lastName || item.firstName
-      ? [item.lastName, item.firstName].filter(Boolean).join(", ")
-      : citizen ? `${citizen.lastName}, ${citizen.firstName}` : item.name,
-    address,
-    birthDate,
-    age: item.age || (birthDate ? calculateAge(birthDate) : "")
-  };
-};
 
 const legacyGridColumnStorageKey = gridKey => `gratulationsdienst.grid.${gridKey}.columnWidths`;
 const gridStateStorageKey = gridKey => `gratulationsdienst.grid.${gridKey}.state`;
@@ -301,17 +274,24 @@ export const gridDefinitions = {
     getRowClass: params => params.data.citizenId === state.selectedCitizenId ? "selected" : "",
     onRowClicked: params => { state.selectedCitizenId = params.data.citizenId; render(); }
   }),
-  importLog: () => ({
+  imported: () => ({
     ...baseGridOptions(),
-    rowData: state.data.importLog.filter(item => item.type !== "Dublette").map(importLogRow),
+    rowData: state.data.citizens.filter(citizen => citizen.source === "CSV Import").map(citizen => ({
+      id: citizen.id,
+      name: `${citizen.lastName}, ${citizen.firstName}`,
+      birthday: citizen.birthDate,
+      age: Number(new Date().getFullYear()) - Number(citizen.birthDate?.slice(0, 4)),
+      address: `${citizen.street} ${citizen.houseNo}`,
+      groupId: groupForCitizen(citizen)?.id || "offen",
+      status: citizen.status
+    })),
     columnDefs: [
-      { headerName: "Zeit", field: "time", colId: "time", width: 180, minWidth: 165 },
-      { headerName: "Name", field: "name", colId: "name", width: 230, minWidth: 170 },
-      { headerName: "Geburtstag", field: "birthDate", colId: "birthDate", width: 130, minWidth: 120, valueFormatter: params => formatDateDe(params.value) },
-      { headerName: "Alter", field: "age", colId: "age", width: 80, minWidth: 70, filter: "agNumberColumnFilter" },
-      { headerName: "Adresse", field: "address", width: 250, minWidth: 190, valueGetter: params => params.data.address || formatStreetAddress(params.data) },
-      { headerName: "Ergebnis", field: "type", width: 135, minWidth: 120, cellRenderer: params => params.value === "Fehler" ? badgeCell("Fehler", "red") : params.value === "Dublette" ? badgeCell("Dublette", "gold") : badgeCell("Importiert", "green") },
-      { headerName: "SOKO", field: "groupId", width: 115, minWidth: 105, valueGetter: params => importLogSoko(params.data), cellRenderer: params => params.value ? sokoBadgeCell(params.value) : badgeCell("offen", "red") }
+      { headerName: "Name", field: "name", width: 230, minWidth: 170 },
+      { headerName: "Geburtstag", field: "birthday", width: 130, minWidth: 120, valueFormatter: params => formatDate(params.value) },
+      { headerName: "Alter", field: "age", width: 90, minWidth: 80, filter: "agNumberColumnFilter" },
+      { headerName: "Adresse", field: "address", width: 280, minWidth: 180 },
+      { headerName: "SOKO", field: "groupId", width: 115, minWidth: 105, cellRenderer: params => sokoBadgeCell(params.value) },
+      { headerName: "Status", field: "status", width: 135, minWidth: 115, cellRenderer: params => statusBadgeCell(params.value) }
     ],
     getRowId: params => params.data.id
   })

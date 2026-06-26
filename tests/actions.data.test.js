@@ -269,14 +269,12 @@ describe('Straßen-Zuständigkeit', () => {
 });
 
 describe('Jubilare löschen und Testdaten', () => {
-  it('clear-citizens nur für Admins; confirm leert Jubilare und Protokoll', () => {
+  it('clear-citizens nur für Admins; confirm leert Jubilare', () => {
     state.data.citizens = [{ id: 'G-1' }];
-    state.data.importLog = [{ id: 'L-1' }];
     actions['clear-citizens']();
     assert.equal(state.dialog.type, 'clear-citizens');
     actions['confirm-clear-citizens']();
     assert.deepEqual(state.data.citizens, []);
-    assert.deepEqual(state.data.importLog, []);
   });
 
   it('clear-citizens wird für Nicht-Admins blockiert', () => {
@@ -289,7 +287,6 @@ describe('Jubilare löschen und Testdaten', () => {
     assert.equal(state.data.citizens.length, 0);
     actions['seed-citizens']();
     assert.ok(state.data.citizens.length >= 30);
-    assert.ok(state.data.importLog.length > 0);
   });
 });
 
@@ -302,7 +299,7 @@ describe('Import-Lauf', () => {
   it('run-import verarbeitet vorhandenen Importtext', () => {
     state.importText = 'Vorname;Nachname;Strasse;Hausnummer;PLZ;Geburtsdatum\nMax;Muster;Hauptstr;1;13407;5.4.1936';
     actions['run-import']();
-    assert.ok(state.data.importLog.length > 0);
+    assert.ok(state.data.citizens.length > 0);
   });
 });
 

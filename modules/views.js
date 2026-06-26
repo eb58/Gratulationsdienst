@@ -878,7 +878,7 @@ export const views = {
             <div class="test-actions" aria-label="Testdaten-Werkzeuge">
               <div class="test-actions-meta">
                 <span>Nur Testzwecke</span>
-                <strong>${state.data.citizens.length.toLocaleString("de-DE")} Jubilare · ${state.data.importLog.length.toLocaleString("de-DE")} Log</strong>
+                <strong>${state.data.citizens.length.toLocaleString("de-DE")} Jubilare</strong>
               </div>
               <button type="button" class="ghost-button test-action-button" data-action="seed-citizens">${Math.max(50, state.data.sokoGroups.length)} CSV simulieren</button>
               <button type="button" class="danger-button test-action-button" data-action="clear-citizens">Löschen</button>
@@ -888,9 +888,9 @@ export const views = {
         </div>
       </section>
       <section class="panel import-log-panel">
-        <h2>Import-Protokoll</h2>
+        <h2>Importierte Jubilare</h2>
         <div class="import-log-content">
-          ${state.data.importLog.length ? gridHost("importLog") : `<div class="empty-state">Noch kein Import-Protokoll</div>`}
+          ${state.data.citizens.some(citizen => citizen.source === "CSV Import") ? gridHost("imported") : `<div class="empty-state">Noch keine Jubilare importiert</div>`}
         </div>
         <div class="button-row" style="margin-top:12px">
           <button type="button" class="primary-button" data-action="soko-print">Drucke SOKO-Fragebögen</button>

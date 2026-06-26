@@ -154,7 +154,6 @@ const refreshSokoPdfImportUi = result => {
 const importMappedRows = mapped => {
   const result = buildImportResult(mapped, state.data.citizens, row => streetAssignment(row)?.groupId);
   state.data.citizens = [...state.data.citizens, ...result.rows];
-  state.data.importLog = [...result.logs, ...state.data.importLog];
   saveData();
   render();
   importToast(importNotice(result) || "Keine neuen Datensätze importiert.");
@@ -570,7 +569,6 @@ export const actions = {
   },
   "confirm-clear-citizens": async () => {
     state.data.citizens = [];
-    state.data.importLog = [];
     state.selectedCitizenId = "";
     state.generatedDocs = [];
     state.dialog = null;
@@ -578,7 +576,7 @@ export const actions = {
     saveData();
     render();
     await deleteAllQuestionnairePages();
-    toast("Alle Jubilare und das Import-Protokoll wurden gelöscht.");
+    toast("Alle Jubilare wurden gelöscht.");
   },
   "seed-citizens": () => {
     if (state.auth.user?.role !== "admin") { toast("Nur Admins können Testdaten erzeugen."); return; }

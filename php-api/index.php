@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-const COLLECTIONS = ['citizens', 'sokoGroups', 'sokoMembers', 'streets', 'senders', 'templates', 'importLog'];
+const COLLECTIONS = ['citizens', 'sokoGroups', 'sokoMembers', 'streets', 'senders', 'templates'];
 const ADMIN_COLLECTIONS = ['sokoGroups', 'sokoMembers', 'streets', 'senders', 'templates'];
 const SESSION_TTL_SECONDS = 28800;
 const MFA_TICKET_TTL_SECONDS = 300;
@@ -151,21 +151,6 @@ function collectionConfig(string $collection): array
                 'updatedAt' => ['updated_at_date', 'date'],
             ],
         ],
-        'importLog' => [
-            'table' => 'gd_import_log',
-            'order' => 'created_at DESC, id DESC',
-            'columns' => [
-                'id' => ['id', 'string'],
-                'time' => ['entry_time', 'string'],
-                'name' => ['name', 'string'],
-                'address' => ['address', 'string'],
-                'birthDate' => ['birth_date', 'date'],
-                'age' => ['age', 'int'],
-                'groupId' => ['group_id', 'string'],
-                'type' => ['entry_type', 'string'],
-                'message' => ['message', 'string'],
-            ],
-        ],
     ];
 
     if (!isset($configs[$collection])) {
@@ -273,7 +258,7 @@ function handleCollection(array $db, string $method, string $collection, ?string
 
     if ($method === 'POST') {
         $item = requireObject(readJson());
-        $itemId = itemId($item, $collection, 0);
+        $itemId = itemId($item);
         if ($itemId === '') respond(['error' => 'Datensatz braucht ein id-Feld.'], 422);
         upsertItem($db, $collection, $itemId, $item);
         respond(readItem($db, $collection, $itemId), 201);
@@ -574,12 +559,7 @@ function db(): array
 function initSchema(array $db): void
 {
     executeSqlScript($db, file_get_contents(__DIR__ . '/schema.mysql.sql'));
-    ensureColumn($db, 'gd_import_log', 'address', "ALTER TABLE gd_import_log ADD COLUMN address VARCHAR(255) NOT NULL DEFAULT '' AFTER name");
-    ensureColumn($db, 'gd_import_log', 'birth_date', 'ALTER TABLE gd_import_log ADD COLUMN birth_date DATE NULL AFTER address');
-    ensureColumn($db, 'gd_import_log', 'age', 'ALTER TABLE gd_import_log ADD COLUMN age INT NULL AFTER birth_date');
-    ensureColumn($db, 'gd_import_log', 'group_id', "ALTER TABLE gd_import_log ADD COLUMN group_id VARCHAR(32) NOT NULL DEFAULT '' AFTER age");
-    ensureIndex($db, 'gd_import_log', 'idx_gd_import_log_group', 'ALTER TABLE gd_import_log ADD INDEX idx_gd_import_log_group (group_id)');
-    ensureColumn($db, 'gd_citizens', 'press_publication', 'ALTER TABLE gd_citizens ADD COLUMN press_publication TINYINT(1) NOT NULL DEFAULT 0 AFTER printed_year');
+ensureColumn($db, 'gd_citizens', 'press_publication', 'ALTER TABLE gd_citizens ADD COLUMN press_publication TINYINT(1) NOT NULL DEFAULT 0 AFTER printed_year');
     ensureColumn($db, 'gd_citizens', 'wedding_anniversary', "ALTER TABLE gd_citizens ADD COLUMN wedding_anniversary VARCHAR(80) NOT NULL DEFAULT '' AFTER press_publication");
     ensureColumn($db, 'gd_citizens', 'wedding_date', 'ALTER TABLE gd_citizens ADD COLUMN wedding_date DATE NULL AFTER wedding_anniversary');
     ensureColumn($db, 'gd_citizens', 'spouse_name', "ALTER TABLE gd_citizens ADD COLUMN spouse_name VARCHAR(180) NOT NULL DEFAULT '' AFTER wedding_date");
@@ -715,9 +695,9 @@ function replaceCollection(array $db, string $collection, array $items): void
 {
     $config = collectionConfig($collection);
     executeStatement($db, 'DELETE FROM ' . $config['table']);
-    foreach ($items as $index => $item) {
+    foreach ($items as $item) {
         $item = requireObject($item);
-        $id = itemId($item, $collection, $index);
+        $id = itemId($item);
         if ($id === '') throw new RuntimeException("Datensatz in {$collection} braucht ein id-Feld.");
         $item['id'] = $id;
         upsertItem($db, $collection, $id, $item);
@@ -1223,11 +1203,9 @@ function requireList(mixed $value, string $name): array
     return $value;
 }
 
-function itemId(array $item, string $collection, int $index): string
+function itemId(array $item): string
 {
-    $id = trim((string)($item['id'] ?? ''));
-    if ($id !== '' || $collection !== 'importLog') return $id;
-    return 'LOG-' . substr(sha1(json_encode($item, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR) . '|' . $index), 0, 12);
+    return trim((string)($item['id'] ?? ''));
 }
 
 function respond(mixed $data, int $status = 200): never

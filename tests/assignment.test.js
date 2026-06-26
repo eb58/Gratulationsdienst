@@ -90,8 +90,7 @@ const resetState = () => {
       }
     ],
     senders: [],
-    templates: [],
-    importLog: []
+    templates: []
   };
   state.filters = { q: '', month: 'alle', groupId: 'alle', age: 'alle', status: 'alle', occasion: 'Geburtstag' };
   state.selectedCitizenId = '';

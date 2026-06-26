@@ -139,7 +139,7 @@ export const state = {
   dialog: null
 };
 
-export const apiCollections = ["citizens", "sokoGroups", "sokoMembers", "streets", "senders", "templates", "importLog"];
+export const apiCollections = ["citizens", "sokoGroups", "sokoMembers", "streets", "senders", "templates"];
 export const adminCollections = ["sokoGroups", "sokoMembers", "streets", "senders", "templates"];
 export const adminViews = ["soko", "regions", "map", "senders", "templates", "quittungStamm", "users"];
 export const persistedCollections = ["citizens", "sokoGroups", "sokoMembers", "streets", "senders", "templates"];

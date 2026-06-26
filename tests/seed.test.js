@@ -123,7 +123,6 @@ describe('seed-citizens integration (echtes Strassenverzeichnis)', () => {
     const result = buildImportResult(mapped, [], row => streetAssignment(row)?.groupId);
     assert.equal(result.rows.length, rowCount, 'nicht alle Zeilen importiert');
     assert.equal(result.duplicates, 0, 'unerwartete Dubletten');
-    assert.equal(result.logs.filter(log => log.type === 'Fehler').length, 0, 'Pflichtfeld-Fehler');
     assert.ok(result.rows.every(row => row.status === 'importiert'), 'nicht jede Zeile wurde einer SOKO zugeordnet');
   });
 });

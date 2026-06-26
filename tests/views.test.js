@@ -125,8 +125,7 @@ beforeEach(() => {
       rules: [{ id: 'R-1', plz: '13437', ortsteil: 'Tegel', von: '1', bis: '99', art: 'F', soko: '01' }]
     }],
     senders: [sender],
-    templates: [template],
-    importLog: [{ time: '10:00', type: 'Importiert', name: 'Mustermann, Erika', address: 'Teststraße 12' }]
+    templates: [template]
   };
   state.filters = { q: '', month: '06', groupId: 'alle', age: 'alle', status: 'alle', occasion: 'Geburtstag' };
   state.mapMonth = '06';
@@ -228,7 +227,7 @@ describe('main views', () => {
     assert.match(views.senders(), /sender-form/);
     assert.match(views.templates(), /template-form/);
     assert.match(views.documents(), /Druckliste/);
-    assert.match(views.import(), /Import-Protokoll/);
+    assert.match(views.import(), /soko-print/);
   });
 
   it('renders receipt, profile and user administration states', () => {

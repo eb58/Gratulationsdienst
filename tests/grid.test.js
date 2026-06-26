@@ -74,10 +74,6 @@ beforeEach(() => {
     }],
     senders: [],
     templates: [],
-    importLog: [
-      { time: '10:00', type: 'Importiert', name: 'Mustermann, Erika', address: 'Teststraße 12' },
-      { time: '10:01', type: 'Dublette', name: 'Doppel' }
-    ]
   };
   state.generatedDocs = [{
     id: 'DOC-G-1',
@@ -120,13 +116,6 @@ describe('grid definitions', () => {
     assert.equal(gridDefinitions.documents().rowData[0].recipient, 'Erika Mustermann');
   });
 
-  it('maps import log rows and filters duplicates', () => {
-    const definition = gridDefinitions.importLog();
-
-    assert.equal(definition.rowData.length, 1);
-    assert.equal(definition.rowData[0].birthDate, citizen.birthDate);
-    assert.equal(definition.rowData[0].age, new Date().getFullYear() - 1936);
-  });
 
   it('renders SOKO and status cell badges', () => {
     const citizenDefinition = gridDefinitions.citizens();

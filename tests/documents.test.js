@@ -79,8 +79,7 @@ beforeEach(() => {
       rules: [{ plz: '13437', soko: '01', von: '1', bis: '99', art: 'F', ortsteil: 'Tegel' }]
     }],
     senders: [sender],
-    templates: [],
-    importLog: []
+    templates: []
   };
   state.generatedDocs = [];
   state.printBackground = true;

@@ -51,9 +51,6 @@ describe('buildImportResult', () => {
     assert.equal(result.rows[0].source, 'CSV Import');
     assert.equal(result.rows[1].status, 'offen');
     assert.equal(result.duplicates, 0);
-    assert.deepEqual(result.logs.map(l => l.type), ['Importiert', 'Importiert']);
-    assert.equal(result.logs[0].message, 'Zugeordnet zu SOKO 01.');
-    assert.equal(result.logs[1].message, 'Straße ohne SOKO-Zuordnung.');
   });
 
   it('continues ids after existing citizens', () => {
@@ -67,8 +64,6 @@ describe('buildImportResult', () => {
     const result = buildImportResult([row({ lastName: '' })], [], assignTegel);
 
     assert.equal(result.rows.length, 0);
-    assert.equal(result.logs[0].type, 'Fehler');
-    assert.equal(result.logs[0].message, 'Pflichtfelder fehlen.');
   });
 
   it('filters duplicates of existing citizens and counts them', () => {
@@ -79,8 +74,6 @@ describe('buildImportResult', () => {
     assert.equal(result.rows[0].firstName, 'Neu');
     assert.equal(result.duplicates, 1);
     assert.equal(result.printedDuplicates, 0);
-    assert.equal(result.logs.length, 1, 'Dubletten erzeugen keinen Log-Eintrag');
-    assert.equal(result.logs[0].firstName, 'Neu');
   });
 
   it('filters duplicates within the same batch', () => {
@@ -98,13 +91,6 @@ describe('buildImportResult', () => {
     assert.equal(result.printedDuplicates, 1);
   });
 
-  it('builds log entries with derived name, address and age', () => {
-    const result = buildImportResult([row({ birthDate: '1936-06-01' })], [], assignTegel);
-
-    assert.equal(result.logs[0].name, 'Mustermann, Erika');
-    assert.equal(result.logs[0].address, 'Musterstraße 12');
-    assert.equal(result.logs[0].age, 2026 - 1936);
-  });
 });
 
 describe('importNotice', () => {
