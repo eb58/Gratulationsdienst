@@ -9,7 +9,7 @@ import { parseSokoQuestionnairePdf } from './sokoQuestionnairePdf.js';
 import { applySokoQuestionnaireResults } from './sokoQuestionnaire.js';
 import { createSokoQuestionnaireSimulation } from './sokoQuestionnaireSimulation.js';
 import { saveQuestionnairePages, deleteAllQuestionnairePages } from './questionnairePages.js';
-import { groupedTestAssignments, balancedTestAssignments, shuffledTestValues, testFirstNames, testLastNames, mortalityWeightedTestAges, testCsvRow, testCsvText } from './testdata.js';
+import { groupedTestAssignments, balancedTestAssignments, shuffledTestValues, testFirstNames, testLastNames, mortalityWeightedTestAges, monthAfterNext, testCsvRow, testCsvText } from './testdata.js';
 import { render, renderDialog } from './render.js';
 import { renderCitizenDetail } from './views.js';
 import { cancelDirtyFormLeave, confirmDirtyFormLeave } from './dirtyForms.js';
@@ -591,8 +591,9 @@ export const actions = {
       return { salutation, firstName, lastName: lastNames[index % lastNames.length] };
     });
     const ages = mortalityWeightedTestAges(rowCount, names.map(name => name.salutation));
+    const birthdayMonth = monthAfterNext();
     const csv = testCsvText(assignments.map((assignment, index) => {
-      return testCsvRow(index, names[index], assignment, state.quittungMonat, Math.random, ages[index]);
+      return testCsvRow(index, names[index], assignment, birthdayMonth, Math.random, ages[index]);
     }));
     state.importText = csv;
     importMappedRows(parseCsv(csv).map(mapImportRow));

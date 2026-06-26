@@ -27,6 +27,7 @@ const {
   groupedTestAssignments,
   balancedTestAssignments,
   honouredTestAges,
+  monthAfterNext,
   mortalityWeightedTestAges,
   testHouseNo,
   testBirthDate,
@@ -111,6 +112,14 @@ describe('testBirthDate', () => {
 
   it('falls back to the current month when none is given', () => {
     assert.match(testBirthDate(0, ''), /^\d{4}-\d{2}-01$/);
+  });
+});
+
+describe('monthAfterNext', () => {
+  it('returns the month after next including year wrap', () => {
+    assert.equal(monthAfterNext(new Date(2026, 5, 26)), '08');
+    assert.equal(monthAfterNext(new Date(2026, 10, 15)), '01');
+    assert.equal(monthAfterNext(new Date(2026, 11, 15)), '02');
   });
 });
 

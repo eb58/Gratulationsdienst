@@ -26,7 +26,7 @@ const dirCode = readFileSync(new URL('../public/data/soko-strassenverzeichnis.js
 (0, eval)(dirCode);
 
 const { buildStreetData } = await import('../modules/domain.js');
-const { groupedTestAssignments, balancedTestAssignments, shuffledTestValues, testFirstNames, testLastNames, mortalityWeightedTestAges, testCsvRow, testCsvText } = await import('../modules/testdata.js');
+const { groupedTestAssignments, balancedTestAssignments, shuffledTestValues, testFirstNames, testLastNames, mortalityWeightedTestAges, monthAfterNext, testCsvRow, testCsvText } = await import('../modules/testdata.js');
 const { parseCsv, mapImportRow } = await import('../modules/import.js');
 const { buildImportResult } = await import('../modules/citizens.js');
 const { streetAssignment } = await import('../modules/assignment.js');
@@ -48,8 +48,9 @@ const seed = () => {
     return { salutation, firstName, lastName: lastNames[index % lastNames.length] };
   });
   const ages = mortalityWeightedTestAges(rowCount, names.map(name => name.salutation));
+  const birthdayMonth = monthAfterNext();
   const csvRows = assignments.map((assignment, index) => {
-    return testCsvRow(index, names[index], assignment, state.quittungMonat, Math.random, ages[index]);
+    return testCsvRow(index, names[index], assignment, birthdayMonth, Math.random, ages[index]);
   });
   const mapped = parseCsv(testCsvText(csvRows)).map(mapImportRow);
   return { rowCount, assignments, csvRows, mapped };
@@ -116,6 +117,14 @@ describe('seed-citizens integration (echtes Strassenverzeichnis)', () => {
     assert.ok(ageCounts[85] >= ageCounts[90], 'Sterblichkeit: 85 darf nicht seltener als 90 sein');
     assert.ok(ageCounts[90] >= ageCounts[95], 'Sterblichkeit: 90 darf nicht seltener als 95 sein');
     assert.ok(ageCounts[95] >= ageCounts[100], 'Sterblichkeit: 95 darf nicht seltener als 100 sein');
+  });
+
+  it('generiert ausschliesslich Geburtstage im uebernaechsten Monat', () => {
+    const { csvRows, mapped } = seed();
+    const expectedMonth = monthAfterNext();
+
+    assert.deepEqual([...new Set(csvRows.map(row => row.Geburtsdatum.slice(5, 7)))], [expectedMonth]);
+    assert.deepEqual([...new Set(mapped.map(row => row.birthDate.slice(5, 7)))], [expectedMonth]);
   });
 
   it('importiert restlos ohne Pflichtfeld-Fehler oder Dubletten', () => {

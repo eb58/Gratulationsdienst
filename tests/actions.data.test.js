@@ -76,6 +76,7 @@ mock.module('../modules/render.js', {
 const { actions } = await import('../modules/actions.js');
 const { state } = await import('../modules/state.js');
 const { defaultData } = await import('../modules/domain.js');
+const { monthAfterNext } = await import('../modules/testdata.js');
 const { normalizeAmount } = await import('../modules/utils.js');
 
 const idEvent = id => ({ target: { closest: () => ({ dataset: { id } }) } });
@@ -287,6 +288,7 @@ describe('Jubilare löschen und Testdaten', () => {
     assert.equal(state.data.citizens.length, 0);
     actions['seed-citizens']();
     assert.ok(state.data.citizens.length >= 30);
+    assert.deepEqual([...new Set(state.data.citizens.map(citizen => citizen.birthDate.slice(5, 7)))], [monthAfterNext()]);
   });
 });
 
@@ -358,6 +360,42 @@ describe('Dokumente und Quittung', () => {
     assert.deepEqual(state.generatedDocs, []);
     assert.equal(state.filters.month, 'alle');
     assert.equal(localStorage.getItem('gd_month_filter'), 'alle');
+  });
+
+  it('generate-docs schliesst Jubilare mit Antwort keine aus', () => {
+    state.data.citizens = [
+      {
+        id: 'G-1',
+        firstName: 'Erika',
+        lastName: 'Post',
+        street: 'Teststrasse',
+        houseNo: '1',
+        postalCode: '13437',
+        birthDate: '1936-06-01',
+        status: 'geprueft',
+        wish: 'per Post'
+      },
+      {
+        id: 'G-2',
+        firstName: 'Max',
+        lastName: 'Keine',
+        street: 'Teststrasse',
+        houseNo: '2',
+        postalCode: '13437',
+        birthDate: '1936-06-02',
+        status: 'geprueft',
+        wish: 'keine'
+      }
+    ];
+    setField('#doc-template', state.data.templates[0].id);
+    setField('#doc-sender', state.data.senders[0].id);
+    setField('#doc-month', 'alle');
+    setField('#doc-group', 'alle');
+
+    actions['generate-docs']();
+
+    assert.deepEqual(state.generatedDocs.map(doc => doc.citizenId), ['G-1']);
+    assert.deepEqual(state.generatedDocs.map(doc => doc.wish), ['per Post']);
   });
 
   it('save-quittung-settings speichert im Datei-Modus und normalisiert den Betrag', async () => {

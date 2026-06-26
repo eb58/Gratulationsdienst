@@ -79,6 +79,7 @@ export const testBirthDate = (index, month, age = mortalityWeightedTestAges(inde
   const day = String((index % 28) + 1).padStart(2, "0");
   return `${year - age}-${useMonth}-${day}`;
 };
+export const monthAfterNext = (date = new Date()) => String(new Date(date.getFullYear(), date.getMonth() + 2, 1).getMonth() + 1).padStart(2, "0");
 export const testCsvRow = (index, name, assignment, month, rand = Math.random, age) => ({
   Anrede: name.salutation,
   Vorname: name.firstName,

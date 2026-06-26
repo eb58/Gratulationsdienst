@@ -26,6 +26,7 @@ const { SOKO_QUESTIONNAIRE_IMPORTED_STATUS } = await import('../modules/sokoQues
 
 const {
   activeCitizens,
+  documentCitizens,
   duplicateKey,
   editableStreetAssignment,
   groupForCitizen,
@@ -197,6 +198,19 @@ describe('selection and receipt helpers', () => {
 
     assert.equal(isReceiptGroupReady('SOKO 01'), true);
     assert.deepEqual(receiptCitizensForReadyGroups().map(citizen => citizen.id), ['ready-visit', 'open']);
+  });
+});
+
+describe('document helpers', () => {
+  it('excludes checked citizens who answered keine from document runs', () => {
+    state.data.citizens = [
+      baseCitizen({ id: 'post', status: 'geprueft', wish: 'per Post' }),
+      baseCitizen({ id: 'none', status: 'geprueft', wish: 'keine' }),
+      baseCitizen({ id: 'open', status: 'offen', wish: 'per Post' }),
+      baseCitizen({ id: 'printed', status: 'gedruckt', wish: 'per Post' })
+    ];
+
+    assert.deepEqual(documentCitizens().map(citizen => citizen.id), ['post']);
   });
 });
 
