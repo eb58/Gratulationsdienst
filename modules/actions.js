@@ -605,7 +605,7 @@ export const actions = {
     if (state.auth.user?.role !== "admin") { toast("Nur Admins können Testdaten erzeugen."); return; }
     const groups = groupedTestAssignments(state.data.streets);
     if (!groups.length) { toast("Keine SOKO-Zuordnungen für Testdaten gefunden."); return; }
-    const rowCount = Math.max(30, groups.length);
+    const rowCount = Math.max(50, groups.length);
     const assignments = balancedTestAssignments(groups, rowCount);
     const firstNames = shuffledTestValues(testFirstNames);
     const lastNames = shuffledTestValues(testLastNames);
