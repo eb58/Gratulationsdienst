@@ -504,7 +504,7 @@ export const views = {
         </select>
         <div class="file-action-row soko-pdf-action-row">
           <div class="file-picker import-file-picker soko-questionnaire-picker">
-            <button type="button" class="primary-button test-action-button" data-action="simulate-soko-pdf-import">Simuliere Fragebögen einlesen</button>
+            <button type="button" class="primary-button test-action-button" data-action="simulate-soko-pdf-import">Simuliere Fragebögen laden</button>
             <label class="soko-questionnaire-load" for="soko-pdf-file"><span>Fragebögen laden</span><em>Gescannte Fragebögen</em></label>
           </div>
           <input id="soko-pdf-file" class="file-input" type="file" accept=".pdf,application/pdf">
@@ -893,7 +893,7 @@ export const views = {
           ${state.data.importLog.length ? gridHost("importLog") : `<div class="empty-state">Noch kein Import-Protokoll</div>`}
         </div>
         <div class="button-row" style="margin-top:12px">
-          <button type="button" class="primary-button" data-action="soko-print">SOKO-Druck</button>
+          <button type="button" class="primary-button" data-action="soko-print">Drucke SOKO-Fragebögen</button>
         </div>
       </section>
     </div>
