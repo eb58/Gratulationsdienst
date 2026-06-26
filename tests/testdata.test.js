@@ -167,6 +167,6 @@ describe('shuffledTestValues', () => {
     const shuffled = shuffledTestValues(testLastNames);
     assert.equal(shuffled.length, testLastNames.length);
     assert.deepEqual([...shuffled].sort(), [...testLastNames].sort());
-    assert.equal(testFirstNames.length, 40);
+    assert.equal(testFirstNames.length, 80);
   });
 });

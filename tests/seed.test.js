@@ -39,7 +39,7 @@ const distinct = arr => new Set(arr).size;
 // Exakt die Pipeline aus actions.js -> "seed-citizens"
 const seed = () => {
   const groups = groupedTestAssignments(state.data.streets);
-  const rowCount = Math.max(30, groups.length);
+  const rowCount = Math.max(50, groups.length);
   const assignments = balancedTestAssignments(groups, rowCount);
   const firstNames = shuffledTestValues(testFirstNames);
   const lastNames = shuffledTestValues(testLastNames);
