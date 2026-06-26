@@ -1,7 +1,7 @@
 ﻿import { escapeHtml, normalize, formatDate, byId, birthdayMonth, calculateAge } from './utils.js';
 import { months, sokoColors, streetGroupDisplay } from './domain.js';
 import { state } from './state.js';
-import { selectedCitizen, selectedTemplate, selectedSender, selectedMember, selectedStreet, filteredCitizens, activeCitizens, groupForCitizen, isCheckedCitizen, receiptCitizens, receiptReviewCitizensForGroup, isReceiptGroupReady } from './assignment.js';
+import { selectedCitizen, selectedTemplate, selectedSender, selectedMember, selectedStreet, filteredCitizens, activeCitizens, groupForCitizen, isCheckedCitizen, wantsVisit } from './assignment.js';
 import { field, emailField, postalCodeField, ibanField, selectField, textField, checkField, radioField, streetRuleRows, assignmentPill, gridHost, groupOptions, sokoSelectOptions, senderOptions, templateOptions, occasionOptions, formatOptions } from './fields.js';
 import { streetMapSvg, mapSegmentCounts, mapAddressPointGroups } from './map.js';
 import { documentBackPreview, documentPreview } from './documents.js';
@@ -258,6 +258,16 @@ const dashboardRows = () => state.data.sokoGroups.map(group => {
   const rate = citizens.length ? Math.round((returns / citizens.length) * 100) : 0;
   return { group, members, citizens: citizens.length, returns, open: citizens.length - returns, rate };
 });
+const groupedQuittungEntries = entries => entries.reduce((map, { citizen, group }) => {
+  if (!map.has(group.id)) map.set(group.id, { group, citizens: [] });
+  map.get(group.id).citizens.push(citizen);
+  return map;
+}, new Map());
+const reviewQuittungEntriesByGroup = entries => entries.reduce((map, { citizen, group }) => {
+  if (!map.has(group.id)) map.set(group.id, []);
+  map.get(group.id).push(citizen);
+  return map;
+}, new Map());
 const ageDistribution = citizens => {
   const groups = [
     { key: "85", label: "85", color: "#d09b2c", count: 0 },
@@ -746,28 +756,29 @@ export const views = {
   },
 
   quittung: () => {
-    const citizens = receiptCitizens();
-    const byGroup = citizens.reduce((acc, c) => {
-      const group = groupForCitizen(c);
-      const key = group.id;
-      if (!acc[key]) acc[key] = { group, citizens: [] };
-      acc[key].citizens.push(c);
-      return acc;
-    }, {});
-    const groups = Object.values(byGroup).sort((a, b) => a.group.id.localeCompare(b.group.id));
+    const reviewEntries = activeCitizens()
+      .filter(citizen => birthdayMonth(citizen.birthDate) === state.quittungMonat)
+      .map(citizen => ({ citizen, group: groupForCitizen(citizen) }))
+      .filter(entry => entry.group);
+    const receiptEntries = reviewEntries.filter(({ citizen }) => wantsVisit(citizen));
+    const groupMap = groupedQuittungEntries(receiptEntries);
+    const reviewByGroup = reviewQuittungEntriesByGroup(reviewEntries);
+    const groups = [...groupMap.values()].sort((a, b) => a.group.id.localeCompare(b.group.id));
     const groupStatus = group => {
-      const uncheckedCount = receiptReviewCitizensForGroup(group.id).filter(citizen => !isCheckedCitizen(citizen)).length;
-      return { uncheckedCount, canPrint: isReceiptGroupReady(group.id) };
+      const reviewCitizens = reviewByGroup.get(group.id) || [];
+      const uncheckedCount = reviewCitizens.filter(citizen => !isCheckedCitizen(citizen)).length;
+      return { uncheckedCount, canPrint: reviewCitizens.length > 0 && uncheckedCount === 0 };
     };
+    const statuses = new Map(groups.map(({ group }) => [group.id, groupStatus(group)]));
     const unfinishedGroups = groups
-      .map(({ group }) => ({ group, ...groupStatus(group) }))
+      .map(({ group }) => ({ group, ...statuses.get(group.id) }))
       .filter(item => !item.canPrint);
-    const canPrintAny = groups.some(({ group }) => isReceiptGroupReady(group.id));
+    const canPrintAny = groups.some(({ group }) => statuses.get(group.id)?.canPrint);
     const betrag = state.quittungBetrag;
     const betragNum = Number.parseFloat(betrag.replace(",", ".")) || 0;
     const rows = groups.map(({ group, citizens: gc }) => {
       const summe = (gc.length * betragNum).toFixed(2).replace(".", ",");
-      const { uncheckedCount, canPrint } = groupStatus(group);
+      const { uncheckedCount, canPrint } = statuses.get(group.id);
       return `<tr>
         <td>${escapeHtml(group.id)}</td>
         <td>${gc.length}</td>
