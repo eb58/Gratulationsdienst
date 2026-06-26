@@ -7,6 +7,7 @@ import { parseCsv, mapImportRow } from './import.js';
 import { buildImportResult, importNotice, citizenGridRow, nextMemberIdAfterDelete } from './citizens.js';
 import { parseSokoQuestionnairePdf } from './sokoQuestionnairePdf.js';
 import { applySokoQuestionnaireResults } from './sokoQuestionnaire.js';
+import { createSokoQuestionnaireSimulation, mergeSokoQuestionnaireImages } from './sokoQuestionnaireSimulation.js';
 import { groupedTestAssignments, balancedTestAssignments, shuffledTestValues, testFirstNames, testLastNames, testCsvRow, testCsvText } from './testdata.js';
 import { render, renderDialog } from './render.js';
 import { renderCitizenDetail } from './views.js';
@@ -165,7 +166,7 @@ const sokoPdfLogEntry = page => {
     groupId: citizen ? streetAssignment(citizen)?.groupId || "" : "",
     type: checked ? "SOKO-PDF" : manual ? "Nacharbeit" : "Fehler",
     message: checked
-      ? "Fragebogen erkannt und Jubilar geprüft."
+      ? "Fragebogen erkannt und zur Prüfung vorgemerkt."
       : manual
         ? `${page.error} Erkannte Ankreuzungen übernommen, Status bleibt unverändert.`
         : page.error || "Fragebogen konnte nicht ausgewertet werden."
@@ -177,11 +178,28 @@ const sokoPdfNotice = pages => {
   const unmatched = pages.filter(page => !page.applied && /nicht gefunden/i.test(page.error || "")).length;
   const failed = pages.filter(page => !page.applied && !/nicht gefunden/i.test(page.error || "")).length;
   return [
-    checked ? `${checked} Fragebögen geprüft.` : "",
+    checked ? `${checked} Fragebögen eingelesen.` : "",
     manual ? `${manual} mit Handschrift zur Nacharbeit.` : "",
     unmatched ? `${unmatched} erkannt, aber kein passender Jubilar gefunden.` : "",
     failed ? `${failed} nicht lesbar.` : ""
   ].filter(Boolean).join(" ") || "Keine Fragebögen erkannt.";
+};
+
+const sokoPdfSimulationCitizens = () => {
+  const rows = currentCitizenGridRows();
+  const citizens = rows.map(row => byId(state.data.citizens, row.id)).filter(Boolean);
+  return citizens.length ? citizens : filteredCitizens().filter(citizen => citizen?.id);
+};
+const applySokoPdfImport = async (file, generatedPages = []) => {
+  const parsed = await parseSokoQuestionnairePdf(file);
+  state.data.citizens = mergeSokoQuestionnaireImages(state.data.citizens, generatedPages);
+  const pages = generatedPages.length
+    ? parsed.pages.map((page, index) => ({ ...page, citizenId: generatedPages[index]?.citizenId || page.citizenId }))
+    : parsed.pages;
+  const result = applySokoQuestionnaireResults(state.data.citizens, pages);
+  state.data.citizens = result.citizens;
+  state.data.importLog = [...result.pages.map(sokoPdfLogEntry), ...state.data.importLog];
+  return result;
 };
 
 export const actions = {
@@ -658,15 +676,29 @@ export const actions = {
     if (!file) { importToast("Bitte zuerst ein SOKO-PDF laden."); return; }
     try {
       importToast("SOKO-PDF wird ausgewertet...");
-      const parsed = await parseSokoQuestionnairePdf(file);
-      const result = applySokoQuestionnaireResults(state.data.citizens, parsed.pages);
-      state.data.citizens = result.citizens;
-      state.data.importLog = [...result.pages.map(sokoPdfLogEntry), ...state.data.importLog];
+      const result = await applySokoPdfImport(file);
       saveData();
       render();
       importToast(sokoPdfNotice(result.pages));
     } catch (error) {
       importToast(error.message || "SOKO-PDF konnte nicht ausgewertet werden.");
+    }
+  },
+  "simulate-soko-pdf-import": async () => {
+    const citizens = sokoPdfSimulationCitizens();
+    if (!citizens.length) { importToast("Keine Jubilare in der aktuellen Auswahl."); return; }
+    try {
+      importToast("SOKO-PDF wird erzeugt...");
+      const simulation = await createSokoQuestionnaireSimulation(citizens);
+      if (!simulation.pages.length) { importToast("Keine Fragebögen erzeugt."); return; }
+      state.selectedCitizenId = simulation.pages[0].citizenId || state.selectedCitizenId;
+      importToast("SOKO-PDF wird ausgewertet...");
+      const result = await applySokoPdfImport(simulation.file, simulation.pages);
+      saveData();
+      render();
+      importToast(`Simulation: ${sokoPdfNotice(result.pages)}`);
+    } catch (error) {
+      importToast(error.message || "SOKO-PDF-Simulation konnte nicht ausgeführt werden.");
     }
   },
   "select-generated": event => {

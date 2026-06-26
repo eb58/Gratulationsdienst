@@ -2,6 +2,7 @@ import { normalize, escapeHtml, formatDate, formatDateDe, formatStreetAddress, c
 import { streetGroupDisplay, sokoColors } from './domain.js';
 import { state } from './state.js';
 import { filteredCitizens, groupForCitizen, selectedCitizen } from './assignment.js';
+import { SOKO_QUESTIONNAIRE_IMPORTED_STATUS } from './sokoQuestionnaire.js';
 import { render, renderDialog } from './render.js'; // Zyklus OK: render wird nur in Event-Callbacks aufgerufen
 import { renderCitizenDetail, renderRegionAssignment } from './views.js'; // Zyklus OK: lazy
 import { requestDirtyFormLeave } from './dirtyForms.js';
@@ -30,6 +31,7 @@ const statusBadgeCell = value => {
   const color = value === "offen" ? "#d09b2c"
     : value === "importiert" ? "#315a8c"
     : value === "geprüft" ? "#2f7d4f"
+    : value === SOKO_QUESTIONNAIRE_IMPORTED_STATUS ? "#7a4f9f"
     : value === "gedruckt" ? "#0f5d58"
     : "#66706d";
   return value === "offen" ? badgeCell(value, "gold") : accentBadgeCell(value, color);
@@ -127,27 +129,58 @@ const importLogRow = (item, index) => {
 
 const legacyGridColumnStorageKey = gridKey => `gratulationsdienst.grid.${gridKey}.columnWidths`;
 const gridStateStorageKey = gridKey => `gratulationsdienst.grid.${gridKey}.state`;
+const normalizedColumnState = columnState => Array.isArray(columnState)
+  ? columnState
+    .map(({ colId, width, sort, sortIndex }) => ({
+      colId,
+      width,
+      ...(sort ? { sort } : sort === null ? { sort: null } : {}),
+      ...(Number.isFinite(sortIndex) ? { sortIndex } : {})
+    }))
+    .filter(item => item.colId && Number.isFinite(item.width))
+  : [];
+const normalizedSortState = columnState => normalizedColumnState(columnState)
+  .filter(item => item.sort === "asc" || item.sort === "desc")
+  .map(({ colId, sort, sortIndex }, index) => ({ colId, sort, sortIndex: Number.isFinite(sortIndex) ? sortIndex : index }));
+const gridStateFromParsed = parsed => ({
+  columnState: normalizedColumnState(parsed?.columnState),
+  sortState: Array.isArray(parsed?.sortState)
+    ? parsed.sortState.filter(item => item?.colId && (item.sort === "asc" || item.sort === "desc"))
+    : normalizedSortState(parsed?.columnState),
+  filterModel: parsed?.filterModel && typeof parsed.filterModel === "object" ? parsed.filterModel : {}
+});
 const storedGridState = gridKey => {
   try {
     const parsed = JSON.parse(localStorage.getItem(gridStateStorageKey(gridKey)) || "null");
-    if (parsed?.columnState?.length) return parsed;
+    const gridState = gridStateFromParsed(parsed);
+    if (gridState.columnState.length || gridState.sortState.length || Object.keys(gridState.filterModel).length) return gridState;
   } catch { /* gespeicherter Grid-State nicht lesbar */ }
   try {
     const columnState = JSON.parse(localStorage.getItem(legacyGridColumnStorageKey(gridKey)) || "[]");
-    return { columnState: Array.isArray(columnState) ? columnState.filter(item => item?.colId && Number.isFinite(item.width)) : [] };
-  } catch { return { columnState: [] }; }
+    return gridStateFromParsed({ columnState });
+  } catch { return gridStateFromParsed(null); }
 };
 const restoreGridState = (gridKey, api) => {
   const gridState = storedGridState(gridKey);
-  if (gridState.columnState?.length) api.applyColumnState?.({ state: gridState.columnState, applyOrder: false });
+  const stateByColumn = new Map(gridState.columnState.map(item => [item.colId, item]));
+  gridState.sortState.forEach(({ colId, sort, sortIndex }) => {
+    const existing = stateByColumn.get(colId) || { colId };
+    stateByColumn.set(colId, { ...existing, sort, sortIndex });
+  });
+  const columnState = [...stateByColumn.values()];
+  if (columnState.length) api.applyColumnState?.({ state: columnState, applyOrder: true });
   if (gridState.filterModel && Object.keys(gridState.filterModel).length) api.setFilterModel?.(gridState.filterModel);
 };
 const saveGridState = (gridKey, api) => {
-  const columnState = api.getColumnState?.()
-    ?.map(({ colId, width, sort, sortIndex }) => ({ colId, width, sort, sortIndex }))
-    .filter(item => item.colId && Number.isFinite(item.width));
+  const columnState = normalizedColumnState(api.getColumnState?.());
   if (!columnState?.length) return;
-  try { localStorage.setItem(gridStateStorageKey(gridKey), JSON.stringify({ columnState, filterModel: api.getFilterModel?.() || {} })); } catch { /* localStorage nicht verfügbar */ }
+  try {
+    localStorage.setItem(gridStateStorageKey(gridKey), JSON.stringify({
+      columnState,
+      sortState: normalizedSortState(columnState),
+      filterModel: api.getFilterModel?.() || {}
+    }));
+  } catch { /* localStorage nicht verfügbar */ }
 };
 
 export const gridDefinitions = {
@@ -290,9 +323,11 @@ export const mountGrid = element => {
     restoreGridState(gridKey, params.api);
   };
   const onColumnResized = definition.onColumnResized;
+  const onColumnMoved = definition.onColumnMoved;
   const onSortChanged = definition.onSortChanged;
   const onFilterChanged = definition.onFilterChanged;
   definition.onColumnResized = params => { onColumnResized?.(params); if (params.finished) saveGridState(gridKey, params.api); };
+  definition.onColumnMoved = params => { onColumnMoved?.(params); saveGridState(gridKey, params.api); };
   definition.onSortChanged = params => { onSortChanged?.(params); saveGridState(gridKey, params.api); };
   definition.onFilterChanged = params => { onFilterChanged?.(params); saveGridState(gridKey, params.api); };
   window.agGrid.createGrid(element, definition);

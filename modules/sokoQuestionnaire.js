@@ -6,6 +6,7 @@ export const SOKO_QR_BOX = { left: 176, top: 24, size: 16 };
 export const SOKO_QR_BOX2 = { left: 17, top: 265, size: 16 };
 export const SOKO_QR_BOXES = [SOKO_QR_BOX, SOKO_QR_BOX2];
 export const SOKO_CHECKBOX_SIZE_MM = 4;
+export const SOKO_QUESTIONNAIRE_IMPORTED_STATUS = "Fragebogen eingelesen";
 
 export const SOKO_CHECKBOXES = {
   wishPost: { left: 19, top: 153, group: "wish", value: "per Post" },
@@ -121,7 +122,7 @@ export const applySokoQuestionnaireResult = (citizen, result) => {
     ...citizen,
     ...patch,
     updatedAt: todayIso(),
-    status: hasManualText || citizen.status === "gedruckt" ? citizen.status : "geprüft"
+    status: hasManualText || citizen.status === "gedruckt" ? citizen.status : SOKO_QUESTIONNAIRE_IMPORTED_STATUS
   };
   return {
     ok: !hasManualText,

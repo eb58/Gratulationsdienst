@@ -6,6 +6,7 @@ import { field, emailField, postalCodeField, ibanField, selectField, textField, 
 import { streetMapSvg, mapSegmentCounts, mapAddressPointGroups } from './map.js';
 import { documentBackPreview, documentPreview } from './documents.js';
 import { qrCodeSvg } from './qr.js';
+import { SOKO_QUESTIONNAIRE_IMPORTED_STATUS } from './sokoQuestionnaire.js';
 import { render, applyPendingFocus } from './render.js'; // Zyklus OK: render wird nur in Callbacks aufgerufen
 import { rememberDirtyFormBaselines } from './dirtyForms.js';
 
@@ -194,11 +195,40 @@ export const citizenDetailContent = citizen => `
   </form>
 `;
 
+const sokoQuestionnaireImages = citizen => Array.isArray(citizen?.sokoQuestionnaireImages)
+  ? citizen.sokoQuestionnaireImages.filter(item => item?.image)
+  : [];
+const citizenQuestionnaireImagesContent = citizen => `
+  <h2>Fragebogen</h2>
+  <div class="citizen-questionnaire-scroll">
+    ${sokoQuestionnaireImages(citizen).map((item, index) => `
+      <figure class="citizen-questionnaire-image">
+        <img src="${escapeHtml(item.image)}" alt="SOKO-Fragebogen ${index + 1}">
+        <figcaption>${escapeHtml(formatDate(item.createdAt))}</figcaption>
+      </figure>
+    `).join("")}
+  </div>
+`;
+const renderCitizenQuestionnaireImages = citizen => {
+  const panel = document.querySelector("#citizen-questionnaire-panel");
+  const split = document.querySelector(".citizen-split");
+  const detailSplit = document.querySelector(".citizen-detail-split");
+  const splitter = document.querySelector(".citizen-detail-splitter");
+  const hasImages = sokoQuestionnaireImages(citizen).length > 0;
+  split?.classList.toggle("has-questionnaire-images", hasImages);
+  detailSplit?.classList.toggle("has-questionnaire-images", hasImages);
+  if (splitter) splitter.hidden = !hasImages;
+  if (!panel) return;
+  panel.hidden = !hasImages;
+  panel.innerHTML = hasImages ? citizenQuestionnaireImagesContent(citizen) : "";
+};
+
 export const renderCitizenDetail = () => {
   const element = document.querySelector("#citizen-detail-panel");
   const citizens = filteredCitizens();
   const citizen = citizens.find(item => item.id === state.selectedCitizenId) || citizens[0];
   if (!element || !citizen) { render(); return; }
+  renderCitizenQuestionnaireImages(citizen);
   element.innerHTML = citizenDetailContent(citizen);
   rememberDirtyFormBaselines(element);
   applyPendingFocus();
@@ -206,7 +236,7 @@ export const renderCitizenDetail = () => {
 
 const selectedMonthLabel = () => months.find(([value]) => value === state.filters.month)?.[1] || "Alle Monate";
 const selectedMonthSuffix = () => state.filters.month === "alle" ? "in allen Monaten" : `im ${selectedMonthLabel()}`;
-const isQuestionnaireReturned = citizen => normalize(citizen.status).startsWith("gepr") || citizen.status === "gedruckt";
+const isQuestionnaireReturned = citizen => isCheckedCitizen(citizen);
 const dashboardCitizens = () => activeCitizens().filter(citizen => state.filters.month === "alle" || birthdayMonth(citizen.birthDate) === state.filters.month);
 const dashboardRows = () => state.data.sokoGroups.map(group => {
   const citizens = dashboardCitizens().filter(citizen => groupForCitizen(citizen)?.id === group.id);
@@ -405,6 +435,7 @@ export const views = {
   citizens: () => {
     const citizens = filteredCitizens();
     const citizen = citizens.find(item => item.id === state.selectedCitizenId) || citizens[0];
+    const hasQuestionnaireImages = sokoQuestionnaireImages(citizen).length > 0;
     return `
       <div class="toolbar">
         <select name="month" data-filter>${months.map(month => `<option value="${month[0]}" ${state.filters.month === month[0] ? "selected" : ""}>${month[1]}</option>`).join("")}</select>
@@ -413,53 +444,31 @@ export const views = {
           ${[["alle", "Alle Alter"], ["85", "85 Jahre"], ["90plus", "90+"], ["100", "100+"]].map(option => `<option value="${option[0]}" ${state.filters.age === option[0] ? "selected" : ""}>${option[1]}</option>`).join("")}
         </select>
         <select name="status" data-filter>
-          ${[["alle", "Alle Status"], ["offen", "offen"], ["importiert", "importiert"], ["geprüft", "geprüft"], ["gedruckt", "gedruckt"]].map(option => `<option value="${option[0]}" ${state.filters.status === option[0] ? "selected" : ""}>${option[1]}</option>`).join("")}
+          ${[["alle", "Alle Status"], ["offen", "offen"], ["importiert", "importiert"], ["geprüft", "geprüft"], [SOKO_QUESTIONNAIRE_IMPORTED_STATUS, SOKO_QUESTIONNAIRE_IMPORTED_STATUS], ["gedruckt", "gedruckt"]].map(option => `<option value="${option[0]}" ${state.filters.status === option[0] ? "selected" : ""}>${option[1]}</option>`).join("")}
         </select>
         <div class="file-action-row soko-pdf-action-row">
-          <label class="file-picker import-file-picker" for="soko-pdf-file">
-            <span>SOKO-PDF auswerten</span>
-            <em>Gescannte Fragebögen</em>
-          </label>
+          <div class="file-picker import-file-picker soko-questionnaire-picker">
+            <button type="button" class="primary-button test-action-button" data-action="simulate-soko-pdf-import">Simuliere Fragebögen einlesen</button>
+            <label class="soko-questionnaire-load" for="soko-pdf-file"><span>Fragebögen laden</span><em>Gescannte Fragebögen</em></label>
+          </div>
           <input id="soko-pdf-file" class="file-input" type="file" accept=".pdf,application/pdf">
         </div>
       </div>
-      <div class="${citizen ? "citizen-split" : ""}" ${citizen ? `style="--citizen-left:${state.citizenSplit}%"` : ""}>
+      <div class="${citizen ? `citizen-split${hasQuestionnaireImages ? " has-questionnaire-images" : ""}` : ""}" ${citizen ? `style="--citizen-left:${state.citizenSplit}%"` : ""}>
         <section class="panel citizen-panel">
           <h2>Jubilare</h2>
           <div class="citizen-panel-scroll citizen-grid-scroll">${gridHost("citizens")}</div>
         </section>
         ${citizen ? `<div class="vertical-splitter" data-splitter="citizen" role="separator" aria-orientation="vertical" aria-label="Bereiche aufteilen" aria-valuemin="20" aria-valuemax="80" aria-valuenow="${state.citizenSplit}" tabindex="0"></div>
-        <section class="panel citizen-panel" id="citizen-detail-panel">
-          <h2>Jubilar</h2>
-          <form id="citizen-form" class="form-grid">
-            <input type="hidden" name="id" value="${escapeHtml(citizen.id)}">
-            ${selectField("salutation", "Anrede", citizen.salutation, [["Frau", "Frau"], ["Herr", "Herr"]])}
-            ${field("firstName", "Vorname", citizen.firstName)}
-            ${field("lastName", "Nachname", citizen.lastName)}
-            ${field("birthDate", "Geburtsdatum", citizen.birthDate, "date")}
-            ${field("street", "Straße", citizen.street)}
-            ${field("houseNo", "Hausnummer", citizen.houseNo)}
-            ${postalCodeField("postalCode", "PLZ", citizen.postalCode)}
-            ${field("district", "Ortsteil", citizen.district)}
-            ${field("phone", "Telefon", citizen.phone)}
-            ${emailField("email", "E-Mail", citizen.email)}
-            ${radioField("wish", "Glückwünsche", citizen.wish, [["Besuch erwünscht", "Besuch erwünscht"], ["per Post", "per Post"], ["keine", "keine"]], "full")}
-            ${checkField("pressPublication", "Veröffentlichung in der lokalen Presse", citizen.pressPublication, "full")}
-            ${radioField("weddingAnniversary", "Es steht bevor die", citizen.weddingAnniversary ?? "", [
-              ["", "—"],
-              ["Goldene Hochzeit", "Goldene Hochzeit"],
-              ["Diamantene Hochzeit", "Diamantene Hochzeit"],
-              ["Eiserne Hochzeit", "Eiserne Hochzeit"],
-              ["Gnadenhochzeit", "Gnadenhochzeit"]
-            ], "full")}
-            ${field("weddingDate", "am", citizen.weddingDate ?? "", "date", "hochzeit-date-field")}
-            ${field("spouseName", "Name des Ehegatten", citizen.spouseName ?? "", "text", "hochzeit-spouse-field")}
-            ${textField("notes", "Notiz", citizen.notes, "full notes-field")}
-            <div class="field full button-row">
-              <button type="button" class="primary-button${citizen.wish && citizen.wish !== "offen" ? "" : " btn-disabled"}" data-action="save-citizen">Speichern</button>
-            </div>
-          </form>
-        </section>` : ""}
+        <div class="citizen-detail-split${hasQuestionnaireImages ? " has-questionnaire-images" : ""}" data-split="citizenDetail" style="--citizenDetail-left:${state.citizenDetailSplit}%">
+          <section class="panel citizen-panel citizen-questionnaire-panel" id="citizen-questionnaire-panel" ${hasQuestionnaireImages ? "" : "hidden"}>
+            ${hasQuestionnaireImages ? citizenQuestionnaireImagesContent(citizen) : ""}
+          </section>
+          ${hasQuestionnaireImages ? `<div class="vertical-splitter citizen-detail-splitter" data-splitter="citizenDetail" role="separator" aria-orientation="vertical" aria-label="Fragebogen und Jubilar aufteilen" aria-valuemin="20" aria-valuemax="80" aria-valuenow="${state.citizenDetailSplit}" tabindex="0"></div>` : ""}
+          <section class="panel citizen-panel" id="citizen-detail-panel">
+            ${citizenDetailContent(citizen)}
+          </section>
+        </div>` : ""}
       </div>
     `;
   },
@@ -682,8 +691,8 @@ export const views = {
     const sender = selectedSender();
     const docs = state.generatedDocs;
     const previewDoc = docs.find(doc => doc.citizenId === state.selectedCitizenId) || docs[0];
-    const checkedCount = filteredCitizens().filter(c => c.status === "geprüft").length;
-    const previewCitizen = previewDoc ? byId(state.data.citizens, previewDoc.citizenId) : filteredCitizens().find(c => c.status === "geprüft") || selectedCitizen();
+    const checkedCount = filteredCitizens().filter(c => isCheckedCitizen(c) && c.status !== "gedruckt").length;
+    const previewCitizen = previewDoc ? byId(state.data.citizens, previewDoc.citizenId) : filteredCitizens().find(c => isCheckedCitizen(c) && c.status !== "gedruckt") || selectedCitizen();
     const previewTemplate = previewDoc ? byId(state.data.templates, previewDoc.templateId) || template : template;
     const printablePreviewTemplate = state.printBackground ? previewTemplate : { ...previewTemplate, backgroundImage: "", backBackgroundImage: "" };
     const previewSender = previewDoc ? byId(state.data.senders, previewDoc.senderId) || sender : sender;

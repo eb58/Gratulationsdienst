@@ -151,14 +151,16 @@ describe('mountGrid', () => {
   it('creates grids, restores state and saves changed state', () => {
     const element = { dataset: { grid: 'citizens' }, innerHTML: '' };
     const calls = [];
+    let currentColumnState = [{ colId: 'name', width: 220, sort: 'asc', sortIndex: 0 }];
     const api = {
       applyColumnState: payload => calls.push(['applyColumnState', payload]),
       setFilterModel: payload => calls.push(['setFilterModel', payload]),
-      getColumnState: () => [{ colId: 'name', width: 220, sort: 'asc', sortIndex: 0 }],
+      getColumnState: () => currentColumnState,
       getFilterModel: () => ({ status: { values: ['geprüft'] } })
     };
     localStorage.setItem('gratulationsdienst.grid.citizens.state', JSON.stringify({
-      columnState: [{ colId: 'name', width: 180 }],
+      columnState: [{ colId: 'birthday', width: 130 }, { colId: 'name', width: 180 }],
+      sortState: [{ colId: 'birthday', sort: 'desc', sortIndex: 0 }],
       filterModel: { status: { values: ['offen'] } }
     }));
     let definition;
@@ -166,14 +168,31 @@ describe('mountGrid', () => {
 
     mountGrid(element);
     definition.onGridReady({ api });
+    currentColumnState = [{ colId: 'birthday', width: 130, sort: 'desc', sortIndex: 0 }, { colId: 'name', width: 220, sort: 'asc', sortIndex: 1 }];
+    definition.onColumnMoved({ api });
     definition.onColumnResized({ api, finished: true });
     definition.onSortChanged({ api });
     definition.onFilterChanged({ api });
 
     assert.equal(state.gridApis.citizens, api);
-    assert.deepEqual(calls[0], ['applyColumnState', { state: [{ colId: 'name', width: 180 }], applyOrder: false }]);
+    assert.deepEqual(calls[0], ['applyColumnState', {
+      state: [
+        { colId: 'birthday', width: 130, sort: 'desc', sortIndex: 0 },
+        { colId: 'name', width: 180 }
+      ],
+      applyOrder: true
+    }]);
     assert.deepEqual(calls[1], ['setFilterModel', { status: { values: ['offen'] } }]);
-    assert.match(localStorage.getItem('gratulationsdienst.grid.citizens.state'), /"width":220/);
+    const savedState = JSON.parse(localStorage.getItem('gratulationsdienst.grid.citizens.state'));
+    assert.deepEqual(savedState.columnState, [
+      { colId: 'birthday', width: 130, sort: 'desc', sortIndex: 0 },
+      { colId: 'name', width: 220, sort: 'asc', sortIndex: 1 }
+    ]);
+    assert.deepEqual(savedState.sortState, [
+      { colId: 'birthday', sort: 'desc', sortIndex: 0 },
+      { colId: 'name', sort: 'asc', sortIndex: 1 }
+    ]);
+    assert.deepEqual(savedState.filterModel, api.getFilterModel());
   });
 
   it('mounts every grid host found in the document', () => {

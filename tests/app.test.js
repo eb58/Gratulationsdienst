@@ -328,6 +328,26 @@ describe('app splitters and lifecycle handlers', () => {
     assert.equal(splitter['aria-valuenow'], '54');
   });
 
+  it('resizes split panes found by data-split containers', () => {
+    state.citizenDetailSplit = 42;
+    const split = { getBoundingClientRect: () => ({ left: 0, width: 200 }), style: { setProperty: (key, value) => { split.style[key] = value; } } };
+    const splitter = {
+      dataset: { splitter: 'citizenDetail' },
+      closest: selector => selector === '[data-split="citizenDetail"]' ? split : null,
+      setPointerCapture: id => { splitter.captured = id; },
+      releasePointerCapture: id => { splitter.released = id; }
+    };
+    const target = eventTarget({ closest: { '[data-splitter]': splitter } });
+
+    listeners.pointerdown({ target, pointerId: 9, preventDefault: () => {} });
+    listeners.pointermove({ clientX: 120 });
+    listeners.pointerup({});
+
+    assert.equal(state.citizenDetailSplit, 60);
+    assert.equal(split.style['--citizenDetail-left'], '60%');
+    assert.equal(localStorage.getItem('gratulationsdienst.splitters'), '{"citizenDetail":60}');
+  });
+
   it('marks dirty forms on beforeunload', () => {
     const control = { name: 'firstName', value: 'Neu', type: 'text', disabled: false };
     const form = {

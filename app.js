@@ -173,7 +173,7 @@ document.addEventListener("pointerdown", event => {
   const splitter = event.target.closest("[data-splitter]");
   if (!splitter) return;
   const key = splitter.dataset.splitter;
-  const split = splitter.closest(`.${key}-split`);
+  const split = splitter.closest(`[data-split="${key}"]`) || splitter.closest(`.${key}-split`);
   if (!split) return;
   event.preventDefault();
   splitter.setPointerCapture(event.pointerId);
@@ -200,7 +200,7 @@ document.addEventListener("keydown", event => {
   const splitter = event.target.closest("[data-splitter]");
   if (!splitter) return;
   const key = splitter.dataset.splitter;
-  const split = splitter.closest(`.${key}-split`);
+  const split = splitter.closest(`[data-split="${key}"]`) || splitter.closest(`.${key}-split`);
   const delta = event.key === "ArrowLeft" ? -4 : event.key === "ArrowRight" ? 4 : 0;
   if (!split || !delta) return;
   event.preventDefault();

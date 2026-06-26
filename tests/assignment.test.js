@@ -22,6 +22,7 @@ globalThis.ResizeObserver = class {
 
 const assignment = await import('../modules/assignment.js');
 const { state } = await import('../modules/state.js');
+const { SOKO_QUESTIONNAIRE_IMPORTED_STATUS } = await import('../modules/sokoQuestionnaire.js');
 
 const {
   activeCitizens,
@@ -107,6 +108,7 @@ describe('citizen status helpers', () => {
     assert.equal(isPrintedCitizen({ status: 'geprüft' }), false);
     assert.equal(isCheckedCitizen({ status: 'geprüft' }), true);
     assert.equal(isCheckedCitizen({ status: 'gedruckt' }), true);
+    assert.equal(isCheckedCitizen({ status: SOKO_QUESTIONNAIRE_IMPORTED_STATUS }), false);
     assert.equal(isCheckedCitizen({ status: 'offen' }), false);
     assert.equal(wantsVisit({ wish: 'Besuch erwünscht' }), true);
     assert.equal(wantsVisit({ wish: 'per Post' }), false);

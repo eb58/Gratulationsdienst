@@ -7,6 +7,7 @@ import {
   checkedSokoFieldsFromScores,
   citizenIdFromSokoQuestionnaireCode,
   findSokoQuestionnaireCitizen,
+  SOKO_QUESTIONNAIRE_IMPORTED_STATUS,
   sokoQuestionnaireCode,
   sokoQuestionnaireDataFromCode,
   sokoQuestionnairePatchFromMarks
@@ -80,12 +81,12 @@ describe('SOKO questionnaire marks', () => {
 });
 
 describe('SOKO questionnaire application', () => {
-  it('sets verified status when marks are complete and no handwriting is present', () => {
+  it('sets imported-questionnaire status when marks are complete and no handwriting is present', () => {
     const result = applySokoQuestionnaireResult(citizen, { marks: { wishPost: true }, textFields: {} });
 
     assert.equal(result.ok, true);
     assert.equal(result.citizen.wish, 'per Post');
-    assert.equal(result.citizen.status, 'geprüft');
+    assert.equal(result.citizen.status, SOKO_QUESTIONNAIRE_IMPORTED_STATUS);
   });
 
   it('keeps imported status when handwriting is detected in supplemental fields', () => {

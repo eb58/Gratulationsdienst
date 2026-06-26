@@ -93,7 +93,7 @@ export const filteredCitizens = () => state.data.citizens.filter(citizen => {
     && (state.filters.status === "alle" || citizen.status === state.filters.status)
     && ageOk;
 });
-export const documentCitizens = () => filteredCitizens().filter(citizen => citizen.status === "geprüft");
+export const documentCitizens = () => filteredCitizens().filter(citizen => isCheckedCitizen(citizen) && !isPrintedCitizen(citizen));
 export const receiptReviewCitizens = () => activeCitizens().filter(citizen => birthdayMonth(citizen.birthDate) === state.quittungMonat);
 export const allReceiptCitizensChecked = () => receiptReviewCitizens().every(isCheckedCitizen);
 export const receiptCitizens = () => receiptReviewCitizens().filter(citizen => wantsVisit(citizen) && groupForCitizen(citizen));

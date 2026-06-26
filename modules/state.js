@@ -113,6 +113,7 @@ export const state = {
   importText: "",
   importSplit: storedSplit("import", 50),
   citizenSplit: storedSplit("citizen", 50),
+  citizenDetailSplit: storedSplit("citizenDetail", 42),
   profileSplit: storedSplit("profile", 50),
   regionSplit: storedSplit("region", 50),
   templateSplit: storedSplit("template", 50),

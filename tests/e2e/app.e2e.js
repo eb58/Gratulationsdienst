@@ -94,6 +94,25 @@ describe('Gratulationsdienst E2E', () => {
     } finally { await context.close(); }
   });
 
+  it('simuliert einen SOKO-PDF-Import und zeigt Fragebogenbilder', async () => {
+    const { context, page } = await openApp();
+    try {
+      await login(page);
+      await page.click('[data-nav="import"]');
+      await page.waitForSelector('.view-import');
+      await page.click('[data-action="seed-citizens"]');
+      await page.waitForFunction(() => (JSON.parse(localStorage.getItem('gratulationsdienst') || '{}').citizens || []).length > 0);
+      await page.click('[data-nav="citizens"]');
+      await page.waitForSelector('.ag-root', { timeout: 10000 });
+      await page.click('[data-action="simulate-soko-pdf-import"]');
+      await page.waitForSelector('.citizen-questionnaire-image img', { timeout: 30000 });
+
+      const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('gratulationsdienst') || '{}'));
+      assert.ok(stored.citizens.some(citizen => citizen.sokoQuestionnaireImages?.length));
+      assert.ok(stored.importLog.some(entry => entry.type === 'SOKO-PDF'));
+    } finally { await context.close(); }
+  }, { timeout: 60000 });
+
   it('zeigt Admin-Stammdaten und öffnet die Vorlagen-Ansicht', async () => {
     const { context, page } = await openApp();
     try {

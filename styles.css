@@ -542,6 +542,50 @@ h3 {
   height: 100%;
 }
 
+.citizen-detail-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  min-height: 0;
+}
+
+.citizen-detail-split.has-questionnaire-images {
+  grid-template-columns: minmax(210px, calc(var(--citizenDetail-left, 42%) - 6px)) 12px minmax(0, calc(100% - var(--citizenDetail-left, 42%) - 6px));
+}
+
+.citizen-questionnaire-panel[hidden] {
+  display: none;
+}
+
+.citizen-questionnaire-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  margin-top: 12px;
+}
+
+.citizen-questionnaire-image {
+  margin: 0 0 12px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.citizen-questionnaire-image img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid #d6dedc;
+}
+
+.citizen-questionnaire-image figcaption {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.2;
+}
+
 .citizen-panel-scroll {
   flex: 1;
   min-height: 0;
@@ -1016,6 +1060,29 @@ input[type="checkbox"].toggle:checked::after {
 .file-action-row .ghost-button {
   min-height: 48px;
   white-space: nowrap;
+}
+
+.soko-pdf-action-row {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.soko-questionnaire-picker {
+  cursor: default;
+  flex-wrap: wrap;
+}
+
+.soko-questionnaire-picker .test-action-button {
+  min-height: 32px;
+  white-space: nowrap;
+}
+
+.soko-questionnaire-load {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-left: auto;
+  cursor: pointer;
 }
 
 .template-background-field {
@@ -2434,6 +2501,7 @@ tbody tr.selected {
   .soko-split,
   .sender-split,
   .print-split,
+  .citizen-detail-split,
   .toolbar,
   .form-grid,
   .form-grid.three,
@@ -2486,6 +2554,17 @@ tbody tr.selected {
   .region-grid-scroll .ag-grid-host,
   .citizen-grid-scroll .ag-grid-host {
     height: 430px !important;
+  }
+
+  .citizen-detail-split.has-questionnaire-images {
+    grid-template-columns: 1fr;
+  }
+
+  .soko-questionnaire-load {
+    justify-content: space-between;
+    margin-left: 0;
+    min-width: min(100%, 260px);
+    flex: 1 1 260px;
   }
 
   .vertical-splitter {
