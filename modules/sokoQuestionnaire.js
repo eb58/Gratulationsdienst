@@ -3,6 +3,8 @@ import { todayIso } from './utils.js';
 export const SOKO_QR_PREFIX = "GD-SOKO:";
 export const SOKO_PAGE_MM = { width: 210, height: 297 };
 export const SOKO_QR_BOX = { left: 176, top: 24, size: 16 };
+export const SOKO_QR_BOX2 = { left: 17, top: 265, size: 16 };
+export const SOKO_QR_BOXES = [SOKO_QR_BOX, SOKO_QR_BOX2];
 export const SOKO_CHECKBOX_SIZE_MM = 4;
 
 export const SOKO_CHECKBOXES = {

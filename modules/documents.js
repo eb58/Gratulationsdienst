@@ -3,7 +3,7 @@ import { state, saveData } from './state.js';
 import { groupForCitizen, selectedCitizen, selectedTemplate, selectedSender } from './assignment.js';
 import { render } from './render.js'; // Zyklus OK: render wird nur in Callbacks aufgerufen
 import { qrCodeSvg } from './qr.js';
-import { SOKO_QR_BOX, sokoQuestionnaireCode } from './sokoQuestionnaire.js';
+import { SOKO_CHECKBOXES, SOKO_CHECKBOX_SIZE_MM, SOKO_QR_BOX, SOKO_QR_BOX2, sokoQuestionnaireCode } from './sokoQuestionnaire.js';
 
 export const letterSalutation = salutation => salutation === "Herr"
   ? "Sehr geehrter Herr"
@@ -326,7 +326,11 @@ export const renderSokoForm = (citizen, index) => {
   const pos = (left, top, width, height, extra = "") => `position:absolute;left:${left}mm;top:${top}mm;width:${width}mm;height:${height}mm;box-sizing:border-box;${extra}`;
   const box = (left, top, width, height, content = "", extra = "") => `<div style="${pos(left, top, width, height, `border:1px solid #111;${extra}`)}">${content}</div>`;
   const text = (left, top, width, height, content, extra = "") => `<div style="${pos(left, top, width, height, extra)}">${content}</div>`;
-  const checkbox = label => `<span style="display:inline-block;width:4mm;height:4mm;border:1px solid #111;vertical-align:-.9mm;margin-right:2mm"></span>${label}`;
+  const checkField = (key, label) => {
+    const c = SOKO_CHECKBOXES[key];
+    return box(c.left, c.top, SOKO_CHECKBOX_SIZE_MM, SOKO_CHECKBOX_SIZE_MM)
+      + text(c.left + SOKO_CHECKBOX_SIZE_MM + 1.5, c.top, 74, SOKO_CHECKBOX_SIZE_MM, label, "display:flex;align-items:center;white-space:nowrap");
+  };
   const addr = `
     <div>${escapeHtml(citizen.salutation || "")} ${escapeHtml(citizen.firstName || "")} ${escapeHtml(citizen.lastName || "")}</div>
     <div>${escapeHtml(citizen.street || "")} ${escapeHtml(citizen.houseNo || "")}</div>
@@ -357,28 +361,23 @@ export const renderSokoForm = (citizen, index) => {
     ${text(16, 121, 50, 7, "Ihre Gratulationsstelle", "font-size:10.5pt")}
 
     ${box(15, 134, 180, 7, "Von der Sozialkommission auszuf&uuml;llen", "display:flex;align-items:center;justify-content:center;font-size:11pt")}
-    ${box(15, 141, 88, 33, `
-      <div style="margin-bottom:6mm">Gl&uuml;ckw&uuml;nsche</div>
-      <div style="display:flex;gap:10mm;margin-bottom:7mm">
-        <span>${checkbox("per Post")}</span><span>${checkbox("Soko")}</span><span>${checkbox("keine")}</span>
-      </div>
-      <div>${checkbox("Ver&ouml;ffentlichung in der regionalen Presse *")}</div>
-    `, "padding:2mm;font-size:9.8pt")}
-    ${box(103, 141, 58, 33, `
-      <div style="margin-bottom:2mm">Es steht bevor die</div>
-      <div style="white-space:nowrap">${checkbox("Goldene Hochzeit&nbsp;&nbsp;&nbsp;(50 J.)")}</div>
-      <div style="white-space:nowrap">${checkbox("Diamantene Hochzeit (60 J.)")}</div>
-      <div style="white-space:nowrap">${checkbox("Eiserne Hochzeit&nbsp;&nbsp;&nbsp;&nbsp;(65 J.)")}</div>
-      <div style="white-space:nowrap">${checkbox("Gnadenhochzeit&nbsp;&nbsp;&nbsp;(70 J.)")}</div>
-    `, "padding:2mm;border-left:0;font-size:9.2pt;line-height:1.14")}
+    ${box(15, 141, 88, 33, "Gl&uuml;ckw&uuml;nsche", "padding:2mm;font-size:9.8pt")}
+    ${box(103, 141, 58, 33, "Es steht bevor die", "padding:2mm;border-left:0;font-size:9.2pt")}
     ${box(161, 141, 34, 33, "am (Datum)", "padding:2mm;border-left:0;font-size:9.8pt")}
+    ${checkField("wishPost", "per Post")}
+    ${checkField("wishVisit", "Soko")}
+    ${checkField("wishNone", "keine")}
+    ${checkField("pressPublication", "Ver&ouml;ffentlichung in der regionalen Presse *")}
+    ${checkField("weddingGold", "Goldene Hochzeit&nbsp;&nbsp;&nbsp;(50 J.)")}
+    ${checkField("weddingDiamond", "Diamantene Hochzeit (60 J.)")}
+    ${checkField("weddingIron", "Eiserne Hochzeit&nbsp;&nbsp;&nbsp;&nbsp;(65 J.)")}
+    ${checkField("weddingGrace", "Gnadenhochzeit&nbsp;&nbsp;&nbsp;(70 J.)")}
     ${box(15, 174, 88, 25, "Unterschrift der Sozialkommission und Datum", "padding:2mm;border-top:0;font-size:9.8pt")}
     ${box(103, 174, 92, 25, "Vorname des Ehegatten, ggf. abweichender Familienname", "padding:2mm;border-top:0;border-left:0;font-size:9.8pt")}
 
-    ${box(15, 203, 180, 10, "", "")}
-    ${box(15, 213, 180, 66, `
-      <div style="font-size:11pt;text-decoration:underline;margin-bottom:17mm">*Datenschutzrechtliche Einwilligungserkl&auml;rung</div>
-      <div style="font-size:9.2pt;line-height:1.22;text-decoration:none">
+    ${box(15, 203, 180, 80, `
+      <div style="font-size:11pt;text-decoration:underline;margin-bottom:5mm">*Datenschutzrechtliche Einwilligungserkl&auml;rung</div>
+      <div style="font-size:10.5pt;line-height:1.28;text-decoration:none">
         Die Soko-Mitarbeiterin/der Soko-Mitarbeiter hat die Jubilarin/den Jubilar darauf hingewiesen, dass
         die im Rahmen der vorstehend genannten Zwecke erhobenen pers&ouml;nlichen Daten Ihrer Person unter
         Beachtung der EU-Datenschutzgrundverordnung und des Berliner Datenschutzgesetzes erhoben,
@@ -389,6 +388,7 @@ export const renderSokoForm = (citizen, index) => {
         Unterschrift der Soko-Mitarbeiterin/des Soko-Mitarbeiters wird best&auml;tigt, dass die Einwilligung zur
         Verarbeitung der personenbezogenen Daten m&uuml;ndlich/telefonisch gegeben wurde.
       </div>
-    `, "padding:2mm;border-top:0")}
+    `, "padding:2mm")}
+    ${text(SOKO_QR_BOX2.left, SOKO_QR_BOX2.top, SOKO_QR_BOX2.size, SOKO_QR_BOX2.size, qrCode, "background:#fff")}
   </div>`;
 };
