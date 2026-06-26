@@ -16,12 +16,32 @@ const CHECKBOX_INSET_MM = 1.25;
 const HANDWRITING_THRESHOLD = 0.006;
 const MIN_HANDWRITING_PIXELS = 35;
 const renderScale = 2.8;
+const PDF_RELOAD_KEY = "gd_pdf_import_reload";
+const isDynamicImportFetchError = error => /Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module/i.test(error?.message || "");
+const reloadAfterStalePdfChunk = error => {
+  if (!isDynamicImportFetchError(error)) return false;
+  try {
+    if (sessionStorage.getItem(PDF_RELOAD_KEY)) return false;
+    sessionStorage.setItem(PDF_RELOAD_KEY, "1");
+  } catch {
+    return false;
+  }
+  console.warn("PDF-Modul konnte nicht geladen werden. Anwendung wird wegen eines veralteten Asset-Caches neu geladen.", error);
+  location.reload();
+  return true;
+};
 
 const pdfjsModule = async () => {
-  const pdfjs = await import('pdfjs-dist/build/pdf.mjs');
-  const worker = await import('pdfjs-dist/build/pdf.worker.mjs?url');
-  pdfjs.GlobalWorkerOptions.workerSrc = worker.default;
-  return pdfjs;
+  try {
+    const pdfjs = await import('pdfjs-dist/build/pdf.mjs');
+    const worker = await import('pdfjs-dist/build/pdf.worker.mjs?url');
+    pdfjs.GlobalWorkerOptions.workerSrc = worker.default;
+    try { sessionStorage.removeItem(PDF_RELOAD_KEY); } catch { /* optional cache marker */ }
+    return pdfjs;
+  } catch (error) {
+    if (reloadAfterStalePdfChunk(error)) return new Promise(() => {});
+    throw new Error("PDF-Modul konnte nicht geladen werden. Bitte Anwendung neu laden.", { cause: error });
+  }
 };
 
 const pageNumbers = pdf => Array.from({ length: pdf.numPages }, (_, index) => index + 1);
@@ -226,6 +246,7 @@ const analyzePage = async (pdf, pageNumber) => {
     citizenId,
     qrData,
     qrValue,
+    image: canvas.toDataURL?.("image/jpeg", 0.78) || "",
     marks,
     scores,
     textFields,

@@ -128,6 +128,21 @@ CREATE TABLE IF NOT EXISTS gd_import_log (
     INDEX idx_gd_import_log_type (entry_type)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS gd_questionnaire_pages (
+    id VARCHAR(64) NOT NULL PRIMARY KEY,
+    citizen_id VARCHAR(32) NOT NULL,
+    import_id VARCHAR(64) NOT NULL DEFAULT '',
+    page_no INT NOT NULL DEFAULT 1,
+    source VARCHAR(40) NOT NULL DEFAULT '',
+    mime_type VARCHAR(80) NOT NULL DEFAULT 'image/jpeg',
+    image_data LONGBLOB NOT NULL,
+    marks JSON NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_gd_questionnaire_pages_citizen (citizen_id),
+    INDEX idx_gd_questionnaire_pages_import (import_id),
+    INDEX idx_gd_questionnaire_pages_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS gd_users (
     id VARCHAR(48) NOT NULL PRIMARY KEY,
     email VARCHAR(180) NOT NULL,

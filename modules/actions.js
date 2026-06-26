@@ -1,4 +1,4 @@
-import { $, todayIso, isValidEmail, isValidIban, formatIban, updateItem, nextId, csvEscape, downloadText, toast, byId, normalizeEmail, normalizeAmount, normalizeDigits, isValidPostalCode, calculateAge, formatStreetAddress } from './utils.js';
+import { $, todayIso, isValidEmail, isValidIban, formatIban, updateItem, nextId, csvEscape, downloadText, toast, byId, normalizeEmail, normalizeAmount, normalizeDigits, isValidPostalCode, calculateAge, formatStreetAddress, safeStorageSetItem } from './utils.js';
 import { normalizeStreetRules, streetDistrictSummary, streetGroupSummary, normalizeStreetDistrict, defaultData } from './domain.js';
 import { state, saveData, saveQuittungSettings, apiRequest, setAuthSession, clearAuthSession, loadCollectionData } from './state.js';
 import { streetAssignment, filteredCitizens, documentCitizens, isPrintedCitizen, selectedTemplate, selectedSender, selectedMember, activeCitizens, groupForCitizen, isReceiptGroupReady, receiptCitizens, receiptCitizensForReadyGroups } from './assignment.js';
@@ -8,6 +8,7 @@ import { buildImportResult, importNotice, citizenGridRow, nextMemberIdAfterDelet
 import { parseSokoQuestionnairePdf } from './sokoQuestionnairePdf.js';
 import { applySokoQuestionnaireResults } from './sokoQuestionnaire.js';
 import { createSokoQuestionnaireSimulation, mergeSokoQuestionnaireImages } from './sokoQuestionnaireSimulation.js';
+import { saveQuestionnairePages } from './questionnairePages.js';
 import { groupedTestAssignments, balancedTestAssignments, shuffledTestValues, testFirstNames, testLastNames, testCsvRow, testCsvText } from './testdata.js';
 import { render, renderDialog } from './render.js';
 import { renderCitizenDetail } from './views.js';
@@ -142,6 +143,14 @@ const showCitizenGridRow = row => {
   if (pageSize) api.paginationGoToPage?.(Math.floor(row.rowIndex / pageSize));
   requestAnimationFrame(() => api.ensureIndexVisible?.(row.rowIndex, "middle"));
 };
+const refreshSokoPdfImportUi = result => {
+  const ids = [...new Set(result.pages.filter(page => page.applied && page.citizen?.id).map(page => page.citizen.id))];
+  const gridUpdated = ids.length
+    ? ids.map(id => updateCitizenGridRow(byId(state.data.citizens, id))).every(Boolean)
+    : Boolean(state.gridApis.citizens);
+  if (!gridUpdated) { render(); return; }
+  renderCitizenDetail();
+};
 const importMappedRows = mapped => {
   const result = buildImportResult(mapped, state.data.citizens, row => streetAssignment(row)?.groupId);
   state.data.citizens = [...state.data.citizens, ...result.rows];
@@ -190,14 +199,32 @@ const sokoPdfSimulationCitizens = () => {
   const citizens = rows.map(row => byId(state.data.citizens, row.id)).filter(Boolean);
   return citizens.length ? citizens : filteredCitizens().filter(citizen => citizen?.id);
 };
+const sokoQuestionnaireImagePages = (resultPages, sourcePages) => resultPages
+  .map((page, index) => {
+    const source = sourcePages[index] || {};
+    const citizenId = page.citizen?.id || page.citizenId || source.citizenId || "";
+    const image = source.image || page.image || "";
+    return page.applied && citizenId && image ? {
+      id: source.id || "",
+      citizenId,
+      image,
+      marks: page.marks || source.marks || {},
+      source: source.source || "pdf",
+      pageNumber: page.pageNumber || source.pageNumber || index + 1,
+      createdAt: source.createdAt || new Date().toISOString()
+    } : null;
+  })
+  .filter(Boolean);
 const applySokoPdfImport = async (file, generatedPages = []) => {
   const parsed = await parseSokoQuestionnairePdf(file);
-  state.data.citizens = mergeSokoQuestionnaireImages(state.data.citizens, generatedPages);
   const pages = generatedPages.length
     ? parsed.pages.map((page, index) => ({ ...page, citizenId: generatedPages[index]?.citizenId || page.citizenId }))
     : parsed.pages;
   const result = applySokoQuestionnaireResults(state.data.citizens, pages);
   state.data.citizens = result.citizens;
+  const imagePages = sokoQuestionnaireImagePages(result.pages, generatedPages.length ? generatedPages : parsed.pages);
+  state.data.citizens = mergeSokoQuestionnaireImages(state.data.citizens, imagePages);
+  await saveQuestionnairePages(imagePages);
   state.data.importLog = [...result.pages.map(sokoPdfLogEntry), ...state.data.importLog];
   return result;
 };
@@ -610,7 +637,7 @@ export const actions = {
     state.selectedTemplateId = template.id;
     state.selectedSenderId = sender.id;
     state.filters.month = $("#doc-month").value;
-    localStorage.setItem("gd_month_filter", state.filters.month);
+    safeStorageSetItem(localStorage, "gd_month_filter", state.filters.month, "Monatsfilter");
     state.filters.groupId = $("#doc-group").value;
     const citizens = documentCitizens();
     state.generatedDocs = citizens.map(citizen => ({
@@ -678,7 +705,7 @@ export const actions = {
       importToast("SOKO-PDF wird ausgewertet...");
       const result = await applySokoPdfImport(file);
       saveData();
-      render();
+      refreshSokoPdfImportUi(result);
       importToast(sokoPdfNotice(result.pages));
     } catch (error) {
       importToast(error.message || "SOKO-PDF konnte nicht ausgewertet werden.");
@@ -695,7 +722,7 @@ export const actions = {
       importToast("SOKO-PDF wird ausgewertet...");
       const result = await applySokoPdfImport(simulation.file, simulation.pages);
       saveData();
-      render();
+      refreshSokoPdfImportUi(result);
       importToast(`Simulation: ${sokoPdfNotice(result.pages)}`);
     } catch (error) {
       importToast(error.message || "SOKO-PDF-Simulation konnte nicht ausgeführt werden.");

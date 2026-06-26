@@ -106,9 +106,13 @@ describe('Gratulationsdienst E2E', () => {
       await page.waitForSelector('.ag-root', { timeout: 10000 });
       await page.click('[data-action="simulate-soko-pdf-import"]');
       await page.waitForSelector('.citizen-questionnaire-image img', { timeout: 30000 });
+      await page.waitForSelector('#citizen-form input[name="firstName"]', { timeout: 10000 });
+      const detailBox = await page.locator('#citizen-detail-panel').boundingBox();
+      assert.ok(detailBox.width > 300);
 
       const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('gratulationsdienst') || '{}'));
-      assert.ok(stored.citizens.some(citizen => citizen.sokoQuestionnaireImages?.length));
+      assert.equal(stored.citizens.some(citizen => citizen.sokoQuestionnaireImages?.length), false);
+      assert.ok(stored.citizens.some(citizen => citizen.status === 'Fragebogen eingelesen'));
       assert.ok(stored.importLog.some(entry => entry.type === 'SOKO-PDF'));
     } finally { await context.close(); }
   }, { timeout: 60000 });

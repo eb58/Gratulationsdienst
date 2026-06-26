@@ -201,26 +201,39 @@ const sokoQuestionnaireImages = citizen => Array.isArray(citizen?.sokoQuestionna
 const citizenQuestionnaireImagesContent = citizen => `
   <h2>Fragebogen</h2>
   <div class="citizen-questionnaire-scroll">
-    ${sokoQuestionnaireImages(citizen).map((item, index) => `
+    ${sokoQuestionnaireImages(citizen).length ? sokoQuestionnaireImages(citizen).map((item, index) => `
       <figure class="citizen-questionnaire-image">
         <img src="${escapeHtml(item.image)}" alt="SOKO-Fragebogen ${index + 1}">
         <figcaption>${escapeHtml(formatDate(item.createdAt))}</figcaption>
       </figure>
-    `).join("")}
+    `).join("") : `<div class="empty-state citizen-questionnaire-empty">Kein Fragebogen eingelesen</div>`}
   </div>
 `;
 const renderCitizenQuestionnaireImages = citizen => {
   const panel = document.querySelector("#citizen-questionnaire-panel");
   const split = document.querySelector(".citizen-split");
   const detailSplit = document.querySelector(".citizen-detail-split");
-  const splitter = document.querySelector(".citizen-detail-splitter");
-  const hasImages = sokoQuestionnaireImages(citizen).length > 0;
-  split?.classList.toggle("has-questionnaire-images", hasImages);
-  detailSplit?.classList.toggle("has-questionnaire-images", hasImages);
-  if (splitter) splitter.hidden = !hasImages;
+  let splitter = document.querySelector(".citizen-detail-splitter");
+  const showQuestionnairePanel = Boolean(citizen);
+  split?.classList.toggle("has-questionnaire-images", showQuestionnairePanel);
+  detailSplit?.classList.toggle("has-questionnaire-images", showQuestionnairePanel);
+  if (showQuestionnairePanel && detailSplit && panel && !splitter) {
+    splitter = document.createElement("div");
+    splitter.className = "vertical-splitter citizen-detail-splitter";
+    splitter.dataset.splitter = "citizenDetail";
+    splitter.setAttribute("role", "separator");
+    splitter.setAttribute("aria-orientation", "vertical");
+    splitter.setAttribute("aria-label", "Fragebogen und Jubilar aufteilen");
+    splitter.setAttribute("aria-valuemin", "25");
+    splitter.setAttribute("aria-valuemax", "55");
+    splitter.setAttribute("aria-valuenow", String(state.citizenDetailSplit));
+    splitter.tabIndex = 0;
+    panel.after(splitter);
+  }
+  if (splitter) splitter.hidden = !showQuestionnairePanel;
   if (!panel) return;
-  panel.hidden = !hasImages;
-  panel.innerHTML = hasImages ? citizenQuestionnaireImagesContent(citizen) : "";
+  panel.hidden = !showQuestionnairePanel;
+  panel.innerHTML = showQuestionnairePanel ? citizenQuestionnaireImagesContent(citizen) : "";
 };
 
 export const renderCitizenDetail = () => {
@@ -435,7 +448,8 @@ export const views = {
   citizens: () => {
     const citizens = filteredCitizens();
     const citizen = citizens.find(item => item.id === state.selectedCitizenId) || citizens[0];
-    const hasQuestionnaireImages = sokoQuestionnaireImages(citizen).length > 0;
+    const showQuestionnairePanel = Boolean(citizen);
+    const citizenSplit = showQuestionnairePanel ? Math.min(state.citizenSplit, 34) : state.citizenSplit;
     return `
       <div class="toolbar">
         <select name="month" data-filter>${months.map(month => `<option value="${month[0]}" ${state.filters.month === month[0] ? "selected" : ""}>${month[1]}</option>`).join("")}</select>
@@ -454,17 +468,17 @@ export const views = {
           <input id="soko-pdf-file" class="file-input" type="file" accept=".pdf,application/pdf">
         </div>
       </div>
-      <div class="${citizen ? `citizen-split${hasQuestionnaireImages ? " has-questionnaire-images" : ""}` : ""}" ${citizen ? `style="--citizen-left:${state.citizenSplit}%"` : ""}>
+      <div class="${citizen ? `citizen-split${showQuestionnairePanel ? " has-questionnaire-images" : ""}` : ""}" ${citizen ? `style="--citizen-left:${citizenSplit}%"` : ""}>
         <section class="panel citizen-panel">
           <h2>Jubilare</h2>
           <div class="citizen-panel-scroll citizen-grid-scroll">${gridHost("citizens")}</div>
         </section>
-        ${citizen ? `<div class="vertical-splitter" data-splitter="citizen" role="separator" aria-orientation="vertical" aria-label="Bereiche aufteilen" aria-valuemin="20" aria-valuemax="80" aria-valuenow="${state.citizenSplit}" tabindex="0"></div>
-        <div class="citizen-detail-split${hasQuestionnaireImages ? " has-questionnaire-images" : ""}" data-split="citizenDetail" style="--citizenDetail-left:${state.citizenDetailSplit}%">
-          <section class="panel citizen-panel citizen-questionnaire-panel" id="citizen-questionnaire-panel" ${hasQuestionnaireImages ? "" : "hidden"}>
-            ${hasQuestionnaireImages ? citizenQuestionnaireImagesContent(citizen) : ""}
+        ${citizen ? `<div class="vertical-splitter" data-splitter="citizen" role="separator" aria-orientation="vertical" aria-label="Bereiche aufteilen" aria-valuemin="${showQuestionnairePanel ? 24 : 20}" aria-valuemax="${showQuestionnairePanel ? 34 : 80}" aria-valuenow="${citizenSplit}" tabindex="0"></div>
+        <div class="citizen-detail-split${showQuestionnairePanel ? " has-questionnaire-images" : ""}" data-split="citizenDetail" style="--citizenDetail-left:${state.citizenDetailSplit}%">
+          <section class="panel citizen-panel citizen-questionnaire-panel" id="citizen-questionnaire-panel">
+            ${citizenQuestionnaireImagesContent(citizen)}
           </section>
-          ${hasQuestionnaireImages ? `<div class="vertical-splitter citizen-detail-splitter" data-splitter="citizenDetail" role="separator" aria-orientation="vertical" aria-label="Fragebogen und Jubilar aufteilen" aria-valuemin="20" aria-valuemax="80" aria-valuenow="${state.citizenDetailSplit}" tabindex="0"></div>` : ""}
+          <div class="vertical-splitter citizen-detail-splitter" data-splitter="citizenDetail" role="separator" aria-orientation="vertical" aria-label="Fragebogen und Jubilar aufteilen" aria-valuemin="25" aria-valuemax="55" aria-valuenow="${state.citizenDetailSplit}" tabindex="0"></div>
           <section class="panel citizen-panel" id="citizen-detail-panel">
             ${citizenDetailContent(citizen)}
           </section>

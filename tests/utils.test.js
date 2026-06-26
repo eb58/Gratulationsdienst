@@ -18,6 +18,7 @@ import {
   normalizeIban,
   repairMojibakeText,
   repairStoredText,
+  safeStorageSetItem,
   updateItem
 } from '../modules/utils.js';
 
@@ -136,5 +137,38 @@ describe('address and stored text helpers', () => {
       name: 'Müller',
       list: ['Günter', 1]
     });
+  });
+});
+
+describe('storage helpers', () => {
+  it('reports quota errors as toast and console warning', () => {
+    const previousDocument = globalThis.document;
+    const previousWindow = globalThis.window;
+    const previousRequestAnimationFrame = globalThis.requestAnimationFrame;
+    const previousConsoleWarn = console.warn;
+    const element = {
+      textContent: '',
+      classList: { add() {}, remove() {} },
+      style: { removeProperty() {}, setProperty() {} }
+    };
+    const warnings = [];
+    globalThis.document = { querySelector: selector => selector === '#toast' ? element : null };
+    globalThis.window = { innerWidth: 1024, innerHeight: 768 };
+    globalThis.requestAnimationFrame = callback => callback();
+    console.warn = (...args) => warnings.push(args);
+    const error = Object.assign(new Error('Setting the value exceeded the quota.'), { name: 'QuotaExceededError' });
+    const storage = { setItem: () => { throw error; } };
+
+    try {
+      assert.equal(safeStorageSetItem(storage, 'gratulationsdienst', '{}', 'Daten'), false);
+      assert.match(element.textContent, /Browser-Speicher ist voll/);
+      assert.match(warnings[0][0], /Storage-Quota/);
+      assert.equal(warnings[0][1], error);
+    } finally {
+      globalThis.document = previousDocument;
+      globalThis.window = previousWindow;
+      globalThis.requestAnimationFrame = previousRequestAnimationFrame;
+      console.warn = previousConsoleWarn;
+    }
   });
 });

@@ -47,12 +47,17 @@ describe('SOKO questionnaire simulation helpers', () => {
     assert.ok(picked.every(citizen => citizen.id));
   });
 
-  it('merges generated images into citizens and caps retained images', () => {
+  it('merges generated scans into citizens without dropping older scans', () => {
     const citizens = [{ id: 'G-1', sokoQuestionnaireImages: [{ image: 'old-1' }, { image: 'old-2' }, { image: 'old-3' }] }, { id: 'G-2' }];
-    const merged = mergeSokoQuestionnaireImages(citizens, [{ citizenId: 'G-1', image: 'new', marks: { wishPost: true }, createdAt: '2026-06-01' }]);
+    const merged = mergeSokoQuestionnaireImages(citizens, [
+      { citizenId: 'G-1', image: 'new-1', marks: { wishPost: true }, pageNumber: 1, createdAt: '2026-06-01' },
+      { citizenId: 'G-1', image: 'new-2', marks: { wishPost: true }, pageNumber: 2, createdAt: '2026-06-01' }
+    ]);
 
-    assert.equal(merged[0].sokoQuestionnaireImages.length, 3);
-    assert.equal(merged[0].sokoQuestionnaireImages[0].image, 'new');
+    assert.equal(merged[0].sokoQuestionnaireImages.length, 5);
+    assert.equal(merged[0].sokoQuestionnaireImages[0].image, 'new-1');
+    assert.equal(merged[0].sokoQuestionnaireImages[1].image, 'new-2');
+    assert.notEqual(merged[0].sokoQuestionnaireImages[0].id, merged[0].sokoQuestionnaireImages[1].id);
     assert.equal(merged[1].sokoQuestionnaireImages, undefined);
   });
 

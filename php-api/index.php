@@ -213,6 +213,11 @@ function dispatch(array $db): void
         return;
     }
 
+    if (($route[0] ?? '') === 'questionnaire-pages') {
+        handleQuestionnairePages($db, $method, array_slice($route, 1));
+        return;
+    }
+
     $collection = $route[0] ?? '';
     $id = $route[1] ?? null;
     if (!in_array($collection, COLLECTIONS, true)) {
@@ -302,6 +307,29 @@ function handleSettings(array $db, string $method, array $route, array $user): v
         $settings = receiptSettingsFromPayload(requireObject(readJson()));
         saveReceiptSettings($db, $settings);
         respond(readReceiptSettings($db));
+    }
+
+    respond(['error' => 'Methode nicht erlaubt.'], 405);
+}
+
+function handleQuestionnairePages(array $db, string $method, array $route): void
+{
+    if ($method === 'GET') {
+        $citizenId = trim((string)($_GET['citizenId'] ?? ''));
+        if ($citizenId === '') respond(['error' => 'citizenId fehlt.'], 422);
+        respond(readQuestionnairePages($db, $citizenId));
+    }
+
+    if ($method === 'POST') {
+        $payload = readJson();
+        $pages = array_is_list($payload) ? $payload : requireList(requireObject($payload)['pages'] ?? [], 'pages');
+        $saved = [];
+        transaction($db, static function () use ($db, $pages, &$saved): void {
+            foreach ($pages as $index => $page) {
+                $saved[] = saveQuestionnairePage($db, requireObject($page), $index);
+            }
+        });
+        respond($saved, 201);
     }
 
     respond(['error' => 'Methode nicht erlaubt.'], 405);
@@ -596,6 +624,67 @@ function saveReceiptSettings(array $db, array $settings): void
         return;
     }
     executeStatement($db, 'INSERT INTO gd_settings (name, value) VALUES (?, ?) ON CONFLICT(name) DO UPDATE SET value = excluded.value', [RECEIPT_SETTINGS_NAME, $payload]);
+}
+
+function readQuestionnairePages(array $db, string $citizenId): array
+{
+    $sql = 'SELECT id, citizen_id, import_id, page_no, source, mime_type, image_data, marks, created_at FROM gd_questionnaire_pages WHERE citizen_id = ? ORDER BY created_at DESC, page_no ASC';
+    if ($db['driver'] === 'mysqli') {
+        $stmt = $db['mysqli']->prepare($sql);
+        bindValues($stmt, [$citizenId]);
+        $stmt->execute();
+        return array_map('questionnairePageFromRow', $stmt->get_result()->fetch_all(MYSQLI_ASSOC));
+    }
+
+    $stmt = $db['pdo']->prepare($sql);
+    $stmt->execute([$citizenId]);
+    return array_map('questionnairePageFromRow', $stmt->fetchAll());
+}
+
+function saveQuestionnairePage(array $db, array $page, int $index): array
+{
+    $citizenId = trim((string)($page['citizenId'] ?? $page['citizen_id'] ?? ''));
+    if ($citizenId === '') throw new RuntimeException('Fragebogen-Seite braucht citizenId.');
+    [$mimeType, $imageData] = questionnaireImageFromDataUrl((string)($page['image'] ?? ''));
+    $id = trim((string)($page['id'] ?? '')) ?: newId('QP');
+    $importId = trim((string)($page['importId'] ?? ''));
+    $pageNo = max(1, (int)($page['pageNumber'] ?? $page['pageNo'] ?? $index + 1));
+    $source = substr(trim((string)($page['source'] ?? 'pdf')), 0, 40);
+    $marks = json_encode($page['marks'] ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+    $values = [$id, $citizenId, $importId, $pageNo, $source, $mimeType, $imageData, $marks];
+
+    if ($db['driver'] === 'mysqli' || $db['driver'] === 'mysql') {
+        executeStatement($db, 'INSERT INTO gd_questionnaire_pages (id, citizen_id, import_id, page_no, source, mime_type, image_data, marks) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE citizen_id = VALUES(citizen_id), import_id = VALUES(import_id), page_no = VALUES(page_no), source = VALUES(source), mime_type = VALUES(mime_type), image_data = VALUES(image_data), marks = VALUES(marks)', $values);
+        return questionnairePageFromRow(fetchOne($db, 'SELECT id, citizen_id, import_id, page_no, source, mime_type, image_data, marks, created_at FROM gd_questionnaire_pages WHERE id = ?', [$id]) ?? []);
+    }
+
+    executeStatement($db, 'INSERT INTO gd_questionnaire_pages (id, citizen_id, import_id, page_no, source, mime_type, image_data, marks) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET citizen_id = excluded.citizen_id, import_id = excluded.import_id, page_no = excluded.page_no, source = excluded.source, mime_type = excluded.mime_type, image_data = excluded.image_data, marks = excluded.marks', $values);
+    return questionnairePageFromRow(fetchOne($db, 'SELECT id, citizen_id, import_id, page_no, source, mime_type, image_data, marks, created_at FROM gd_questionnaire_pages WHERE id = ?', [$id]) ?? []);
+}
+
+function questionnaireImageFromDataUrl(string $image): array
+{
+    if (!preg_match('/^data:([^;,]+);base64,(.+)$/s', trim($image), $match)) {
+        throw new RuntimeException('Fragebogen-Bild muss ein Data-URL sein.');
+    }
+    $data = base64_decode(str_replace(["\r", "\n"], '', $match[2]), true);
+    if ($data === false || $data === '') throw new RuntimeException('Fragebogen-Bild ist ungÃ¼ltig.');
+    return [$match[1], $data];
+}
+
+function questionnairePageFromRow(array $row): array
+{
+    $marks = json_decode((string)($row['marks'] ?? '[]'), true);
+    return [
+        'id' => (string)($row['id'] ?? ''),
+        'citizenId' => (string)($row['citizen_id'] ?? ''),
+        'importId' => (string)($row['import_id'] ?? ''),
+        'pageNumber' => (int)($row['page_no'] ?? 1),
+        'source' => (string)($row['source'] ?? ''),
+        'image' => 'data:' . (string)($row['mime_type'] ?? 'image/jpeg') . ';base64,' . base64_encode((string)($row['image_data'] ?? '')),
+        'marks' => is_array($marks) ? $marks : [],
+        'createdAt' => (string)($row['created_at'] ?? ''),
+    ];
 }
 
 function readCollection(array $db, string $collection): array
@@ -1157,6 +1246,8 @@ function routes(): array
         'GET /{collection}/{id}',
         'PUT /{collection}/{id}',
         'DELETE /{collection}/{id}',
+        'GET /questionnaire-pages?citizenId={id}',
+        'POST /questionnaire-pages',
         'GET /data',
         'PUT /data',
         'GET /settings/receipt',

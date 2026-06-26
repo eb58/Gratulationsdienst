@@ -189,6 +189,14 @@ describe('view partials', () => {
     assert.match(region, /Erika Mustermann/);
   });
 
+  it('shows an explicit empty questionnaire state for citizens without scans', () => {
+    const html = views.citizens();
+
+    assert.match(html, /citizen-questionnaire-panel/);
+    assert.match(html, /Kein Fragebogen eingelesen/);
+    assert.doesNotMatch(html, /citizen-questionnaire-image/);
+  });
+
   it('renders map info for empty and assigned SOKO selections', () => {
     assert.match(sokoMapInfoHtml('offen'), /Über eine SOKO/);
 

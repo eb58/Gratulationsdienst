@@ -1,5 +1,5 @@
 import { canAccessView, isAdmin, state, loadAuthStatus, loadCollectionData } from './modules/state.js';
-import { MONTH_KEY, QUITTUNG_MONTH_KEY, MAP_MONTH_KEY, storeSplit, isValidEmail, normalizeIban, isValidIban, normalizeAmount, normalizeDigits, isValidPostalCode } from './modules/utils.js';
+import { MONTH_KEY, QUITTUNG_MONTH_KEY, MAP_MONTH_KEY, storeSplit, safeStorageSetItem, isValidEmail, normalizeIban, isValidIban, normalizeAmount, normalizeDigits, isValidPostalCode } from './modules/utils.js';
 import { viewTitles, sokoMapInfoHtml } from './modules/views.js';
 import { findNearestAddress } from './modules/map.js';
 import { render, renderDialog } from './modules/render.js';
@@ -55,7 +55,7 @@ const goToView = view => {
 };
 const applyFilter = (name, value) => {
   state.filters[name] = value;
-  if (name === "month") localStorage.setItem(MONTH_KEY, value);
+  if (name === "month") safeStorageSetItem(localStorage, MONTH_KEY, value, "Monatsfilter");
   render();
 };
 const updateFilter = input => {
@@ -175,13 +175,15 @@ document.addEventListener("pointerdown", event => {
   const key = splitter.dataset.splitter;
   const split = splitter.closest(`[data-split="${key}"]`) || splitter.closest(`.${key}-split`);
   if (!split) return;
+  const min = Number(splitter.getAttribute?.("aria-valuemin")) || 20;
+  const max = Number(splitter.getAttribute?.("aria-valuemax")) || 80;
   event.preventDefault();
   splitter.setPointerCapture(event.pointerId);
   document.body.classList.add("is-resizing");
   const move = moveEvent => {
     const rect = split.getBoundingClientRect();
     const raw = ((moveEvent.clientX - rect.left) / rect.width) * 100;
-    const next = Math.max(20, Math.min(80, Math.round(raw)));
+    const next = Math.max(min, Math.min(max, Math.round(raw)));
     state[`${key}Split`] = next;
     split.style.setProperty(`--${key}-left`, `${next}%`);
   };
@@ -204,7 +206,9 @@ document.addEventListener("keydown", event => {
   const delta = event.key === "ArrowLeft" ? -4 : event.key === "ArrowRight" ? 4 : 0;
   if (!split || !delta) return;
   event.preventDefault();
-  const next = Math.max(20, Math.min(80, state[`${key}Split`] + delta));
+  const min = Number(splitter.getAttribute?.("aria-valuemin")) || 20;
+  const max = Number(splitter.getAttribute?.("aria-valuemax")) || 80;
+  const next = Math.max(min, Math.min(max, state[`${key}Split`] + delta));
   state[`${key}Split`] = next;
   split.style.setProperty(`--${key}-left`, `${next}%`);
   splitter.setAttribute("aria-valuenow", String(next));
@@ -220,7 +224,7 @@ document.addEventListener("change", event => {
   if (event.target.matches("#doc-template, #doc-sender, #doc-month, #doc-group")) { actions["generate-docs"](); return; }
   if (event.target.matches("#map-month-select")) {
     state.mapMonth = event.target.value;
-    localStorage.setItem(MAP_MONTH_KEY, event.target.value);
+    safeStorageSetItem(localStorage, MAP_MONTH_KEY, event.target.value, "Kartenmonat");
     const info = document.querySelector("#map-soko-info");
     if (info) info.innerHTML = sokoMapInfoHtml(info.dataset.groupId || "");
     return;
@@ -228,7 +232,7 @@ document.addEventListener("change", event => {
   const bound = event.target.closest("[data-bind]");
   if (bound) {
     state[bound.dataset.bind] = bound.value;
-    if (bound.dataset.bind === "quittungMonat") localStorage.setItem(QUITTUNG_MONTH_KEY, bound.value);
+    if (bound.dataset.bind === "quittungMonat") safeStorageSetItem(localStorage, QUITTUNG_MONTH_KEY, bound.value, "Quittungsmonat");
     if (dirtyTracked) return;
     render();
     return;

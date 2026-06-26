@@ -16,7 +16,6 @@ const PDF_WIDTH_PT = 595.28;
 const PDF_HEIGHT_PT = 841.89;
 const JPEG_QUALITY = 0.74;
 const MAX_SIMULATED_PAGES = 8;
-const MAX_IMAGES_PER_CITIZEN = 3;
 const wishKeys = ["wishPost", "wishVisit", "wishNone"];
 const weddingKeys = ["weddingGold", "weddingDiamond", "weddingIron", "weddingGrace"];
 const checkboxLabels = {
@@ -266,7 +265,7 @@ export const createSokoQuestionnaireSimulation = async (citizens, options = {}) 
   const pages = await Promise.all(selected.map(async (citizen, index) => {
     const marks = options.marksByCitizenId?.[citizen.id] || randomSokoQuestionnaireMarks(random);
     const image = await drawQuestionnairePage(citizen, marks, index);
-    return { citizenId: citizen.id, image, marks, createdAt };
+    return { citizenId: citizen.id, image, marks, pageNumber: index + 1, createdAt };
   }));
   const pdfBytes = jpegImagesToPdfBytes(pages.map(page => ({
     data: dataUrlBytes(page.image),
@@ -281,17 +280,18 @@ export const mergeSokoQuestionnaireImages = (citizens, pages) => {
   const byCitizen = pages.reduce((acc, page) => ({
     ...acc,
     [page.citizenId]: [...(acc[page.citizenId] || []), {
-      id: `SIM-${page.createdAt}-${page.citizenId}`,
+      id: page.id || `SIM-${page.createdAt}-${page.citizenId}-${page.pageNumber || index + 1}`,
       createdAt: page.createdAt,
       image: page.image,
       marks: page.marks,
-      source: "simulation"
+      pageNumber: page.pageNumber || index + 1,
+      source: page.source || "simulation"
     }]
   }), {});
   return citizens.map(citizen => {
     const images = byCitizen[citizen.id];
     if (!images?.length) return citizen;
     const existing = Array.isArray(citizen.sokoQuestionnaireImages) ? citizen.sokoQuestionnaireImages : [];
-    return { ...citizen, sokoQuestionnaireImages: [...images, ...existing].slice(0, MAX_IMAGES_PER_CITIZEN) };
+    return { ...citizen, sokoQuestionnaireImages: [...images, ...existing] };
   });
 };

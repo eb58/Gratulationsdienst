@@ -1,4 +1,4 @@
-import { normalize, escapeHtml, formatDate, formatDateDe, formatStreetAddress, calculateAge } from './utils.js';
+import { normalize, escapeHtml, formatDate, formatDateDe, formatStreetAddress, calculateAge, safeStorageSetItem } from './utils.js';
 import { streetGroupDisplay, sokoColors } from './domain.js';
 import { state } from './state.js';
 import { filteredCitizens, groupForCitizen, selectedCitizen } from './assignment.js';
@@ -6,6 +6,7 @@ import { SOKO_QUESTIONNAIRE_IMPORTED_STATUS } from './sokoQuestionnaire.js';
 import { render, renderDialog } from './render.js'; // Zyklus OK: render wird nur in Event-Callbacks aufgerufen
 import { renderCitizenDetail, renderRegionAssignment } from './views.js'; // Zyklus OK: lazy
 import { requestDirtyFormLeave } from './dirtyForms.js';
+import { loadQuestionnairePagesForCitizen } from './questionnairePages.js';
 
 export const gridTheme = () => window.agGrid?.themeQuartz?.withParams ? window.agGrid.themeQuartz.withParams({
   accentColor: "#0f5d58",
@@ -19,6 +20,13 @@ export const gridTheme = () => window.agGrid?.themeQuartz?.withParams ? window.a
 }) : undefined;
 
 export const badgeCell = (value, tone = "") => `<span class="pill ${tone}">${escapeHtml(value)}</span>`;
+const renderCitizenDetailWithQuestionnaires = () => {
+  renderCitizenDetail();
+  const citizenId = state.selectedCitizenId;
+  loadQuestionnairePagesForCitizen(citizenId).then(pages => {
+    if (pages.length && state.selectedCitizenId === citizenId) renderCitizenDetail();
+  });
+};
 const accentBadgeCell = (value, color) => `
   <span class="pill" style="color:${color}">
     ${escapeHtml(value)}
@@ -174,13 +182,11 @@ const restoreGridState = (gridKey, api) => {
 const saveGridState = (gridKey, api) => {
   const columnState = normalizedColumnState(api.getColumnState?.());
   if (!columnState?.length) return;
-  try {
-    localStorage.setItem(gridStateStorageKey(gridKey), JSON.stringify({
-      columnState,
-      sortState: normalizedSortState(columnState),
-      filterModel: api.getFilterModel?.() || {}
-    }));
-  } catch { /* localStorage nicht verfügbar */ }
+  safeStorageSetItem(localStorage, gridStateStorageKey(gridKey), JSON.stringify({
+    columnState,
+    sortState: normalizedSortState(columnState),
+    filterModel: api.getFilterModel?.() || {}
+  }), `Tabellenlayout ${gridKey}`);
 };
 
 export const gridDefinitions = {
@@ -209,7 +215,7 @@ export const gridDefinitions = {
       const inList = filteredCitizens().some(c => c.id === state.selectedCitizenId);
       if (!inList) {
         const first = params.api.getDisplayedRowAtIndex(0);
-        if (first) { state.selectedCitizenId = first.data.id; renderCitizenDetail(); params.api.redrawRows?.(); }
+        if (first) { state.selectedCitizenId = first.data.id; renderCitizenDetailWithQuestionnaires(); params.api.redrawRows?.(); }
       }
     },
     onRowClicked: params => {
@@ -217,7 +223,7 @@ export const gridDefinitions = {
       if (params.data.id === state.selectedCitizenId) return;
       const selectRow = () => {
         state.selectedCitizenId = params.data.id;
-        renderCitizenDetail();
+        renderCitizenDetailWithQuestionnaires();
         params.api.redrawRows?.();
       };
       if (!requestDirtyFormLeave(selectRow)) { params.api.redrawRows?.(); renderDialog(); }

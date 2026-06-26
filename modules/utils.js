@@ -9,11 +9,25 @@ const storedSplitters = () => {
   try { return JSON.parse(localStorage.getItem(SPLITTERS_KEY)) || {}; }
   catch { return {}; }
 };
-export const storedSplit = (key, fallback) => {
+export const storedSplit = (key, fallback, min = 20, max = 80) => {
   const value = Number(storedSplitters()[key]);
-  return Number.isFinite(value) ? Math.max(20, Math.min(80, value)) : fallback;
+  return Number.isFinite(value) ? Math.max(min, Math.min(max, value)) : fallback;
 };
-export const storeSplit = (key, value) => localStorage.setItem(SPLITTERS_KEY, JSON.stringify({ ...storedSplitters(), [key]: value }));
+const isStorageQuotaError = error => error?.name === "QuotaExceededError" || /quota/i.test(error?.message || "");
+export const safeStorageSetItem = (storage, key, value, label = key) => {
+  try {
+    storage?.setItem(key, value);
+    return true;
+  } catch (error) {
+    const quota = isStorageQuotaError(error);
+    console.warn(`${label} konnte nicht gespeichert werden${quota ? " (Storage-Quota)" : ""}.`, error);
+    toast(quota
+      ? `${label} konnte nicht gespeichert werden: Browser-Speicher ist voll.`
+      : `${label} konnte nicht gespeichert werden.`);
+    return false;
+  }
+};
+export const storeSplit = (key, value) => safeStorageSetItem(localStorage, SPLITTERS_KEY, JSON.stringify({ ...storedSplitters(), [key]: value }), "Splitter-Position");
 export const $ = selector => document.querySelector(selector);
 export const $$ = selector => [...document.querySelectorAll(selector)];
 export const todayIso = () => new Date().toISOString().slice(0, 10);

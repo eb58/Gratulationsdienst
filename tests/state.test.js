@@ -26,6 +26,7 @@ globalThis.SOKO_STRASSENVERZEICHNIS = {
 const stateModule = await import('../modules/state.js');
 const {
   canAccessView,
+  dataForPersistence,
   hasBackendData,
   isAdmin,
   mergeById,
@@ -93,6 +94,19 @@ describe('loaded data normalization', () => {
     assert.equal(normalized.sokoGroups.some(group => group.id === 'SOKO 99'), false);
     assert.equal(normalized.sokoMembers.some(member => member.groupId === 'SOKO 99'), false);
     assert.ok(normalized.streets.some(street => street.name === 'Teststraße'));
+  });
+  it('removes transient questionnaire images from loaded and persisted data', () => {
+    const data = {
+      citizens: [{ id: 'G-1', firstName: 'Ada', sokoQuestionnaireImages: [{ image: 'data:image/jpeg;base64,xxx' }] }],
+      sokoGroups: [],
+      sokoMembers: [],
+      streets: [],
+      templates: []
+    };
+
+    assert.equal(normalizeLoadedData(data).citizens[0].sokoQuestionnaireImages, undefined);
+    assert.equal(dataForPersistence(data).citizens[0].sokoQuestionnaireImages, undefined);
+    assert.equal(data.citizens[0].sokoQuestionnaireImages.length, 1);
   });
 });
 

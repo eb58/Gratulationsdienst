@@ -550,7 +550,7 @@ h3 {
 }
 
 .citizen-detail-split.has-questionnaire-images {
-  grid-template-columns: minmax(210px, calc(var(--citizenDetail-left, 42%) - 6px)) 12px minmax(0, calc(100% - var(--citizenDetail-left, 42%) - 6px));
+  grid-template-columns: minmax(240px, calc(var(--citizenDetail-left, 42%) - 18px)) 12px minmax(360px, 1fr);
 }
 
 .citizen-questionnaire-panel[hidden] {
@@ -575,7 +575,9 @@ h3 {
 .citizen-questionnaire-image img {
   display: block;
   width: 100%;
+  max-height: 72vh;
   height: auto;
+  object-fit: contain;
   border: 1px solid #d6dedc;
 }
 
