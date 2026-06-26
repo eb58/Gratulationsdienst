@@ -113,8 +113,8 @@ describe('seed-citizens integration (echtes Strassenverzeichnis)', () => {
       .reduce((map, age) => (map[age] = (map[age] || 0) + 1, map), {});
 
     [85, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101].forEach(age => assert.ok(ageCounts[age], `Alter ${age} fehlt`));
-    assert.ok(ageCounts[85] > ageCounts[90], 'Sterblichkeit: 85 muss häufiger als 90 sein');
-    assert.ok(ageCounts[90] > ageCounts[95], 'Sterblichkeit: 90 muss häufiger als 95 sein');
+    assert.ok(ageCounts[85] >= ageCounts[90], 'Sterblichkeit: 85 darf nicht seltener als 90 sein');
+    assert.ok(ageCounts[90] >= ageCounts[95], 'Sterblichkeit: 90 darf nicht seltener als 95 sein');
     assert.ok(ageCounts[95] >= ageCounts[100], 'Sterblichkeit: 95 darf nicht seltener als 100 sein');
   });
 

@@ -880,7 +880,7 @@ export const views = {
                 <span>Nur Testzwecke</span>
                 <strong>${state.data.citizens.length.toLocaleString("de-DE")} Jubilare · ${state.data.importLog.length.toLocaleString("de-DE")} Log</strong>
               </div>
-              <button type="button" class="ghost-button test-action-button" data-action="seed-citizens">${Math.max(30, state.data.sokoGroups.length)} CSV simulieren</button>
+              <button type="button" class="ghost-button test-action-button" data-action="seed-citizens">${Math.max(50, state.data.sokoGroups.length)} CSV simulieren</button>
               <button type="button" class="danger-button test-action-button" data-action="clear-citizens">Löschen</button>
             </div>
           ` : ""}

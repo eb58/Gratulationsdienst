@@ -19,6 +19,7 @@ globalThis.ResizeObserver = class {
   observe() {}
   disconnect() {}
 };
+globalThis.requestAnimationFrame = cb => cb();
 globalThis.document = { querySelectorAll: () => [] };
 
 const grid = await import('../modules/grid.js');
@@ -152,16 +153,20 @@ describe('mountGrid', () => {
     const element = { dataset: { grid: 'citizens' }, innerHTML: '' };
     const calls = [];
     let currentColumnState = [{ colId: 'name', width: 220, sort: 'asc', sortIndex: 0 }];
+    let currentPageSize = 50;
     const api = {
       applyColumnState: payload => calls.push(['applyColumnState', payload]),
       setFilterModel: payload => calls.push(['setFilterModel', payload]),
+      paginationSetPageSize: payload => { calls.push(['paginationSetPageSize', payload]); currentPageSize = payload; },
       getColumnState: () => currentColumnState,
-      getFilterModel: () => ({ status: { values: ['geprüft'] } })
+      getFilterModel: () => ({ status: { values: ['geprüft'] } }),
+      paginationGetPageSize: () => currentPageSize
     };
     localStorage.setItem('gratulationsdienst.grid.citizens.state', JSON.stringify({
       columnState: [{ colId: 'birthday', width: 130 }, { colId: 'name', width: 180 }],
       sortState: [{ colId: 'birthday', sort: 'desc', sortIndex: 0 }],
-      filterModel: { status: { values: ['offen'] } }
+      filterModel: { status: { values: ['offen'] } },
+      paginationPageSize: 100
     }));
     let definition;
     window.agGrid = { createGrid: (_element, options) => { definition = options; } };
@@ -173,6 +178,8 @@ describe('mountGrid', () => {
     definition.onColumnResized({ api, finished: true });
     definition.onSortChanged({ api });
     definition.onFilterChanged({ api });
+    currentPageSize = 100;
+    definition.onPaginationChanged({ api, newPageSize: true });
 
     assert.equal(state.gridApis.citizens, api);
     assert.deepEqual(calls[0], ['applyColumnState', {
@@ -183,6 +190,7 @@ describe('mountGrid', () => {
       applyOrder: true
     }]);
     assert.deepEqual(calls[1], ['setFilterModel', { status: { values: ['offen'] } }]);
+    assert.deepEqual(calls[2], ['paginationSetPageSize', 100]);
     const savedState = JSON.parse(localStorage.getItem('gratulationsdienst.grid.citizens.state'));
     assert.deepEqual(savedState.columnState, [
       { colId: 'birthday', width: 130, sort: 'desc', sortIndex: 0 },
@@ -193,6 +201,7 @@ describe('mountGrid', () => {
       { colId: 'name', sort: 'asc', sortIndex: 1 }
     ]);
     assert.deepEqual(savedState.filterModel, api.getFilterModel());
+    assert.equal(savedState.paginationPageSize, 100);
   });
 
   it('mounts every grid host found in the document', () => {

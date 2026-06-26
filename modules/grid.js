@@ -155,13 +155,14 @@ const gridStateFromParsed = parsed => ({
   sortState: Array.isArray(parsed?.sortState)
     ? parsed.sortState.filter(item => item?.colId && (item.sort === "asc" || item.sort === "desc"))
     : normalizedSortState(parsed?.columnState),
-  filterModel: parsed?.filterModel && typeof parsed.filterModel === "object" ? parsed.filterModel : {}
+  filterModel: parsed?.filterModel && typeof parsed.filterModel === "object" ? parsed.filterModel : {},
+  paginationPageSize: Number.isFinite(parsed?.paginationPageSize) ? parsed.paginationPageSize : undefined
 });
 const storedGridState = gridKey => {
   try {
     const parsed = JSON.parse(localStorage.getItem(gridStateStorageKey(gridKey)) || "null");
     const gridState = gridStateFromParsed(parsed);
-    if (gridState.columnState.length || gridState.sortState.length || Object.keys(gridState.filterModel).length) return gridState;
+    if (gridState.columnState.length || gridState.sortState.length || Object.keys(gridState.filterModel).length || Number.isFinite(gridState.paginationPageSize)) return gridState;
   } catch { /* gespeicherter Grid-State nicht lesbar */ }
   try {
     const columnState = JSON.parse(localStorage.getItem(legacyGridColumnStorageKey(gridKey)) || "[]");
@@ -178,6 +179,7 @@ const restoreGridState = (gridKey, api) => {
   const columnState = [...stateByColumn.values()];
   if (columnState.length) api.applyColumnState?.({ state: columnState, applyOrder: true });
   if (gridState.filterModel && Object.keys(gridState.filterModel).length) api.setFilterModel?.(gridState.filterModel);
+  if (Number.isFinite(gridState.paginationPageSize)) api.paginationSetPageSize?.(gridState.paginationPageSize);
 };
 const saveGridState = (gridKey, api) => {
   const columnState = normalizedColumnState(api.getColumnState?.());
@@ -185,7 +187,8 @@ const saveGridState = (gridKey, api) => {
   safeStorageSetItem(localStorage, gridStateStorageKey(gridKey), JSON.stringify({
     columnState,
     sortState: normalizedSortState(columnState),
-    filterModel: api.getFilterModel?.() || {}
+    filterModel: api.getFilterModel?.() || {},
+    paginationPageSize: api.paginationGetPageSize?.()
   }), `Tabellenlayout ${gridKey}`);
 };
 
@@ -322,20 +325,26 @@ export const mountGrid = element => {
     element.innerHTML = `<div class="empty-state">AG Grid konnte nicht geladen werden.</div>`;
     return;
   }
+  const storedPageSize = storedGridState(gridKey).paginationPageSize;
+  if (Number.isFinite(storedPageSize)) definition.paginationPageSize = storedPageSize;
+  let ready = false;
   const onGridReady = definition.onGridReady;
   definition.onGridReady = params => {
     onGridReady?.(params);
     state.gridApis[gridKey] = params.api;
     restoreGridState(gridKey, params.api);
+    requestAnimationFrame(() => { ready = true; });
   };
   const onColumnResized = definition.onColumnResized;
   const onColumnMoved = definition.onColumnMoved;
   const onSortChanged = definition.onSortChanged;
   const onFilterChanged = definition.onFilterChanged;
+  const onPaginationChanged = definition.onPaginationChanged;
   definition.onColumnResized = params => { onColumnResized?.(params); if (params.finished) saveGridState(gridKey, params.api); };
   definition.onColumnMoved = params => { onColumnMoved?.(params); saveGridState(gridKey, params.api); };
   definition.onSortChanged = params => { onSortChanged?.(params); saveGridState(gridKey, params.api); };
   definition.onFilterChanged = params => { onFilterChanged?.(params); saveGridState(gridKey, params.api); };
+  definition.onPaginationChanged = params => { onPaginationChanged?.(params); if (ready && params.newPageSize) saveGridState(gridKey, params.api); };
   window.agGrid.createGrid(element, definition);
 };
 export const mountGrids = () => [...document.querySelectorAll("[data-grid]")].forEach(mountGrid);
