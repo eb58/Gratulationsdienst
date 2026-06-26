@@ -31,7 +31,7 @@ const mockBackend = context => context.route('**/php-api/**', route => {
   if (path === '/auth/login') return json({ token: 'e2e-token', user: adminUser });
   if (path === '/auth/logout') return json({});
   if (path === '/settings/receipt') return json({});
-  return json([]); // citizens, sokoGroups, sokoMembers, streets, senders, templates, importLog
+  return json([]); // citizens, sokoGroups, sokoMembers, streets, senders, templates
 });
 
 let server, browser;
@@ -113,7 +113,6 @@ describe('Gratulationsdienst E2E', () => {
       const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('gratulationsdienst') || '{}'));
       assert.equal(stored.citizens.some(citizen => citizen.sokoQuestionnaireImages?.length), false);
       assert.ok(stored.citizens.some(citizen => citizen.status === 'Fragebogen eingelesen'));
-      assert.ok(stored.importLog.some(entry => entry.type === 'SOKO-PDF'));
     } finally { await context.close(); }
   }, { timeout: 60000 });
 

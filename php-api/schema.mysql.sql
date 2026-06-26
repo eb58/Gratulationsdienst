@@ -113,21 +113,6 @@ CREATE TABLE IF NOT EXISTS gd_templates (
     INDEX idx_gd_templates_occasion (occasion)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS gd_import_log (
-    id VARCHAR(48) NOT NULL PRIMARY KEY,
-    entry_time VARCHAR(80) NOT NULL DEFAULT '',
-    name VARCHAR(180) NOT NULL DEFAULT '',
-    address VARCHAR(255) NOT NULL DEFAULT '',
-    birth_date DATE NULL,
-    age INT NULL,
-    group_id VARCHAR(32) NOT NULL DEFAULT '',
-    entry_type VARCHAR(40) NOT NULL DEFAULT '',
-    message TEXT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_gd_import_log_group (group_id),
-    INDEX idx_gd_import_log_type (entry_type)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
 CREATE TABLE IF NOT EXISTS gd_questionnaire_pages (
     id VARCHAR(64) NOT NULL PRIMARY KEY,
     citizen_id VARCHAR(32) NOT NULL,
