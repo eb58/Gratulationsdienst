@@ -269,38 +269,66 @@ const reviewQuittungEntriesByGroup = entries => entries.reduce((map, { citizen, 
   return map;
 }, new Map());
 const ageDistribution = citizens => {
-  const groups = [
-    { key: "85", label: "85", color: "#d09b2c", count: 0 },
-    { key: "90-99", label: "90-99", color: "#0f5d58", count: 0 },
-    { key: "100+", label: "100+", color: "#b64036", count: 0 }
-  ];
-  citizens.forEach(citizen => {
+  const counts = citizens.reduce((acc, citizen) => {
     const age = calculateAge(citizen.birthDate);
-    const group = age >= 100 ? groups[2] : age >= 90 ? groups[1] : groups[0];
-    group.count += 1;
-  });
-  return groups;
+    if (Number.isFinite(age) && (age === 85 || age >= 90)) acc.set(age, (acc.get(age) || 0) + 1);
+    return acc;
+  }, new Map());
+  const maxAge = Math.max(0, ...counts.keys());
+  const ages = [
+    ...(counts.has(85) ? [85] : []),
+    ...Array.from({ length: Math.max(0, maxAge - 89) }, (_, index) => index + 90)
+  ];
+  return ages.map(age => ({ age, count: counts.get(age) || 0 }));
 };
+const ageLabel = age => age === 85 || age % 5 === 0 ? age : "";
 const ageDistributionChart = citizens => {
   const groups = ageDistribution(citizens);
-  const total = groups.reduce((sum, group) => sum + group.count, 0);
-  const segments = groups.reduce((acc, group) => {
-    const value = total ? (group.count / total) * 100 : 0;
-    return {
-      offset: acc.offset + value,
-      html: `${acc.html}<circle class="age-chart-segment" cx="32" cy="32" r="15.9" pathLength="100" stroke="${group.color}" stroke-dasharray="${value} ${100 - value}" stroke-dashoffset="${-acc.offset}"></circle>`
-    };
-  }, { offset: 0, html: "" }).html;
+  const max = Math.max(1, ...groups.map(group => group.count));
+  const chartItems = groups.flatMap(group => group.age === 85 ? [group, { spacer: true }] : [group]);
+  const labels = chartItems
+    .map((group, index) => ({ label: group.spacer ? "" : ageLabel(group.age), column: index + 1 }))
+    .filter(item => item.label);
   return `
     <div class="age-card-body">
-      <svg class="age-chart" viewBox="0 0 64 64" role="img" aria-label="Altersverteilung">
-        <circle class="age-chart-track" cx="32" cy="32" r="15.9"></circle>
-        ${segments}
-        <text x="32" y="35">${total}</text>
-      </svg>
-      <div class="age-legend">
-        ${groups.map(group => `<span><i style="background:${group.color}"></i>${escapeHtml(group.label)} <strong>${group.count}</strong></span>`).join("")}
-      </div>
+      ${groups.length ? `<div class="age-histogram" style="--age-count:${chartItems.length}" role="img" aria-label="Altersverteilung nach Jahren">
+        <div class="age-bars">
+          ${chartItems.map(group => group.spacer ? `<div class="age-bin age-spacer" aria-hidden="true"></div>` : `
+          <div class="age-bin" title="${group.age} Jahre: ${group.count}">
+            <div class="age-bar" style="height:${Math.max(8, Math.round((group.count / max) * 100))}%"></div>
+          </div>
+        `).join("")}
+        </div>
+        <div class="age-axis">
+          ${labels.map(item => `<span style="grid-column:${item.column}">${item.label}</span>`).join("")}
+        </div>
+      </div>` : `<div class="empty-state compact">Keine Jubilare</div>`}
+    </div>
+  `;
+};
+const genderDistribution = citizens => citizens.reduce((counts, citizen) => {
+  const salutation = normalize(citizen.salutation);
+  const key = salutation === "frau" ? "female" : salutation === "herr" ? "male" : "unknown";
+  counts[key] += 1;
+  return counts;
+}, { female: 0, male: 0, unknown: 0 });
+const genderDistributionChart = citizens => {
+  const counts = genderDistribution(citizens);
+  const total = counts.female + counts.male + counts.unknown;
+  const items = [
+    { key: "female", label: "Frauen", value: counts.female, tone: "female" },
+    { key: "male", label: "Männer", value: counts.male, tone: "male" },
+    ...(counts.unknown ? [{ key: "unknown", label: "Unklar", value: counts.unknown, tone: "unknown" }] : [])
+  ];
+  return `
+    <div class="gender-bars" aria-label="Statistik nach Geschlecht">
+      ${items.map(item => `
+        <div class="gender-row ${item.tone}">
+          <span>${escapeHtml(item.label)}</span>
+          <strong>${item.value.toLocaleString("de-DE")}</strong>
+          <i><b style="width:${total ? Math.round((item.value / total) * 100) : 0}%"></b></i>
+        </div>
+      `).join("")}
     </div>
   `;
 };
@@ -389,6 +417,10 @@ export const views = {
           <article class="metric-card age-card">
             <span>Altersverteilung</span>
             ${ageDistributionChart(citizens)}
+          </article>
+          <article class="metric-card gender-card">
+            <span>Geschlecht</span>
+            ${genderDistributionChart(citizens)}
           </article>
           <article class="metric-card accent-teal">
             <span>SOKO-Gruppen</span>

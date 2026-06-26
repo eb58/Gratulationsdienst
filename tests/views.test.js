@@ -210,7 +210,18 @@ describe('view partials', () => {
 
 describe('main views', () => {
   it('renders operational views with their key controls', () => {
-    assert.match(views.dashboard(), /SOKO Statistiken/);
+    state.data.citizens = [
+      { ...citizen, id: 'G-85', birthDate: '1941-06-01' },
+      { ...citizen, id: 'G-90', birthDate: '1936-06-01' },
+      { ...citizen, id: 'G-91', birthDate: '1935-06-01', salutation: 'Herr' }
+    ];
+    const dashboard = views.dashboard();
+    assert.match(dashboard, /SOKO Statistiken/);
+    assert.match(dashboard, /age-histogram/);
+    assert.match(dashboard, />85</);
+    assert.match(dashboard, />90</);
+    assert.match(dashboard, /Statistik nach Geschlecht/);
+    assert.match(dashboard, /Frauen/);
     assert.match(views.citizens(), /data-grid="citizens"/);
     assert.match(views.soko(), /data-grid="members"/);
     assert.match(views.regions(), /data-grid="streets"/);

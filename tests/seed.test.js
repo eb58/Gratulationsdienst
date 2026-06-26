@@ -26,7 +26,7 @@ const dirCode = readFileSync(new URL('../public/data/soko-strassenverzeichnis.js
 (0, eval)(dirCode);
 
 const { buildStreetData } = await import('../modules/domain.js');
-const { groupedTestAssignments, balancedTestAssignments, shuffledTestValues, testFirstNames, testLastNames, testCsvRow, testCsvText } = await import('../modules/testdata.js');
+const { groupedTestAssignments, balancedTestAssignments, shuffledTestValues, testFirstNames, testLastNames, mortalityWeightedTestAges, testCsvRow, testCsvText } = await import('../modules/testdata.js');
 const { parseCsv, mapImportRow } = await import('../modules/import.js');
 const { buildImportResult } = await import('../modules/citizens.js');
 const { streetAssignment } = await import('../modules/assignment.js');
@@ -43,9 +43,13 @@ const seed = () => {
   const assignments = balancedTestAssignments(groups, rowCount);
   const firstNames = shuffledTestValues(testFirstNames);
   const lastNames = shuffledTestValues(testLastNames);
-  const csvRows = assignments.map((assignment, index) => {
+  const names = assignments.map((_, index) => {
     const [salutation, firstName] = firstNames[index % firstNames.length];
-    return testCsvRow(index, { salutation, firstName, lastName: lastNames[index % lastNames.length] }, assignment, state.quittungMonat);
+    return { salutation, firstName, lastName: lastNames[index % lastNames.length] };
+  });
+  const ages = mortalityWeightedTestAges(rowCount, names.map(name => name.salutation));
+  const csvRows = assignments.map((assignment, index) => {
+    return testCsvRow(index, names[index], assignment, state.quittungMonat, Math.random, ages[index]);
   });
   const mapped = parseCsv(testCsvText(csvRows)).map(mapImportRow);
   return { rowCount, assignments, csvRows, mapped };
@@ -102,10 +106,16 @@ describe('seed-citizens integration (echtes Strassenverzeichnis)', () => {
     assert.notDeepEqual(a, b, 'zwei Seed-Laeufe ergaben identische Strassen');
   });
 
-  it('deckt alle Altersstufen ab', () => {
+  it('deckt alle Altersstufen mit Sterblichkeitsgewichtung ab', () => {
     const { mapped } = seed();
-    const ages = new Set(mapped.map(r => new Date().getFullYear() - Number(r.birthDate.slice(0, 4))));
-    [85, 90, 95, 100, 101].forEach(age => assert.ok(ages.has(age), `Alter ${age} fehlt`));
+    const ageCounts = mapped
+      .map(r => new Date().getFullYear() - Number(r.birthDate.slice(0, 4)))
+      .reduce((map, age) => (map[age] = (map[age] || 0) + 1, map), {});
+
+    [85, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101].forEach(age => assert.ok(ageCounts[age], `Alter ${age} fehlt`));
+    assert.ok(ageCounts[85] > ageCounts[90], 'Sterblichkeit: 85 muss häufiger als 90 sein');
+    assert.ok(ageCounts[90] > ageCounts[95], 'Sterblichkeit: 90 muss häufiger als 95 sein');
+    assert.ok(ageCounts[95] >= ageCounts[100], 'Sterblichkeit: 95 darf nicht seltener als 100 sein');
   });
 
   it('importiert restlos ohne Pflichtfeld-Fehler oder Dubletten', () => {
