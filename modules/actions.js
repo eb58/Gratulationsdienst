@@ -638,6 +638,15 @@ export const actions = {
     render();
     toast(state.generatedDocs.length ? `${state.generatedDocs.length} Dokumente erzeugt.` : "Keine geprüften Jubilare in der aktuellen Auswahl.");
   },
+  "reset-selected-for-reprint": () => {
+    const citizen = byId(state.data.citizens, state.selectedCitizenId);
+    if (!citizen || !isPrintedCitizen(citizen)) { toast("Bitte einen bereits gedruckten Jubilar auswählen."); return; }
+    state.data.citizens = updateItem(state.data.citizens, citizen.id, { ...citizen, status: "geprüft", updatedAt: todayIso() });
+    state.generatedDocs = [];
+    saveData();
+    render();
+    toast("Jubilar für den Nachdruck auf geprüft gesetzt.");
+  },
   "print-docs": printCurrentRun,
   "toggle-print-background": e => { state.printBackground = e.target.checked; },
   "save-quittung-settings": () => {

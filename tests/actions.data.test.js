@@ -398,6 +398,30 @@ describe('Dokumente und Quittung', () => {
     assert.deepEqual(state.generatedDocs.map(doc => doc.wish), ['per Post']);
   });
 
+  it('reset-selected-for-reprint setzt gedruckte Jubilare wieder auf geprüft', () => {
+    state.data.citizens = [{
+      id: 'G-1',
+      firstName: 'Erika',
+      lastName: 'Gedruckt',
+      street: 'Teststrasse',
+      houseNo: '1',
+      postalCode: '13437',
+      birthDate: '1936-06-01',
+      status: 'gedruckt',
+      wish: 'per Post',
+      printedAt: '2026-06-01'
+    }];
+    state.selectedCitizenId = 'G-1';
+    state.generatedDocs = [{ citizenId: 'G-1' }];
+
+    actions['reset-selected-for-reprint']();
+
+    const citizen = state.data.citizens[0];
+    assert.equal(citizen.status, 'geprüft');
+    assert.equal(citizen.printedAt, '2026-06-01');
+    assert.deepEqual(state.generatedDocs, []);
+  });
+
   it('save-quittung-settings speichert im Datei-Modus und normalisiert den Betrag', async () => {
     state.quittungBetrag = '9,9x';
     actions['save-quittung-settings']();

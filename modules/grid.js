@@ -44,6 +44,14 @@ const statusBadgeCell = value => {
     : "#66706d";
   return value === "offen" ? badgeCell(value, "gold") : accentBadgeCell(value, color);
 };
+const wishBadgeCell = value => {
+  const normalized = normalize(value);
+  const tone = normalized === "keine" ? "red"
+    : normalized === "offen" || !normalized ? "gold"
+    : normalized.startsWith("besuch") ? "green"
+    : "";
+  return badgeCell(value || "offen", tone);
+};
 const agTheme = () => { const theme = gridTheme(); return theme ? { theme } : {}; };
 
 export const baseGridOptions = () => ({
@@ -175,15 +183,17 @@ export const gridDefinitions = {
       age: Number(new Date().getFullYear()) - Number(citizen.birthDate?.slice(0, 4)),
       address: `${citizen.street} ${citizen.houseNo}`,
       groupId: groupForCitizen(citizen)?.id || "offen",
+      wish: citizen.wish || "",
       status: citizen.status
     })),
     columnDefs: [
       { headerName: "Name", field: "name", width: 220, minWidth: 150 },
+      { headerName: "Status", field: "status", width: 135, minWidth: 115, cellRenderer: params => statusBadgeCell(params.value) },
+      { headerName: "Glückwünsche", field: "wish", width: 155, minWidth: 130, cellRenderer: params => wishBadgeCell(params.value) },
       { headerName: "Geburtstag", field: "birthday", width: 130, minWidth: 120, valueFormatter: params => formatDate(params.value) },
       { headerName: "Alter", field: "age", width: 90, minWidth: 80, filter: "agNumberColumnFilter" },
       { headerName: "Adresse", field: "address", width: 280, minWidth: 180 },
-      { headerName: "SOKO", field: "groupId", width: 115, minWidth: 105, cellRenderer: params => sokoBadgeCell(params.value) },
-      { headerName: "Status", field: "status", width: 135, minWidth: 115, cellRenderer: params => statusBadgeCell(params.value) }
+      { headerName: "SOKO", field: "groupId", width: 115, minWidth: 105, cellRenderer: params => sokoBadgeCell(params.value) }
     ],
     getRowId: params => params.data.id,
     getRowClass: params => params.data.id === state.selectedCitizenId ? "selected" : "",

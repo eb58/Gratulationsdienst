@@ -110,7 +110,11 @@ describe('grid basics', () => {
 
 describe('grid definitions', () => {
   it('builds row data for the main grids', () => {
-    assert.deepEqual(gridDefinitions.citizens().rowData.map(row => row.id), ['G-1']);
+    const citizenDefinition = gridDefinitions.citizens();
+    assert.deepEqual(citizenDefinition.rowData.map(row => row.id), ['G-1']);
+    assert.equal(citizenDefinition.rowData[0].wish, 'Besuch erwünscht');
+    assert.deepEqual(citizenDefinition.columnDefs.slice(0, 3).map(column => column.field), ['name', 'status', 'wish']);
+    assert.ok(citizenDefinition.columnDefs.some(column => column.field === 'wish' && column.headerName === 'Glückwünsche'));
     assert.equal(gridDefinitions.members().rowData[0].role, 'Leitung');
     assert.equal(gridDefinitions.streets().rowData[0].ruleCount, 1);
     assert.equal(gridDefinitions.documents().rowData[0].recipient, 'Erika Mustermann');
@@ -120,10 +124,14 @@ describe('grid definitions', () => {
   it('renders SOKO and status cell badges', () => {
     const citizenDefinition = gridDefinitions.citizens();
     const sokoRenderer = citizenDefinition.columnDefs.find(column => column.field === 'groupId').cellRenderer;
+    const wishRenderer = citizenDefinition.columnDefs.find(column => column.field === 'wish').cellRenderer;
     const statusRenderer = citizenDefinition.columnDefs.find(column => column.field === 'status').cellRenderer;
 
     assert.match(sokoRenderer({ value: 'SOKO 01' }), /style="color:/);
     assert.match(sokoRenderer({ value: 'offen' }), /pill red/);
+    assert.match(wishRenderer({ value: 'Besuch erwünscht' }), /pill green/);
+    assert.match(wishRenderer({ value: 'keine' }), /pill red/);
+    assert.match(wishRenderer({ value: '' }), /pill gold/);
     assert.match(statusRenderer({ value: 'offen' }), /pill gold/);
     assert.match(statusRenderer({ value: 'gedruckt' }), /#0f5d58/);
   });

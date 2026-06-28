@@ -109,7 +109,7 @@ describe('importNotice', () => {
 
 describe('citizenGridRow', () => {
   it('maps citizen fields and resolves the group id', () => {
-    const citizen = { id: 'G-1', firstName: 'Erika', lastName: 'Mustermann', birthDate: '1936-06-01', street: 'Musterstraße', houseNo: '12', status: 'geprüft' };
+    const citizen = { id: 'G-1', firstName: 'Erika', lastName: 'Mustermann', birthDate: '1936-06-01', street: 'Musterstraße', houseNo: '12', status: 'geprüft', wish: 'per Post' };
 
     assert.deepEqual(citizenGridRow(citizen, { id: 'SOKO 01' }), {
       id: 'G-1',
@@ -118,6 +118,7 @@ describe('citizenGridRow', () => {
       age: 2026 - 1936,
       address: 'Musterstraße 12',
       groupId: 'SOKO 01',
+      wish: 'per Post',
       status: 'geprüft'
     });
   });

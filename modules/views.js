@@ -1,7 +1,7 @@
 ﻿import { escapeHtml, normalize, formatDate, byId, birthdayMonth, calculateAge } from './utils.js';
 import { months, sokoColors, streetGroupDisplay } from './domain.js';
 import { state } from './state.js';
-import { selectedCitizen, selectedTemplate, selectedSender, selectedMember, selectedStreet, filteredCitizens, activeCitizens, groupForCitizen, isCheckedCitizen, wantsVisit } from './assignment.js';
+import { selectedCitizen, selectedTemplate, selectedSender, selectedMember, selectedStreet, filteredCitizens, activeCitizens, groupForCitizen, isCheckedCitizen, isPrintedCitizen, wantsVisit } from './assignment.js';
 import { field, emailField, postalCodeField, ibanField, selectField, textField, checkField, radioField, streetRuleRows, assignmentPill, gridHost, groupOptions, sokoSelectOptions, senderOptions, templateOptions, occasionOptions, formatOptions } from './fields.js';
 import { streetMapSvg, mapSegmentCounts, mapAddressPointGroups } from './map.js';
 import { documentBackPreview, documentPreview } from './documents.js';
@@ -191,6 +191,7 @@ export const citizenDetailContent = citizen => `
     ${textField("notes", "Notiz", citizen.notes, "full notes-field")}
     <div class="field full button-row">
       <button type="button" class="primary-button${citizen.wish && citizen.wish !== "offen" ? "" : " btn-disabled"}" data-action="save-citizen">Speichern</button>
+      ${isPrintedCitizen(citizen) ? `<button type="button" class="ghost-button" data-action="reset-selected-for-reprint">Für Nachdruck auf geprüft setzen</button>` : ""}
     </div>
   </form>
 `;

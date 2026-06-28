@@ -36,6 +36,7 @@ export const citizenGridRow = (citizen, group) => ({
   age: calculateAge(citizen.birthDate),
   address: `${citizen.street} ${citizen.houseNo}`,
   groupId: group?.id || "offen",
+  wish: citizen.wish || "",
   status: citizen.status
 });
 
