@@ -8,6 +8,7 @@ import { hasDirtyForm, requestDirtyFormLeave, trackDirtyFormChange } from './mod
 
 window.GRATULATIONSDIENST_VERSION = "20260608-6";
 
+const SIDEBAR_COLLAPSED_KEY = "gd_sidebar_collapsed";
 const initialParams = new URLSearchParams(location.search);
 const cssEscape = value => globalThis.CSS?.escape ? globalThis.CSS.escape(value) : String(value).replace(/"/g, '\\"');
 const focusSelectorFor = element => {
@@ -26,6 +27,24 @@ const focusSelectorFor = element => {
 const closeNav = () => {
   document.body.classList.remove("nav-open");
   document.querySelector("[data-nav-toggle]")?.setAttribute("aria-expanded", "false");
+};
+const updateSidebarToggleState = collapsed => {
+  document.querySelectorAll("[data-sidebar-toggle]").forEach(button => {
+    const label = collapsed ? "Menue ausklappen" : "Menue einklappen";
+    button.setAttribute("aria-expanded", String(!collapsed));
+    button.setAttribute("aria-label", label);
+    button.setAttribute("title", label);
+  });
+};
+const setSidebarCollapsed = collapsed => {
+  document.body.classList.toggle("sidebar-collapsed", collapsed);
+  safeStorageSetItem(localStorage, SIDEBAR_COLLAPSED_KEY, collapsed ? "1" : "0", "Menuezustand");
+  updateSidebarToggleState(collapsed);
+};
+const restoreSidebarState = () => {
+  const collapsed = localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1";
+  document.body.classList.toggle("sidebar-collapsed", collapsed);
+  updateSidebarToggleState(collapsed);
 };
 const guardedActionIds = {
   "select-citizen": id => id !== state.selectedCitizenId,
@@ -110,6 +129,7 @@ const updatePostalCodeValidity = input => {
 document.addEventListener("click", event => {
   const skipLink = event.target.closest(".skip-link");
   const navToggle = event.target.closest("[data-nav-toggle]");
+  const sidebarToggle = event.target.closest("[data-sidebar-toggle]");
   const nav = event.target.closest("[data-nav]");
   const action = event.target.closest("[data-action]");
   const adminOnly = event.target.closest("[data-admin-only]");
@@ -123,6 +143,10 @@ document.addEventListener("click", event => {
     const open = document.body.classList.toggle("nav-open");
     navToggle.setAttribute("aria-expanded", String(open));
     navToggle.setAttribute("aria-label", open ? "Menü schließen" : "Menü öffnen");
+    return;
+  }
+  if (sidebarToggle) {
+    setSidebarCollapsed(!document.body.classList.contains("sidebar-collapsed"));
     return;
   }
   if ((nav || action) && adminOnly && !isAdmin()) return;
@@ -307,6 +331,7 @@ if (initialParams.get("resetToken")) {
   state.auth.mode = "reset";
   state.auth.resetToken = initialParams.get("resetToken");
 }
+restoreSidebarState();
 render();
 loadAuthStatus().then(() => {
   if (initialParams.get("resetToken")) {

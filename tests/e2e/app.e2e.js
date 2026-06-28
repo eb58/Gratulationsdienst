@@ -112,7 +112,7 @@ describe('Gratulationsdienst E2E', () => {
 
       const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('gratulationsdienst') || '{}'));
       assert.equal(stored.citizens.some(citizen => citizen.sokoQuestionnaireImages?.length), false);
-      assert.ok(stored.citizens.some(citizen => citizen.status === 'Fragebogen eingelesen'));
+      assert.ok(stored.citizens.some(citizen => citizen.status === 'geladen'));
     } finally { await context.close(); }
   }, { timeout: 60000 });
 

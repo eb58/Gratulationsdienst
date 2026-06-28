@@ -201,7 +201,7 @@ describe('view partials', () => {
     const html = views.citizens();
 
     assert.match(html, /citizen-questionnaire-panel/);
-    assert.match(html, /Kein Fragebogen eingelesen/);
+    assert.match(html, /Kein Fragebogen geladen/);
     assert.doesNotMatch(html, /citizen-questionnaire-image/);
   });
 

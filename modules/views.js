@@ -212,7 +212,7 @@ const citizenQuestionnaireImagesContent = citizen => `
         <img src="${escapeHtml(item.image)}" alt="SOKO-Fragebogen ${index + 1}">
         <figcaption>${escapeHtml(formatDate(item.createdAt))}</figcaption>
       </figure>
-    `).join("") : `<div class="empty-state citizen-questionnaire-empty">Kein Fragebogen eingelesen</div>`}
+    `).join("") : `<div class="empty-state citizen-questionnaire-empty">Kein Fragebogen geladen</div>`}
   </div>
 `;
 const renderCitizenQuestionnaireImages = citizen => {

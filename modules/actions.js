@@ -165,7 +165,7 @@ const sokoPdfNotice = pages => {
   const unmatched = pages.filter(page => !page.applied && /nicht gefunden/i.test(page.error || "")).length;
   const failed = pages.filter(page => !page.applied && !/nicht gefunden/i.test(page.error || "")).length;
   return [
-    checked ? `${checked} Fragebögen eingelesen.` : "",
+    checked ? `${checked} Fragebögen geladen.` : "",
     manual ? `${manual} mit Handschrift zur Nacharbeit.` : "",
     unmatched ? `${unmatched} erkannt, aber kein passender Jubilar gefunden.` : "",
     failed ? `${failed} nicht lesbar.` : ""

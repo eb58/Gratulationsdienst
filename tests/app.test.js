@@ -101,7 +101,8 @@ const elements = {
   '#toast': domElement(),
   '#map-soko-info': domElement(),
   '[data-action="save-citizen"]': domElement(),
-  '[data-nav-toggle]': domElement()
+  '[data-nav-toggle]': domElement(),
+  '[data-sidebar-toggle]': domElement()
 };
 elements['#map-soko-info'].dataset = {};
 globalThis.document = {
@@ -109,7 +110,7 @@ globalThis.document = {
   addEventListener: (type, handler) => { listeners[type] = handler; },
   removeEventListener: () => {},
   querySelector: selector => elements[selector] || null,
-  querySelectorAll: () => []
+  querySelectorAll: selector => selector === '[data-sidebar-toggle]' ? [elements['[data-sidebar-toggle]']] : []
 };
 globalThis.addEventListener = (type, handler) => { listeners[type] = handler; };
 globalThis.requestAnimationFrame = callback => callback();
@@ -126,6 +127,8 @@ beforeEach(() => {
   elements['#view'].focused = false;
   elements['#map-soko-info'].dataset = {};
   elements['#map-soko-info'].innerHTML = '';
+  document.body.classList.remove('nav-open');
+  document.body.classList.remove('sidebar-collapsed');
   localStorage.clear();
 });
 
@@ -189,6 +192,24 @@ describe('app click handler', () => {
     assert.equal(document.body.classList.contains('nav-open'), true);
     assert.equal(toggle.getAttribute('aria-expanded'), 'true');
     assert.equal(toggle.getAttribute('aria-label'), 'Menü schließen');
+  });
+
+  it('toggles and persists the desktop sidebar state', () => {
+    const toggle = elements['[data-sidebar-toggle]'];
+    const target = eventTarget({ closest: { '[data-sidebar-toggle]': toggle } });
+
+    listeners.click({ target });
+
+    assert.equal(document.body.classList.contains('sidebar-collapsed'), true);
+    assert.equal(localStorage.getItem('gd_sidebar_collapsed'), '1');
+    assert.equal(toggle.getAttribute('aria-expanded'), 'false');
+    assert.equal(toggle.getAttribute('aria-label'), 'Menue ausklappen');
+
+    listeners.click({ target });
+
+    assert.equal(document.body.classList.contains('sidebar-collapsed'), false);
+    assert.equal(localStorage.getItem('gd_sidebar_collapsed'), '0');
+    assert.equal(toggle.getAttribute('aria-expanded'), 'true');
   });
 
   it('changes views through nav clicks and closes nav when already active', () => {

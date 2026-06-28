@@ -81,6 +81,7 @@ button {
   height: 100vh;
   display: grid;
   grid-template-columns: 260px minmax(0, 1fr);
+  transition: grid-template-columns 0.18s ease;
 }
 
 .sidebar {
@@ -92,6 +93,18 @@ button {
   background: #1f2928;
   color: #fff;
   overflow-y: auto;
+  transition: padding 0.18s ease, visibility 0.18s ease;
+}
+
+body.sidebar-collapsed .app-shell {
+  grid-template-columns: 0 minmax(0, 1fr);
+}
+
+body.sidebar-collapsed .sidebar {
+  padding-right: 0;
+  padding-left: 0;
+  overflow: hidden;
+  visibility: hidden;
 }
 
 .brand {
@@ -250,6 +263,10 @@ details.nav-section:not([open]) .nav-section-title::after {
   grid-template-columns: minmax(0, 1fr);
 }
 
+.auth-locked .sidebar-toggle {
+  display: none;
+}
+
 .auth-locked .main {
   width: min(680px, 100%);
   margin: 0 auto;
@@ -263,6 +280,45 @@ details.nav-section:not([open]) .nav-section-title::after {
   gap: 16px;
   padding-bottom: 20px;
   border-bottom: 1px solid var(--line);
+}
+
+.topbar-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.sidebar-toggle {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  background: var(--panel);
+}
+
+.sidebar-toggle:hover {
+  border-color: #a6ded8;
+  color: var(--teal);
+  background: #e6f7f4;
+}
+
+.sidebar-toggle svg {
+  width: 21px;
+  height: 21px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+body.sidebar-collapsed .sidebar-toggle svg {
+  transform: scaleX(-1);
 }
 
 .eyebrow {
@@ -2494,6 +2550,10 @@ tbody tr.selected {
     grid-template-columns: 1fr;
   }
 
+  body.sidebar-collapsed .app-shell {
+    grid-template-columns: 1fr;
+  }
+
   .main {
     display: block;
     overflow: visible;
@@ -2510,6 +2570,16 @@ tbody tr.selected {
     z-index: 5;
     padding: 12px;
     overflow-y: visible;
+  }
+
+  body.sidebar-collapsed .sidebar {
+    padding: 12px;
+    overflow-y: visible;
+    visibility: visible;
+  }
+
+  .sidebar-toggle {
+    display: none;
   }
 
   .nav-toggle {
