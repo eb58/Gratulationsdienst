@@ -1,5 +1,4 @@
-﻿import { escapeHtml, normalize, formatDate, byId, birthdayMonth, calculateAge } from './utils.js';
-import { anniversaryDateInYear } from './utils.js';
+import { escapeHtml, normalize, formatDate, byId, birthdayMonth, calculateAge, anniversaryDateFromCreatedAt } from './utils.js';
 import { months, sokoColors, streetGroupDisplay } from './domain.js';
 import { state } from './state.js';
 import { selectedCitizen, selectedTemplate, selectedSender, selectedMember, selectedStreet, filteredCitizens, activeCitizens, groupForCitizen, isCheckedCitizen, isPrintedCitizen, wantsVisit } from './assignment.js';
@@ -296,15 +295,7 @@ const cleanupPreviewContent = () => {
   const ids = new Set(preview.citizenIds || []);
   const citizens = state.data.citizens
     .filter(citizen => ids.has(citizen.id))
-    .sort((a, b) => anniversaryDateInYear(a.birthDate) - anniversaryDateInYear(b.birthDate) || String(a.lastName || "").localeCompare(String(b.lastName || "")));
-  const rows = citizens.map(citizen => `
-    <tr>
-      <td>${escapeHtml(citizen.id)}</td>
-      <td>${escapeHtml(`${citizen.firstName || ""} ${citizen.lastName || ""}`.trim())}</td>
-      <td>${escapeHtml(formatDate(citizen.birthDate))}</td>
-      <td>${escapeHtml(formatDate(anniversaryDateInYear(citizen.birthDate)))}</td>
-    </tr>
-  `).join("");
+    .sort((a, b) => anniversaryDateFromCreatedAt(a.birthDate, a.createdAt) - anniversaryDateFromCreatedAt(b.birthDate, b.createdAt) || String(a.lastName || "").localeCompare(String(b.lastName || "")));
   return `
     <section id="cleanup-preview" class="panel cleanup-preview-panel" tabindex="-1">
       <h2>Zu löschende Jubilare</h2>
@@ -313,12 +304,7 @@ const cleanupPreviewContent = () => {
         <div><span>Anzahl</span><strong>${citizens.length.toLocaleString("de-DE")}</strong></div>
       </div>
       ${citizens.length ? `
-        <div class="cleanup-preview-table-wrap">
-          <table class="data-table cleanup-preview-table">
-            <thead><tr><th>ID</th><th>Name</th><th>Geburtsdatum</th><th>Jubiläum ${new Date().getFullYear()}</th></tr></thead>
-            <tbody>${rows}</tbody>
-          </table>
-        </div>
+        ${gridHost("cleanupPreview", 420)}
         <div class="button-row" style="margin-top:12px">
           <button type="button" class="danger-button" data-action="delete-old-citizens">Angezeigte Jubilare löschen</button>
         </div>

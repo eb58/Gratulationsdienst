@@ -66,6 +66,7 @@ function collectionConfig(string $collection): array
                 'weddingAnniversary' => ['wedding_anniversary', 'string'],
                 'weddingDate' => ['wedding_date', 'date'],
                 'spouseName' => ['spouse_name', 'string'],
+                'createdAt' => ['created_at', 'createdAt'],
             ],
         ],
         'sokoGroups' => [
@@ -757,6 +758,7 @@ function valueForDb(mixed $value, string $type): mixed
 {
     if ($type === 'bool') return $value ? 1 : 0;
     if ($type === 'json') return json_encode($value ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+    if ($type === 'createdAt') return trim((string)($value ?? '')) ?: date('Y-m-d H:i:s');
     if ($type === 'date') return trim((string)($value ?? '')) ?: null;
     if ($type === 'int') return trim((string)($value ?? '')) === '' ? null : (int)$value;
     return (string)($value ?? '');

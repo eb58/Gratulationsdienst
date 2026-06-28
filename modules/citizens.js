@@ -7,7 +7,7 @@ export const buildImportResult = (mapped, existingCitizens, assignGroup) => mapp
   const duplicate = !missing && acc.keys.includes(key);
   const printedDuplicate = duplicate && acc.printedKeys.includes(key);
   const group = assignGroup(row);
-  const item = { ...row, id: nextId("G-2026", [...existingCitizens, ...acc.rows]), source: "CSV Import", updatedAt: todayIso(), status: group ? "importiert" : "offen" };
+  const item = { ...row, id: nextId("G-2026", [...existingCitizens, ...acc.rows]), source: "CSV Import", createdAt: row.createdAt || todayIso(), updatedAt: todayIso(), status: group ? "importiert" : "offen" };
   return {
     rows: missing || duplicate ? acc.rows : [...acc.rows, item],
     duplicates: duplicate ? acc.duplicates + 1 : acc.duplicates,

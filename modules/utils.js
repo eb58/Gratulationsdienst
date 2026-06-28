@@ -87,9 +87,18 @@ export const anniversaryDateInYear = (birthDate, referenceDate = new Date()) => 
   if (Number.isNaN(birth.getTime())) return null;
   return new Date(referenceDate.getFullYear(), birth.getMonth(), birth.getDate());
 };
+export const anniversaryDateFromCreatedAt = (birthDate, createdAt = "", referenceDate = new Date()) => {
+  const birth = new Date(birthDate);
+  if (Number.isNaN(birth.getTime())) return null;
+  const created = new Date(createdAt);
+  if (Number.isNaN(created.getTime())) return null;
+  const base = created;
+  const anniversary = new Date(base.getFullYear(), birth.getMonth(), birth.getDate());
+  return anniversary < new Date(base.getFullYear(), base.getMonth(), base.getDate()) ? new Date(base.getFullYear() + 1, birth.getMonth(), birth.getDate()) : anniversary;
+};
 export const dateMonthsAgo = (months, referenceDate = new Date()) => new Date(referenceDate.getFullYear(), referenceDate.getMonth() - cleanupMonthsValue(months), referenceDate.getDate());
-export const isAnniversaryOlderThanMonths = (birthDate, months, referenceDate = new Date()) => {
-  const anniversary = anniversaryDateInYear(birthDate, referenceDate);
+export const isAnniversaryOlderThanMonths = (birthDate, months, referenceDate = new Date(), createdAt = "") => {
+  const anniversary = anniversaryDateFromCreatedAt(birthDate, createdAt, referenceDate);
   return anniversary !== null && anniversary < dateMonthsAgo(months, referenceDate);
 };
 export const formatDateDe = iso => {

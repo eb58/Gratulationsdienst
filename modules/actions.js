@@ -20,7 +20,7 @@ const quittungSettingKeys = ["quittungBetrag", "quittungTelefon", "quittungKapit
 const quittungSettingsFromForm = () => Object.fromEntries(quittungSettingKeys.map(key => [key, $(`[data-bind="${key}"]`)?.value ?? state[key]]));
 const cleanupMonthsFromForm = () => cleanupMonthsValue($("#cleanup-months")?.value ?? state.cleanupMonths);
 const cleanupCitizenIds = months => state.data.citizens
-  .filter(citizen => isAnniversaryOlderThanMonths(citizen.birthDate, months))
+  .filter(citizen => isAnniversaryOlderThanMonths(citizen.birthDate, months, new Date(), citizen.createdAt))
   .map(citizen => citizen.id);
 const readFileAsDataUrl = file => new Promise((resolve, reject) => {
   const reader = new FileReader();

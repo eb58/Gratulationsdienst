@@ -250,7 +250,7 @@ describe('main views', () => {
     assert.doesNotMatch(views.privacy(), /Angezeigte Jubilare löschen/);
     state.cleanupPreview = { months: 6, citizenIds: [citizen.id] };
     assert.match(views.privacy(), /Zu löschende Jubilare/);
-    assert.match(views.privacy(), /Erika Mustermann/);
+    assert.match(views.privacy(), /data-grid="cleanupPreview"/);
     assert.match(views.privacy(), /Angezeigte Jubilare löschen/);
     assert.match(views.users(), /user-form/);
 

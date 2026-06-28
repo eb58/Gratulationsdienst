@@ -33,13 +33,18 @@ const {
   normalizeLoadedData,
   normalizeTemplate,
   normalizeTemplates,
+  loadData,
+  saveData,
   saveQuittungSettings,
   state,
+  usesLocalDataStorage,
   writableCollections
 } = stateModule;
 
 beforeEach(() => {
+  globalThis.location.protocol = 'file:';
   state.auth.user = { role: 'admin' };
+  state.auth.token = '';
   globalThis.localStorage.clear();
 });
 
@@ -129,6 +134,29 @@ describe('backend and permission helpers', () => {
     assert.equal(canAccessView('soko'), true);
     assert.equal(canAccessView('privacy'), true);
     assert.equal(writableCollections().includes('sokoMembers'), true);
+  });
+
+  it('uses browser data storage only in file mode', () => {
+    assert.equal(usesLocalDataStorage(), true);
+    state.data = { ...state.data, citizens: [{ id: 'G-local', firstName: 'Lokal' }] };
+    saveData();
+    assert.match(localStorage.getItem('gratulationsdienst'), /G-local/);
+
+    globalThis.location.protocol = 'http:';
+    globalThis.fetch = () => Promise.resolve({ ok: true, json: async () => [] });
+    state.auth.token = 'token';
+    localStorage.setItem('gratulationsdienst', JSON.stringify({ citizens: [{ id: 'G-old' }] }));
+    saveData();
+
+    assert.equal(usesLocalDataStorage(), false);
+    assert.equal(localStorage.getItem('gratulationsdienst'), null);
+  });
+
+  it('ignores stale browser data in backend mode', () => {
+    localStorage.setItem('gratulationsdienst', JSON.stringify({ citizens: [{ id: 'G-old' }] }));
+    globalThis.location.protocol = 'http:';
+
+    assert.equal(loadData().citizens.some(citizen => citizen.id === 'G-old'), false);
   });
 });
 

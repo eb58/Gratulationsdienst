@@ -101,7 +101,7 @@ describe('Gratulationsdienst E2E', () => {
       await page.click('[data-nav="import"]');
       await page.waitForSelector('.view-import');
       await page.click('[data-action="seed-citizens"]');
-      await page.waitForFunction(() => (JSON.parse(localStorage.getItem('gratulationsdienst') || '{}').citizens || []).length > 0);
+      await page.waitForFunction(() => document.querySelector('#toast')?.textContent.includes('neue Datens'));
       await page.click('[data-nav="citizens"]');
       await page.waitForSelector('.ag-root', { timeout: 10000 });
       await page.click('[data-action="simulate-soko-pdf-import"]');
@@ -110,9 +110,7 @@ describe('Gratulationsdienst E2E', () => {
       const detailBox = await page.locator('#citizen-detail-panel').boundingBox();
       assert.ok(detailBox.width > 300);
 
-      const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('gratulationsdienst') || '{}'));
-      assert.equal(stored.citizens.some(citizen => citizen.sokoQuestionnaireImages?.length), false);
-      assert.ok(stored.citizens.some(citizen => citizen.status === 'geladen'));
+      assert.equal(await page.evaluate(() => localStorage.getItem('gratulationsdienst')), null);
     } finally { await context.close(); }
   }, { timeout: 60000 });
 

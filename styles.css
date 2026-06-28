@@ -1330,16 +1330,8 @@ input[type="checkbox"].toggle:checked::after {
   margin-top: 12px;
 }
 
-.cleanup-preview-table-wrap {
-  max-height: 420px;
+.cleanup-preview-panel .ag-grid-host {
   margin-top: 12px;
-  overflow: auto;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-}
-
-.cleanup-preview-table {
-  width: 100%;
 }
 
 .file-picker {

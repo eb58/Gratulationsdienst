@@ -83,7 +83,10 @@ export const normalizeLoadedData = data => {
   };
 };
 
+const localDataStorageEnabled = () => location.protocol === "file:";
+
 export const loadData = () => {
+  if (!localDataStorageEnabled()) return normalizeLoadedData(structuredClone(defaultData));
   try {
     return normalizeLoadedData(JSON.parse(localStorage.getItem(STORAGE_KEY)) || structuredClone(defaultData));
   } catch {
@@ -148,6 +151,7 @@ export const persistedCollections = ["citizens", "sokoGroups", "sokoMembers", "s
 export const hasBackendData = data => data && persistedCollections.some(key => Array.isArray(data[key]) && data[key].length);
 export const isAdmin = () => state.auth.user?.role === "admin";
 export const canAccessView = view => !adminViews.includes(view) || isAdmin();
+export const usesLocalDataStorage = localDataStorageEnabled;
 export const writableCollections = () => isAdmin()
   ? apiCollections
   : apiCollections.filter(collection => !adminCollections.includes(collection));
@@ -222,7 +226,8 @@ export const saveCollectionData = data => location.protocol === "file:"
     .catch(error => console.warn("Datenbank-Speicherung nicht verfügbar.", error));
 
 export const saveData = () => {
-  safeStorageSetItem(localStorage, STORAGE_KEY, JSON.stringify(dataForPersistence(state.data)), "Daten");
+  if (usesLocalDataStorage()) safeStorageSetItem(localStorage, STORAGE_KEY, JSON.stringify(dataForPersistence(state.data)), "Daten");
+  else localStorage.removeItem(STORAGE_KEY);
   saveCollectionData(state.data);
 };
 
@@ -240,11 +245,12 @@ export const loadCollectionData = () => {
       const data = Object.fromEntries(entries);
       if (!hasBackendData(data)) {
         saveCollectionData(state.data);
+        localStorage.removeItem(STORAGE_KEY);
         render();
         return;
       }
       state.data = normalizeLoadedData(data);
-      safeStorageSetItem(localStorage, STORAGE_KEY, JSON.stringify(dataForPersistence(state.data)), "Daten");
+      localStorage.removeItem(STORAGE_KEY);
       if (!data.sokoGroups?.length && state.data.sokoGroups.length && isAdmin()) {
         saveBackendCollection("sokoGroups", state.data.sokoGroups).catch(() => {});
         saveBackendCollection("sokoMembers", state.data.sokoMembers).catch(() => {});

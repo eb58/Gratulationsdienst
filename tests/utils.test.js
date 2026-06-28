@@ -10,6 +10,7 @@ import {
   formatIban,
   dateMonthsAgo,
   isAnniversaryOlderThanMonths,
+  anniversaryDateFromCreatedAt,
   isValidEmail,
   isValidIban,
   isValidPostalCode,
@@ -103,16 +104,30 @@ describe('cleanup month helpers', () => {
   });
 
   it('matches anniversaries older than the configured age', () => {
-    const reference = new Date(2026, 8, 28);
-    assert.equal(localIso(dateMonthsAgo(6, reference)), '2026-03-28');
-    assert.equal(isAnniversaryOlderThanMonths('1936-01-01', 6, reference), true);
-    assert.equal(isAnniversaryOlderThanMonths('1936-03-28', 6, reference), false);
-    assert.equal(isAnniversaryOlderThanMonths('1936-08-01', 6, reference), false);
+    const reference = new Date(2026, 5, 28);
+    assert.equal(localIso(dateMonthsAgo(6, reference)), '2025-12-28');
+    assert.equal(isAnniversaryOlderThanMonths('1936-10-15', 6, reference, '2025-07-15'), true);
+    assert.equal(isAnniversaryOlderThanMonths('1936-12-28', 6, reference, '2025-09-28'), false);
+    assert.equal(isAnniversaryOlderThanMonths('1936-08-01', 6, reference, '2026-05-01'), false);
   });
 
   it('keeps future anniversaries in the current year', () => {
     const reference = new Date(2026, 5, 28);
-    assert.equal(isAnniversaryOlderThanMonths('1936-08-01', 6, reference), false);
+    assert.equal(isAnniversaryOlderThanMonths('1936-08-01', 6, reference, '2026-06-01'), false);
+  });
+
+  it('derives the concrete anniversary from the creation date', () => {
+    const reference = new Date(2026, 5, 28);
+    assert.equal(localIso(anniversaryDateFromCreatedAt('1936-10-15', '2025-07-15', reference)), '2025-10-15');
+    assert.equal(localIso(anniversaryDateFromCreatedAt('1936-08-01', '2026-05-01', reference)), '2026-08-01');
+    assert.equal(isAnniversaryOlderThanMonths('1936-10-15', 6, reference, '2025-07-15'), true);
+    assert.equal(isAnniversaryOlderThanMonths('1936-08-01', 6, reference, '2026-05-01'), false);
+  });
+
+  it('does not delete records without a creation date', () => {
+    const reference = new Date(2026, 8, 28);
+    assert.equal(anniversaryDateFromCreatedAt('1936-01-01', '', reference), null);
+    assert.equal(isAnniversaryOlderThanMonths('1936-01-01', 6, reference), false);
   });
 });
 
