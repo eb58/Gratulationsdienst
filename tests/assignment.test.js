@@ -188,9 +188,9 @@ describe('selection and receipt helpers', () => {
       baseCitizen({ id: 'other-month', houseNo: '18', birthDate: '1936-07-01', status: 'geprüft', wish: 'Besuch erwünscht' })
     ];
 
-    assert.deepEqual(receiptReviewCitizens().map(citizen => citizen.id), ['ready-visit', 'ready-post', 'open']);
+    assert.deepEqual(receiptReviewCitizens().map(citizen => citizen.id), ['ready-visit', 'open']);
     assert.deepEqual(receiptCitizens().map(citizen => citizen.id), ['ready-visit', 'open']);
-    assert.deepEqual(receiptReviewCitizensForGroup('SOKO 01').map(citizen => citizen.id), ['ready-visit', 'ready-post', 'open']);
+    assert.deepEqual(receiptReviewCitizensForGroup('SOKO 01').map(citizen => citizen.id), ['ready-visit', 'open']);
     assert.equal(isReceiptGroupReady('SOKO 01'), false);
     assert.deepEqual(receiptCitizensForReadyGroups().map(citizen => citizen.id), []);
 

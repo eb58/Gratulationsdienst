@@ -796,10 +796,10 @@ export const views = {
   quittung: () => {
     const reviewEntries = activeCitizens()
       .filter(citizen => birthdayMonth(citizen.birthDate) === state.quittungMonat)
+      .filter(wantsVisit)
       .map(citizen => ({ citizen, group: groupForCitizen(citizen) }))
       .filter(entry => entry.group);
-    const receiptEntries = reviewEntries.filter(({ citizen }) => wantsVisit(citizen));
-    const groupMap = groupedQuittungEntries(receiptEntries);
+    const groupMap = groupedQuittungEntries(reviewEntries);
     const reviewByGroup = reviewQuittungEntriesByGroup(reviewEntries);
     const groups = [...groupMap.values()].sort((a, b) => a.group.id.localeCompare(b.group.id));
     const groupStatus = group => {

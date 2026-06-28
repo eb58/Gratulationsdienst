@@ -95,9 +95,9 @@ export const filteredCitizens = () => state.data.citizens.filter(citizen => {
     && ageOk;
 });
 export const documentCitizens = () => filteredCitizens().filter(citizen => isCheckedCitizen(citizen) && !isPrintedCitizen(citizen) && wantsGreeting(citizen));
-export const receiptReviewCitizens = () => activeCitizens().filter(citizen => birthdayMonth(citizen.birthDate) === state.quittungMonat);
+export const receiptReviewCitizens = () => activeCitizens().filter(citizen => birthdayMonth(citizen.birthDate) === state.quittungMonat && wantsVisit(citizen));
 export const allReceiptCitizensChecked = () => receiptReviewCitizens().every(isCheckedCitizen);
-export const receiptCitizens = () => receiptReviewCitizens().filter(citizen => wantsVisit(citizen) && groupForCitizen(citizen));
+export const receiptCitizens = () => receiptReviewCitizens().filter(citizen => groupForCitizen(citizen));
 export const receiptReviewCitizensForGroup = groupId => receiptReviewCitizens().filter(citizen => groupForCitizen(citizen)?.id === groupId);
 export const isReceiptGroupReady = groupId => {
   if (!groupId) return false;
