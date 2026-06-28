@@ -1,10 +1,15 @@
 import { defineConfig } from 'vite';
-import { copyFileSync, readdirSync, watch } from 'node:fs';
+import { copyFileSync, readdirSync, rmSync, watch } from 'node:fs';
 
 const dataDest = 'docker/src/gratulationsdienst/data';
 const copyDataFile = file => { try { copyFileSync(`public/data/${file}`, `${dataDest}/${file}`); } catch {} };
 
 // vite build --watch beobachtet public/ nicht zuverlässig -> eigener fs.watch kopiert Datenänderungen direkt
+const cleanAssets = () => ({
+  name: 'clean-assets',
+  buildStart() { rmSync('docker/src/gratulationsdienst/assets', { recursive: true, force: true }); }
+});
+
 const watchPublicData = () => ({
   name: 'watch-public-data',
   buildStart() {
@@ -15,7 +20,7 @@ const watchPublicData = () => ({
 
 export default defineConfig({
   base: '/gratulationsdienst/',
-  plugins: [watchPublicData()],
+  plugins: [cleanAssets(), watchPublicData()],
   build: {
     outDir: 'docker/src/gratulationsdienst',
     emptyOutDir: false,

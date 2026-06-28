@@ -63,10 +63,11 @@ const documentPreviewStack = (template, citizen, sender) => {
 };
 
 export const authView = () => {
-  if (!state.auth.ready) return `<section class="auth-panel"><h2>Anmeldung wird geprüft</h2><div class="empty-state">Bitte warten...</div></section>`;
+  const logo = `<img class="auth-logo" src="assets/reinickendorf.jpg" alt="Bezirksamt Reinickendorf von Berlin">`;
+  const panel = content => `<section class="auth-panel">${logo}<div class="auth-content">${content}</div></section>`;
+  if (!state.auth.ready) return panel(`<h2>Anmeldung wird geprüft</h2><div class="empty-state">Bitte warten...</div>`);
   const notice = state.auth.message ? `<div class="alert">${escapeHtml(state.auth.message)}</div>` : "";
-  if (state.auth.setupRequired) return `
-    <section class="auth-panel">
+  if (state.auth.setupRequired) return panel(`
       <h2>Ersten Admin-Zugang anlegen</h2>
       ${notice}
       <form id="auth-setup-form" class="form-grid">
@@ -75,10 +76,8 @@ export const authView = () => {
         ${field("password", "Passwort", "", "password", "full", 'autocomplete="new-password"')}
         <div class="field full"><button type="button" class="primary-button" data-action="auth-setup">Admin anlegen</button></div>
       </form>
-    </section>
-  `;
-  if (state.auth.mfaTicket) return `
-    <section class="auth-panel">
+  `);
+  if (state.auth.mfaTicket) return panel(`
       <h2>Zweiter Faktor</h2>
       ${notice}
       <form id="auth-mfa-form" class="form-grid">
@@ -88,10 +87,8 @@ export const authView = () => {
           <button type="button" class="ghost-button" data-action="auth-cancel-mfa">Zurück</button>
         </div>
       </form>
-    </section>
-  `;
-  if (state.auth.mode === "reset") return `
-    <section class="auth-panel">
+  `);
+  if (state.auth.mode === "reset") return panel(`
       <h2>Passwort zurücksetzen</h2>
       ${notice}
       <form id="auth-reset-request-form" class="form-grid">
@@ -106,10 +103,8 @@ export const authView = () => {
           <button type="button" class="ghost-button" data-action="auth-show-login">Zur Anmeldung</button>
         </div>
       </form>
-    </section>
-  `;
-  return `
-    <section class="auth-panel">
+  `);
+  return panel(`
       <h2>Anmelden</h2>
       ${notice}
       <form id="auth-login-form" class="form-grid">
@@ -120,8 +115,7 @@ export const authView = () => {
           <button type="button" class="ghost-button" data-action="auth-show-reset">Passwort vergessen</button>
         </div>
       </form>
-    </section>
-  `;
+  `);
 };
 
 export const regionAssignmentContent = () => {

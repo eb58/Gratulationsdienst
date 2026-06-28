@@ -922,12 +922,25 @@ body.is-resizing {
 }
 
 .auth-panel {
+  display: flex;
+  align-items: center;
+  gap: 28px;
   width: 100%;
   padding: 22px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--panel);
   box-shadow: var(--shadow);
+}
+
+.auth-logo {
+  width: 100px;
+  flex-shrink: 0;
+}
+
+.auth-content {
+  flex: 1;
+  min-width: 0;
 }
 
 .auth-panel h2 {
