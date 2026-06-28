@@ -127,6 +127,24 @@ describe('Gratulationsdienst E2E', () => {
     } finally { await context.close(); }
   });
 
+  it('klappt die Desktop-Navigation auf eine Icon-Leiste ein', async () => {
+    const { context, page } = await openApp();
+    try {
+      await login(page);
+      await page.click('[data-sidebar-toggle]');
+      await page.waitForFunction(() => {
+        const box = document.querySelector('.sidebar')?.getBoundingClientRect();
+        return box && box.width <= 90;
+      });
+      const sidebarBox = await page.locator('.sidebar').boundingBox();
+      const labelBox = await page.locator('[data-nav="dashboard"] .nav-label').boundingBox();
+      assert.equal(await page.evaluate(() => document.body.classList.contains('sidebar-collapsed')), true);
+      assert.ok(sidebarBox.width <= 90);
+      assert.equal(labelBox.width <= 1, true);
+      assert.equal(await page.locator('[data-nav="templates"]').isVisible(), true);
+    } finally { await context.close(); }
+  });
+
   it('meldet wieder ab und kehrt zum Login zurück', async () => {
     const { context, page } = await openApp();
     try {

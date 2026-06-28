@@ -36,13 +36,18 @@ const updateSidebarToggleState = collapsed => {
     button.setAttribute("title", label);
   });
 };
+const openSidebarSections = () => {
+  document.querySelectorAll("details.nav-section-collapsible").forEach(section => { section.open = true; });
+};
 const setSidebarCollapsed = collapsed => {
+  if (collapsed) openSidebarSections();
   document.body.classList.toggle("sidebar-collapsed", collapsed);
   safeStorageSetItem(localStorage, SIDEBAR_COLLAPSED_KEY, collapsed ? "1" : "0", "Menuezustand");
   updateSidebarToggleState(collapsed);
 };
 const restoreSidebarState = () => {
   const collapsed = localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1";
+  if (collapsed) openSidebarSections();
   document.body.classList.toggle("sidebar-collapsed", collapsed);
   updateSidebarToggleState(collapsed);
 };

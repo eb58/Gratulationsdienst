@@ -97,14 +97,13 @@ button {
 }
 
 body.sidebar-collapsed .app-shell {
-  grid-template-columns: 0 minmax(0, 1fr);
+  grid-template-columns: 76px minmax(0, 1fr);
 }
 
 body.sidebar-collapsed .sidebar {
-  padding-right: 0;
-  padding-left: 0;
-  overflow: hidden;
-  visibility: hidden;
+  gap: 14px;
+  padding: 18px 10px;
+  overflow-x: hidden;
 }
 
 .brand {
@@ -136,6 +135,26 @@ body.sidebar-collapsed .sidebar {
   color: #c9d7d3;
   font-size: 13px;
   margin-top: 2px;
+}
+
+body.sidebar-collapsed .brand {
+  justify-content: center;
+}
+
+body.sidebar-collapsed .brand > div {
+  display: none;
+}
+
+body.sidebar-collapsed .brand-mark {
+  width: 44px;
+  height: 44px;
+}
+
+.nav-icons {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
 }
 
 .nav-toggle {
@@ -216,6 +235,9 @@ details.nav-section:not([open]) .nav-section-title::after {
 
 .nav button {
   min-height: 42px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   border: 0;
   border-radius: 8px;
   padding: 0 12px;
@@ -224,10 +246,67 @@ details.nav-section:not([open]) .nav-section-title::after {
   text-align: left;
 }
 
+.nav-icon {
+  width: 21px;
+  height: 21px;
+  flex: 0 0 21px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.nav-label {
+  min-width: 0;
+}
+
 .nav button:hover,
 .nav button.active {
   color: #fff;
   background: #384140;
+}
+
+body.sidebar-collapsed .nav {
+  gap: 8px;
+}
+
+body.sidebar-collapsed .nav-section {
+  display: block;
+}
+
+body.sidebar-collapsed .nav-section + .nav-section {
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+body.sidebar-collapsed .nav-section-title {
+  display: none;
+}
+
+body.sidebar-collapsed details.nav-section:not([open]) .nav-section-items {
+  display: flex;
+}
+
+body.sidebar-collapsed .nav-section-items {
+  gap: 8px;
+  margin-top: 0;
+}
+
+body.sidebar-collapsed .nav button {
+  justify-content: center;
+  min-height: 46px;
+  padding: 0;
+}
+
+body.sidebar-collapsed .nav-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
 .sidebar-footer {
@@ -2573,9 +2652,23 @@ tbody tr.selected {
   }
 
   body.sidebar-collapsed .sidebar {
+    gap: 24px;
     padding: 12px;
     overflow-y: visible;
     visibility: visible;
+  }
+
+  body.sidebar-collapsed .brand {
+    justify-content: flex-start;
+  }
+
+  body.sidebar-collapsed .brand > div {
+    display: block;
+  }
+
+  body.sidebar-collapsed .brand-mark {
+    width: 48px;
+    height: 48px;
   }
 
   .sidebar-toggle {
@@ -2601,6 +2694,19 @@ tbody tr.selected {
     overflow-y: auto;
   }
 
+  body.sidebar-collapsed .nav {
+    gap: 6px;
+  }
+
+  body.sidebar-collapsed .nav-section + .nav-section {
+    padding-top: 0;
+    border-top: 0;
+  }
+
+  body.sidebar-collapsed .nav-section-title {
+    display: flex;
+  }
+
   body:not(.nav-open) .nav {
     display: none;
   }
@@ -2621,9 +2727,27 @@ tbody tr.selected {
 
   .nav button {
     min-height: 34px;
+    justify-content: flex-start;
+    gap: 10px;
     padding: 0 10px;
     font-size: 14px;
     text-align: left;
+  }
+
+  body.sidebar-collapsed .nav button {
+    justify-content: flex-start;
+    min-height: 34px;
+    padding: 0 10px;
+  }
+
+  body.sidebar-collapsed .nav-label {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
   }
 
   .sidebar-footer {
