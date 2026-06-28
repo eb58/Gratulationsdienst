@@ -63,7 +63,7 @@ const documentPreviewStack = (template, citizen, sender) => {
 };
 
 export const authView = () => {
-  const logo = `<img class="auth-logo" src="assets/reinickendorf.jpg" alt="Bezirksamt Reinickendorf von Berlin">`;
+  const logo = `<div class="auth-brand"><img class="auth-logo" src="assets/reinickendorf.jpg" alt="Bezirksamt Reinickendorf von Berlin"><span class="auth-brand-name">Gratulationsdienst Reinickendorf</span></div>`;
   const panel = content => `<section class="auth-panel">${logo}<div class="auth-content">${content}</div></section>`;
   if (!state.auth.ready) return panel(`<h2>Anmeldung wird geprüft</h2><div class="empty-state">Bitte warten...</div>`);
   const notice = state.auth.message ? `<div class="alert">${escapeHtml(state.auth.message)}</div>` : "";
@@ -92,7 +92,7 @@ export const authView = () => {
       <h2>Passwort zurücksetzen</h2>
       ${notice}
       <form id="auth-reset-request-form" class="form-grid">
-        ${field("email", "E-Mail", "", "email", "full")}
+        ${field("email", "E-Mail", state.auth.pendingEmail ?? "", "email", "full")}
         <div class="field full"><button type="button" class="ghost-button" data-action="auth-reset-request">Reset-Link per E-Mail anfordern</button></div>
       </form>
       <form id="auth-reset-apply-form" class="form-grid">

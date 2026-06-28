@@ -221,7 +221,7 @@ const applySokoPdfImport = async (file, generatedPages = []) => {
 };
 
 export const actions = {
-  "auth-show-reset": () => { state.auth.mode = "reset"; state.auth.message = ""; render(); },
+  "auth-show-reset": () => { state.auth.mode = "reset"; state.auth.message = ""; state.auth.pendingEmail = $("#auth-login-form [name=email]")?.value ?? ""; render(); },
   "auth-show-login": () => { state.auth.mode = "login"; state.auth.message = ""; state.auth.resetToken = ""; render(); },
   "auth-cancel-mfa": () => { state.auth.mfaTicket = ""; state.auth.message = ""; render(); },
   "auth-setup": async () => {
