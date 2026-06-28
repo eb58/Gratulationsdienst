@@ -143,13 +143,22 @@ const showCitizenGridRow = row => {
   if (pageSize) api.paginationGoToPage?.(Math.floor(row.rowIndex / pageSize));
   requestAnimationFrame(() => api.ensureIndexVisible?.(row.rowIndex, "middle"));
 };
+const keepOrSelectFirstVisibleCitizen = () => {
+  const rows = currentCitizenGridRows();
+  if (rows.some(row => row.id === state.selectedCitizenId)) return rows.find(row => row.id === state.selectedCitizenId);
+  const first = rows[0];
+  if (first?.id) state.selectedCitizenId = first.id;
+  return first;
+};
 const refreshSokoPdfImportUi = result => {
+  const selectedRow = keepOrSelectFirstVisibleCitizen();
   const ids = [...new Set(result.pages.filter(page => page.applied && page.citizen?.id).map(page => page.citizen.id))];
   const gridUpdated = ids.length
     ? ids.map(id => updateCitizenGridRow(byId(state.data.citizens, id))).every(Boolean)
     : Boolean(state.gridApis.citizens);
   if (!gridUpdated) { render(); return; }
   renderCitizenDetail();
+  showCitizenGridRow(selectedRow);
 };
 const importMappedRows = mapped => {
   const result = buildImportResult(mapped, state.data.citizens, row => streetAssignment(row)?.groupId);
@@ -709,7 +718,6 @@ export const actions = {
       importToast("SOKO-PDF wird erzeugt...");
       const simulation = await createSokoQuestionnaireSimulation(citizens);
       if (!simulation.pages.length) { importToast("Keine Fragebögen erzeugt."); return; }
-      state.selectedCitizenId = simulation.pages[0].citizenId || state.selectedCitizenId;
       importToast("SOKO-PDF wird ausgewertet...");
       const result = await applySokoPdfImport(simulation.file, simulation.pages);
       saveData();
