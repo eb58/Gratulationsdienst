@@ -216,9 +216,16 @@ describe('document helpers', () => {
 
 describe('duplicate key', () => {
   it('uses normalized identifying citizen data', () => {
-    const first = baseCitizen({ firstName: ' Erika ', lastName: 'Mustermann', houseNo: '12a' });
-    const second = baseCitizen({ firstName: 'erika', lastName: 'MUSTERMANN', houseNo: '12a' });
+    const first = baseCitizen({ firstName: ' Erika ', lastName: 'Mustermann' });
+    const second = baseCitizen({ firstName: 'erika', lastName: 'MUSTERMANN' });
 
     assert.equal(duplicateKey(first), duplicateKey(second));
+  });
+
+  it('ignores address changes — a person who moved stays the same person', () => {
+    const before = baseCitizen({ street: 'Alte Straße', houseNo: '1', postalCode: '13407' });
+    const after = baseCitizen({ street: 'Neue Straße', houseNo: '99', postalCode: '13439' });
+
+    assert.equal(duplicateKey(before), duplicateKey(after));
   });
 });

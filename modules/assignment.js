@@ -10,10 +10,7 @@ export const activeCitizens = () => state.data.citizens.filter(citizen => !isPri
 export const duplicateKey = citizen => [
   citizen.firstName,
   citizen.lastName,
-  citizen.street,
-  citizen.houseNo,
-  citizen.postalCode,
-  calculateAge(citizen.birthDate)
+  citizen.birthDate
 ].map(normalize).join("|");
 
 export const streetNameVariants = value => {

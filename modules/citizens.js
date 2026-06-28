@@ -1,33 +1,55 @@
 import { normalize, nextId, todayIso, calculateAge } from './utils.js';
-import { duplicateKey, isPrintedCitizen } from './assignment.js';
+import { duplicateKey } from './assignment.js';
 
-export const buildImportResult = (mapped, existingCitizens, assignGroup) => mapped.reduce((acc, row) => {
-  const missing = !row.firstName || !row.lastName || !row.birthDate || !row.street;
-  const key = duplicateKey(row);
-  const duplicate = !missing && acc.keys.includes(key);
-  const printedDuplicate = duplicate && acc.printedKeys.includes(key);
-  const group = assignGroup(row);
-  const item = { ...row, id: nextId("G-2026", [...existingCitizens, ...acc.rows]), source: "CSV Import", createdAt: row.createdAt || todayIso(), updatedAt: todayIso(), status: group ? "importiert" : "offen" };
-  return {
-    rows: missing || duplicate ? acc.rows : [...acc.rows, item],
-    duplicates: duplicate ? acc.duplicates + 1 : acc.duplicates,
-    printedDuplicates: printedDuplicate ? acc.printedDuplicates + 1 : acc.printedDuplicates,
-    keys: missing || duplicate ? acc.keys : [...acc.keys, key],
-    printedKeys: acc.printedKeys
+const LABO_FIELDS = ['salutation', 'street', 'houseNo', 'postalCode', 'district', 'phone', 'email'];
+const ADDRESS_FIELDS = ['street', 'houseNo', 'postalCode'];
+const todayDe = () => todayIso().split('-').reverse().join('.');
+
+const mergeCitizen = (existing, incoming, hasGroup) => {
+  const merged = {
+    ...existing,
+    ...Object.fromEntries(LABO_FIELDS.map(key => [key, incoming[key] ?? existing[key]])),
+    updatedAt: todayIso()
   };
-}, {
-  rows: [],
-  duplicates: 0,
-  printedDuplicates: 0,
-  keys: existingCitizens.map(duplicateKey),
-  printedKeys: existingCitizens.filter(isPrintedCitizen).map(duplicateKey)
-});
+  const addressChanged = ADDRESS_FIELDS.some(f => incoming[f] && incoming[f] !== existing[f]);
+  if (addressChanged && !hasGroup) {
+    const note = `Keine SOKO-Zuordnung bei Reimport ${todayDe()}`;
+    merged.notes = merged.notes ? `${merged.notes}\n${note}` : note;
+  }
+  return merged;
+};
 
-export const importNotice = ({ rows, duplicates, printedDuplicates }) => printedDuplicates
-  ? `${rows.length} neue Datensätze importiert. ${duplicates} Dubletten ausgefiltert, davon ${printedDuplicates} bereits gedruckt.`
-  : duplicates
-    ? `${rows.length} neue Datensätze importiert. ${duplicates} Dubletten ausgefiltert.`
-    : `${rows.length} neue Datensätze importiert.`;
+export const buildImportResult = (mapped, existingCitizens, assignGroup) => {
+  const existingByKey = new Map(existingCitizens.map(c => [duplicateKey(c), c]));
+  const seen = new Set();
+  const newRows = [];
+  const updates = [];
+  let skipped = 0;
+  for (const row of mapped) {
+    if (!row.firstName || !row.lastName || !row.birthDate || !row.street) continue;
+    const key = duplicateKey(row);
+    if (existingByKey.has(key)) {
+      updates.push(mergeCitizen(existingByKey.get(key), row, assignGroup(row)));
+      existingByKey.delete(key);
+      seen.add(key);
+    } else if (seen.has(key)) {
+      skipped++;
+    } else {
+      seen.add(key);
+      const group = assignGroup(row);
+      newRows.push({ ...row, id: nextId("G-2026", [...existingCitizens, ...newRows]), source: "CSV Import", createdAt: row.createdAt || todayIso(), updatedAt: todayIso(), status: group ? "importiert" : "offen" });
+    }
+  }
+  return { newRows, updates, skipped };
+};
+
+export const importNotice = ({ newRows, updates, skipped }) => {
+  const parts = [];
+  if (newRows.length) parts.push(`${newRows.length} neue Datensätze importiert`);
+  if (updates.length) parts.push(`${updates.length} Bestände aktualisiert`);
+  if (skipped) parts.push(`${skipped} Dubletten übersprungen`);
+  return parts.length ? parts.join(", ") + "." : "Keine Änderungen.";
+};
 
 export const citizenGridRow = (citizen, group) => ({
   id: citizen.id,

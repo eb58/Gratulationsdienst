@@ -166,10 +166,11 @@ const refreshSokoPdfImportUi = result => {
 };
 const importMappedRows = mapped => {
   const result = buildImportResult(mapped, state.data.citizens, row => streetAssignment(row)?.groupId);
-  state.data.citizens = [...state.data.citizens, ...result.rows];
+  const updatesById = new Map(result.updates.map(c => [c.id, c]));
+  state.data.citizens = [...state.data.citizens.map(c => updatesById.get(c.id) ?? c), ...result.newRows];
   saveData();
   render();
-  importToast(importNotice(result) || "Keine neuen Datensätze importiert.");
+  importToast(importNotice(result));
 };
 const importToast = message => toast(message, { anchor: ".soko-pdf-action-row, .import-action-row" });
 const sokoPdfNotice = pages => {
