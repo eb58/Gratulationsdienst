@@ -188,6 +188,15 @@ describe('view partials', () => {
     assert.match(region, /Erika Mustermann/);
   });
 
+  it('places citizen actions and likely edited fields before personal data', () => {
+    const html = citizenDetailContent(citizen);
+
+    assert.ok(html.indexOf('data-action="save-citizen"') < html.indexOf('name="wish"'));
+    assert.ok(html.indexOf('name="wish"') < html.indexOf('citizen-personal-section'));
+    assert.ok(html.indexOf('name="notes"') < html.indexOf('citizen-personal-section'));
+    assert.ok(html.indexOf('citizen-personal-section') < html.indexOf('name="firstName"'));
+  });
+
   it('shows an explicit empty questionnaire state for citizens without scans', () => {
     const html = views.citizens();
 

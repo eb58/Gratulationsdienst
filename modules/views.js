@@ -167,16 +167,10 @@ export const citizenDetailContent = citizen => `
   <h2>Jubilar</h2>
   <form id="citizen-form" class="form-grid">
     <input type="hidden" name="id" value="${escapeHtml(citizen.id)}">
-    ${selectField("salutation", "Anrede", citizen.salutation, [["Frau", "Frau"], ["Herr", "Herr"]])}
-    ${field("firstName", "Vorname", citizen.firstName)}
-    ${field("lastName", "Nachname", citizen.lastName)}
-    ${field("birthDate", "Geburtsdatum", citizen.birthDate, "date")}
-    ${field("street", "Straße", citizen.street)}
-    ${field("houseNo", "Hausnummer", citizen.houseNo)}
-    ${postalCodeField("postalCode", "PLZ", citizen.postalCode)}
-    ${field("district", "Ortsteil", citizen.district)}
-    ${field("phone", "Telefon", citizen.phone)}
-    ${emailField("email", "E-Mail", citizen.email)}
+    <div class="field full button-row citizen-action-row">
+      <button type="button" class="primary-button${citizen.wish && citizen.wish !== "offen" ? "" : " btn-disabled"}" data-action="save-citizen">Speichern</button>
+      ${isPrintedCitizen(citizen) ? `<button type="button" class="ghost-button" data-action="reset-selected-for-reprint">Für Nachdruck auf geprüft setzen</button>` : ""}
+    </div>
     ${radioField("wish", "Glückwünsche", citizen.wish, [["Besuch erwünscht", "Besuch erwünscht"], ["per Post", "per Post"], ["keine", "keine"]], "full")}
     ${checkField("pressPublication", "Veröffentlichung in der lokalen Presse", citizen.pressPublication, "full")}
     ${radioField("weddingAnniversary", "Es steht bevor die", citizen.weddingAnniversary ?? "", [
@@ -189,10 +183,21 @@ export const citizenDetailContent = citizen => `
     ${field("weddingDate", "am", citizen.weddingDate ?? "", "date", "hochzeit-date-field")}
     ${field("spouseName", "Name des Ehegatten", citizen.spouseName ?? "", "text", "hochzeit-spouse-field")}
     ${textField("notes", "Notiz", citizen.notes, "full notes-field")}
-    <div class="field full button-row">
-      <button type="button" class="primary-button${citizen.wish && citizen.wish !== "offen" ? "" : " btn-disabled"}" data-action="save-citizen">Speichern</button>
-      ${isPrintedCitizen(citizen) ? `<button type="button" class="ghost-button" data-action="reset-selected-for-reprint">Für Nachdruck auf geprüft setzen</button>` : ""}
-    </div>
+    <section class="citizen-personal-section full">
+      <h3>Persönliche Daten</h3>
+      <div class="form-grid">
+        ${selectField("salutation", "Anrede", citizen.salutation, [["Frau", "Frau"], ["Herr", "Herr"]])}
+        ${field("firstName", "Vorname", citizen.firstName)}
+        ${field("lastName", "Nachname", citizen.lastName)}
+        ${field("birthDate", "Geburtsdatum", citizen.birthDate, "date")}
+        ${field("street", "Straße", citizen.street)}
+        ${field("houseNo", "Hausnummer", citizen.houseNo)}
+        ${postalCodeField("postalCode", "PLZ", citizen.postalCode)}
+        ${field("district", "Ortsteil", citizen.district)}
+        ${field("phone", "Telefon", citizen.phone)}
+        ${emailField("email", "E-Mail", citizen.email)}
+      </div>
+    </section>
   </form>
 `;
 

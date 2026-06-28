@@ -610,6 +610,24 @@ h3 {
   min-height: 0;
 }
 
+.citizen-action-row {
+  margin-bottom: 2px;
+}
+
+.citizen-personal-section {
+  grid-column: 1 / -1;
+  margin-top: 4px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.citizen-personal-section h3 {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
 .region-split {
   display: grid;
   grid-template-columns: minmax(0, calc(var(--region-left, 50%) - 6px)) 12px minmax(0, calc(100% - var(--region-left, 50%) - 6px));
