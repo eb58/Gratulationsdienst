@@ -5,7 +5,7 @@
 // insert-token, upload-template-background.
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { beforeEach, describe, it, mock } from 'node:test';
+import { afterEach, beforeEach, describe, it, mock } from 'node:test';
 
 const storage = () => {
   const values = new Map();
@@ -80,6 +80,11 @@ const { monthAfterNext } = await import('../modules/testdata.js');
 const { normalizeAmount } = await import('../modules/utils.js');
 
 const idEvent = id => ({ target: { closest: () => ({ dataset: { id } }) } });
+const birthdayWithAnniversaryMonthsAgo = months => {
+  const date = new Date();
+  const birthday = new Date(date.getFullYear(), date.getMonth() - months, Math.min(date.getDate(), 28));
+  return `1936-${String(birthday.getMonth() + 1).padStart(2, '0')}-${String(birthday.getDate()).padStart(2, '0')}`;
+};
 
 beforeEach(() => {
   for (const key of Object.keys(nodes)) delete nodes[key];
@@ -98,11 +103,16 @@ beforeEach(() => {
   state.selectedUserId = '';
   state.importText = '';
   state.generatedDocs = [];
+  state.cleanupPreview = null;
   state.printBackground = true;
   state.filters = { q: '', month: 'alle', groupId: 'alle', age: 'alle', status: 'alle', occasion: 'Geburtstag' };
   state.gridApis = {};
   state.auth.user = { id: 'demo', email: 'demo@local', role: 'admin' };
   state.auth.users = [];
+});
+
+afterEach(() => {
+  mock.timers.reset();
 });
 
 describe('Auswahl- und Sortier-Actions', () => {
@@ -281,6 +291,52 @@ describe('Jubilare löschen und Testdaten', () => {
   it('clear-citizens wird für Nicht-Admins blockiert', () => {
     state.auth.user = { id: 'u', role: 'user' };
     actions['clear-citizens']();
+    assert.equal(state.dialog, null);
+  });
+
+  it('delete-old-citizens erzwingt mindestens sechs Monate und löscht nur ältere Jubiläen', async () => {
+    mock.timers.enable({ apis: ['Date'], now: new Date(2026, 8, 28) });
+    state.data.citizens = [
+      { id: 'old-1', birthDate: birthdayWithAnniversaryMonthsAgo(7) },
+      { id: 'old-2', birthDate: birthdayWithAnniversaryMonthsAgo(8) },
+      { id: 'boundary', birthDate: birthdayWithAnniversaryMonthsAgo(6) },
+      { id: 'fresh', birthDate: birthdayWithAnniversaryMonthsAgo(5) },
+      { id: 'future', birthDate: '1936-11-01' }
+    ];
+    state.selectedCitizenId = 'old-1';
+    state.generatedDocs = [{ citizenId: 'old-1' }, { citizenId: 'fresh' }];
+    setField('#cleanup-months', '5');
+
+    actions['preview-old-citizens']();
+
+    assert.equal(state.cleanupMonths, 6);
+    assert.equal(localStorage.getItem('gd_cleanup_months'), '6');
+    assert.equal(state.dialog, null);
+    assert.deepEqual(state.cleanupPreview, { months: 6, citizenIds: ['old-1', 'old-2'] });
+
+    actions['delete-old-citizens']();
+
+    assert.equal(state.dialog.type, 'delete-old-citizens');
+    assert.deepEqual(state.dialog.citizenIds, ['old-1', 'old-2']);
+
+    await actions['confirm-delete-old-citizens']();
+
+    assert.deepEqual(state.data.citizens.map(citizen => citizen.id), ['boundary', 'fresh', 'future']);
+    assert.equal(state.selectedCitizenId, '');
+    assert.deepEqual(state.generatedDocs, [{ citizenId: 'fresh' }]);
+    assert.equal(state.cleanupPreview, null);
+  });
+
+  it('delete-old-citizens wird für Nicht-Admins blockiert', () => {
+    state.auth.user = { id: 'u', role: 'user' };
+    state.data.citizens = [{ id: 'old-1', birthDate: birthdayWithAnniversaryMonthsAgo(7) }];
+    actions['preview-old-citizens']();
+    assert.equal(state.dialog, null);
+  });
+
+  it('delete-old-citizens öffnet ohne Vorschau keinen Löschdialog', () => {
+    state.data.citizens = [{ id: 'old-1', birthDate: birthdayWithAnniversaryMonthsAgo(7) }];
+    actions['delete-old-citizens']();
     assert.equal(state.dialog, null);
   });
 

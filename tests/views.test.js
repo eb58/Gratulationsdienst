@@ -153,6 +153,7 @@ beforeEach(() => {
     sender: sender.role,
     createdAt: '2026-06-01'
   }];
+  state.cleanupPreview = null;
   state.printBackground = true;
   state.importText = 'Vorname;Nachname';
   state.dashboardSort = { key: 'group', dir: 'asc' };
@@ -237,12 +238,20 @@ describe('main views', () => {
     assert.match(views.templates(), /template-form/);
     assert.match(views.documents(), /Druckliste/);
     assert.match(views.import(), /soko-print/);
+    assert.doesNotMatch(views.import(), /Alte Jubilare löschen/);
   });
 
   it('renders receipt, profile and user administration states', () => {
     assert.match(views.quittung(), /Alle fertigen drucken/);
     assert.match(views.quittungStamm(), /quittung-form/);
     assert.match(views.profile(), /mfa-setup/);
+    assert.match(views.privacy(), /Datenbereinigung/);
+    assert.match(views.privacy(), /Betroffene anzeigen/);
+    assert.doesNotMatch(views.privacy(), /Angezeigte Jubilare löschen/);
+    state.cleanupPreview = { months: 6, citizenIds: [citizen.id] };
+    assert.match(views.privacy(), /Zu löschende Jubilare/);
+    assert.match(views.privacy(), /Erika Mustermann/);
+    assert.match(views.privacy(), /Angezeigte Jubilare löschen/);
     assert.match(views.users(), /user-form/);
 
     state.auth.user.mfaEnabled = true;

@@ -318,6 +318,12 @@ function handleQuestionnairePages(array $db, string $method, array $route): void
     }
 
     if ($method === 'DELETE') {
+        $payload = readJson();
+        $citizenIds = is_array($payload) && !array_is_list($payload) ? array_values(array_filter(array_map(static fn ($id) => trim((string)$id), $payload['citizenIds'] ?? []))) : [];
+        if ($citizenIds) {
+            deleteQuestionnairePagesForCitizens($db, $citizenIds);
+            respond(['ok' => true, 'deletedCitizenIds' => $citizenIds]);
+        }
         executeStatement($db, 'DELETE FROM gd_questionnaire_pages', []);
         respond(['ok' => true]);
     }
@@ -624,6 +630,14 @@ function readQuestionnairePages(array $db, string $citizenId): array
     $stmt = $db['pdo']->prepare($sql);
     $stmt->execute([$citizenId]);
     return array_map('questionnairePageFromRow', $stmt->fetchAll());
+}
+
+function deleteQuestionnairePagesForCitizens(array $db, array $citizenIds): int
+{
+    $ids = array_values(array_unique(array_filter(array_map(static fn ($id) => trim((string)$id), $citizenIds))));
+    if (!$ids) return 0;
+    $placeholders = implode(',', array_fill(0, count($ids), '?'));
+    return executeStatement($db, "DELETE FROM gd_questionnaire_pages WHERE citizen_id IN ({$placeholders})", $ids);
 }
 
 function saveQuestionnairePage(array $db, array $page, int $index): array

@@ -3,6 +3,7 @@ export const MONTH_KEY = "gd_month_filter";
 export const QUITTUNG_MONTH_KEY = "gd_quittung_month";
 export const QUITTUNG_SETTINGS_KEY = "gd_quittung_settings";
 export const MAP_MONTH_KEY = "gd_map_month";
+export const CLEANUP_MONTHS_KEY = "gd_cleanup_months";
 export const API_BASE = import.meta.env?.VITE_API_BASE ?? "/php-api";
 export const SPLITTERS_KEY = "gratulationsdienst.splitters";
 const storedSplitters = () => {
@@ -77,6 +78,20 @@ export const birthdayInRunYear = birthDate => {
 };
 export const calculateAge = birthDate => runYear() - new Date(birthDate).getFullYear();
 export const birthdayMonth = birthDate => String(new Date(birthDate).getMonth() + 1).padStart(2, "0");
+export const cleanupMonthsValue = value => {
+  const months = Math.trunc(Number(value));
+  return Number.isFinite(months) ? Math.max(6, months) : 6;
+};
+export const anniversaryDateInYear = (birthDate, referenceDate = new Date()) => {
+  const birth = new Date(birthDate);
+  if (Number.isNaN(birth.getTime())) return null;
+  return new Date(referenceDate.getFullYear(), birth.getMonth(), birth.getDate());
+};
+export const dateMonthsAgo = (months, referenceDate = new Date()) => new Date(referenceDate.getFullYear(), referenceDate.getMonth() - cleanupMonthsValue(months), referenceDate.getDate());
+export const isAnniversaryOlderThanMonths = (birthDate, months, referenceDate = new Date()) => {
+  const anniversary = anniversaryDateInYear(birthDate, referenceDate);
+  return anniversary !== null && anniversary < dateMonthsAgo(months, referenceDate);
+};
 export const formatDateDe = iso => {
   if (!iso) return "";
   const [y, m, d] = iso.split("-");

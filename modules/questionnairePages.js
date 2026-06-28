@@ -60,6 +60,18 @@ export const deleteAllQuestionnairePages = () => {
   });
 };
 
+export const deleteQuestionnairePagesForCitizens = citizenIds => {
+  const ids = [...new Set((citizenIds || []).filter(Boolean))];
+  ids.forEach(id => loadedCitizenIds.delete(id));
+  if (!ids.length || !hasBackend()) return Promise.resolve();
+  return apiRequest("/questionnaire-pages", {
+    method: "DELETE",
+    body: JSON.stringify({ citizenIds: ids })
+  }).catch(error => {
+    console.warn("Fragebogen-Scans konnten nicht gelöscht werden.", error);
+  });
+};
+
 export const saveQuestionnairePages = pages => {
   const payload = pagesWithImages(pages);
   if (!payload.length) return Promise.resolve([]);

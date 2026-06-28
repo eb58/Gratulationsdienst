@@ -1,4 +1,4 @@
-import { STORAGE_KEY, MONTH_KEY, QUITTUNG_MONTH_KEY, QUITTUNG_SETTINGS_KEY, MAP_MONTH_KEY, API_BASE, storedSplit, repairStoredText, toast, normalize, safeStorageSetItem } from './utils.js';
+import { STORAGE_KEY, MONTH_KEY, QUITTUNG_MONTH_KEY, QUITTUNG_SETTINGS_KEY, MAP_MONTH_KEY, CLEANUP_MONTHS_KEY, API_BASE, storedSplit, repairStoredText, toast, normalize, cleanupMonthsValue, safeStorageSetItem } from './utils.js';
 import { defaultData, buildStreetData } from './domain.js';
 import { render } from './render.js'; // Zyklus OK: render wird nur in Callbacks aufgerufen
 
@@ -118,6 +118,7 @@ export const state = {
   quittungKapitel: quittungSettings.quittungKapitel,
   quittungTitel: quittungSettings.quittungTitel,
   quittungMonat: localStorage.getItem(QUITTUNG_MONTH_KEY) || new Date().toISOString().slice(5, 7),
+  cleanupMonths: cleanupMonthsValue(localStorage.getItem(CLEANUP_MONTHS_KEY)),
   mapMonth: localStorage.getItem(MAP_MONTH_KEY) || new Date().toISOString().slice(5, 7),
   importText: "",
   importSplit: storedSplit("import", 50),
@@ -131,6 +132,7 @@ export const state = {
   printSplit: storedSplit("print", 50),
   usersSplit: storedSplit("users", 50),
   generatedDocs: [],
+  cleanupPreview: null,
   printBackground: true,
   dashboardSort: { key: "group", dir: "asc" },
   selectedUserId: "",
@@ -141,7 +143,7 @@ export const state = {
 
 export const apiCollections = ["citizens", "sokoGroups", "sokoMembers", "streets", "senders", "templates"];
 export const adminCollections = ["sokoGroups", "sokoMembers", "streets", "senders", "templates"];
-export const adminViews = ["soko", "regions", "map", "senders", "templates", "quittungStamm", "users"];
+export const adminViews = ["soko", "regions", "map", "senders", "templates", "quittungStamm", "privacy", "users"];
 export const persistedCollections = ["citizens", "sokoGroups", "sokoMembers", "streets", "senders", "templates"];
 export const hasBackendData = data => data && persistedCollections.some(key => Array.isArray(data[key]) && data[key].length);
 export const isAdmin = () => state.auth.user?.role === "admin";

@@ -1297,6 +1297,51 @@ input[type="checkbox"].toggle:checked::after {
   padding: 0 14px;
 }
 
+.cleanup-admin-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+.cleanup-months-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.cleanup-months-field input {
+  width: 64px;
+  height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0 8px;
+  color: var(--ink);
+  background: white;
+  font: inherit;
+}
+
+.cleanup-preview-panel {
+  margin-top: 12px;
+}
+
+.cleanup-preview-table-wrap {
+  max-height: 420px;
+  margin-top: 12px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.cleanup-preview-table {
+  width: 100%;
+}
+
 .file-picker {
   display: flex;
   align-items: center;

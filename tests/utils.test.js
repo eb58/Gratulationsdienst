@@ -2,14 +2,18 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   byId,
+  cleanupMonthsValue,
   csvEscape,
   escapeHtml,
   formatDateDe,
   formatStreetAddress,
   formatIban,
+  dateMonthsAgo,
+  isAnniversaryOlderThanMonths,
   isValidEmail,
   isValidIban,
   isValidPostalCode,
+  anniversaryDateInYear,
   nextId,
   normalize,
   normalizeAmount,
@@ -21,6 +25,8 @@ import {
   safeStorageSetItem,
   updateItem
 } from '../modules/utils.js';
+
+const localIso = date => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 
 describe('email validation', () => {
   it('accepts empty and syntactically valid addresses', () => {
@@ -79,6 +85,34 @@ describe('amount normalization', () => {
     assert.equal(normalizeAmount('€ 35,00'), '35,00');
     assert.equal(normalizeAmount(',50'), '');
     assert.equal(normalizeAmount('abc'), '');
+  });
+});
+
+describe('cleanup month helpers', () => {
+  it('enforces a minimum cleanup age of six months', () => {
+    assert.equal(cleanupMonthsValue(), 6);
+    assert.equal(cleanupMonthsValue('5'), 6);
+    assert.equal(cleanupMonthsValue('8'), 8);
+  });
+
+  it('finds the concrete anniversary date in the reference year', () => {
+    const reference = new Date(2026, 5, 28);
+    assert.equal(localIso(anniversaryDateInYear('1936-06-01', reference)), '2026-06-01');
+    assert.equal(localIso(anniversaryDateInYear('1936-12-01', reference)), '2026-12-01');
+    assert.equal(localIso(anniversaryDateInYear('1936-08-01', reference)), '2026-08-01');
+  });
+
+  it('matches anniversaries older than the configured age', () => {
+    const reference = new Date(2026, 8, 28);
+    assert.equal(localIso(dateMonthsAgo(6, reference)), '2026-03-28');
+    assert.equal(isAnniversaryOlderThanMonths('1936-01-01', 6, reference), true);
+    assert.equal(isAnniversaryOlderThanMonths('1936-03-28', 6, reference), false);
+    assert.equal(isAnniversaryOlderThanMonths('1936-08-01', 6, reference), false);
+  });
+
+  it('keeps future anniversaries in the current year', () => {
+    const reference = new Date(2026, 5, 28);
+    assert.equal(isAnniversaryOlderThanMonths('1936-08-01', 6, reference), false);
   });
 });
 

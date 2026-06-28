@@ -1,5 +1,5 @@
 import { canAccessView, isAdmin, state, loadAuthStatus, loadCollectionData } from './modules/state.js';
-import { MONTH_KEY, QUITTUNG_MONTH_KEY, MAP_MONTH_KEY, storeSplit, safeStorageSetItem, isValidEmail, normalizeIban, isValidIban, normalizeAmount, normalizeDigits, isValidPostalCode } from './modules/utils.js';
+import { MONTH_KEY, QUITTUNG_MONTH_KEY, MAP_MONTH_KEY, storeSplit, safeStorageSetItem, isValidEmail, normalizeIban, isValidIban, normalizeAmount, normalizeDigits, isValidPostalCode, cleanupMonthsValue } from './modules/utils.js';
 import { viewTitles, sokoMapInfoHtml } from './modules/views.js';
 import { findNearestAddress } from './modules/map.js';
 import { render, renderDialog } from './modules/render.js';
@@ -130,6 +130,12 @@ const updatePostalCodeValidity = input => {
   hint.classList.toggle("error", Boolean(hasValue && !valid));
   hint.textContent = hasValue && !valid ? "PLZ muss 5 Ziffern haben" : "";
 };
+const boundValue = input => {
+  if (input.dataset.bind !== "cleanupMonths") return input.value;
+  const value = cleanupMonthsValue(input.value);
+  input.value = String(value);
+  return value;
+};
 
 document.addEventListener("click", event => {
   const skipLink = event.target.closest(".skip-link");
@@ -193,7 +199,7 @@ document.addEventListener("input", event => {
   const digits = event.target.closest("[data-digits-field]:not([data-postal-code-field])");
   if (digits) updateDigitsInput(digits);
   const bound = event.target.closest("[data-bind]");
-  if (bound) state[bound.dataset.bind] = bound.value;
+  if (bound) state[bound.dataset.bind] = boundValue(bound);
 });
 
 document.addEventListener("submit", event => event.preventDefault());
@@ -260,7 +266,7 @@ document.addEventListener("change", event => {
   }
   const bound = event.target.closest("[data-bind]");
   if (bound) {
-    state[bound.dataset.bind] = bound.value;
+    state[bound.dataset.bind] = boundValue(bound);
     if (bound.dataset.bind === "quittungMonat") safeStorageSetItem(localStorage, QUITTUNG_MONTH_KEY, bound.value, "Quittungsmonat");
     if (dirtyTracked) return;
     render();
