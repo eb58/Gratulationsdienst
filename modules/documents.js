@@ -356,7 +356,7 @@ export const renderSokoForm = (citizen, index) => {
     ${box(104, 94, 48, 16, "Zutreffendes ist<br>angekreuzt", "display:flex;align-items:center;justify-content:center;text-align:center;font-weight:bold;font-size:11pt")}
 
     ${text(15, 77, 85, 7, "Sehr geehrte Damen und Herren,", "font-size:10.5pt")}
-    ${text(15, 89, 92, 14, "bitte senden Sie mir diesen <strong>Fragebogen</strong><br><strong>innerhalb von drei Wochen</strong> ausgef&uuml;llt und unterschrieben zur&uuml;ck.", "font-size:10.5pt;line-height:1.18")}
+    ${text(15, 89, 82, 14, "bitte senden Sie mir diesen <strong>Fragebogen</strong><br><strong>innerhalb von drei Wochen</strong><br>ausgef&uuml;llt und unterschrieben zur&uuml;ck.", "font-size:10.5pt;line-height:1.18")}
     ${text(15, 108, 92, 7, "F&uuml;r weitere Angaben bitte die R&uuml;ckseite benutzen.", "font-size:10.5pt")}
     ${text(16, 121, 50, 7, "Ihre Gratulationsstelle", "font-size:10.5pt")}
 

@@ -254,6 +254,7 @@ describe('SOKO print artifacts', () => {
     assert.ok(html.indexOf('005 / 06') < html.indexOf('Lfd. Nr. / Monat'));
     assert.match(html, /left:104mm;top:22mm;width:91mm;height:58mm;[\s\S]*?005 \/ 06<\/div><\/div>/);
     assert.match(html, /left:166mm;top:80mm;width:29mm;height:9mm;[\s\S]*?Lfd\. Nr\. \/ Monat/);
+    assert.match(html, /width:82mm;height:14mm;[\s\S]*?innerhalb von drei Wochen<\/strong><br>ausgef&uuml;llt/);
     assert.match(html, /030 999/);
   });
 });
