@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-const COLLECTIONS = ['citizens', 'sokoGroups', 'sokoMembers', 'streets', 'senders', 'templates', 'importLog'];
+const COLLECTIONS = ['citizens', 'sokoGroups', 'sokoMembers', 'streets', 'senders', 'templates'];
 const ADMIN_COLLECTIONS = ['sokoGroups', 'sokoMembers', 'streets', 'senders', 'templates'];
 const SESSION_TTL_SECONDS = 28800;
 const MFA_TICKET_TTL_SECONDS = 300;
@@ -66,6 +66,7 @@ function collectionConfig(string $collection): array
                 'weddingAnniversary' => ['wedding_anniversary', 'string'],
                 'weddingDate' => ['wedding_date', 'date'],
                 'spouseName' => ['spouse_name', 'string'],
+                'createdAt' => ['created_at', 'createdAt'],
             ],
         ],
         'sokoGroups' => [
@@ -151,21 +152,6 @@ function collectionConfig(string $collection): array
                 'updatedAt' => ['updated_at_date', 'date'],
             ],
         ],
-        'importLog' => [
-            'table' => 'gd_import_log',
-            'order' => 'created_at DESC, id DESC',
-            'columns' => [
-                'id' => ['id', 'string'],
-                'time' => ['entry_time', 'string'],
-                'name' => ['name', 'string'],
-                'address' => ['address', 'string'],
-                'birthDate' => ['birth_date', 'date'],
-                'age' => ['age', 'int'],
-                'groupId' => ['group_id', 'string'],
-                'type' => ['entry_type', 'string'],
-                'message' => ['message', 'string'],
-            ],
-        ],
     ];
 
     if (!isset($configs[$collection])) {
@@ -210,6 +196,11 @@ function dispatch(array $db): void
 
     if (($route[0] ?? '') === 'settings') {
         handleSettings($db, $method, array_slice($route, 1), $user);
+        return;
+    }
+
+    if (($route[0] ?? '') === 'questionnaire-pages') {
+        handleQuestionnairePages($db, $method, array_slice($route, 1));
         return;
     }
 
@@ -268,7 +259,7 @@ function handleCollection(array $db, string $method, string $collection, ?string
 
     if ($method === 'POST') {
         $item = requireObject(readJson());
-        $itemId = itemId($item, $collection, 0);
+        $itemId = itemId($item);
         if ($itemId === '') respond(['error' => 'Datensatz braucht ein id-Feld.'], 422);
         upsertItem($db, $collection, $itemId, $item);
         respond(readItem($db, $collection, $itemId), 201);
@@ -302,6 +293,40 @@ function handleSettings(array $db, string $method, array $route, array $user): v
         $settings = receiptSettingsFromPayload(requireObject(readJson()));
         saveReceiptSettings($db, $settings);
         respond(readReceiptSettings($db));
+    }
+
+    respond(['error' => 'Methode nicht erlaubt.'], 405);
+}
+
+function handleQuestionnairePages(array $db, string $method, array $route): void
+{
+    if ($method === 'GET') {
+        $citizenId = trim((string)($_GET['citizenId'] ?? ''));
+        if ($citizenId === '') respond(['error' => 'citizenId fehlt.'], 422);
+        respond(readQuestionnairePages($db, $citizenId));
+    }
+
+    if ($method === 'POST') {
+        $payload = readJson();
+        $pages = array_is_list($payload) ? $payload : requireList(requireObject($payload)['pages'] ?? [], 'pages');
+        $saved = [];
+        transaction($db, static function () use ($db, $pages, &$saved): void {
+            foreach ($pages as $index => $page) {
+                $saved[] = saveQuestionnairePage($db, requireObject($page), $index);
+            }
+        });
+        respond($saved, 201);
+    }
+
+    if ($method === 'DELETE') {
+        $payload = readJson();
+        $citizenIds = is_array($payload) && !array_is_list($payload) ? array_values(array_filter(array_map(static fn ($id) => trim((string)$id), $payload['citizenIds'] ?? []))) : [];
+        if ($citizenIds) {
+            deleteQuestionnairePagesForCitizens($db, $citizenIds);
+            respond(['ok' => true, 'deletedCitizenIds' => $citizenIds]);
+        }
+        executeStatement($db, 'DELETE FROM gd_questionnaire_pages', []);
+        respond(['ok' => true]);
     }
 
     respond(['error' => 'Methode nicht erlaubt.'], 405);
@@ -541,12 +566,7 @@ function db(): array
 function initSchema(array $db): void
 {
     executeSqlScript($db, file_get_contents(__DIR__ . '/schema.mysql.sql'));
-    ensureColumn($db, 'gd_import_log', 'address', "ALTER TABLE gd_import_log ADD COLUMN address VARCHAR(255) NOT NULL DEFAULT '' AFTER name");
-    ensureColumn($db, 'gd_import_log', 'birth_date', 'ALTER TABLE gd_import_log ADD COLUMN birth_date DATE NULL AFTER address');
-    ensureColumn($db, 'gd_import_log', 'age', 'ALTER TABLE gd_import_log ADD COLUMN age INT NULL AFTER birth_date');
-    ensureColumn($db, 'gd_import_log', 'group_id', "ALTER TABLE gd_import_log ADD COLUMN group_id VARCHAR(32) NOT NULL DEFAULT '' AFTER age");
-    ensureIndex($db, 'gd_import_log', 'idx_gd_import_log_group', 'ALTER TABLE gd_import_log ADD INDEX idx_gd_import_log_group (group_id)');
-    ensureColumn($db, 'gd_citizens', 'press_publication', 'ALTER TABLE gd_citizens ADD COLUMN press_publication TINYINT(1) NOT NULL DEFAULT 0 AFTER printed_year');
+ensureColumn($db, 'gd_citizens', 'press_publication', 'ALTER TABLE gd_citizens ADD COLUMN press_publication TINYINT(1) NOT NULL DEFAULT 0 AFTER printed_year');
     ensureColumn($db, 'gd_citizens', 'wedding_anniversary', "ALTER TABLE gd_citizens ADD COLUMN wedding_anniversary VARCHAR(80) NOT NULL DEFAULT '' AFTER press_publication");
     ensureColumn($db, 'gd_citizens', 'wedding_date', 'ALTER TABLE gd_citizens ADD COLUMN wedding_date DATE NULL AFTER wedding_anniversary');
     ensureColumn($db, 'gd_citizens', 'spouse_name', "ALTER TABLE gd_citizens ADD COLUMN spouse_name VARCHAR(180) NOT NULL DEFAULT '' AFTER wedding_date");
@@ -598,6 +618,71 @@ function saveReceiptSettings(array $db, array $settings): void
     executeStatement($db, 'INSERT INTO gd_settings (name, value) VALUES (?, ?) ON CONFLICT(name) DO UPDATE SET value = excluded.value', [RECEIPT_SETTINGS_NAME, $payload]);
 }
 
+function readQuestionnairePages(array $db, string $citizenId): array
+{
+    $sql = 'SELECT id, citizen_id, source, mime_type, image_data, marks, created_at FROM gd_questionnaire_pages WHERE citizen_id = ? ORDER BY created_at DESC';
+    if ($db['driver'] === 'mysqli') {
+        $stmt = $db['mysqli']->prepare($sql);
+        bindValues($stmt, [$citizenId]);
+        $stmt->execute();
+        return array_map('questionnairePageFromRow', $stmt->get_result()->fetch_all(MYSQLI_ASSOC));
+    }
+
+    $stmt = $db['pdo']->prepare($sql);
+    $stmt->execute([$citizenId]);
+    return array_map('questionnairePageFromRow', $stmt->fetchAll());
+}
+
+function deleteQuestionnairePagesForCitizens(array $db, array $citizenIds): int
+{
+    $ids = array_values(array_unique(array_filter(array_map(static fn ($id) => trim((string)$id), $citizenIds))));
+    if (!$ids) return 0;
+    $placeholders = implode(',', array_fill(0, count($ids), '?'));
+    return executeStatement($db, "DELETE FROM gd_questionnaire_pages WHERE citizen_id IN ({$placeholders})", $ids);
+}
+
+function saveQuestionnairePage(array $db, array $page, int $index): array
+{
+    $citizenId = trim((string)($page['citizenId'] ?? $page['citizen_id'] ?? ''));
+    if ($citizenId === '') throw new RuntimeException('Fragebogen-Seite braucht citizenId.');
+    [$mimeType, $imageData] = questionnaireImageFromDataUrl((string)($page['image'] ?? ''));
+    $id = trim((string)($page['id'] ?? '')) ?: newId('QP');
+    $source = substr(trim((string)($page['source'] ?? 'pdf')), 0, 40);
+    $marks = json_encode($page['marks'] ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+    $values = [$id, $citizenId, $source, $mimeType, $imageData, $marks];
+
+    if ($db['driver'] === 'mysqli' || $db['driver'] === 'mysql') {
+        executeStatement($db, 'INSERT INTO gd_questionnaire_pages (id, citizen_id, source, mime_type, image_data, marks) VALUES (?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE citizen_id = VALUES(citizen_id), source = VALUES(source), mime_type = VALUES(mime_type), image_data = VALUES(image_data), marks = VALUES(marks)', $values);
+        return questionnairePageFromRow(fetchOne($db, 'SELECT id, citizen_id, source, mime_type, image_data, marks, created_at FROM gd_questionnaire_pages WHERE id = ?', [$id]) ?? []);
+    }
+
+    executeStatement($db, 'INSERT INTO gd_questionnaire_pages (id, citizen_id, source, mime_type, image_data, marks) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET citizen_id = excluded.citizen_id, source = excluded.source, mime_type = excluded.mime_type, image_data = excluded.image_data, marks = excluded.marks', $values);
+    return questionnairePageFromRow(fetchOne($db, 'SELECT id, citizen_id, source, mime_type, image_data, marks, created_at FROM gd_questionnaire_pages WHERE id = ?', [$id]) ?? []);
+}
+
+function questionnaireImageFromDataUrl(string $image): array
+{
+    if (!preg_match('/^data:([^;,]+);base64,(.+)$/s', trim($image), $match)) {
+        throw new RuntimeException('Fragebogen-Bild muss ein Data-URL sein.');
+    }
+    $data = base64_decode(str_replace(["\r", "\n"], '', $match[2]), true);
+    if ($data === false || $data === '') throw new RuntimeException('Fragebogen-Bild ist ungÃ¼ltig.');
+    return [$match[1], $data];
+}
+
+function questionnairePageFromRow(array $row): array
+{
+    $marks = json_decode((string)($row['marks'] ?? '[]'), true);
+    return [
+        'id' => (string)($row['id'] ?? ''),
+        'citizenId' => (string)($row['citizen_id'] ?? ''),
+        'source' => (string)($row['source'] ?? ''),
+        'image' => 'data:' . (string)($row['mime_type'] ?? 'image/jpeg') . ';base64,' . base64_encode((string)($row['image_data'] ?? '')),
+        'marks' => is_array($marks) ? $marks : [],
+        'createdAt' => (string)($row['created_at'] ?? ''),
+    ];
+}
+
 function readCollection(array $db, string $collection): array
 {
     $config = collectionConfig($collection);
@@ -625,9 +710,9 @@ function replaceCollection(array $db, string $collection, array $items): void
 {
     $config = collectionConfig($collection);
     executeStatement($db, 'DELETE FROM ' . $config['table']);
-    foreach ($items as $index => $item) {
+    foreach ($items as $item) {
         $item = requireObject($item);
-        $id = itemId($item, $collection, $index);
+        $id = itemId($item);
         if ($id === '') throw new RuntimeException("Datensatz in {$collection} braucht ein id-Feld.");
         $item['id'] = $id;
         upsertItem($db, $collection, $id, $item);
@@ -673,6 +758,7 @@ function valueForDb(mixed $value, string $type): mixed
 {
     if ($type === 'bool') return $value ? 1 : 0;
     if ($type === 'json') return json_encode($value ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+    if ($type === 'createdAt') return trim((string)($value ?? '')) ?: date('Y-m-d H:i:s');
     if ($type === 'date') return trim((string)($value ?? '')) ?: null;
     if ($type === 'int') return trim((string)($value ?? '')) === '' ? null : (int)$value;
     return (string)($value ?? '');
@@ -1133,11 +1219,9 @@ function requireList(mixed $value, string $name): array
     return $value;
 }
 
-function itemId(array $item, string $collection, int $index): string
+function itemId(array $item): string
 {
-    $id = trim((string)($item['id'] ?? ''));
-    if ($id !== '' || $collection !== 'importLog') return $id;
-    return 'LOG-' . substr(sha1(json_encode($item, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR) . '|' . $index), 0, 12);
+    return trim((string)($item['id'] ?? ''));
 }
 
 function respond(mixed $data, int $status = 200): never
@@ -1157,6 +1241,9 @@ function routes(): array
         'GET /{collection}/{id}',
         'PUT /{collection}/{id}',
         'DELETE /{collection}/{id}',
+        'GET /questionnaire-pages?citizenId={id}',
+        'POST /questionnaire-pages',
+        'DELETE /questionnaire-pages',
         'GET /data',
         'PUT /data',
         'GET /settings/receipt',

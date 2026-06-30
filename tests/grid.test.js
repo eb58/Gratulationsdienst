@@ -19,6 +19,7 @@ globalThis.ResizeObserver = class {
   observe() {}
   disconnect() {}
 };
+globalThis.requestAnimationFrame = cb => cb();
 globalThis.document = { querySelectorAll: () => [] };
 
 const grid = await import('../modules/grid.js');
@@ -43,6 +44,7 @@ const citizen = {
   postalCode: '13437',
   district: 'Tegel',
   birthDate: '1936-06-01',
+  createdAt: '2026-04-01',
   status: 'geprüft',
   wish: 'Besuch erwünscht'
 };
@@ -73,10 +75,6 @@ beforeEach(() => {
     }],
     senders: [],
     templates: [],
-    importLog: [
-      { time: '10:00', type: 'Importiert', name: 'Mustermann, Erika', address: 'Teststraße 12' },
-      { time: '10:01', type: 'Dublette', name: 'Doppel' }
-    ]
   };
   state.generatedDocs = [{
     id: 'DOC-G-1',
@@ -87,6 +85,7 @@ beforeEach(() => {
     wish: 'Besuch erwünscht',
     templateName: 'Standard'
   }];
+  state.cleanupPreview = { months: 6, citizenIds: ['G-1'] };
   state.filters = { q: '', month: 'alle', groupId: 'alle', age: 'alle', status: 'alle', occasion: 'Geburtstag' };
   state.selectedCitizenId = 'G-1';
   state.selectedMemberId = 'S-001';
@@ -113,27 +112,33 @@ describe('grid basics', () => {
 
 describe('grid definitions', () => {
   it('builds row data for the main grids', () => {
-    assert.deepEqual(gridDefinitions.citizens().rowData.map(row => row.id), ['G-1']);
+    const citizenDefinition = gridDefinitions.citizens();
+    assert.deepEqual(citizenDefinition.rowData.map(row => row.id), ['G-1']);
+    assert.equal(citizenDefinition.rowData[0].wish, 'Besuch erwünscht');
+    assert.deepEqual(citizenDefinition.columnDefs.slice(0, 3).map(column => column.field), ['name', 'status', 'wish']);
+    assert.ok(citizenDefinition.columnDefs.some(column => column.field === 'wish' && column.headerName === 'Glückwünsche'));
     assert.equal(gridDefinitions.members().rowData[0].role, 'Leitung');
     assert.equal(gridDefinitions.streets().rowData[0].ruleCount, 1);
     assert.equal(gridDefinitions.documents().rowData[0].recipient, 'Erika Mustermann');
+    assert.equal(gridDefinitions.cleanupPreview().rowData[0].name, 'Mustermann, Erika');
+    assert.equal(gridDefinitions.cleanupPreview().rowData[0].createdAt, '2026-04-01');
+    assert.ok(gridDefinitions.cleanupPreview().columnDefs.some(column => column.field === 'createdAt'));
+    assert.equal(gridDefinitions.cleanupPreview().rowData[0].anniversary.getFullYear(), 2026);
+    assert.equal(gridDefinitions.cleanupPreview().columnDefs.at(-1).field, 'anniversary');
   });
 
-  it('maps import log rows and filters duplicates', () => {
-    const definition = gridDefinitions.importLog();
-
-    assert.equal(definition.rowData.length, 1);
-    assert.equal(definition.rowData[0].birthDate, citizen.birthDate);
-    assert.equal(definition.rowData[0].age, new Date().getFullYear() - 1936);
-  });
 
   it('renders SOKO and status cell badges', () => {
     const citizenDefinition = gridDefinitions.citizens();
     const sokoRenderer = citizenDefinition.columnDefs.find(column => column.field === 'groupId').cellRenderer;
+    const wishRenderer = citizenDefinition.columnDefs.find(column => column.field === 'wish').cellRenderer;
     const statusRenderer = citizenDefinition.columnDefs.find(column => column.field === 'status').cellRenderer;
 
     assert.match(sokoRenderer({ value: 'SOKO 01' }), /style="color:/);
     assert.match(sokoRenderer({ value: 'offen' }), /pill red/);
+    assert.match(wishRenderer({ value: 'Besuch erwünscht' }), /pill green/);
+    assert.match(wishRenderer({ value: 'keine' }), /pill red/);
+    assert.match(wishRenderer({ value: '' }), /pill gold/);
     assert.match(statusRenderer({ value: 'offen' }), /pill gold/);
     assert.match(statusRenderer({ value: 'gedruckt' }), /#0f5d58/);
   });
@@ -151,29 +156,56 @@ describe('mountGrid', () => {
   it('creates grids, restores state and saves changed state', () => {
     const element = { dataset: { grid: 'citizens' }, innerHTML: '' };
     const calls = [];
+    let currentColumnState = [{ colId: 'name', width: 220, sort: 'asc', sortIndex: 0 }];
+    let currentPageSize = 50;
     const api = {
       applyColumnState: payload => calls.push(['applyColumnState', payload]),
       setFilterModel: payload => calls.push(['setFilterModel', payload]),
-      getColumnState: () => [{ colId: 'name', width: 220, sort: 'asc', sortIndex: 0 }],
-      getFilterModel: () => ({ status: { values: ['geprüft'] } })
+      paginationSetPageSize: payload => { calls.push(['paginationSetPageSize', payload]); currentPageSize = payload; },
+      getColumnState: () => currentColumnState,
+      getFilterModel: () => ({ status: { values: ['geprüft'] } }),
+      paginationGetPageSize: () => currentPageSize
     };
     localStorage.setItem('gratulationsdienst.grid.citizens.state', JSON.stringify({
-      columnState: [{ colId: 'name', width: 180 }],
-      filterModel: { status: { values: ['offen'] } }
+      columnState: [{ colId: 'birthday', width: 130 }, { colId: 'name', width: 180 }],
+      sortState: [{ colId: 'birthday', sort: 'desc', sortIndex: 0 }],
+      filterModel: { status: { values: ['offen'] } },
+      paginationPageSize: 100
     }));
     let definition;
     window.agGrid = { createGrid: (_element, options) => { definition = options; } };
 
     mountGrid(element);
     definition.onGridReady({ api });
+    currentColumnState = [{ colId: 'birthday', width: 130, sort: 'desc', sortIndex: 0 }, { colId: 'name', width: 220, sort: 'asc', sortIndex: 1 }];
+    definition.onColumnMoved({ api });
     definition.onColumnResized({ api, finished: true });
     definition.onSortChanged({ api });
     definition.onFilterChanged({ api });
+    currentPageSize = 100;
+    definition.onPaginationChanged({ api, newPageSize: true });
 
     assert.equal(state.gridApis.citizens, api);
-    assert.deepEqual(calls[0], ['applyColumnState', { state: [{ colId: 'name', width: 180 }], applyOrder: false }]);
+    assert.deepEqual(calls[0], ['applyColumnState', {
+      state: [
+        { colId: 'birthday', width: 130, sort: 'desc', sortIndex: 0 },
+        { colId: 'name', width: 180 }
+      ],
+      applyOrder: true
+    }]);
     assert.deepEqual(calls[1], ['setFilterModel', { status: { values: ['offen'] } }]);
-    assert.match(localStorage.getItem('gratulationsdienst.grid.citizens.state'), /"width":220/);
+    assert.deepEqual(calls[2], ['paginationSetPageSize', 100]);
+    const savedState = JSON.parse(localStorage.getItem('gratulationsdienst.grid.citizens.state'));
+    assert.deepEqual(savedState.columnState, [
+      { colId: 'birthday', width: 130, sort: 'desc', sortIndex: 0 },
+      { colId: 'name', width: 220, sort: 'asc', sortIndex: 1 }
+    ]);
+    assert.deepEqual(savedState.sortState, [
+      { colId: 'birthday', sort: 'desc', sortIndex: 0 },
+      { colId: 'name', sort: 'asc', sortIndex: 1 }
+    ]);
+    assert.deepEqual(savedState.filterModel, api.getFilterModel());
+    assert.equal(savedState.paginationPageSize, 100);
   });
 
   it('mounts every grid host found in the document', () => {

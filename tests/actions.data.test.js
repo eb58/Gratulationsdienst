@@ -5,7 +5,7 @@
 // insert-token, upload-template-background.
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { beforeEach, describe, it, mock } from 'node:test';
+import { afterEach, beforeEach, describe, it, mock } from 'node:test';
 
 const storage = () => {
   const values = new Map();
@@ -76,10 +76,10 @@ mock.module('../modules/render.js', {
 const { actions } = await import('../modules/actions.js');
 const { state } = await import('../modules/state.js');
 const { defaultData } = await import('../modules/domain.js');
+const { monthAfterNext } = await import('../modules/testdata.js');
 const { normalizeAmount } = await import('../modules/utils.js');
 
 const idEvent = id => ({ target: { closest: () => ({ dataset: { id } }) } });
-
 beforeEach(() => {
   for (const key of Object.keys(nodes)) delete nodes[key];
   routes.clear();
@@ -97,11 +97,16 @@ beforeEach(() => {
   state.selectedUserId = '';
   state.importText = '';
   state.generatedDocs = [];
+  state.cleanupPreview = null;
   state.printBackground = true;
   state.filters = { q: '', month: 'alle', groupId: 'alle', age: 'alle', status: 'alle', occasion: 'Geburtstag' };
   state.gridApis = {};
   state.auth.user = { id: 'demo', email: 'demo@local', role: 'admin' };
   state.auth.users = [];
+});
+
+afterEach(() => {
+  mock.timers.reset();
 });
 
 describe('Auswahl- und Sortier-Actions', () => {
@@ -269,14 +274,12 @@ describe('Straßen-Zuständigkeit', () => {
 });
 
 describe('Jubilare löschen und Testdaten', () => {
-  it('clear-citizens nur für Admins; confirm leert Jubilare und Protokoll', () => {
+  it('clear-citizens nur für Admins; confirm leert Jubilare', () => {
     state.data.citizens = [{ id: 'G-1' }];
-    state.data.importLog = [{ id: 'L-1' }];
     actions['clear-citizens']();
     assert.equal(state.dialog.type, 'clear-citizens');
     actions['confirm-clear-citizens']();
     assert.deepEqual(state.data.citizens, []);
-    assert.deepEqual(state.data.importLog, []);
   });
 
   it('clear-citizens wird für Nicht-Admins blockiert', () => {
@@ -285,11 +288,59 @@ describe('Jubilare löschen und Testdaten', () => {
     assert.equal(state.dialog, null);
   });
 
+  it('delete-old-citizens erzwingt mindestens sechs Monate und löscht nur ältere Jubiläen', async () => {
+    mock.timers.enable({ apis: ['Date'], now: new Date(2026, 5, 28) });
+    state.data.citizens = [
+      { id: 'old-1', birthDate: '1936-10-15', createdAt: '2025-07-15' },
+      { id: 'old-2', birthDate: '1936-11-20', createdAt: '2025-08-20' },
+      { id: 'old-created', birthDate: '1936-12-20', createdAt: '2025-09-20' },
+      { id: 'boundary', birthDate: '1936-12-28', createdAt: '2025-09-28' },
+      { id: 'fresh', birthDate: '1936-01-15', createdAt: '2025-10-15' },
+      { id: 'future-created', birthDate: '1936-08-01', createdAt: '2026-05-01' },
+      { id: 'future', birthDate: '1936-11-01', createdAt: '2026-08-01' }
+    ];
+    state.selectedCitizenId = 'old-1';
+    state.generatedDocs = [{ citizenId: 'old-1' }, { citizenId: 'fresh' }];
+    setField('#cleanup-months', '5');
+
+    actions['preview-old-citizens']();
+
+    assert.equal(state.cleanupMonths, 6);
+    assert.equal(localStorage.getItem('gd_cleanup_months'), '6');
+    assert.equal(state.dialog, null);
+    assert.deepEqual(state.cleanupPreview, { months: 6, citizenIds: ['old-1', 'old-2', 'old-created'] });
+
+    actions['delete-old-citizens']();
+
+    assert.equal(state.dialog.type, 'delete-old-citizens');
+    assert.deepEqual(state.dialog.citizenIds, ['old-1', 'old-2', 'old-created']);
+
+    await actions['confirm-delete-old-citizens']();
+
+    assert.deepEqual(state.data.citizens.map(citizen => citizen.id), ['boundary', 'fresh', 'future-created', 'future']);
+    assert.equal(state.selectedCitizenId, '');
+    assert.deepEqual(state.generatedDocs, [{ citizenId: 'fresh' }]);
+    assert.equal(state.cleanupPreview, null);
+  });
+
+  it('delete-old-citizens wird für Nicht-Admins blockiert', () => {
+    state.auth.user = { id: 'u', role: 'user' };
+    state.data.citizens = [{ id: 'old-1', birthDate: '1936-10-15', createdAt: '2025-07-15' }];
+    actions['preview-old-citizens']();
+    assert.equal(state.dialog, null);
+  });
+
+  it('delete-old-citizens öffnet ohne Vorschau keinen Löschdialog', () => {
+    state.data.citizens = [{ id: 'old-1', birthDate: '1936-10-15', createdAt: '2025-07-15' }];
+    actions['delete-old-citizens']();
+    assert.equal(state.dialog, null);
+  });
+
   it('seed-citizens erzeugt Jubilare aus den SOKO-Zuordnungen', () => {
     assert.equal(state.data.citizens.length, 0);
     actions['seed-citizens']();
     assert.ok(state.data.citizens.length >= 30);
-    assert.ok(state.data.importLog.length > 0);
+    assert.deepEqual([...new Set(state.data.citizens.map(citizen => citizen.birthDate.slice(5, 7)))], [monthAfterNext()]);
   });
 });
 
@@ -302,7 +353,7 @@ describe('Import-Lauf', () => {
   it('run-import verarbeitet vorhandenen Importtext', () => {
     state.importText = 'Vorname;Nachname;Strasse;Hausnummer;PLZ;Geburtsdatum\nMax;Muster;Hauptstr;1;13407;5.4.1936';
     actions['run-import']();
-    assert.ok(state.data.importLog.length > 0);
+    assert.ok(state.data.citizens.length > 0);
   });
 });
 
@@ -361,6 +412,66 @@ describe('Dokumente und Quittung', () => {
     assert.deepEqual(state.generatedDocs, []);
     assert.equal(state.filters.month, 'alle');
     assert.equal(localStorage.getItem('gd_month_filter'), 'alle');
+  });
+
+  it('generate-docs schliesst Jubilare mit Antwort keine aus', () => {
+    state.data.citizens = [
+      {
+        id: 'G-1',
+        firstName: 'Erika',
+        lastName: 'Post',
+        street: 'Teststrasse',
+        houseNo: '1',
+        postalCode: '13437',
+        birthDate: '1936-06-01',
+        status: 'geprueft',
+        wish: 'per Post'
+      },
+      {
+        id: 'G-2',
+        firstName: 'Max',
+        lastName: 'Keine',
+        street: 'Teststrasse',
+        houseNo: '2',
+        postalCode: '13437',
+        birthDate: '1936-06-02',
+        status: 'geprueft',
+        wish: 'keine'
+      }
+    ];
+    setField('#doc-template', state.data.templates[0].id);
+    setField('#doc-sender', state.data.senders[0].id);
+    setField('#doc-month', 'alle');
+    setField('#doc-group', 'alle');
+
+    actions['generate-docs']();
+
+    assert.deepEqual(state.generatedDocs.map(doc => doc.citizenId), ['G-1']);
+    assert.deepEqual(state.generatedDocs.map(doc => doc.wish), ['per Post']);
+  });
+
+  it('reset-selected-for-reprint setzt gedruckte Jubilare wieder auf geprüft', () => {
+    state.data.citizens = [{
+      id: 'G-1',
+      firstName: 'Erika',
+      lastName: 'Gedruckt',
+      street: 'Teststrasse',
+      houseNo: '1',
+      postalCode: '13437',
+      birthDate: '1936-06-01',
+      status: 'gedruckt',
+      wish: 'per Post',
+      printedAt: '2026-06-01'
+    }];
+    state.selectedCitizenId = 'G-1';
+    state.generatedDocs = [{ citizenId: 'G-1' }];
+
+    actions['reset-selected-for-reprint']();
+
+    const citizen = state.data.citizens[0];
+    assert.equal(citizen.status, 'geprüft');
+    assert.equal(citizen.printedAt, '2026-06-01');
+    assert.deepEqual(state.generatedDocs, []);
   });
 
   it('save-quittung-settings speichert im Datei-Modus und normalisiert den Betrag', async () => {

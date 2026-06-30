@@ -2,6 +2,7 @@ import { escapeHtml, isValidEmail, normalizeIban, isValidIban, isValidPostalCode
 import { sokoCodesFromDirectory, sokoGroupId, defaultData } from './domain.js';
 import { state, mergeById } from './state.js';
 import { groupForCitizen } from './assignment.js';
+import { SOKO_QUESTIONNAIRE_IMPORTED_STATUS } from './sokoQuestionnaire.js';
 
 const emailHint = value => String(value ?? "").trim() && !isValidEmail(value) ? "E-Mail-Adresse ist ungültig" : "";
 const postalCodeHint = value => String(value ?? "").trim() && !isValidPostalCode(value) ? "PLZ muss 5 Ziffern haben" : "";
@@ -111,6 +112,7 @@ export const statusPill = status => {
   const color = status === "offen" ? "#d09b2c"
     : status === "importiert" ? "#315a8c"
     : status === "geprüft" ? "#2f7d4f"
+    : status === SOKO_QUESTIONNAIRE_IMPORTED_STATUS ? "#7a4f9f"
     : status === "gedruckt" ? "#0f5d58"
     : "#66706d";
   return status === "offen"

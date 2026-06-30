@@ -101,7 +101,8 @@ const elements = {
   '#toast': domElement(),
   '#map-soko-info': domElement(),
   '[data-action="save-citizen"]': domElement(),
-  '[data-nav-toggle]': domElement()
+  '[data-nav-toggle]': domElement(),
+  '[data-sidebar-toggle]': domElement()
 };
 elements['#map-soko-info'].dataset = {};
 globalThis.document = {
@@ -109,7 +110,7 @@ globalThis.document = {
   addEventListener: (type, handler) => { listeners[type] = handler; },
   removeEventListener: () => {},
   querySelector: selector => elements[selector] || null,
-  querySelectorAll: () => []
+  querySelectorAll: selector => selector === '[data-sidebar-toggle]' ? [elements['[data-sidebar-toggle]']] : []
 };
 globalThis.addEventListener = (type, handler) => { listeners[type] = handler; };
 globalThis.requestAnimationFrame = callback => callback();
@@ -126,6 +127,8 @@ beforeEach(() => {
   elements['#view'].focused = false;
   elements['#map-soko-info'].dataset = {};
   elements['#map-soko-info'].innerHTML = '';
+  document.body.classList.remove('nav-open');
+  document.body.classList.remove('sidebar-collapsed');
   localStorage.clear();
 });
 
@@ -191,6 +194,24 @@ describe('app click handler', () => {
     assert.equal(toggle.getAttribute('aria-label'), 'Menü schließen');
   });
 
+  it('toggles and persists the desktop sidebar state', () => {
+    const toggle = elements['[data-sidebar-toggle]'];
+    const target = eventTarget({ closest: { '[data-sidebar-toggle]': toggle } });
+
+    listeners.click({ target });
+
+    assert.equal(document.body.classList.contains('sidebar-collapsed'), true);
+    assert.equal(localStorage.getItem('gd_sidebar_collapsed'), '1');
+    assert.equal(toggle.getAttribute('aria-expanded'), 'false');
+    assert.equal(toggle.getAttribute('aria-label'), 'Menue ausklappen');
+
+    listeners.click({ target });
+
+    assert.equal(document.body.classList.contains('sidebar-collapsed'), false);
+    assert.equal(localStorage.getItem('gd_sidebar_collapsed'), '0');
+    assert.equal(toggle.getAttribute('aria-expanded'), 'true');
+  });
+
   it('changes views through nav clicks and closes nav when already active', () => {
     const nav = { dataset: { nav: 'import' } };
     const target = eventTarget({ closest: { '[data-nav]': nav } });
@@ -234,6 +255,16 @@ describe('app filter and change handlers', () => {
 
     assert.equal(element.value, '12');
     assert.equal(state.customValue, '12');
+  });
+
+  it('enforces the cleanup month minimum on bound input', () => {
+    state.cleanupMonths = 6;
+    const element = input({ value: '5', dataset: { bind: 'cleanupMonths' } });
+
+    listeners.input({ target: element });
+
+    assert.equal(element.value, '6');
+    assert.equal(state.cleanupMonths, 6);
   });
 
   it('prevents form submissions', () => {
@@ -326,6 +357,26 @@ describe('app splitters and lifecycle handlers', () => {
     assert.equal(state.templateSplit, 54);
     assert.equal(split.style['--template-left'], '54%');
     assert.equal(splitter['aria-valuenow'], '54');
+  });
+
+  it('resizes split panes found by data-split containers', () => {
+    state.citizenDetailSplit = 42;
+    const split = { getBoundingClientRect: () => ({ left: 0, width: 200 }), style: { setProperty: (key, value) => { split.style[key] = value; } } };
+    const splitter = {
+      dataset: { splitter: 'citizenDetail' },
+      closest: selector => selector === '[data-split="citizenDetail"]' ? split : null,
+      setPointerCapture: id => { splitter.captured = id; },
+      releasePointerCapture: id => { splitter.released = id; }
+    };
+    const target = eventTarget({ closest: { '[data-splitter]': splitter } });
+
+    listeners.pointerdown({ target, pointerId: 9, preventDefault: () => {} });
+    listeners.pointermove({ clientX: 120 });
+    listeners.pointerup({});
+
+    assert.equal(state.citizenDetailSplit, 60);
+    assert.equal(split.style['--citizenDetail-left'], '60%');
+    assert.equal(localStorage.getItem('gratulationsdienst.splitters'), '{"citizenDetail":60}');
   });
 
   it('marks dirty forms on beforeunload', () => {

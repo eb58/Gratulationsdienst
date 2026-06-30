@@ -1,11 +1,15 @@
-import { $, todayIso, isValidEmail, isValidIban, formatIban, updateItem, nextId, csvEscape, downloadText, toast, byId, normalizeEmail, normalizeAmount, normalizeDigits, isValidPostalCode } from './utils.js';
+import { $, todayIso, CLEANUP_MONTHS_KEY, cleanupMonthsValue, isAnniversaryOlderThanMonths, isValidEmail, isValidIban, formatIban, updateItem, nextId, csvEscape, downloadText, toast, byId, normalizeEmail, normalizeAmount, normalizeDigits, isValidPostalCode, safeStorageSetItem } from './utils.js';
 import { normalizeStreetRules, streetDistrictSummary, streetGroupSummary, normalizeStreetDistrict, defaultData } from './domain.js';
 import { state, saveData, saveQuittungSettings, apiRequest, setAuthSession, clearAuthSession, loadCollectionData } from './state.js';
 import { streetAssignment, filteredCitizens, documentCitizens, isPrintedCitizen, selectedTemplate, selectedSender, selectedMember, activeCitizens, groupForCitizen, isReceiptGroupReady, receiptCitizens, receiptCitizensForReadyGroups } from './assignment.js';
 import { printCurrentRun, completePrintRun, renderSokoForm, renderSokoQuittung } from './documents.js';
 import { parseCsv, mapImportRow } from './import.js';
 import { buildImportResult, importNotice, citizenGridRow, nextMemberIdAfterDelete } from './citizens.js';
-import { groupedTestAssignments, balancedTestAssignments, shuffledTestValues, testFirstNames, testLastNames, testCsvRow, testCsvText } from './testdata.js';
+import { parseSokoQuestionnairePdf } from './sokoQuestionnairePdf.js';
+import { applySokoQuestionnaireResults } from './sokoQuestionnaire.js';
+import { createSokoQuestionnaireSimulation } from './sokoQuestionnaireSimulation.js';
+import { saveQuestionnairePages, deleteAllQuestionnairePages, deleteQuestionnairePagesForCitizens } from './questionnairePages.js';
+import { groupedTestAssignments, balancedTestAssignments, shuffledTestValues, testFirstNames, testLastNames, mortalityWeightedTestAges, monthAfterNext, testCsvRow, testCsvText } from './testdata.js';
 import { render, renderDialog } from './render.js';
 import { renderCitizenDetail } from './views.js';
 import { cancelDirtyFormLeave, confirmDirtyFormLeave } from './dirtyForms.js';
@@ -14,6 +18,10 @@ const formValues = selector => Object.fromEntries(new FormData($(selector)).entr
 const TEMPLATE_BACKGROUND_MAX_BYTES = 1_500_000;
 const quittungSettingKeys = ["quittungBetrag", "quittungTelefon", "quittungKapitel", "quittungTitel"];
 const quittungSettingsFromForm = () => Object.fromEntries(quittungSettingKeys.map(key => [key, $(`[data-bind="${key}"]`)?.value ?? state[key]]));
+const cleanupMonthsFromForm = () => cleanupMonthsValue($("#cleanup-months")?.value ?? state.cleanupMonths);
+const cleanupCitizenIds = months => state.data.citizens
+  .filter(citizen => isAnniversaryOlderThanMonths(citizen.birthDate, months, new Date(), citizen.createdAt))
+  .map(citizen => citizen.id);
 const readFileAsDataUrl = file => new Promise((resolve, reject) => {
   const reader = new FileReader();
   reader.addEventListener("load", () => resolve(String(reader.result || "")), { once: true });
@@ -139,15 +147,78 @@ const showCitizenGridRow = row => {
   if (pageSize) api.paginationGoToPage?.(Math.floor(row.rowIndex / pageSize));
   requestAnimationFrame(() => api.ensureIndexVisible?.(row.rowIndex, "middle"));
 };
+const keepOrSelectFirstVisibleCitizen = () => {
+  const rows = currentCitizenGridRows();
+  if (rows.some(row => row.id === state.selectedCitizenId)) return rows.find(row => row.id === state.selectedCitizenId);
+  const first = rows[0];
+  if (first?.id) state.selectedCitizenId = first.id;
+  return first;
+};
+const refreshSokoPdfImportUi = result => {
+  const selectedRow = keepOrSelectFirstVisibleCitizen();
+  const ids = [...new Set(result.pages.filter(page => page.applied && page.citizen?.id).map(page => page.citizen.id))];
+  const gridUpdated = ids.length
+    ? ids.map(id => updateCitizenGridRow(byId(state.data.citizens, id))).every(Boolean)
+    : Boolean(state.gridApis.citizens);
+  if (!gridUpdated) { render(); return; }
+  renderCitizenDetail();
+  showCitizenGridRow(selectedRow);
+};
 const importMappedRows = mapped => {
   const result = buildImportResult(mapped, state.data.citizens, row => streetAssignment(row)?.groupId);
-  state.data.citizens = [...state.data.citizens, ...result.rows];
-  state.data.importLog = [...result.logs, ...state.data.importLog];
+  const updatesById = new Map(result.updates.map(c => [c.id, c]));
+  state.data.citizens = [...state.data.citizens.map(c => updatesById.get(c.id) ?? c), ...result.newRows];
   saveData();
   render();
-  importToast(importNotice(result) || "Keine neuen Datensätze importiert.");
+  importToast(importNotice(result));
 };
-const importToast = message => toast(message, { anchor: ".import-action-row" });
+const importToast = message => toast(message, { anchor: ".soko-pdf-action-row, .import-action-row" });
+const sokoPdfNotice = pages => {
+  const checked = pages.filter(page => page.ok).length;
+  const manual = pages.filter(page => page.applied && !page.ok).length;
+  const unmatched = pages.filter(page => !page.applied && /nicht gefunden/i.test(page.error || "")).length;
+  const failed = pages.filter(page => !page.applied && !/nicht gefunden/i.test(page.error || "")).length;
+  return [
+    checked ? `${checked} Fragebögen geladen.` : "",
+    manual ? `${manual} mit Handschrift zur Nacharbeit.` : "",
+    unmatched ? `${unmatched} erkannt, aber kein passender Jubilar gefunden.` : "",
+    failed ? `${failed} nicht lesbar.` : ""
+  ].filter(Boolean).join(" ") || "Keine Fragebögen erkannt.";
+};
+
+const hasNoQuestionnaire = citizen => !citizen.sokoQuestionnaireImages?.length;
+const sokoPdfSimulationCitizens = () => {
+  const rows = currentCitizenGridRows();
+  const citizens = rows.map(row => byId(state.data.citizens, row.id)).filter(Boolean);
+  const pool = citizens.length ? citizens : filteredCitizens().filter(citizen => citizen?.id);
+  return pool.filter(hasNoQuestionnaire);
+};
+const sokoQuestionnaireImagePages = (resultPages, sourcePages) => resultPages
+  .map((page, index) => {
+    const source = sourcePages[index] || {};
+    const citizenId = page.citizen?.id || page.citizenId || source.citizenId || "";
+    const image = source.image || page.image || "";
+    return page.applied && citizenId && image ? {
+      id: source.id || "",
+      citizenId,
+      image,
+      marks: page.marks || source.marks || {},
+      source: source.source || "pdf",
+      createdAt: source.createdAt || new Date().toISOString()
+    } : null;
+  })
+  .filter(Boolean);
+const applySokoPdfImport = async (file, generatedPages = []) => {
+  const parsed = await parseSokoQuestionnairePdf(file);
+  const pages = generatedPages.length
+    ? parsed.pages.map((page, index) => ({ ...page, citizenId: generatedPages[index]?.citizenId || page.citizenId }))
+    : parsed.pages;
+  const result = applySokoQuestionnaireResults(state.data.citizens, pages);
+  state.data.citizens = result.citizens;
+  const imagePages = sokoQuestionnaireImagePages(result.pages, generatedPages.length ? generatedPages : parsed.pages);
+  await saveQuestionnairePages(imagePages);
+  return result;
+};
 
 export const actions = {
   "auth-show-reset": () => { state.auth.mode = "reset"; state.auth.message = ""; render(); },
@@ -510,28 +581,76 @@ export const actions = {
     state.focusTarget = ".dialog-box [data-autofocus]";
     render();
   },
-  "confirm-clear-citizens": () => {
+  "preview-old-citizens": () => {
+    if (state.auth.user?.role !== "admin") { toast("Nur Admins können Jubilare bereinigen."); return; }
+    const months = cleanupMonthsFromForm();
+    state.cleanupMonths = months;
+    safeStorageSetItem(localStorage, CLEANUP_MONTHS_KEY, String(months), "Bereinigungsfrist");
+    const citizenIds = cleanupCitizenIds(months);
+    state.cleanupPreview = { months, citizenIds };
+    if (!citizenIds.length) { toast(`Keine Jubilare mit Jubiläum vor mehr als ${months} Monaten gefunden.`); render(); return; }
+    state.focusTarget = "#cleanup-preview";
+    render();
+  },
+  "delete-old-citizens": () => {
+    if (state.auth.user?.role !== "admin") { toast("Nur Admins können Jubilare bereinigen."); return; }
+    const { citizenIds: previewIds = [], months = state.cleanupMonths } = state.cleanupPreview || {};
+    const citizenIds = previewIds.filter(id => byId(state.data.citizens, id));
+    if (!citizenIds.length) { toast("Bitte zuerst die zu löschenden Jubilare anzeigen."); return; }
+    state.dialog = {
+      type: "delete-old-citizens",
+      citizenIds,
+      months,
+      title: "Alte Jubilare löschen",
+      message: `Sollen ${citizenIds.length.toLocaleString("de-DE")} geprüfte Jubilare endgültig gelöscht werden? Es werden genau die Einträge aus der angezeigten Vorschau gelöscht.`,
+      confirmLabel: "Angezeigte Jubilare löschen",
+      confirmAction: "confirm-delete-old-citizens"
+    };
+    state.focusTarget = ".dialog-box [data-autofocus]";
+    render();
+  },
+  "confirm-clear-citizens": async () => {
     state.data.citizens = [];
-    state.data.importLog = [];
     state.selectedCitizenId = "";
     state.generatedDocs = [];
     state.dialog = null;
     state.focusTarget = "#view";
     saveData();
     render();
-    toast("Alle Jubilare und das Import-Protokoll wurden gelöscht.");
+    await deleteAllQuestionnairePages();
+    toast("Alle Jubilare wurden gelöscht.");
+  },
+  "confirm-delete-old-citizens": async () => {
+    const citizenIds = state.dialog?.citizenIds || [];
+    if (!citizenIds.length) return;
+    const deleteIds = new Set(citizenIds);
+    state.data.citizens = state.data.citizens.filter(citizen => !deleteIds.has(citizen.id));
+    if (deleteIds.has(state.selectedCitizenId)) state.selectedCitizenId = "";
+    state.generatedDocs = state.generatedDocs.filter(doc => !deleteIds.has(doc.citizenId));
+    state.cleanupPreview = null;
+    state.dialog = null;
+    state.focusTarget = "#view";
+    saveData();
+    render();
+    await deleteQuestionnairePagesForCitizens(citizenIds);
+    toast(`${citizenIds.length.toLocaleString("de-DE")} alte Jubilare wurden gelöscht.`);
   },
   "seed-citizens": () => {
     if (state.auth.user?.role !== "admin") { toast("Nur Admins können Testdaten erzeugen."); return; }
     const groups = groupedTestAssignments(state.data.streets);
     if (!groups.length) { toast("Keine SOKO-Zuordnungen für Testdaten gefunden."); return; }
-    const rowCount = Math.max(30, groups.length);
+    const rowCount = Math.max(50, groups.length);
     const assignments = balancedTestAssignments(groups, rowCount);
     const firstNames = shuffledTestValues(testFirstNames);
     const lastNames = shuffledTestValues(testLastNames);
-    const csv = testCsvText(assignments.map((assignment, index) => {
+    const names = assignments.map((_, index) => {
       const [salutation, firstName] = firstNames[index % firstNames.length];
-      return testCsvRow(index, { salutation, firstName, lastName: lastNames[index % lastNames.length] }, assignment, state.quittungMonat);
+      return { salutation, firstName, lastName: lastNames[index % lastNames.length] };
+    });
+    const ages = mortalityWeightedTestAges(rowCount, names.map(name => name.salutation));
+    const birthdayMonth = monthAfterNext();
+    const csv = testCsvText(assignments.map((assignment, index) => {
+      return testCsvRow(index, names[index], assignment, birthdayMonth, Math.random, ages[index]);
     }));
     state.importText = csv;
     importMappedRows(parseCsv(csv).map(mapImportRow));
@@ -557,7 +676,7 @@ export const actions = {
     state.selectedTemplateId = template.id;
     state.selectedSenderId = sender.id;
     state.filters.month = $("#doc-month").value;
-    localStorage.setItem("gd_month_filter", state.filters.month);
+    safeStorageSetItem(localStorage, "gd_month_filter", state.filters.month, "Monatsfilter");
     state.filters.groupId = $("#doc-group").value;
     const citizens = documentCitizens();
     state.generatedDocs = citizens.map(citizen => ({
@@ -575,6 +694,15 @@ export const actions = {
     }));
     render();
     toast(state.generatedDocs.length ? `${state.generatedDocs.length} Dokumente erzeugt.` : "Keine geprüften Jubilare in der aktuellen Auswahl.");
+  },
+  "reset-selected-for-reprint": () => {
+    const citizen = byId(state.data.citizens, state.selectedCitizenId);
+    if (!citizen || !isPrintedCitizen(citizen)) { toast("Bitte einen bereits gedruckten Jubilar auswählen."); return; }
+    state.data.citizens = updateItem(state.data.citizens, citizen.id, { ...citizen, status: "geprüft", updatedAt: todayIso() });
+    state.generatedDocs = [];
+    saveData();
+    render();
+    toast("Jubilar für den Nachdruck auf geprüft gesetzt.");
   },
   "print-docs": printCurrentRun,
   "toggle-print-background": e => { state.printBackground = e.target.checked; },
@@ -615,9 +743,37 @@ export const actions = {
     const forms = citizens.map(renderSokoForm).join("");
     openPrintWindow(forms, "SOKO-Fragebogen");
   },
-"run-import": () => {
+  "run-import": () => {
     if (!state.importText) { importToast("Bitte zuerst eine CSV-Datei laden."); return; }
     importMappedRows(parseCsv(state.importText).map(mapImportRow));
+  },
+  "run-soko-pdf-import": async ({ file } = {}) => {
+    if (!file) { importToast("Bitte zuerst ein SOKO-PDF laden."); return; }
+    try {
+      importToast("SOKO-PDF wird ausgewertet...");
+      const result = await applySokoPdfImport(file);
+      saveData();
+      refreshSokoPdfImportUi(result);
+      importToast(sokoPdfNotice(result.pages));
+    } catch (error) {
+      importToast(error.message || "SOKO-PDF konnte nicht ausgewertet werden.");
+    }
+  },
+  "simulate-soko-pdf-import": async () => {
+    const citizens = sokoPdfSimulationCitizens();
+    if (!citizens.length) { importToast("Keine Jubilare in der aktuellen Auswahl."); return; }
+    try {
+      importToast("SOKO-PDF wird erzeugt...");
+      const simulation = await createSokoQuestionnaireSimulation(citizens);
+      if (!simulation.pages.length) { importToast("Keine Fragebögen erzeugt."); return; }
+      importToast("SOKO-PDF wird ausgewertet...");
+      const result = await applySokoPdfImport(simulation.file, simulation.pages);
+      saveData();
+      refreshSokoPdfImportUi(result);
+      importToast(`Simulation: ${sokoPdfNotice(result.pages)}`);
+    } catch (error) {
+      importToast(error.message || "SOKO-PDF-Simulation konnte nicht ausgeführt werden.");
+    }
   },
   "select-generated": event => {
     state.selectedCitizenId = event.target.closest("[data-id]").dataset.id;

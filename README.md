@@ -6,6 +6,7 @@ Gratulationsdienst Reinickendorf
 
 - [Installationsanleitung](INSTALLATIONSANLEITUNG.md)
 - [Technische Dokumentation](TECHNISCHE_DOKUMENTATION.md)
+- [Projektkontext fuer Codex](docs/projektkontext.md)
 
 ## Enthalten
 

@@ -31,7 +31,7 @@ const mockBackend = context => context.route('**/php-api/**', route => {
   if (path === '/auth/login') return json({ token: 'e2e-token', user: adminUser });
   if (path === '/auth/logout') return json({});
   if (path === '/settings/receipt') return json({});
-  return json([]); // citizens, sokoGroups, sokoMembers, streets, senders, templates, importLog
+  return json([]); // citizens, sokoGroups, sokoMembers, streets, senders, templates
 });
 
 let server, browser;
@@ -94,6 +94,26 @@ describe('Gratulationsdienst E2E', () => {
     } finally { await context.close(); }
   });
 
+  it('simuliert einen SOKO-PDF-Import und zeigt Fragebogenbilder', async () => {
+    const { context, page } = await openApp();
+    try {
+      await login(page);
+      await page.click('[data-nav="import"]');
+      await page.waitForSelector('.view-import');
+      await page.click('[data-action="seed-citizens"]');
+      await page.waitForFunction(() => document.querySelector('#toast')?.textContent.includes('neue Datens'));
+      await page.click('[data-nav="citizens"]');
+      await page.waitForSelector('.ag-root', { timeout: 10000 });
+      await page.click('[data-action="simulate-soko-pdf-import"]');
+      await page.waitForSelector('.citizen-questionnaire-image img', { timeout: 30000 });
+      await page.waitForSelector('#citizen-form input[name="firstName"]', { timeout: 10000 });
+      const detailBox = await page.locator('#citizen-detail-panel').boundingBox();
+      assert.ok(detailBox.width > 300);
+
+      assert.equal(await page.evaluate(() => localStorage.getItem('gratulationsdienst')), null);
+    } finally { await context.close(); }
+  }, { timeout: 60000 });
+
   it('zeigt Admin-Stammdaten und öffnet die Vorlagen-Ansicht', async () => {
     const { context, page } = await openApp();
     try {
@@ -102,6 +122,24 @@ describe('Gratulationsdienst E2E', () => {
       await page.click('[data-nav="templates"]');
       await page.waitForSelector('.view-templates');
       assert.equal(await page.locator('#page-title').textContent(), 'Stammdaten: Vorlagen');
+    } finally { await context.close(); }
+  });
+
+  it('klappt die Desktop-Navigation auf eine Icon-Leiste ein', async () => {
+    const { context, page } = await openApp();
+    try {
+      await login(page);
+      await page.click('[data-sidebar-toggle]');
+      await page.waitForFunction(() => {
+        const box = document.querySelector('.sidebar')?.getBoundingClientRect();
+        return box && box.width <= 90;
+      });
+      const sidebarBox = await page.locator('.sidebar').boundingBox();
+      const labelBox = await page.locator('[data-nav="dashboard"] .nav-label').boundingBox();
+      assert.equal(await page.evaluate(() => document.body.classList.contains('sidebar-collapsed')), true);
+      assert.ok(sidebarBox.width <= 90);
+      assert.equal(labelBox.width <= 1, true);
+      assert.equal(await page.locator('[data-nav="templates"]').isVisible(), true);
     } finally { await context.close(); }
   });
 

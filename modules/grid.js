@@ -1,10 +1,12 @@
-import { normalize, escapeHtml, formatDate, formatDateDe, formatStreetAddress, calculateAge } from './utils.js';
+import { normalize, escapeHtml, formatDate, safeStorageSetItem, anniversaryDateFromCreatedAt } from './utils.js';
 import { streetGroupDisplay, sokoColors } from './domain.js';
 import { state } from './state.js';
 import { filteredCitizens, groupForCitizen, selectedCitizen } from './assignment.js';
+import { SOKO_QUESTIONNAIRE_IMPORTED_STATUS } from './sokoQuestionnaire.js';
 import { render, renderDialog } from './render.js'; // Zyklus OK: render wird nur in Event-Callbacks aufgerufen
 import { renderCitizenDetail, renderRegionAssignment } from './views.js'; // Zyklus OK: lazy
 import { requestDirtyFormLeave } from './dirtyForms.js';
+import { loadQuestionnairePagesForCitizen } from './questionnairePages.js';
 
 export const gridTheme = () => window.agGrid?.themeQuartz?.withParams ? window.agGrid.themeQuartz.withParams({
   accentColor: "#0f5d58",
@@ -18,6 +20,13 @@ export const gridTheme = () => window.agGrid?.themeQuartz?.withParams ? window.a
 }) : undefined;
 
 export const badgeCell = (value, tone = "") => `<span class="pill ${tone}">${escapeHtml(value)}</span>`;
+const renderCitizenDetailWithQuestionnaires = () => {
+  renderCitizenDetail();
+  const citizenId = state.selectedCitizenId;
+  loadQuestionnairePagesForCitizen(citizenId).then(pages => {
+    if (pages.length && state.selectedCitizenId === citizenId) renderCitizenDetail();
+  });
+};
 const accentBadgeCell = (value, color) => `
   <span class="pill" style="color:${color}">
     ${escapeHtml(value)}
@@ -30,9 +39,18 @@ const statusBadgeCell = value => {
   const color = value === "offen" ? "#d09b2c"
     : value === "importiert" ? "#315a8c"
     : value === "geprüft" ? "#2f7d4f"
+    : value === SOKO_QUESTIONNAIRE_IMPORTED_STATUS ? "#7a4f9f"
     : value === "gedruckt" ? "#0f5d58"
     : "#66706d";
   return value === "offen" ? badgeCell(value, "gold") : accentBadgeCell(value, color);
+};
+const wishBadgeCell = value => {
+  const normalized = normalize(value);
+  const tone = normalized === "keine" ? "red"
+    : normalized === "offen" || !normalized ? "gold"
+    : normalized.startsWith("besuch") ? "green"
+    : "";
+  return badgeCell(value || "offen", tone);
 };
 const agTheme = () => { const theme = gridTheme(); return theme ? { theme } : {}; };
 
@@ -97,57 +115,62 @@ const filteredMembers = () => state.data.sokoMembers.filter(member => {
     && (!state.filters.q || haystack.includes(normalize(state.filters.q)));
 });
 
-const importLogSoko = item => item.groupId || item.soko || String(item.message || "").match(/SOKO \d+/)?.[0] || "";
-const importLogCitizen = item => {
-  const name = normalize(item.name);
-  const address = normalize(item.address || formatStreetAddress(item));
-  const byName = state.data.citizens.filter(citizen => [
-    normalize(`${citizen.firstName} ${citizen.lastName}`),
-    normalize(`${citizen.lastName}, ${citizen.firstName}`)
-  ].includes(name));
-  return address
-    ? byName.find(citizen => normalize(formatStreetAddress(citizen)) === address)
-    : byName.length === 1 ? byName[0] : null;
-};
-const importLogRow = (item, index) => {
-  const citizen = item.birthDate && item.age && item.address ? null : importLogCitizen(item);
-  const birthDate = item.birthDate || citizen?.birthDate || "";
-  const address = item.address || (citizen ? formatStreetAddress(citizen) : "");
-  return {
-    ...item,
-    id: `LOG-${index}`,
-    name: item.lastName || item.firstName
-      ? [item.lastName, item.firstName].filter(Boolean).join(", ")
-      : citizen ? `${citizen.lastName}, ${citizen.firstName}` : item.name,
-    address,
-    birthDate,
-    age: item.age || (birthDate ? calculateAge(birthDate) : "")
-  };
-};
 
 const legacyGridColumnStorageKey = gridKey => `gratulationsdienst.grid.${gridKey}.columnWidths`;
 const gridStateStorageKey = gridKey => `gratulationsdienst.grid.${gridKey}.state`;
+const normalizedColumnState = columnState => Array.isArray(columnState)
+  ? columnState
+    .map(({ colId, width, sort, sortIndex }) => ({
+      colId,
+      width,
+      ...(sort ? { sort } : sort === null ? { sort: null } : {}),
+      ...(Number.isFinite(sortIndex) ? { sortIndex } : {})
+    }))
+    .filter(item => item.colId && Number.isFinite(item.width))
+  : [];
+const normalizedSortState = columnState => normalizedColumnState(columnState)
+  .filter(item => item.sort === "asc" || item.sort === "desc")
+  .map(({ colId, sort, sortIndex }, index) => ({ colId, sort, sortIndex: Number.isFinite(sortIndex) ? sortIndex : index }));
+const gridStateFromParsed = parsed => ({
+  columnState: normalizedColumnState(parsed?.columnState),
+  sortState: Array.isArray(parsed?.sortState)
+    ? parsed.sortState.filter(item => item?.colId && (item.sort === "asc" || item.sort === "desc"))
+    : normalizedSortState(parsed?.columnState),
+  filterModel: parsed?.filterModel && typeof parsed.filterModel === "object" ? parsed.filterModel : {},
+  paginationPageSize: Number.isFinite(parsed?.paginationPageSize) ? parsed.paginationPageSize : undefined
+});
 const storedGridState = gridKey => {
   try {
     const parsed = JSON.parse(localStorage.getItem(gridStateStorageKey(gridKey)) || "null");
-    if (parsed?.columnState?.length) return parsed;
+    const gridState = gridStateFromParsed(parsed);
+    if (gridState.columnState.length || gridState.sortState.length || Object.keys(gridState.filterModel).length || Number.isFinite(gridState.paginationPageSize)) return gridState;
   } catch { /* gespeicherter Grid-State nicht lesbar */ }
   try {
     const columnState = JSON.parse(localStorage.getItem(legacyGridColumnStorageKey(gridKey)) || "[]");
-    return { columnState: Array.isArray(columnState) ? columnState.filter(item => item?.colId && Number.isFinite(item.width)) : [] };
-  } catch { return { columnState: [] }; }
+    return gridStateFromParsed({ columnState });
+  } catch { return gridStateFromParsed(null); }
 };
 const restoreGridState = (gridKey, api) => {
   const gridState = storedGridState(gridKey);
-  if (gridState.columnState?.length) api.applyColumnState?.({ state: gridState.columnState, applyOrder: false });
+  const stateByColumn = new Map(gridState.columnState.map(item => [item.colId, item]));
+  gridState.sortState.forEach(({ colId, sort, sortIndex }) => {
+    const existing = stateByColumn.get(colId) || { colId };
+    stateByColumn.set(colId, { ...existing, sort, sortIndex });
+  });
+  const columnState = [...stateByColumn.values()];
+  if (columnState.length) api.applyColumnState?.({ state: columnState, applyOrder: true });
   if (gridState.filterModel && Object.keys(gridState.filterModel).length) api.setFilterModel?.(gridState.filterModel);
+  if (Number.isFinite(gridState.paginationPageSize)) api.paginationSetPageSize?.(gridState.paginationPageSize);
 };
 const saveGridState = (gridKey, api) => {
-  const columnState = api.getColumnState?.()
-    ?.map(({ colId, width, sort, sortIndex }) => ({ colId, width, sort, sortIndex }))
-    .filter(item => item.colId && Number.isFinite(item.width));
+  const columnState = normalizedColumnState(api.getColumnState?.());
   if (!columnState?.length) return;
-  try { localStorage.setItem(gridStateStorageKey(gridKey), JSON.stringify({ columnState, filterModel: api.getFilterModel?.() || {} })); } catch { /* localStorage nicht verfügbar */ }
+  safeStorageSetItem(localStorage, gridStateStorageKey(gridKey), JSON.stringify({
+    columnState,
+    sortState: normalizedSortState(columnState),
+    filterModel: api.getFilterModel?.() || {},
+    paginationPageSize: api.paginationGetPageSize?.()
+  }), `Tabellenlayout ${gridKey}`);
 };
 
 export const gridDefinitions = {
@@ -160,15 +183,17 @@ export const gridDefinitions = {
       age: Number(new Date().getFullYear()) - Number(citizen.birthDate?.slice(0, 4)),
       address: `${citizen.street} ${citizen.houseNo}`,
       groupId: groupForCitizen(citizen)?.id || "offen",
+      wish: citizen.wish || "",
       status: citizen.status
     })),
     columnDefs: [
       { headerName: "Name", field: "name", width: 220, minWidth: 150 },
+      { headerName: "Status", field: "status", width: 135, minWidth: 115, cellRenderer: params => statusBadgeCell(params.value) },
+      { headerName: "Glückwünsche", field: "wish", width: 155, minWidth: 130, cellRenderer: params => wishBadgeCell(params.value) },
       { headerName: "Geburtstag", field: "birthday", width: 130, minWidth: 120, valueFormatter: params => formatDate(params.value) },
       { headerName: "Alter", field: "age", width: 90, minWidth: 80, filter: "agNumberColumnFilter" },
       { headerName: "Adresse", field: "address", width: 280, minWidth: 180 },
-      { headerName: "SOKO", field: "groupId", width: 115, minWidth: 105, cellRenderer: params => sokoBadgeCell(params.value) },
-      { headerName: "Status", field: "status", width: 135, minWidth: 115, cellRenderer: params => statusBadgeCell(params.value) }
+      { headerName: "SOKO", field: "groupId", width: 115, minWidth: 105, cellRenderer: params => sokoBadgeCell(params.value) }
     ],
     getRowId: params => params.data.id,
     getRowClass: params => params.data.id === state.selectedCitizenId ? "selected" : "",
@@ -176,7 +201,7 @@ export const gridDefinitions = {
       const inList = filteredCitizens().some(c => c.id === state.selectedCitizenId);
       if (!inList) {
         const first = params.api.getDisplayedRowAtIndex(0);
-        if (first) { state.selectedCitizenId = first.data.id; renderCitizenDetail(); params.api.redrawRows?.(); }
+        if (first) { state.selectedCitizenId = first.data.id; renderCitizenDetailWithQuestionnaires(); params.api.redrawRows?.(); }
       }
     },
     onRowClicked: params => {
@@ -184,7 +209,7 @@ export const gridDefinitions = {
       if (params.data.id === state.selectedCitizenId) return;
       const selectRow = () => {
         state.selectedCitizenId = params.data.id;
-        renderCitizenDetail();
+        renderCitizenDetailWithQuestionnaires();
         params.api.redrawRows?.();
       };
       if (!requestDirtyFormLeave(selectRow)) { params.api.redrawRows?.(); renderDialog(); }
@@ -259,20 +284,52 @@ export const gridDefinitions = {
     getRowClass: params => params.data.citizenId === state.selectedCitizenId ? "selected" : "",
     onRowClicked: params => { state.selectedCitizenId = params.data.citizenId; render(); }
   }),
-  importLog: () => ({
+  imported: () => ({
     ...baseGridOptions(),
-    rowData: state.data.importLog.filter(item => item.type !== "Dublette").map(importLogRow),
+    rowData: state.data.citizens.filter(citizen => citizen.source === "CSV Import").map(citizen => ({
+      id: citizen.id,
+      name: `${citizen.lastName}, ${citizen.firstName}`,
+      birthday: citizen.birthDate,
+      age: Number(new Date().getFullYear()) - Number(citizen.birthDate?.slice(0, 4)),
+      address: `${citizen.street} ${citizen.houseNo}`,
+      groupId: groupForCitizen(citizen)?.id || "offen",
+      status: citizen.status
+    })),
     columnDefs: [
-      { headerName: "Zeit", field: "time", colId: "time", width: 180, minWidth: 165 },
-      { headerName: "Name", field: "name", colId: "name", width: 230, minWidth: 170 },
-      { headerName: "Geburtstag", field: "birthDate", colId: "birthDate", width: 130, minWidth: 120, valueFormatter: params => formatDateDe(params.value) },
-      { headerName: "Alter", field: "age", colId: "age", width: 80, minWidth: 70, filter: "agNumberColumnFilter" },
-      { headerName: "Adresse", field: "address", width: 250, minWidth: 190, valueGetter: params => params.data.address || formatStreetAddress(params.data) },
-      { headerName: "Ergebnis", field: "type", width: 135, minWidth: 120, cellRenderer: params => params.value === "Fehler" ? badgeCell("Fehler", "red") : params.value === "Dublette" ? badgeCell("Dublette", "gold") : badgeCell("Importiert", "green") },
-      { headerName: "SOKO", field: "groupId", width: 115, minWidth: 105, valueGetter: params => importLogSoko(params.data), cellRenderer: params => params.value ? sokoBadgeCell(params.value) : badgeCell("offen", "red") }
+      { headerName: "Name", field: "name", width: 230, minWidth: 170 },
+      { headerName: "Geburtstag", field: "birthday", width: 130, minWidth: 120, valueFormatter: params => formatDate(params.value) },
+      { headerName: "Alter", field: "age", width: 90, minWidth: 80, filter: "agNumberColumnFilter" },
+      { headerName: "Adresse", field: "address", width: 280, minWidth: 180 },
+      { headerName: "SOKO", field: "groupId", width: 115, minWidth: 105, cellRenderer: params => sokoBadgeCell(params.value) },
+      { headerName: "Status", field: "status", width: 135, minWidth: 115, cellRenderer: params => statusBadgeCell(params.value) }
     ],
     getRowId: params => params.data.id
-  })
+  }),
+  cleanupPreview: () => {
+    const ids = new Set(state.cleanupPreview?.citizenIds || []);
+    const rowData = state.data.citizens
+      .filter(citizen => ids.has(citizen.id))
+      .map(citizen => ({
+        id: citizen.id,
+        name: `${citizen.lastName || ""}, ${citizen.firstName || ""}`.replace(/^, /, ""),
+        birthday: citizen.birthDate,
+        createdAt: citizen.createdAt,
+        anniversary: anniversaryDateFromCreatedAt(citizen.birthDate, citizen.createdAt)
+      }))
+      .sort((a, b) => a.anniversary - b.anniversary || String(a.name).localeCompare(String(b.name)));
+    return {
+      ...baseGridOptions(),
+      rowData,
+      columnDefs: [
+        { headerName: "ID", field: "id", width: 150, minWidth: 130 },
+        { headerName: "Name", field: "name", width: 240, minWidth: 170 },
+        { headerName: "Geburtsdatum", field: "birthday", width: 145, minWidth: 130, valueFormatter: params => formatDate(params.value) },
+        { headerName: "Angelegt am", field: "createdAt", width: 150, minWidth: 135, valueFormatter: params => formatDate(params.value) },
+        { headerName: "Jubiläum", field: "anniversary", width: 145, minWidth: 130, valueFormatter: params => formatDate(params.value) }
+      ],
+      getRowId: params => params.data.id
+    };
+  }
 };
 
 export const mountGrid = element => {
@@ -283,18 +340,26 @@ export const mountGrid = element => {
     element.innerHTML = `<div class="empty-state">AG Grid konnte nicht geladen werden.</div>`;
     return;
   }
+  const storedPageSize = storedGridState(gridKey).paginationPageSize;
+  if (Number.isFinite(storedPageSize)) definition.paginationPageSize = storedPageSize;
+  let ready = false;
   const onGridReady = definition.onGridReady;
   definition.onGridReady = params => {
     onGridReady?.(params);
     state.gridApis[gridKey] = params.api;
     restoreGridState(gridKey, params.api);
+    requestAnimationFrame(() => { ready = true; });
   };
   const onColumnResized = definition.onColumnResized;
+  const onColumnMoved = definition.onColumnMoved;
   const onSortChanged = definition.onSortChanged;
   const onFilterChanged = definition.onFilterChanged;
+  const onPaginationChanged = definition.onPaginationChanged;
   definition.onColumnResized = params => { onColumnResized?.(params); if (params.finished) saveGridState(gridKey, params.api); };
+  definition.onColumnMoved = params => { onColumnMoved?.(params); saveGridState(gridKey, params.api); };
   definition.onSortChanged = params => { onSortChanged?.(params); saveGridState(gridKey, params.api); };
   definition.onFilterChanged = params => { onFilterChanged?.(params); saveGridState(gridKey, params.api); };
+  definition.onPaginationChanged = params => { onPaginationChanged?.(params); if (ready && params.newPageSize) saveGridState(gridKey, params.api); };
   window.agGrid.createGrid(element, definition);
 };
 export const mountGrids = () => [...document.querySelectorAll("[data-grid]")].forEach(mountGrid);

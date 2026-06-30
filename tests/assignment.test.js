@@ -22,9 +22,11 @@ globalThis.ResizeObserver = class {
 
 const assignment = await import('../modules/assignment.js');
 const { state } = await import('../modules/state.js');
+const { SOKO_QUESTIONNAIRE_IMPORTED_STATUS } = await import('../modules/sokoQuestionnaire.js');
 
 const {
   activeCitizens,
+  documentCitizens,
   duplicateKey,
   editableStreetAssignment,
   groupForCitizen,
@@ -89,8 +91,7 @@ const resetState = () => {
       }
     ],
     senders: [],
-    templates: [],
-    importLog: []
+    templates: []
   };
   state.filters = { q: '', month: 'alle', groupId: 'alle', age: 'alle', status: 'alle', occasion: 'Geburtstag' };
   state.selectedCitizenId = '';
@@ -107,6 +108,7 @@ describe('citizen status helpers', () => {
     assert.equal(isPrintedCitizen({ status: 'geprüft' }), false);
     assert.equal(isCheckedCitizen({ status: 'geprüft' }), true);
     assert.equal(isCheckedCitizen({ status: 'gedruckt' }), true);
+    assert.equal(isCheckedCitizen({ status: SOKO_QUESTIONNAIRE_IMPORTED_STATUS }), false);
     assert.equal(isCheckedCitizen({ status: 'offen' }), false);
     assert.equal(wantsVisit({ wish: 'Besuch erwünscht' }), true);
     assert.equal(wantsVisit({ wish: 'per Post' }), false);
@@ -186,9 +188,9 @@ describe('selection and receipt helpers', () => {
       baseCitizen({ id: 'other-month', houseNo: '18', birthDate: '1936-07-01', status: 'geprüft', wish: 'Besuch erwünscht' })
     ];
 
-    assert.deepEqual(receiptReviewCitizens().map(citizen => citizen.id), ['ready-visit', 'ready-post', 'open']);
+    assert.deepEqual(receiptReviewCitizens().map(citizen => citizen.id), ['ready-visit', 'open']);
     assert.deepEqual(receiptCitizens().map(citizen => citizen.id), ['ready-visit', 'open']);
-    assert.deepEqual(receiptReviewCitizensForGroup('SOKO 01').map(citizen => citizen.id), ['ready-visit', 'ready-post', 'open']);
+    assert.deepEqual(receiptReviewCitizensForGroup('SOKO 01').map(citizen => citizen.id), ['ready-visit', 'open']);
     assert.equal(isReceiptGroupReady('SOKO 01'), false);
     assert.deepEqual(receiptCitizensForReadyGroups().map(citizen => citizen.id), []);
 
@@ -199,11 +201,31 @@ describe('selection and receipt helpers', () => {
   });
 });
 
+describe('document helpers', () => {
+  it('excludes checked citizens who answered keine from document runs', () => {
+    state.data.citizens = [
+      baseCitizen({ id: 'post', status: 'geprueft', wish: 'per Post' }),
+      baseCitizen({ id: 'none', status: 'geprueft', wish: 'keine' }),
+      baseCitizen({ id: 'open', status: 'offen', wish: 'per Post' }),
+      baseCitizen({ id: 'printed', status: 'gedruckt', wish: 'per Post' })
+    ];
+
+    assert.deepEqual(documentCitizens().map(citizen => citizen.id), ['post']);
+  });
+});
+
 describe('duplicate key', () => {
   it('uses normalized identifying citizen data', () => {
-    const first = baseCitizen({ firstName: ' Erika ', lastName: 'Mustermann', houseNo: '12a' });
-    const second = baseCitizen({ firstName: 'erika', lastName: 'MUSTERMANN', houseNo: '12a' });
+    const first = baseCitizen({ firstName: ' Erika ', lastName: 'Mustermann' });
+    const second = baseCitizen({ firstName: 'erika', lastName: 'MUSTERMANN' });
 
     assert.equal(duplicateKey(first), duplicateKey(second));
+  });
+
+  it('ignores address changes — a person who moved stays the same person', () => {
+    const before = baseCitizen({ street: 'Alte Straße', houseNo: '1', postalCode: '13407' });
+    const after = baseCitizen({ street: 'Neue Straße', houseNo: '99', postalCode: '13439' });
+
+    assert.equal(duplicateKey(before), duplicateKey(after));
   });
 });

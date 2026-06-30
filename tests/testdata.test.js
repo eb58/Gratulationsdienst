@@ -26,6 +26,9 @@ const {
   testAssignments,
   groupedTestAssignments,
   balancedTestAssignments,
+  honouredTestAges,
+  monthAfterNext,
+  mortalityWeightedTestAges,
   testHouseNo,
   testBirthDate,
   testCsvRow,
@@ -100,15 +103,50 @@ describe('testHouseNo', () => {
 });
 
 describe('testBirthDate', () => {
-  it('cycles ages and uses the given month and day', () => {
+  it('uses the given age, month and day', () => {
     const year = new Date().getFullYear();
-    assert.equal(testBirthDate(0, '06'), `${year - 85}-06-01`);
-    assert.equal(testBirthDate(4, '06'), `${year - 101}-06-05`);
-    assert.equal(testBirthDate(5, '12'), `${year - 85}-12-06`);
+    assert.equal(testBirthDate(0, '06', 85), `${year - 85}-06-01`);
+    assert.equal(testBirthDate(4, '06', 101), `${year - 101}-06-05`);
+    assert.equal(testBirthDate(5, '12', 90), `${year - 90}-12-06`);
   });
 
   it('falls back to the current month when none is given', () => {
     assert.match(testBirthDate(0, ''), /^\d{4}-\d{2}-01$/);
+  });
+});
+
+describe('monthAfterNext', () => {
+  it('returns the month after next including year wrap', () => {
+    assert.equal(monthAfterNext(new Date(2026, 5, 26)), '08');
+    assert.equal(monthAfterNext(new Date(2026, 10, 15)), '01');
+    assert.equal(monthAfterNext(new Date(2026, 11, 15)), '02');
+  });
+});
+
+describe('mortalityWeightedTestAges', () => {
+  it('keeps all honoured ages visible when enough rows are generated', () => {
+    assert.deepEqual(mortalityWeightedTestAges(honouredTestAges.length), honouredTestAges);
+  });
+
+  it('weights test ages by expected mortality', () => {
+    const ageCounts = mortalityWeightedTestAges(38).reduce((map, age) => ({ ...map, [age]: (map[age] || 0) + 1 }), {});
+
+    assert.ok(ageCounts[85] > ageCounts[90], '85 soll häufiger als 90 sein');
+    assert.ok(ageCounts[90] > ageCounts[95], '90 soll häufiger als 95 sein');
+    assert.ok(ageCounts[95] > ageCounts[100], '95 soll häufiger als 100 sein');
+    assert.equal(ageCounts[101], 1);
+  });
+
+  it('uses higher old-age weights for women than for men', () => {
+    const femaleAges = mortalityWeightedTestAges(60, Array.from({ length: 60 }, () => 'Frau'));
+    const maleAges = mortalityWeightedTestAges(60, Array.from({ length: 60 }, () => 'Herr'));
+    const oldWomen = femaleAges.filter(age => age >= 95).length;
+    const oldMen = maleAges.filter(age => age >= 95).length;
+    const centenarianWomen = femaleAges.filter(age => age >= 100).length;
+    const centenarianMen = maleAges.filter(age => age >= 100).length;
+
+    assert.ok(oldWomen > oldMen, 'Frauen sollen ab 95 häufiger vertreten sein');
+    assert.ok(centenarianWomen > centenarianMen, 'Frauen sollen ab 100 häufiger vertreten sein');
   });
 });
 
@@ -138,6 +176,6 @@ describe('shuffledTestValues', () => {
     const shuffled = shuffledTestValues(testLastNames);
     assert.equal(shuffled.length, testLastNames.length);
     assert.deepEqual([...shuffled].sort(), [...testLastNames].sort());
-    assert.equal(testFirstNames.length, 40);
+    assert.equal(testFirstNames.length, 80);
   });
 });

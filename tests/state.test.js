@@ -26,19 +26,25 @@ globalThis.SOKO_STRASSENVERZEICHNIS = {
 const stateModule = await import('../modules/state.js');
 const {
   canAccessView,
+  dataForPersistence,
   hasBackendData,
   isAdmin,
   mergeById,
   normalizeLoadedData,
   normalizeTemplate,
   normalizeTemplates,
+  loadData,
+  saveData,
   saveQuittungSettings,
   state,
+  usesLocalDataStorage,
   writableCollections
 } = stateModule;
 
 beforeEach(() => {
+  globalThis.location.protocol = 'file:';
   state.auth.user = { role: 'admin' };
+  state.auth.token = '';
   globalThis.localStorage.clear();
 });
 
@@ -94,6 +100,19 @@ describe('loaded data normalization', () => {
     assert.equal(normalized.sokoMembers.some(member => member.groupId === 'SOKO 99'), false);
     assert.ok(normalized.streets.some(street => street.name === 'Teststraße'));
   });
+  it('removes transient questionnaire images from loaded and persisted data', () => {
+    const data = {
+      citizens: [{ id: 'G-1', firstName: 'Ada', sokoQuestionnaireImages: [{ image: 'data:image/jpeg;base64,xxx' }] }],
+      sokoGroups: [],
+      sokoMembers: [],
+      streets: [],
+      templates: []
+    };
+
+    assert.equal(normalizeLoadedData(data).citizens[0].sokoQuestionnaireImages, undefined);
+    assert.equal(dataForPersistence(data).citizens[0].sokoQuestionnaireImages, undefined);
+    assert.equal(data.citizens[0].sokoQuestionnaireImages.length, 1);
+  });
 });
 
 describe('backend and permission helpers', () => {
@@ -106,13 +125,38 @@ describe('backend and permission helpers', () => {
     state.auth.user = { role: 'user' };
     assert.equal(isAdmin(), false);
     assert.equal(canAccessView('soko'), false);
+    assert.equal(canAccessView('privacy'), false);
     assert.equal(canAccessView('dashboard'), true);
     assert.equal(writableCollections().includes('sokoMembers'), false);
 
     state.auth.user = { role: 'admin' };
     assert.equal(isAdmin(), true);
     assert.equal(canAccessView('soko'), true);
+    assert.equal(canAccessView('privacy'), true);
     assert.equal(writableCollections().includes('sokoMembers'), true);
+  });
+
+  it('uses browser data storage only in file mode', () => {
+    assert.equal(usesLocalDataStorage(), true);
+    state.data = { ...state.data, citizens: [{ id: 'G-local', firstName: 'Lokal' }] };
+    saveData();
+    assert.match(localStorage.getItem('gratulationsdienst'), /G-local/);
+
+    globalThis.location.protocol = 'http:';
+    globalThis.fetch = () => Promise.resolve({ ok: true, json: async () => [] });
+    state.auth.token = 'token';
+    localStorage.setItem('gratulationsdienst', JSON.stringify({ citizens: [{ id: 'G-old' }] }));
+    saveData();
+
+    assert.equal(usesLocalDataStorage(), false);
+    assert.equal(localStorage.getItem('gratulationsdienst'), null);
+  });
+
+  it('ignores stale browser data in backend mode', () => {
+    localStorage.setItem('gratulationsdienst', JSON.stringify({ citizens: [{ id: 'G-old' }] }));
+    globalThis.location.protocol = 'http:';
+
+    assert.equal(loadData().citizens.some(citizen => citizen.id === 'G-old'), false);
   });
 });
 

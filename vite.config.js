@@ -18,7 +18,7 @@ export default defineConfig({
   plugins: [watchPublicData()],
   build: {
     outDir: 'docker/src/gratulationsdienst',
-    emptyOutDir: true,
+    emptyOutDir: false,
   },
   server: {
     proxy: {

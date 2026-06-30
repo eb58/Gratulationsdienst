@@ -1,4 +1,4 @@
-import { STORAGE_KEY, MONTH_KEY, QUITTUNG_MONTH_KEY, QUITTUNG_SETTINGS_KEY, MAP_MONTH_KEY, API_BASE, storedSplit, repairStoredText, toast, normalize } from './utils.js';
+import { STORAGE_KEY, MONTH_KEY, QUITTUNG_MONTH_KEY, QUITTUNG_SETTINGS_KEY, MAP_MONTH_KEY, CLEANUP_MONTHS_KEY, API_BASE, storedSplit, repairStoredText, toast, normalize, cleanupMonthsValue, safeStorageSetItem } from './utils.js';
 import { defaultData, buildStreetData } from './domain.js';
 import { render } from './render.js'; // Zyklus OK: render wird nur in Callbacks aufgerufen
 
@@ -22,7 +22,7 @@ const normalizeQuittungSettings = settings => Object.fromEntries(quittungSetting
 const applyQuittungSettings = settings => {
   const normalized = normalizeQuittungSettings(settings);
   Object.assign(state, normalized);
-  localStorage.setItem(QUITTUNG_SETTINGS_KEY, JSON.stringify(normalized));
+  safeStorageSetItem(localStorage, QUITTUNG_SETTINGS_KEY, JSON.stringify(normalized), "Quittungs-Einstellungen");
   return normalized;
 };
 const storedQuittungSettings = () => {
@@ -61,12 +61,21 @@ const mergeStreets = (existing, generated) => {
   const knownNames = new Set(existing.map(s => normalize(s.name)));
   return [...existing, ...generated.filter(s => !knownNames.has(normalize(s.name)))];
 };
+const withoutTransientCitizenFields = citizen => {
+  const { sokoQuestionnaireImages, ...persisted } = citizen || {};
+  return persisted;
+};
+export const dataForPersistence = data => ({
+  ...data,
+  citizens: Array.isArray(data?.citizens) ? data.citizens.map(withoutTransientCitizenFields) : data?.citizens
+});
 
 export const normalizeLoadedData = data => {
   const repaired = repairStoredText(data);
   const activeGroupIds = new Set(defaultData.sokoGroups.map(group => group.id));
   return {
     ...repaired,
+    citizens: Array.isArray(repaired?.citizens) ? repaired.citizens.map(withoutTransientCitizenFields) : repaired?.citizens,
     sokoGroups: mergeById(repaired?.sokoGroups, defaultData.sokoGroups, group => activeGroupIds.has(group.id)),
     sokoMembers: mergeById(repaired?.sokoMembers, defaultData.sokoMembers, member => activeGroupIds.has(member.groupId)),
     streets: mergeStreets(repaired?.streets || [], buildStreetData()),
@@ -74,7 +83,10 @@ export const normalizeLoadedData = data => {
   };
 };
 
+const localDataStorageEnabled = () => location.protocol === "file:";
+
 export const loadData = () => {
+  if (!localDataStorageEnabled()) return normalizeLoadedData(structuredClone(defaultData));
   try {
     return normalizeLoadedData(JSON.parse(localStorage.getItem(STORAGE_KEY)) || structuredClone(defaultData));
   } catch {
@@ -109,10 +121,12 @@ export const state = {
   quittungKapitel: quittungSettings.quittungKapitel,
   quittungTitel: quittungSettings.quittungTitel,
   quittungMonat: localStorage.getItem(QUITTUNG_MONTH_KEY) || new Date().toISOString().slice(5, 7),
+  cleanupMonths: cleanupMonthsValue(localStorage.getItem(CLEANUP_MONTHS_KEY)),
   mapMonth: localStorage.getItem(MAP_MONTH_KEY) || new Date().toISOString().slice(5, 7),
   importText: "",
   importSplit: storedSplit("import", 50),
   citizenSplit: storedSplit("citizen", 50),
+  citizenDetailSplit: storedSplit("citizenDetail", 42, 25, 55),
   profileSplit: storedSplit("profile", 50),
   regionSplit: storedSplit("region", 50),
   templateSplit: storedSplit("template", 50),
@@ -121,6 +135,7 @@ export const state = {
   printSplit: storedSplit("print", 50),
   usersSplit: storedSplit("users", 50),
   generatedDocs: [],
+  cleanupPreview: null,
   printBackground: true,
   dashboardSort: { key: "group", dir: "asc" },
   selectedUserId: "",
@@ -129,13 +144,14 @@ export const state = {
   dialog: null
 };
 
-export const apiCollections = ["citizens", "sokoGroups", "sokoMembers", "streets", "senders", "templates", "importLog"];
+export const apiCollections = ["citizens", "sokoGroups", "sokoMembers", "streets", "senders", "templates"];
 export const adminCollections = ["sokoGroups", "sokoMembers", "streets", "senders", "templates"];
-export const adminViews = ["soko", "regions", "map", "senders", "templates", "quittungStamm", "users"];
+export const adminViews = ["soko", "regions", "map", "senders", "templates", "quittungStamm", "privacy", "users"];
 export const persistedCollections = ["citizens", "sokoGroups", "sokoMembers", "streets", "senders", "templates"];
 export const hasBackendData = data => data && persistedCollections.some(key => Array.isArray(data[key]) && data[key].length);
 export const isAdmin = () => state.auth.user?.role === "admin";
 export const canAccessView = view => !adminViews.includes(view) || isAdmin();
+export const usesLocalDataStorage = localDataStorageEnabled;
 export const writableCollections = () => isAdmin()
   ? apiCollections
   : apiCollections.filter(collection => !adminCollections.includes(collection));
@@ -148,7 +164,7 @@ export const setAuthSession = session => {
   state.auth.mfaTicket = "";
   state.auth.resetToken = "";
   state.auth.mfaSetup = null;
-  if (state.auth.token) sessionStorage.setItem(AUTH_TOKEN_KEY, state.auth.token);
+  if (state.auth.token) safeStorageSetItem(sessionStorage, AUTH_TOKEN_KEY, state.auth.token, "Authentifizierungs-Token");
   else clearStoredAuthToken();
 };
 export const clearAuthSession = () => {
@@ -206,11 +222,12 @@ export const loadBackendQuittungSettings = () => location.protocol === "file:" |
 export const saveCollectionData = data => location.protocol === "file:"
   ? Promise.resolve()
   : !state.auth.token ? Promise.resolve()
-  : Promise.all(writableCollections().map(collection => saveBackendCollection(collection, data[collection] || [])))
+  : Promise.all(writableCollections().map(collection => saveBackendCollection(collection, dataForPersistence(data)[collection] || [])))
     .catch(error => console.warn("Datenbank-Speicherung nicht verfügbar.", error));
 
 export const saveData = () => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state.data));
+  if (usesLocalDataStorage()) safeStorageSetItem(localStorage, STORAGE_KEY, JSON.stringify(dataForPersistence(state.data)), "Daten");
+  else localStorage.removeItem(STORAGE_KEY);
   saveCollectionData(state.data);
 };
 
@@ -228,11 +245,12 @@ export const loadCollectionData = () => {
       const data = Object.fromEntries(entries);
       if (!hasBackendData(data)) {
         saveCollectionData(state.data);
+        localStorage.removeItem(STORAGE_KEY);
         render();
         return;
       }
       state.data = normalizeLoadedData(data);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state.data));
+      localStorage.removeItem(STORAGE_KEY);
       if (!data.sokoGroups?.length && state.data.sokoGroups.length && isAdmin()) {
         saveBackendCollection("sokoGroups", state.data.sokoGroups).catch(() => {});
         saveBackendCollection("sokoMembers", state.data.sokoMembers).catch(() => {});

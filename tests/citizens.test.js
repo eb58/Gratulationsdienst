@@ -45,85 +45,107 @@ describe('buildImportResult', () => {
   it('imports valid rows with incrementing ids and group status', () => {
     const result = buildImportResult([row(), row({ firstName: 'Hans', street: 'Ohnezuordnung' })], [], assignTegel);
 
-    assert.equal(result.rows.length, 2);
-    assert.deepEqual(result.rows.map(r => r.id), ['G-2026-001', 'G-2026-002']);
-    assert.equal(result.rows[0].status, 'importiert');
-    assert.equal(result.rows[0].source, 'CSV Import');
-    assert.equal(result.rows[1].status, 'offen');
-    assert.equal(result.duplicates, 0);
-    assert.deepEqual(result.logs.map(l => l.type), ['Importiert', 'Importiert']);
-    assert.equal(result.logs[0].message, 'Zugeordnet zu SOKO 01.');
-    assert.equal(result.logs[1].message, 'Straße ohne SOKO-Zuordnung.');
+    assert.equal(result.newRows.length, 2);
+    assert.deepEqual(result.newRows.map(r => r.id), ['G-2026-001', 'G-2026-002']);
+    assert.equal(result.newRows[0].status, 'importiert');
+    assert.equal(result.newRows[0].source, 'CSV Import');
+    assert.equal(result.newRows[1].status, 'offen');
+    assert.equal(result.skipped, 0);
   });
 
   it('continues ids after existing citizens', () => {
     const existing = [row({ firstName: 'Alt', lastName: 'Bestand', birthDate: '1930-01-01' })];
     const result = buildImportResult([row()], existing, assignTegel);
 
-    assert.equal(result.rows[0].id, 'G-2026-002');
+    assert.equal(result.newRows[0].id, 'G-2026-002');
   });
 
   it('flags rows with missing mandatory fields as errors without importing them', () => {
     const result = buildImportResult([row({ lastName: '' })], [], assignTegel);
 
-    assert.equal(result.rows.length, 0);
-    assert.equal(result.logs[0].type, 'Fehler');
-    assert.equal(result.logs[0].message, 'Pflichtfelder fehlen.');
+    assert.equal(result.newRows.length, 0);
   });
 
-  it('filters duplicates of existing citizens and counts them', () => {
-    const existing = [row()];
-    const result = buildImportResult([row(), row({ firstName: 'Neu' })], existing, assignTegel);
+  it('merges LABO fields into existing citizens and preserves system fields', () => {
+    const existing = [row({ id: 'G-2026-001', street: 'Alte Straße', houseNo: '1', wish: 'per Post', status: 'geprüft' })];
+    const incoming = [row({ street: 'Neue Straße', houseNo: '99', postalCode: '13439' })];
+    const result = buildImportResult(incoming, existing, assignTegel);
 
-    assert.equal(result.rows.length, 1);
-    assert.equal(result.rows[0].firstName, 'Neu');
-    assert.equal(result.duplicates, 1);
-    assert.equal(result.printedDuplicates, 0);
-    assert.equal(result.logs.length, 1, 'Dubletten erzeugen keinen Log-Eintrag');
-    assert.equal(result.logs[0].firstName, 'Neu');
+    assert.equal(result.newRows.length, 0);
+    assert.equal(result.updates.length, 1);
+    assert.equal(result.updates[0].id, 'G-2026-001');
+    assert.equal(result.updates[0].street, 'Neue Straße');
+    assert.equal(result.updates[0].houseNo, '99');
+    assert.equal(result.updates[0].postalCode, '13439');
+    assert.equal(result.updates[0].wish, 'per Post');
+    assert.equal(result.updates[0].status, 'geprüft');
+    assert.equal(result.skipped, 0);
   });
 
-  it('filters duplicates within the same batch', () => {
+  it('updates printed citizens while preserving their status', () => {
+    const existing = [row({ id: 'G-2026-001', status: 'gedruckt', street: 'Alte Straße' })];
+    const result = buildImportResult([row({ street: 'Neue Straße' })], existing, assignTegel);
+
+    assert.equal(result.updates.length, 1);
+    assert.equal(result.updates[0].status, 'gedruckt');
+    assert.equal(result.updates[0].street, 'Neue Straße');
+    assert.equal(result.skipped, 0);
+  });
+
+  it('skips same-batch duplicates', () => {
     const result = buildImportResult([row(), row()], [], assignTegel);
 
-    assert.equal(result.rows.length, 1);
-    assert.equal(result.duplicates, 1);
+    assert.equal(result.newRows.length, 1);
+    assert.equal(result.skipped, 1);
   });
 
-  it('marks duplicates of already printed citizens', () => {
-    const existing = [row({ status: 'gedruckt' })];
-    const result = buildImportResult([row()], existing, assignTegel);
+  it('flags a moved-out citizen in notes when the new address has no SOKO match', () => {
+    const existing = [row({ id: 'G-2026-001', street: 'Musterstraße', notes: '' })];
+    const result = buildImportResult([row({ street: 'Auswärtige Straße', houseNo: '5' })], existing, assignTegel);
 
-    assert.equal(result.duplicates, 1);
-    assert.equal(result.printedDuplicates, 1);
+    assert.equal(result.updates.length, 1);
+    assert.match(result.updates[0].notes, /Keine SOKO-Zuordnung bei Reimport/);
   });
 
-  it('builds log entries with derived name, address and age', () => {
-    const result = buildImportResult([row({ birthDate: '1936-06-01' })], [], assignTegel);
+  it('does not flag a move when the new address still has a SOKO match', () => {
+    const existing = [row({ id: 'G-2026-001', street: 'Alte Musterstraße', notes: '' })];
+    const result = buildImportResult([row({ street: 'Musterstraße' })], existing, assignTegel);
 
-    assert.equal(result.logs[0].name, 'Mustermann, Erika');
-    assert.equal(result.logs[0].address, 'Musterstraße 12');
-    assert.equal(result.logs[0].age, 2026 - 1936);
+    assert.equal(result.updates[0].notes, '');
   });
+
+  it('skips second occurrence of an existing citizen in the same batch', () => {
+    const existing = [row({ id: 'G-2026-001' })];
+    const result = buildImportResult([row(), row()], existing, assignTegel);
+
+    assert.equal(result.updates.length, 1);
+    assert.equal(result.newRows.length, 0);
+    assert.equal(result.skipped, 1);
+  });
+
 });
 
 describe('importNotice', () => {
-  it('reports plain import count', () => {
-    assert.equal(importNotice({ rows: [1, 2], duplicates: 0, printedDuplicates: 0 }), '2 neue Datensätze importiert.');
+  it('reports new rows only', () => {
+    assert.equal(importNotice({ newRows: [1, 2], updates: [], skipped: 0 }), '2 neue Datensätze importiert.');
   });
 
-  it('reports filtered duplicates', () => {
-    assert.equal(importNotice({ rows: [1], duplicates: 3, printedDuplicates: 0 }), '1 neue Datensätze importiert. 3 Dubletten ausgefiltert.');
+  it('reports updates only', () => {
+    assert.equal(importNotice({ newRows: [], updates: [1, 2], skipped: 0 }), '2 Bestände aktualisiert.');
   });
 
-  it('reports printed duplicates separately', () => {
-    assert.equal(importNotice({ rows: [], duplicates: 3, printedDuplicates: 2 }), '0 neue Datensätze importiert. 3 Dubletten ausgefiltert, davon 2 bereits gedruckt.');
+  it('combines new and updated', () => {
+    assert.equal(importNotice({ newRows: [1], updates: [1, 2], skipped: 3 }), '1 neue Datensätze importiert, 2 Bestände aktualisiert, 3 Dubletten übersprungen.');
+  });
+
+  it('reports no changes when all lists are empty', () => {
+    assert.equal(importNotice({ newRows: [], updates: [], skipped: 0 }), 'Keine Änderungen.');
   });
 });
 
 describe('citizenGridRow', () => {
   it('maps citizen fields and resolves the group id', () => {
-    const citizen = { id: 'G-1', firstName: 'Erika', lastName: 'Mustermann', birthDate: '1936-06-01', street: 'Musterstraße', houseNo: '12', status: 'geprüft' };
+    const citizen = { id: 'G-1', firstName: 'Erika', lastName: 'Mustermann', birthDate: '1936-06-01', street: 'Musterstraße', houseNo: '12', status: 'geprüft', wish: 'per Post' };
 
     assert.deepEqual(citizenGridRow(citizen, { id: 'SOKO 01' }), {
       id: 'G-1',
@@ -132,6 +154,7 @@ describe('citizenGridRow', () => {
       age: 2026 - 1936,
       address: 'Musterstraße 12',
       groupId: 'SOKO 01',
+      wish: 'per Post',
       status: 'geprüft'
     });
   });

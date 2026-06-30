@@ -125,8 +125,7 @@ beforeEach(() => {
       rules: [{ id: 'R-1', plz: '13437', ortsteil: 'Tegel', von: '1', bis: '99', art: 'F', soko: '01' }]
     }],
     senders: [sender],
-    templates: [template],
-    importLog: [{ time: '10:00', type: 'Importiert', name: 'Mustermann, Erika', address: 'Teststraße 12' }]
+    templates: [template]
   };
   state.filters = { q: '', month: '06', groupId: 'alle', age: 'alle', status: 'alle', occasion: 'Geburtstag' };
   state.mapMonth = '06';
@@ -154,6 +153,7 @@ beforeEach(() => {
     sender: sender.role,
     createdAt: '2026-06-01'
   }];
+  state.cleanupPreview = null;
   state.printBackground = true;
   state.importText = 'Vorname;Nachname';
   state.dashboardSort = { key: 'group', dir: 'asc' };
@@ -189,6 +189,23 @@ describe('view partials', () => {
     assert.match(region, /Erika Mustermann/);
   });
 
+  it('places citizen actions and likely edited fields before personal data', () => {
+    const html = citizenDetailContent(citizen);
+
+    assert.ok(html.indexOf('data-action="save-citizen"') < html.indexOf('name="wish"'));
+    assert.ok(html.indexOf('name="wish"') < html.indexOf('citizen-personal-section'));
+    assert.ok(html.indexOf('name="notes"') < html.indexOf('citizen-personal-section'));
+    assert.ok(html.indexOf('citizen-personal-section') < html.indexOf('name="firstName"'));
+  });
+
+  it('shows an explicit empty questionnaire state for citizens without scans', () => {
+    const html = views.citizens();
+
+    assert.match(html, /citizen-questionnaire-panel/);
+    assert.match(html, /Kein Fragebogen geladen/);
+    assert.doesNotMatch(html, /citizen-questionnaire-image/);
+  });
+
   it('renders map info for empty and assigned SOKO selections', () => {
     assert.match(sokoMapInfoHtml('offen'), /Über eine SOKO/);
 
@@ -202,20 +219,39 @@ describe('view partials', () => {
 
 describe('main views', () => {
   it('renders operational views with their key controls', () => {
-    assert.match(views.dashboard(), /SOKO Statistiken/);
+    state.data.citizens = [
+      { ...citizen, id: 'G-85', birthDate: '1941-06-01' },
+      { ...citizen, id: 'G-90', birthDate: '1936-06-01' },
+      { ...citizen, id: 'G-91', birthDate: '1935-06-01', salutation: 'Herr' }
+    ];
+    const dashboard = views.dashboard();
+    assert.match(dashboard, /SOKO Statistiken/);
+    assert.match(dashboard, /age-histogram/);
+    assert.match(dashboard, />85</);
+    assert.match(dashboard, />90</);
+    assert.match(dashboard, /Statistik nach Geschlecht/);
+    assert.match(dashboard, /Frauen/);
     assert.match(views.citizens(), /data-grid="citizens"/);
     assert.match(views.soko(), /data-grid="members"/);
     assert.match(views.regions(), /data-grid="streets"/);
     assert.match(views.senders(), /sender-form/);
     assert.match(views.templates(), /template-form/);
     assert.match(views.documents(), /Druckliste/);
-    assert.match(views.import(), /Import-Protokoll/);
+    assert.match(views.import(), /soko-print/);
+    assert.doesNotMatch(views.import(), /Alte Jubilare löschen/);
   });
 
   it('renders receipt, profile and user administration states', () => {
     assert.match(views.quittung(), /Alle fertigen drucken/);
     assert.match(views.quittungStamm(), /quittung-form/);
     assert.match(views.profile(), /mfa-setup/);
+    assert.match(views.privacy(), /Datenbereinigung/);
+    assert.match(views.privacy(), /Betroffene anzeigen/);
+    assert.doesNotMatch(views.privacy(), /Angezeigte Jubilare löschen/);
+    state.cleanupPreview = { months: 6, citizenIds: [citizen.id] };
+    assert.match(views.privacy(), /Zu löschende Jubilare/);
+    assert.match(views.privacy(), /data-grid="cleanupPreview"/);
+    assert.match(views.privacy(), /Angezeigte Jubilare löschen/);
     assert.match(views.users(), /user-form/);
 
     state.auth.user.mfaEnabled = true;

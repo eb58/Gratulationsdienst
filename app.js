@@ -1,5 +1,5 @@
 import { canAccessView, isAdmin, state, loadAuthStatus, loadCollectionData } from './modules/state.js';
-import { MONTH_KEY, QUITTUNG_MONTH_KEY, MAP_MONTH_KEY, storeSplit, isValidEmail, normalizeIban, isValidIban, normalizeAmount, normalizeDigits, isValidPostalCode } from './modules/utils.js';
+import { MONTH_KEY, QUITTUNG_MONTH_KEY, MAP_MONTH_KEY, storeSplit, safeStorageSetItem, isValidEmail, normalizeIban, isValidIban, normalizeAmount, normalizeDigits, isValidPostalCode, cleanupMonthsValue } from './modules/utils.js';
 import { viewTitles, sokoMapInfoHtml } from './modules/views.js';
 import { findNearestAddress } from './modules/map.js';
 import { render, renderDialog } from './modules/render.js';
@@ -8,6 +8,7 @@ import { hasDirtyForm, requestDirtyFormLeave, trackDirtyFormChange } from './mod
 
 window.GRATULATIONSDIENST_VERSION = "20260608-6";
 
+const SIDEBAR_COLLAPSED_KEY = "gd_sidebar_collapsed";
 const initialParams = new URLSearchParams(location.search);
 const cssEscape = value => globalThis.CSS?.escape ? globalThis.CSS.escape(value) : String(value).replace(/"/g, '\\"');
 const focusSelectorFor = element => {
@@ -27,6 +28,29 @@ const closeNav = () => {
   document.body.classList.remove("nav-open");
   document.querySelector("[data-nav-toggle]")?.setAttribute("aria-expanded", "false");
 };
+const updateSidebarToggleState = collapsed => {
+  document.querySelectorAll("[data-sidebar-toggle]").forEach(button => {
+    const label = collapsed ? "Menue ausklappen" : "Menue einklappen";
+    button.setAttribute("aria-expanded", String(!collapsed));
+    button.setAttribute("aria-label", label);
+    button.setAttribute("title", label);
+  });
+};
+const openSidebarSections = () => {
+  document.querySelectorAll("details.nav-section-collapsible").forEach(section => { section.open = true; });
+};
+const setSidebarCollapsed = collapsed => {
+  if (collapsed) openSidebarSections();
+  document.body.classList.toggle("sidebar-collapsed", collapsed);
+  safeStorageSetItem(localStorage, SIDEBAR_COLLAPSED_KEY, collapsed ? "1" : "0", "Menuezustand");
+  updateSidebarToggleState(collapsed);
+};
+const restoreSidebarState = () => {
+  const collapsed = localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1";
+  if (collapsed) openSidebarSections();
+  document.body.classList.toggle("sidebar-collapsed", collapsed);
+  updateSidebarToggleState(collapsed);
+};
 const guardedActionIds = {
   "select-citizen": id => id !== state.selectedCitizenId,
   "select-member": id => id !== state.selectedMemberId,
@@ -45,6 +69,7 @@ const afterViewChange = () => {
   if (state.view === "documents") actions["generate-docs"]();
   if (state.view === "users") actions["load-users"]();
 };
+const isPdfFile = file => file?.type === "application/pdf" || /\.pdf$/i.test(file?.name || "");
 const goToView = view => {
   state.view = view;
   state.focusTarget = "#view";
@@ -54,7 +79,7 @@ const goToView = view => {
 };
 const applyFilter = (name, value) => {
   state.filters[name] = value;
-  if (name === "month") localStorage.setItem(MONTH_KEY, value);
+  if (name === "month") safeStorageSetItem(localStorage, MONTH_KEY, value, "Monatsfilter");
   render();
 };
 const updateFilter = input => {
@@ -105,10 +130,17 @@ const updatePostalCodeValidity = input => {
   hint.classList.toggle("error", Boolean(hasValue && !valid));
   hint.textContent = hasValue && !valid ? "PLZ muss 5 Ziffern haben" : "";
 };
+const boundValue = input => {
+  if (input.dataset.bind !== "cleanupMonths") return input.value;
+  const value = cleanupMonthsValue(input.value);
+  input.value = String(value);
+  return value;
+};
 
 document.addEventListener("click", event => {
   const skipLink = event.target.closest(".skip-link");
   const navToggle = event.target.closest("[data-nav-toggle]");
+  const sidebarToggle = event.target.closest("[data-sidebar-toggle]");
   const nav = event.target.closest("[data-nav]");
   const action = event.target.closest("[data-action]");
   const adminOnly = event.target.closest("[data-admin-only]");
@@ -122,6 +154,10 @@ document.addEventListener("click", event => {
     const open = document.body.classList.toggle("nav-open");
     navToggle.setAttribute("aria-expanded", String(open));
     navToggle.setAttribute("aria-label", open ? "Menü schließen" : "Menü öffnen");
+    return;
+  }
+  if (sidebarToggle) {
+    setSidebarCollapsed(!document.body.classList.contains("sidebar-collapsed"));
     return;
   }
   if ((nav || action) && adminOnly && !isAdmin()) return;
@@ -163,7 +199,7 @@ document.addEventListener("input", event => {
   const digits = event.target.closest("[data-digits-field]:not([data-postal-code-field])");
   if (digits) updateDigitsInput(digits);
   const bound = event.target.closest("[data-bind]");
-  if (bound) state[bound.dataset.bind] = bound.value;
+  if (bound) state[bound.dataset.bind] = boundValue(bound);
 });
 
 document.addEventListener("submit", event => event.preventDefault());
@@ -172,15 +208,17 @@ document.addEventListener("pointerdown", event => {
   const splitter = event.target.closest("[data-splitter]");
   if (!splitter) return;
   const key = splitter.dataset.splitter;
-  const split = splitter.closest(`.${key}-split`);
+  const split = splitter.closest(`[data-split="${key}"]`) || splitter.closest(`.${key}-split`);
   if (!split) return;
+  const min = Number(splitter.getAttribute?.("aria-valuemin")) || 20;
+  const max = Number(splitter.getAttribute?.("aria-valuemax")) || 80;
   event.preventDefault();
   splitter.setPointerCapture(event.pointerId);
   document.body.classList.add("is-resizing");
   const move = moveEvent => {
     const rect = split.getBoundingClientRect();
     const raw = ((moveEvent.clientX - rect.left) / rect.width) * 100;
-    const next = Math.max(20, Math.min(80, Math.round(raw)));
+    const next = Math.max(min, Math.min(max, Math.round(raw)));
     state[`${key}Split`] = next;
     split.style.setProperty(`--${key}-left`, `${next}%`);
   };
@@ -199,11 +237,13 @@ document.addEventListener("keydown", event => {
   const splitter = event.target.closest("[data-splitter]");
   if (!splitter) return;
   const key = splitter.dataset.splitter;
-  const split = splitter.closest(`.${key}-split`);
+  const split = splitter.closest(`[data-split="${key}"]`) || splitter.closest(`.${key}-split`);
   const delta = event.key === "ArrowLeft" ? -4 : event.key === "ArrowRight" ? 4 : 0;
   if (!split || !delta) return;
   event.preventDefault();
-  const next = Math.max(20, Math.min(80, state[`${key}Split`] + delta));
+  const min = Number(splitter.getAttribute?.("aria-valuemin")) || 20;
+  const max = Number(splitter.getAttribute?.("aria-valuemax")) || 80;
+  const next = Math.max(min, Math.min(max, state[`${key}Split`] + delta));
   state[`${key}Split`] = next;
   split.style.setProperty(`--${key}-left`, `${next}%`);
   splitter.setAttribute("aria-valuenow", String(next));
@@ -219,21 +259,30 @@ document.addEventListener("change", event => {
   if (event.target.matches("#doc-template, #doc-sender, #doc-month, #doc-group")) { actions["generate-docs"](); return; }
   if (event.target.matches("#map-month-select")) {
     state.mapMonth = event.target.value;
-    localStorage.setItem(MAP_MONTH_KEY, event.target.value);
+    safeStorageSetItem(localStorage, MAP_MONTH_KEY, event.target.value, "Kartenmonat");
     const info = document.querySelector("#map-soko-info");
     if (info) info.innerHTML = sokoMapInfoHtml(info.dataset.groupId || "");
     return;
   }
   const bound = event.target.closest("[data-bind]");
   if (bound) {
-    state[bound.dataset.bind] = bound.value;
-    if (bound.dataset.bind === "quittungMonat") localStorage.setItem(QUITTUNG_MONTH_KEY, bound.value);
+    state[bound.dataset.bind] = boundValue(bound);
+    if (bound.dataset.bind === "quittungMonat") safeStorageSetItem(localStorage, QUITTUNG_MONTH_KEY, bound.value, "Quittungsmonat");
     if (dirtyTracked) return;
     render();
     return;
   }
+  const sokoPdfFile = event.target.matches("#soko-pdf-file") ? event.target.files[0] : null;
+  if (sokoPdfFile) {
+    Promise.resolve(actions["run-soko-pdf-import"]({ file: sokoPdfFile })).finally(() => { event.target.value = ""; });
+    return;
+  }
   const file = event.target.matches("#import-file") ? event.target.files[0] : null;
-  if (file) file.text().then(text => { state.importText = text; actions["run-import"](); });
+  if (file && isPdfFile(file)) {
+    Promise.resolve(actions["run-soko-pdf-import"]({ file })).finally(() => { event.target.value = ""; });
+    return;
+  }
+  if (file) file.text().then(text => { state.importText = text; actions["run-import"](); }).finally(() => { event.target.value = ""; });
 });
 
 globalThis.addEventListener("beforeunload", event => {
@@ -293,6 +342,7 @@ if (initialParams.get("resetToken")) {
   state.auth.mode = "reset";
   state.auth.resetToken = initialParams.get("resetToken");
 }
+restoreSidebarState();
 render();
 loadAuthStatus().then(() => {
   if (initialParams.get("resetToken")) {

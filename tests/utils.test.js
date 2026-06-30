@@ -2,14 +2,19 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   byId,
+  cleanupMonthsValue,
   csvEscape,
   escapeHtml,
   formatDateDe,
   formatStreetAddress,
   formatIban,
+  dateMonthsAgo,
+  isAnniversaryOlderThanMonths,
+  anniversaryDateFromCreatedAt,
   isValidEmail,
   isValidIban,
   isValidPostalCode,
+  anniversaryDateInYear,
   nextId,
   normalize,
   normalizeAmount,
@@ -18,8 +23,11 @@ import {
   normalizeIban,
   repairMojibakeText,
   repairStoredText,
+  safeStorageSetItem,
   updateItem
 } from '../modules/utils.js';
+
+const localIso = date => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 
 describe('email validation', () => {
   it('accepts empty and syntactically valid addresses', () => {
@@ -81,6 +89,48 @@ describe('amount normalization', () => {
   });
 });
 
+describe('cleanup month helpers', () => {
+  it('enforces a minimum cleanup age of six months', () => {
+    assert.equal(cleanupMonthsValue(), 6);
+    assert.equal(cleanupMonthsValue('5'), 6);
+    assert.equal(cleanupMonthsValue('8'), 8);
+  });
+
+  it('finds the concrete anniversary date in the reference year', () => {
+    const reference = new Date(2026, 5, 28);
+    assert.equal(localIso(anniversaryDateInYear('1936-06-01', reference)), '2026-06-01');
+    assert.equal(localIso(anniversaryDateInYear('1936-12-01', reference)), '2026-12-01');
+    assert.equal(localIso(anniversaryDateInYear('1936-08-01', reference)), '2026-08-01');
+  });
+
+  it('matches anniversaries older than the configured age', () => {
+    const reference = new Date(2026, 5, 28);
+    assert.equal(localIso(dateMonthsAgo(6, reference)), '2025-12-28');
+    assert.equal(isAnniversaryOlderThanMonths('1936-10-15', 6, reference, '2025-07-15'), true);
+    assert.equal(isAnniversaryOlderThanMonths('1936-12-28', 6, reference, '2025-09-28'), false);
+    assert.equal(isAnniversaryOlderThanMonths('1936-08-01', 6, reference, '2026-05-01'), false);
+  });
+
+  it('keeps future anniversaries in the current year', () => {
+    const reference = new Date(2026, 5, 28);
+    assert.equal(isAnniversaryOlderThanMonths('1936-08-01', 6, reference, '2026-06-01'), false);
+  });
+
+  it('derives the concrete anniversary from the creation date', () => {
+    const reference = new Date(2026, 5, 28);
+    assert.equal(localIso(anniversaryDateFromCreatedAt('1936-10-15', '2025-07-15', reference)), '2025-10-15');
+    assert.equal(localIso(anniversaryDateFromCreatedAt('1936-08-01', '2026-05-01', reference)), '2026-08-01');
+    assert.equal(isAnniversaryOlderThanMonths('1936-10-15', 6, reference, '2025-07-15'), true);
+    assert.equal(isAnniversaryOlderThanMonths('1936-08-01', 6, reference, '2026-05-01'), false);
+  });
+
+  it('does not delete records without a creation date', () => {
+    const reference = new Date(2026, 8, 28);
+    assert.equal(anniversaryDateFromCreatedAt('1936-01-01', '', reference), null);
+    assert.equal(isAnniversaryOlderThanMonths('1936-01-01', 6, reference), false);
+  });
+});
+
 describe('text formatting helpers', () => {
   it('normalizes text for comparisons', () => {
     assert.equal(normalize('  ÄÖÜ  '), 'äöü');
@@ -136,5 +186,38 @@ describe('address and stored text helpers', () => {
       name: 'Müller',
       list: ['Günter', 1]
     });
+  });
+});
+
+describe('storage helpers', () => {
+  it('reports quota errors as toast and console warning', () => {
+    const previousDocument = globalThis.document;
+    const previousWindow = globalThis.window;
+    const previousRequestAnimationFrame = globalThis.requestAnimationFrame;
+    const previousConsoleWarn = console.warn;
+    const element = {
+      textContent: '',
+      classList: { add() {}, remove() {} },
+      style: { removeProperty() {}, setProperty() {} }
+    };
+    const warnings = [];
+    globalThis.document = { querySelector: selector => selector === '#toast' ? element : null };
+    globalThis.window = { innerWidth: 1024, innerHeight: 768 };
+    globalThis.requestAnimationFrame = callback => callback();
+    console.warn = (...args) => warnings.push(args);
+    const error = Object.assign(new Error('Setting the value exceeded the quota.'), { name: 'QuotaExceededError' });
+    const storage = { setItem: () => { throw error; } };
+
+    try {
+      assert.equal(safeStorageSetItem(storage, 'gratulationsdienst', '{}', 'Daten'), false);
+      assert.match(element.textContent, /Browser-Speicher ist voll/);
+      assert.match(warnings[0][0], /Storage-Quota/);
+      assert.equal(warnings[0][1], error);
+    } finally {
+      globalThis.document = previousDocument;
+      globalThis.window = previousWindow;
+      globalThis.requestAnimationFrame = previousRequestAnimationFrame;
+      console.warn = previousConsoleWarn;
+    }
   });
 });

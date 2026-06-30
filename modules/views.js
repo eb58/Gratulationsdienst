@@ -1,11 +1,12 @@
-﻿import { escapeHtml, normalize, formatDate, byId, birthdayMonth, calculateAge } from './utils.js';
+import { escapeHtml, normalize, formatDate, byId, birthdayMonth, calculateAge, anniversaryDateFromCreatedAt } from './utils.js';
 import { months, sokoColors, streetGroupDisplay } from './domain.js';
 import { state } from './state.js';
-import { selectedCitizen, selectedTemplate, selectedSender, selectedMember, selectedStreet, filteredCitizens, activeCitizens, groupForCitizen, isCheckedCitizen, receiptCitizens, receiptReviewCitizensForGroup, isReceiptGroupReady } from './assignment.js';
+import { selectedCitizen, selectedTemplate, selectedSender, selectedMember, selectedStreet, filteredCitizens, activeCitizens, groupForCitizen, isCheckedCitizen, isPrintedCitizen, wantsVisit } from './assignment.js';
 import { field, emailField, postalCodeField, ibanField, selectField, textField, checkField, radioField, streetRuleRows, assignmentPill, gridHost, groupOptions, sokoSelectOptions, senderOptions, templateOptions, occasionOptions, formatOptions } from './fields.js';
 import { streetMapSvg, mapSegmentCounts, mapAddressPointGroups } from './map.js';
 import { documentBackPreview, documentPreview } from './documents.js';
 import { qrCodeSvg } from './qr.js';
+import { SOKO_QUESTIONNAIRE_IMPORTED_STATUS } from './sokoQuestionnaire.js';
 import { render, applyPendingFocus } from './render.js'; // Zyklus OK: render wird nur in Callbacks aufgerufen
 import { rememberDirtyFormBaselines } from './dirtyForms.js';
 
@@ -22,6 +23,7 @@ export const viewTitles = {
   quittungStamm: "Stammdaten: Quittung",
   import: "LABO-Import",
   profile: "Mein Zugang",
+  privacy: "Datenschutz",
   users: "Benutzerverwaltung"
 };
 
@@ -166,16 +168,10 @@ export const citizenDetailContent = citizen => `
   <h2>Jubilar</h2>
   <form id="citizen-form" class="form-grid">
     <input type="hidden" name="id" value="${escapeHtml(citizen.id)}">
-    ${selectField("salutation", "Anrede", citizen.salutation, [["Frau", "Frau"], ["Herr", "Herr"]])}
-    ${field("firstName", "Vorname", citizen.firstName)}
-    ${field("lastName", "Nachname", citizen.lastName)}
-    ${field("birthDate", "Geburtsdatum", citizen.birthDate, "date")}
-    ${field("street", "Straße", citizen.street)}
-    ${field("houseNo", "Hausnummer", citizen.houseNo)}
-    ${postalCodeField("postalCode", "PLZ", citizen.postalCode)}
-    ${field("district", "Ortsteil", citizen.district)}
-    ${field("phone", "Telefon", citizen.phone)}
-    ${emailField("email", "E-Mail", citizen.email)}
+    <div class="field full button-row citizen-action-row">
+      <button type="button" class="primary-button${citizen.wish && citizen.wish !== "offen" ? "" : " btn-disabled"}" data-action="save-citizen">Speichern</button>
+      ${isPrintedCitizen(citizen) ? `<button type="button" class="ghost-button" data-action="reset-selected-for-reprint">Für Nachdruck auf geprüft setzen</button>` : ""}
+    </div>
     ${radioField("wish", "Glückwünsche", citizen.wish, [["Besuch erwünscht", "Besuch erwünscht"], ["per Post", "per Post"], ["keine", "keine"]], "full")}
     ${checkField("pressPublication", "Veröffentlichung in der lokalen Presse", citizen.pressPublication, "full")}
     ${radioField("weddingAnniversary", "Es steht bevor die", citizen.weddingAnniversary ?? "", [
@@ -188,17 +184,71 @@ export const citizenDetailContent = citizen => `
     ${field("weddingDate", "am", citizen.weddingDate ?? "", "date", "hochzeit-date-field")}
     ${field("spouseName", "Name des Ehegatten", citizen.spouseName ?? "", "text", "hochzeit-spouse-field")}
     ${textField("notes", "Notiz", citizen.notes, "full notes-field")}
-    <div class="field full button-row">
-      <button type="button" class="primary-button${citizen.wish && citizen.wish !== "offen" ? "" : " btn-disabled"}" data-action="save-citizen">Speichern</button>
-    </div>
+    <section class="citizen-personal-section full">
+      <h3>Persönliche Daten</h3>
+      <div class="form-grid">
+        ${selectField("salutation", "Anrede", citizen.salutation, [["Frau", "Frau"], ["Herr", "Herr"]])}
+        ${field("firstName", "Vorname", citizen.firstName)}
+        ${field("lastName", "Nachname", citizen.lastName)}
+        ${field("birthDate", "Geburtsdatum", citizen.birthDate, "date")}
+        ${field("street", "Straße", citizen.street)}
+        ${field("houseNo", "Hausnummer", citizen.houseNo)}
+        ${postalCodeField("postalCode", "PLZ", citizen.postalCode)}
+        ${field("district", "Ortsteil", citizen.district)}
+        ${field("phone", "Telefon", citizen.phone)}
+        ${emailField("email", "E-Mail", citizen.email)}
+      </div>
+    </section>
   </form>
 `;
+
+const sokoQuestionnaireImages = citizen => Array.isArray(citizen?.sokoQuestionnaireImages)
+  ? citizen.sokoQuestionnaireImages.filter(item => item?.image)
+  : [];
+const citizenQuestionnaireImagesContent = citizen => `
+  <h2>Fragebogen</h2>
+  <div class="citizen-questionnaire-scroll">
+    ${sokoQuestionnaireImages(citizen).length ? sokoQuestionnaireImages(citizen).map((item, index) => `
+      <figure class="citizen-questionnaire-image">
+        <img src="${escapeHtml(item.image)}" alt="SOKO-Fragebogen ${index + 1}">
+        <figcaption>${escapeHtml(formatDate(item.createdAt))}</figcaption>
+      </figure>
+    `).join("") : `<div class="empty-state citizen-questionnaire-empty">Kein Fragebogen geladen</div>`}
+  </div>
+`;
+const renderCitizenQuestionnaireImages = citizen => {
+  const panel = document.querySelector("#citizen-questionnaire-panel");
+  const split = document.querySelector(".citizen-split");
+  const detailSplit = document.querySelector(".citizen-detail-split");
+  let splitter = document.querySelector(".citizen-detail-splitter");
+  const showQuestionnairePanel = Boolean(citizen);
+  split?.classList.toggle("has-questionnaire-images", showQuestionnairePanel);
+  detailSplit?.classList.toggle("has-questionnaire-images", showQuestionnairePanel);
+  if (showQuestionnairePanel && detailSplit && panel && !splitter) {
+    splitter = document.createElement("div");
+    splitter.className = "vertical-splitter citizen-detail-splitter";
+    splitter.dataset.splitter = "citizenDetail";
+    splitter.setAttribute("role", "separator");
+    splitter.setAttribute("aria-orientation", "vertical");
+    splitter.setAttribute("aria-label", "Fragebogen und Jubilar aufteilen");
+    splitter.setAttribute("aria-valuemin", "25");
+    splitter.setAttribute("aria-valuemax", "55");
+    splitter.setAttribute("aria-valuenow", String(state.citizenDetailSplit));
+    splitter.tabIndex = 0;
+    panel.after(splitter);
+  }
+  if (splitter) splitter.hidden = !showQuestionnairePanel;
+  if (!panel) return;
+  panel.hidden = !showQuestionnairePanel;
+  panel.innerHTML = showQuestionnairePanel ? citizenQuestionnaireImagesContent(citizen) : "";
+};
 
 export const renderCitizenDetail = () => {
   const element = document.querySelector("#citizen-detail-panel");
   const citizens = filteredCitizens();
   const citizen = citizens.find(item => item.id === state.selectedCitizenId) || citizens[0];
   if (!element || !citizen) { render(); return; }
+  renderCitizenQuestionnaireImages(citizen);
   element.innerHTML = citizenDetailContent(citizen);
   rememberDirtyFormBaselines(element);
   applyPendingFocus();
@@ -206,7 +256,7 @@ export const renderCitizenDetail = () => {
 
 const selectedMonthLabel = () => months.find(([value]) => value === state.filters.month)?.[1] || "Alle Monate";
 const selectedMonthSuffix = () => state.filters.month === "alle" ? "in allen Monaten" : `im ${selectedMonthLabel()}`;
-const isQuestionnaireReturned = citizen => normalize(citizen.status).startsWith("gepr") || citizen.status === "gedruckt";
+const isQuestionnaireReturned = citizen => isCheckedCitizen(citizen);
 const dashboardCitizens = () => activeCitizens().filter(citizen => state.filters.month === "alle" || birthdayMonth(citizen.birthDate) === state.filters.month);
 const dashboardRows = () => state.data.sokoGroups.map(group => {
   const citizens = dashboardCitizens().filter(citizen => groupForCitizen(citizen)?.id === group.id);
@@ -215,39 +265,100 @@ const dashboardRows = () => state.data.sokoGroups.map(group => {
   const rate = citizens.length ? Math.round((returns / citizens.length) * 100) : 0;
   return { group, members, citizens: citizens.length, returns, open: citizens.length - returns, rate };
 });
+const groupedQuittungEntries = entries => entries.reduce((map, { citizen, group }) => {
+  if (!map.has(group.id)) map.set(group.id, { group, citizens: [] });
+  map.get(group.id).citizens.push(citizen);
+  return map;
+}, new Map());
+const reviewQuittungEntriesByGroup = entries => entries.reduce((map, { citizen, group }) => {
+  if (!map.has(group.id)) map.set(group.id, []);
+  map.get(group.id).push(citizen);
+  return map;
+}, new Map());
 const ageDistribution = citizens => {
-  const groups = [
-    { key: "85", label: "85", color: "#d09b2c", count: 0 },
-    { key: "90-99", label: "90-99", color: "#0f5d58", count: 0 },
-    { key: "100+", label: "100+", color: "#b64036", count: 0 }
-  ];
-  citizens.forEach(citizen => {
+  const counts = citizens.reduce((acc, citizen) => {
     const age = calculateAge(citizen.birthDate);
-    const group = age >= 100 ? groups[2] : age >= 90 ? groups[1] : groups[0];
-    group.count += 1;
-  });
-  return groups;
+    if (Number.isFinite(age) && (age === 85 || age >= 90)) acc.set(age, (acc.get(age) || 0) + 1);
+    return acc;
+  }, new Map());
+  const maxAge = Math.max(0, ...counts.keys());
+  const ages = [
+    ...(counts.has(85) ? [85] : []),
+    ...Array.from({ length: Math.max(0, maxAge - 89) }, (_, index) => index + 90)
+  ];
+  return ages.map(age => ({ age, count: counts.get(age) || 0 }));
+};
+const ageLabel = age => age === 85 || age % 5 === 0 ? age : "";
+const cleanupPreviewContent = () => {
+  const preview = state.cleanupPreview;
+  if (!preview) return "";
+  const ids = new Set(preview.citizenIds || []);
+  const citizens = state.data.citizens
+    .filter(citizen => ids.has(citizen.id))
+    .sort((a, b) => anniversaryDateFromCreatedAt(a.birthDate, a.createdAt) - anniversaryDateFromCreatedAt(b.birthDate, b.createdAt) || String(a.lastName || "").localeCompare(String(b.lastName || "")));
+  return `
+    <section id="cleanup-preview" class="panel cleanup-preview-panel" tabindex="-1">
+      <h2>Zu löschende Jubilare</h2>
+      <div class="data-list">
+        <div><span>Frist</span><strong>${escapeHtml(preview.months)} Monate</strong></div>
+        <div><span>Anzahl</span><strong>${citizens.length.toLocaleString("de-DE")}</strong></div>
+      </div>
+      ${citizens.length ? `
+        ${gridHost("cleanupPreview", 420)}
+        <div class="button-row" style="margin-top:12px">
+          <button type="button" class="danger-button" data-action="delete-old-citizens">Angezeigte Jubilare löschen</button>
+        </div>
+      ` : `<div class="empty-state" style="margin-top:12px">Keine Jubilare für diese Frist gefunden</div>`}
+    </section>
+  `;
 };
 const ageDistributionChart = citizens => {
   const groups = ageDistribution(citizens);
-  const total = groups.reduce((sum, group) => sum + group.count, 0);
-  const segments = groups.reduce((acc, group) => {
-    const value = total ? (group.count / total) * 100 : 0;
-    return {
-      offset: acc.offset + value,
-      html: `${acc.html}<circle class="age-chart-segment" cx="32" cy="32" r="15.9" pathLength="100" stroke="${group.color}" stroke-dasharray="${value} ${100 - value}" stroke-dashoffset="${-acc.offset}"></circle>`
-    };
-  }, { offset: 0, html: "" }).html;
+  const max = Math.max(1, ...groups.map(group => group.count));
+  const chartItems = groups.flatMap(group => group.age === 85 ? [group, { spacer: true }] : [group]);
+  const labels = chartItems
+    .map((group, index) => ({ label: group.spacer ? "" : ageLabel(group.age), column: index + 1 }))
+    .filter(item => item.label);
   return `
     <div class="age-card-body">
-      <svg class="age-chart" viewBox="0 0 64 64" role="img" aria-label="Altersverteilung">
-        <circle class="age-chart-track" cx="32" cy="32" r="15.9"></circle>
-        ${segments}
-        <text x="32" y="35">${total}</text>
-      </svg>
-      <div class="age-legend">
-        ${groups.map(group => `<span><i style="background:${group.color}"></i>${escapeHtml(group.label)} <strong>${group.count}</strong></span>`).join("")}
-      </div>
+      ${groups.length ? `<div class="age-histogram" style="--age-count:${chartItems.length}" role="img" aria-label="Altersverteilung nach Jahren">
+        <div class="age-bars">
+          ${chartItems.map(group => group.spacer ? `<div class="age-bin age-spacer" aria-hidden="true"></div>` : `
+          <div class="age-bin" title="${group.age} Jahre: ${group.count}">
+            <div class="age-bar" style="height:${Math.max(8, Math.round((group.count / max) * 100))}%"></div>
+          </div>
+        `).join("")}
+        </div>
+        <div class="age-axis">
+          ${labels.map(item => `<span style="grid-column:${item.column}">${item.label}</span>`).join("")}
+        </div>
+      </div>` : `<div class="empty-state compact">Keine Jubilare</div>`}
+    </div>
+  `;
+};
+const genderDistribution = citizens => citizens.reduce((counts, citizen) => {
+  const salutation = normalize(citizen.salutation);
+  const key = salutation === "frau" ? "female" : salutation === "herr" ? "male" : "unknown";
+  counts[key] += 1;
+  return counts;
+}, { female: 0, male: 0, unknown: 0 });
+const genderDistributionChart = citizens => {
+  const counts = genderDistribution(citizens);
+  const total = counts.female + counts.male + counts.unknown;
+  const items = [
+    { key: "female", label: "Frauen", value: counts.female, tone: "female" },
+    { key: "male", label: "Männer", value: counts.male, tone: "male" },
+    ...(counts.unknown ? [{ key: "unknown", label: "Unklar", value: counts.unknown, tone: "unknown" }] : [])
+  ];
+  return `
+    <div class="gender-bars" aria-label="Statistik nach Geschlecht">
+      ${items.map(item => `
+        <div class="gender-row ${item.tone}">
+          <span>${escapeHtml(item.label)}</span>
+          <strong>${item.value.toLocaleString("de-DE")}</strong>
+          <i><b style="width:${total ? Math.round((item.value / total) * 100) : 0}%"></b></i>
+        </div>
+      `).join("")}
     </div>
   `;
 };
@@ -337,6 +448,10 @@ export const views = {
             <span>Altersverteilung</span>
             ${ageDistributionChart(citizens)}
           </article>
+          <article class="metric-card gender-card">
+            <span>Geschlecht</span>
+            ${genderDistributionChart(citizens)}
+          </article>
           <article class="metric-card accent-teal">
             <span>SOKO-Gruppen</span>
             <strong>${rows.length.toLocaleString("de-DE")}</strong>
@@ -405,6 +520,8 @@ export const views = {
   citizens: () => {
     const citizens = filteredCitizens();
     const citizen = citizens.find(item => item.id === state.selectedCitizenId) || citizens[0];
+    const showQuestionnairePanel = Boolean(citizen);
+    const citizenSplit = showQuestionnairePanel ? Math.min(state.citizenSplit, 34) : state.citizenSplit;
     return `
       <div class="toolbar">
         <select name="month" data-filter>${months.map(month => `<option value="${month[0]}" ${state.filters.month === month[0] ? "selected" : ""}>${month[1]}</option>`).join("")}</select>
@@ -413,46 +530,31 @@ export const views = {
           ${[["alle", "Alle Alter"], ["85", "85 Jahre"], ["90plus", "90+"], ["100", "100+"]].map(option => `<option value="${option[0]}" ${state.filters.age === option[0] ? "selected" : ""}>${option[1]}</option>`).join("")}
         </select>
         <select name="status" data-filter>
-          ${[["alle", "Alle Status"], ["offen", "offen"], ["importiert", "importiert"], ["geprüft", "geprüft"], ["gedruckt", "gedruckt"]].map(option => `<option value="${option[0]}" ${state.filters.status === option[0] ? "selected" : ""}>${option[1]}</option>`).join("")}
+          ${[["alle", "Alle Status"], ["offen", "offen"], ["importiert", "importiert"], ["geprüft", "geprüft"], [SOKO_QUESTIONNAIRE_IMPORTED_STATUS, SOKO_QUESTIONNAIRE_IMPORTED_STATUS], ["gedruckt", "gedruckt"]].map(option => `<option value="${option[0]}" ${state.filters.status === option[0] ? "selected" : ""}>${option[1]}</option>`).join("")}
         </select>
+        <div class="file-action-row soko-pdf-action-row">
+          <div class="file-picker import-file-picker soko-questionnaire-picker">
+            <button type="button" class="primary-button test-action-button" data-action="simulate-soko-pdf-import">Simuliere Fragebögen laden</button>
+            <label class="soko-questionnaire-load" for="soko-pdf-file"><span>Fragebögen laden</span><em>Gescannte Fragebögen</em></label>
+          </div>
+          <input id="soko-pdf-file" class="file-input" type="file" accept=".pdf,application/pdf">
+        </div>
       </div>
-      <div class="${citizen ? "citizen-split" : ""}" ${citizen ? `style="--citizen-left:${state.citizenSplit}%"` : ""}>
+      <div class="${citizen ? `citizen-split${showQuestionnairePanel ? " has-questionnaire-images" : ""}` : ""}" ${citizen ? `style="--citizen-left:${citizenSplit}%"` : ""}>
         <section class="panel citizen-panel">
           <h2>Jubilare</h2>
           <div class="citizen-panel-scroll citizen-grid-scroll">${gridHost("citizens")}</div>
         </section>
-        ${citizen ? `<div class="vertical-splitter" data-splitter="citizen" role="separator" aria-orientation="vertical" aria-label="Bereiche aufteilen" aria-valuemin="20" aria-valuemax="80" aria-valuenow="${state.citizenSplit}" tabindex="0"></div>
-        <section class="panel citizen-panel" id="citizen-detail-panel">
-          <h2>Jubilar</h2>
-          <form id="citizen-form" class="form-grid">
-            <input type="hidden" name="id" value="${escapeHtml(citizen.id)}">
-            ${selectField("salutation", "Anrede", citizen.salutation, [["Frau", "Frau"], ["Herr", "Herr"]])}
-            ${field("firstName", "Vorname", citizen.firstName)}
-            ${field("lastName", "Nachname", citizen.lastName)}
-            ${field("birthDate", "Geburtsdatum", citizen.birthDate, "date")}
-            ${field("street", "Straße", citizen.street)}
-            ${field("houseNo", "Hausnummer", citizen.houseNo)}
-            ${postalCodeField("postalCode", "PLZ", citizen.postalCode)}
-            ${field("district", "Ortsteil", citizen.district)}
-            ${field("phone", "Telefon", citizen.phone)}
-            ${emailField("email", "E-Mail", citizen.email)}
-            ${radioField("wish", "Glückwünsche", citizen.wish, [["Besuch erwünscht", "Besuch erwünscht"], ["per Post", "per Post"], ["keine", "keine"]], "full")}
-            ${checkField("pressPublication", "Veröffentlichung in der lokalen Presse", citizen.pressPublication, "full")}
-            ${radioField("weddingAnniversary", "Es steht bevor die", citizen.weddingAnniversary ?? "", [
-              ["", "—"],
-              ["Goldene Hochzeit", "Goldene Hochzeit"],
-              ["Diamantene Hochzeit", "Diamantene Hochzeit"],
-              ["Eiserne Hochzeit", "Eiserne Hochzeit"],
-              ["Gnadenhochzeit", "Gnadenhochzeit"]
-            ], "full")}
-            ${field("weddingDate", "am", citizen.weddingDate ?? "", "date", "hochzeit-date-field")}
-            ${field("spouseName", "Name des Ehegatten", citizen.spouseName ?? "", "text", "hochzeit-spouse-field")}
-            ${textField("notes", "Notiz", citizen.notes, "full notes-field")}
-            <div class="field full button-row">
-              <button type="button" class="primary-button${citizen.wish && citizen.wish !== "offen" ? "" : " btn-disabled"}" data-action="save-citizen">Speichern</button>
-            </div>
-          </form>
-        </section>` : ""}
+        ${citizen ? `<div class="vertical-splitter" data-splitter="citizen" role="separator" aria-orientation="vertical" aria-label="Bereiche aufteilen" aria-valuemin="${showQuestionnairePanel ? 24 : 20}" aria-valuemax="${showQuestionnairePanel ? 34 : 80}" aria-valuenow="${citizenSplit}" tabindex="0"></div>
+        <div class="citizen-detail-split${showQuestionnairePanel ? " has-questionnaire-images" : ""}" data-split="citizenDetail" style="--citizenDetail-left:${state.citizenDetailSplit}%">
+          <section class="panel citizen-panel citizen-questionnaire-panel" id="citizen-questionnaire-panel">
+            ${citizenQuestionnaireImagesContent(citizen)}
+          </section>
+          <div class="vertical-splitter citizen-detail-splitter" data-splitter="citizenDetail" role="separator" aria-orientation="vertical" aria-label="Fragebogen und Jubilar aufteilen" aria-valuemin="25" aria-valuemax="55" aria-valuenow="${state.citizenDetailSplit}" tabindex="0"></div>
+          <section class="panel citizen-panel" id="citizen-detail-panel">
+            ${citizenDetailContent(citizen)}
+          </section>
+        </div>` : ""}
       </div>
     `;
   },
@@ -675,8 +777,8 @@ export const views = {
     const sender = selectedSender();
     const docs = state.generatedDocs;
     const previewDoc = docs.find(doc => doc.citizenId === state.selectedCitizenId) || docs[0];
-    const checkedCount = filteredCitizens().filter(c => c.status === "geprüft").length;
-    const previewCitizen = previewDoc ? byId(state.data.citizens, previewDoc.citizenId) : filteredCitizens().find(c => c.status === "geprüft") || selectedCitizen();
+    const checkedCount = filteredCitizens().filter(c => isCheckedCitizen(c) && c.status !== "gedruckt").length;
+    const previewCitizen = previewDoc ? byId(state.data.citizens, previewDoc.citizenId) : filteredCitizens().find(c => isCheckedCitizen(c) && c.status !== "gedruckt") || selectedCitizen();
     const previewTemplate = previewDoc ? byId(state.data.templates, previewDoc.templateId) || template : template;
     const printablePreviewTemplate = state.printBackground ? previewTemplate : { ...previewTemplate, backgroundImage: "", backBackgroundImage: "" };
     const previewSender = previewDoc ? byId(state.data.senders, previewDoc.senderId) || sender : sender;
@@ -716,28 +818,29 @@ export const views = {
   },
 
   quittung: () => {
-    const citizens = receiptCitizens();
-    const byGroup = citizens.reduce((acc, c) => {
-      const group = groupForCitizen(c);
-      const key = group.id;
-      if (!acc[key]) acc[key] = { group, citizens: [] };
-      acc[key].citizens.push(c);
-      return acc;
-    }, {});
-    const groups = Object.values(byGroup).sort((a, b) => a.group.id.localeCompare(b.group.id));
+    const reviewEntries = activeCitizens()
+      .filter(citizen => birthdayMonth(citizen.birthDate) === state.quittungMonat)
+      .filter(wantsVisit)
+      .map(citizen => ({ citizen, group: groupForCitizen(citizen) }))
+      .filter(entry => entry.group);
+    const groupMap = groupedQuittungEntries(reviewEntries);
+    const reviewByGroup = reviewQuittungEntriesByGroup(reviewEntries);
+    const groups = [...groupMap.values()].sort((a, b) => a.group.id.localeCompare(b.group.id));
     const groupStatus = group => {
-      const uncheckedCount = receiptReviewCitizensForGroup(group.id).filter(citizen => !isCheckedCitizen(citizen)).length;
-      return { uncheckedCount, canPrint: isReceiptGroupReady(group.id) };
+      const reviewCitizens = reviewByGroup.get(group.id) || [];
+      const uncheckedCount = reviewCitizens.filter(citizen => !isCheckedCitizen(citizen)).length;
+      return { uncheckedCount, canPrint: reviewCitizens.length > 0 && uncheckedCount === 0 };
     };
+    const statuses = new Map(groups.map(({ group }) => [group.id, groupStatus(group)]));
     const unfinishedGroups = groups
-      .map(({ group }) => ({ group, ...groupStatus(group) }))
+      .map(({ group }) => ({ group, ...statuses.get(group.id) }))
       .filter(item => !item.canPrint);
-    const canPrintAny = groups.some(({ group }) => isReceiptGroupReady(group.id));
+    const canPrintAny = groups.some(({ group }) => statuses.get(group.id)?.canPrint);
     const betrag = state.quittungBetrag;
     const betragNum = Number.parseFloat(betrag.replace(",", ".")) || 0;
     const rows = groups.map(({ group, citizens: gc }) => {
       const summe = (gc.length * betragNum).toFixed(2).replace(".", ",");
-      const { uncheckedCount, canPrint } = groupStatus(group);
+      const { uncheckedCount, canPrint } = statuses.get(group.id);
       return `<tr>
         <td>${escapeHtml(group.id)}</td>
         <td>${gc.length}</td>
@@ -805,9 +908,9 @@ export const views = {
             <div class="test-actions" aria-label="Testdaten-Werkzeuge">
               <div class="test-actions-meta">
                 <span>Nur Testzwecke</span>
-                <strong>${state.data.citizens.length.toLocaleString("de-DE")} Jubilare · ${state.data.importLog.length.toLocaleString("de-DE")} Log</strong>
+                <strong>${state.data.citizens.length.toLocaleString("de-DE")} Jubilare</strong>
               </div>
-              <button type="button" class="ghost-button test-action-button" data-action="seed-citizens">${Math.max(30, state.data.sokoGroups.length)} CSV simulieren</button>
+              <button type="button" class="ghost-button test-action-button" data-action="seed-citizens">${Math.max(50, state.data.sokoGroups.length)} CSV simulieren</button>
               <button type="button" class="danger-button test-action-button" data-action="clear-citizens">Löschen</button>
             </div>
           ` : ""}
@@ -815,12 +918,12 @@ export const views = {
         </div>
       </section>
       <section class="panel import-log-panel">
-        <h2>Import-Protokoll</h2>
+        <h2>Importierte Jubilare</h2>
         <div class="import-log-content">
-          ${state.data.importLog.length ? gridHost("importLog") : `<div class="empty-state">Noch kein Import-Protokoll</div>`}
+          ${state.data.citizens.some(citizen => citizen.source === "CSV Import") ? gridHost("imported") : `<div class="empty-state">Noch keine Jubilare importiert</div>`}
         </div>
         <div class="button-row" style="margin-top:12px">
-          <button type="button" class="primary-button" data-action="soko-print">SOKO-Druck</button>
+          <button type="button" class="primary-button" data-action="soko-print">Drucke SOKO-Fragebögen</button>
         </div>
       </section>
     </div>
@@ -879,6 +982,26 @@ export const views = {
       </div>
     `;
   },
+
+  privacy: () => `
+    <section class="panel">
+      <h2>Datenbereinigung</h2>
+      <div class="data-list">
+        <div><span>Aktuelle Jubilare</span><strong>${state.data.citizens.length.toLocaleString("de-DE")}</strong></div>
+        <div><span>Mindestfrist</span><strong>6 Monate</strong></div>
+      </div>
+      <div class="alert" style="margin-top:12px">Aus Datenschutzgründen können Jubilare gelöscht werden, deren Jubiläum mehr als die eingestellte Anzahl Monate zurückliegt.</div>
+      <div class="cleanup-admin-actions">
+        <label class="cleanup-months-field">
+          <span>Jubiläum älter als</span>
+          <input id="cleanup-months" type="number" min="6" step="1" data-bind="cleanupMonths" value="${escapeHtml(state.cleanupMonths)}">
+          <span>Monate</span>
+        </label>
+        <button type="button" class="primary-button" data-action="preview-old-citizens">Betroffene anzeigen</button>
+      </div>
+    </section>
+    ${cleanupPreviewContent()}
+  `,
 
   users: () => {
     const users = state.auth.users || [];

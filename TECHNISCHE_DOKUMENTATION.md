@@ -187,7 +187,6 @@ Zusatzrouten für Auth und Benutzerverwaltung werden ebenfalls im selben Entry-P
 - `streets`
 - `senders`
 - `templates`
-- `importLog`
 
 ### Tabellen
 
@@ -199,7 +198,6 @@ Das Schema legt unter anderem folgende Tabellen an:
 - `gd_streets`
 - `gd_senders`
 - `gd_templates`
-- `gd_import_log`
 - `gd_users`
 - `gd_auth_tokens`
 - `gd_auth_rate_limits`

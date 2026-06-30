@@ -4,15 +4,13 @@ import { state } from './state.js';
 
 export const isPrintedCitizen = citizen => citizen.status === "gedruckt";
 export const isCheckedCitizen = citizen => normalize(citizen.status).startsWith("gepr") || isPrintedCitizen(citizen);
+export const wantsGreeting = citizen => normalize(citizen.wish) !== "keine";
 export const wantsVisit = citizen => normalize(citizen.wish).startsWith("besuch");
 export const activeCitizens = () => state.data.citizens.filter(citizen => !isPrintedCitizen(citizen));
 export const duplicateKey = citizen => [
   citizen.firstName,
   citizen.lastName,
-  citizen.street,
-  citizen.houseNo,
-  citizen.postalCode,
-  calculateAge(citizen.birthDate)
+  citizen.birthDate
 ].map(normalize).join("|");
 
 export const streetNameVariants = value => {
@@ -93,10 +91,10 @@ export const filteredCitizens = () => state.data.citizens.filter(citizen => {
     && (state.filters.status === "alle" || citizen.status === state.filters.status)
     && ageOk;
 });
-export const documentCitizens = () => filteredCitizens().filter(citizen => citizen.status === "geprüft");
-export const receiptReviewCitizens = () => activeCitizens().filter(citizen => birthdayMonth(citizen.birthDate) === state.quittungMonat);
+export const documentCitizens = () => filteredCitizens().filter(citizen => isCheckedCitizen(citizen) && !isPrintedCitizen(citizen) && wantsGreeting(citizen));
+export const receiptReviewCitizens = () => activeCitizens().filter(citizen => birthdayMonth(citizen.birthDate) === state.quittungMonat && wantsVisit(citizen));
 export const allReceiptCitizensChecked = () => receiptReviewCitizens().every(isCheckedCitizen);
-export const receiptCitizens = () => receiptReviewCitizens().filter(citizen => wantsVisit(citizen) && groupForCitizen(citizen));
+export const receiptCitizens = () => receiptReviewCitizens().filter(citizen => groupForCitizen(citizen));
 export const receiptReviewCitizensForGroup = groupId => receiptReviewCitizens().filter(citizen => groupForCitizen(citizen)?.id === groupId);
 export const isReceiptGroupReady = groupId => {
   if (!groupId) return false;

@@ -3,17 +3,32 @@ export const MONTH_KEY = "gd_month_filter";
 export const QUITTUNG_MONTH_KEY = "gd_quittung_month";
 export const QUITTUNG_SETTINGS_KEY = "gd_quittung_settings";
 export const MAP_MONTH_KEY = "gd_map_month";
+export const CLEANUP_MONTHS_KEY = "gd_cleanup_months";
 export const API_BASE = import.meta.env?.VITE_API_BASE ?? "/php-api";
 export const SPLITTERS_KEY = "gratulationsdienst.splitters";
 const storedSplitters = () => {
   try { return JSON.parse(localStorage.getItem(SPLITTERS_KEY)) || {}; }
   catch { return {}; }
 };
-export const storedSplit = (key, fallback) => {
+export const storedSplit = (key, fallback, min = 20, max = 80) => {
   const value = Number(storedSplitters()[key]);
-  return Number.isFinite(value) ? Math.max(20, Math.min(80, value)) : fallback;
+  return Number.isFinite(value) ? Math.max(min, Math.min(max, value)) : fallback;
 };
-export const storeSplit = (key, value) => localStorage.setItem(SPLITTERS_KEY, JSON.stringify({ ...storedSplitters(), [key]: value }));
+const isStorageQuotaError = error => error?.name === "QuotaExceededError" || /quota/i.test(error?.message || "");
+export const safeStorageSetItem = (storage, key, value, label = key) => {
+  try {
+    storage?.setItem(key, value);
+    return true;
+  } catch (error) {
+    const quota = isStorageQuotaError(error);
+    console.warn(`${label} konnte nicht gespeichert werden${quota ? " (Storage-Quota)" : ""}.`, error);
+    toast(quota
+      ? `${label} konnte nicht gespeichert werden: Browser-Speicher ist voll.`
+      : `${label} konnte nicht gespeichert werden.`);
+    return false;
+  }
+};
+export const storeSplit = (key, value) => safeStorageSetItem(localStorage, SPLITTERS_KEY, JSON.stringify({ ...storedSplitters(), [key]: value }), "Splitter-Position");
 export const $ = selector => document.querySelector(selector);
 export const $$ = selector => [...document.querySelectorAll(selector)];
 export const todayIso = () => new Date().toISOString().slice(0, 10);
@@ -63,6 +78,29 @@ export const birthdayInRunYear = birthDate => {
 };
 export const calculateAge = birthDate => runYear() - new Date(birthDate).getFullYear();
 export const birthdayMonth = birthDate => String(new Date(birthDate).getMonth() + 1).padStart(2, "0");
+export const cleanupMonthsValue = value => {
+  const months = Math.trunc(Number(value));
+  return Number.isFinite(months) ? Math.max(6, months) : 6;
+};
+export const anniversaryDateInYear = (birthDate, referenceDate = new Date()) => {
+  const birth = new Date(birthDate);
+  if (Number.isNaN(birth.getTime())) return null;
+  return new Date(referenceDate.getFullYear(), birth.getMonth(), birth.getDate());
+};
+export const anniversaryDateFromCreatedAt = (birthDate, createdAt = "", referenceDate = new Date()) => {
+  const birth = new Date(birthDate);
+  if (Number.isNaN(birth.getTime())) return null;
+  const created = new Date(createdAt);
+  if (Number.isNaN(created.getTime())) return null;
+  const base = created;
+  const anniversary = new Date(base.getFullYear(), birth.getMonth(), birth.getDate());
+  return anniversary < new Date(base.getFullYear(), base.getMonth(), base.getDate()) ? new Date(base.getFullYear() + 1, birth.getMonth(), birth.getDate()) : anniversary;
+};
+export const dateMonthsAgo = (months, referenceDate = new Date()) => new Date(referenceDate.getFullYear(), referenceDate.getMonth() - cleanupMonthsValue(months), referenceDate.getDate());
+export const isAnniversaryOlderThanMonths = (birthDate, months, referenceDate = new Date(), createdAt = "") => {
+  const anniversary = anniversaryDateFromCreatedAt(birthDate, createdAt, referenceDate);
+  return anniversary !== null && anniversary < dateMonthsAgo(months, referenceDate);
+};
 export const formatDateDe = iso => {
   if (!iso) return "";
   const [y, m, d] = iso.split("-");

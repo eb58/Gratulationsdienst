@@ -26,7 +26,7 @@ const dirCode = readFileSync(new URL('../public/data/soko-strassenverzeichnis.js
 (0, eval)(dirCode);
 
 const { buildStreetData } = await import('../modules/domain.js');
-const { groupedTestAssignments, balancedTestAssignments, shuffledTestValues, testFirstNames, testLastNames, testCsvRow, testCsvText } = await import('../modules/testdata.js');
+const { groupedTestAssignments, balancedTestAssignments, shuffledTestValues, testFirstNames, testLastNames, mortalityWeightedTestAges, monthAfterNext, testCsvRow, testCsvText } = await import('../modules/testdata.js');
 const { parseCsv, mapImportRow } = await import('../modules/import.js');
 const { buildImportResult } = await import('../modules/citizens.js');
 const { streetAssignment } = await import('../modules/assignment.js');
@@ -39,13 +39,18 @@ const distinct = arr => new Set(arr).size;
 // Exakt die Pipeline aus actions.js -> "seed-citizens"
 const seed = () => {
   const groups = groupedTestAssignments(state.data.streets);
-  const rowCount = Math.max(30, groups.length);
+  const rowCount = Math.max(50, groups.length);
   const assignments = balancedTestAssignments(groups, rowCount);
   const firstNames = shuffledTestValues(testFirstNames);
   const lastNames = shuffledTestValues(testLastNames);
-  const csvRows = assignments.map((assignment, index) => {
+  const names = assignments.map((_, index) => {
     const [salutation, firstName] = firstNames[index % firstNames.length];
-    return testCsvRow(index, { salutation, firstName, lastName: lastNames[index % lastNames.length] }, assignment, state.quittungMonat);
+    return { salutation, firstName, lastName: lastNames[index % lastNames.length] };
+  });
+  const ages = mortalityWeightedTestAges(rowCount, names.map(name => name.salutation));
+  const birthdayMonth = monthAfterNext();
+  const csvRows = assignments.map((assignment, index) => {
+    return testCsvRow(index, names[index], assignment, birthdayMonth, Math.random, ages[index]);
   });
   const mapped = parseCsv(testCsvText(csvRows)).map(mapImportRow);
   return { rowCount, assignments, csvRows, mapped };
@@ -102,18 +107,31 @@ describe('seed-citizens integration (echtes Strassenverzeichnis)', () => {
     assert.notDeepEqual(a, b, 'zwei Seed-Laeufe ergaben identische Strassen');
   });
 
-  it('deckt alle Altersstufen ab', () => {
+  it('deckt alle Altersstufen mit Sterblichkeitsgewichtung ab', () => {
     const { mapped } = seed();
-    const ages = new Set(mapped.map(r => new Date().getFullYear() - Number(r.birthDate.slice(0, 4))));
-    [85, 90, 95, 100, 101].forEach(age => assert.ok(ages.has(age), `Alter ${age} fehlt`));
+    const ageCounts = mapped
+      .map(r => new Date().getFullYear() - Number(r.birthDate.slice(0, 4)))
+      .reduce((map, age) => (map[age] = (map[age] || 0) + 1, map), {});
+
+    [85, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101].forEach(age => assert.ok(ageCounts[age], `Alter ${age} fehlt`));
+    assert.ok(ageCounts[85] >= ageCounts[90], 'Sterblichkeit: 85 darf nicht seltener als 90 sein');
+    assert.ok(ageCounts[90] >= ageCounts[95], 'Sterblichkeit: 90 darf nicht seltener als 95 sein');
+    assert.ok(ageCounts[95] >= ageCounts[100], 'Sterblichkeit: 95 darf nicht seltener als 100 sein');
+  });
+
+  it('generiert ausschliesslich Geburtstage im uebernaechsten Monat', () => {
+    const { csvRows, mapped } = seed();
+    const expectedMonth = monthAfterNext();
+
+    assert.deepEqual([...new Set(csvRows.map(row => row.Geburtsdatum.slice(5, 7)))], [expectedMonth]);
+    assert.deepEqual([...new Set(mapped.map(row => row.birthDate.slice(5, 7)))], [expectedMonth]);
   });
 
   it('importiert restlos ohne Pflichtfeld-Fehler oder Dubletten', () => {
     const { rowCount, mapped } = seed();
     const result = buildImportResult(mapped, [], row => streetAssignment(row)?.groupId);
-    assert.equal(result.rows.length, rowCount, 'nicht alle Zeilen importiert');
-    assert.equal(result.duplicates, 0, 'unerwartete Dubletten');
-    assert.equal(result.logs.filter(log => log.type === 'Fehler').length, 0, 'Pflichtfeld-Fehler');
-    assert.ok(result.rows.every(row => row.status === 'importiert'), 'nicht jede Zeile wurde einer SOKO zugeordnet');
+    assert.equal(result.newRows.length, rowCount, 'nicht alle Zeilen importiert');
+    assert.equal(result.skipped, 0, 'unerwartete Dubletten');
+    assert.ok(result.newRows.every(row => row.status === 'importiert'), 'nicht jede Zeile wurde einer SOKO zugeordnet');
   });
 });
