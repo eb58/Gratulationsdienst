@@ -1,12 +1,17 @@
 {
-  "name": "gratulationsdienst-reinickendorf",
+  "name": "gratulationsdienst",
   "version": "1.0.0",
-  "description": "Statischer Browser-Prototyp fuer das Hauptmodul aus dem Pflichtenheft.",
+  "description": "Administration für Gratulationsdienst Reinickendorf.",
   "main": "app.js",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "watch": "vite build --watch",
+    "test": "node --test --experimental-test-module-mocks",
+    "test:coverage": "node --test --experimental-test-module-mocks --experimental-test-coverage",
+    "test:e2e": "node --test tests/e2e/app.e2e.js",
+    "check:directory": "node scripts/check-directory.js",
+    "hooks:install": "git config core.hooksPath .githooks",
     "preview": "vite preview"
   },
   "repository": {

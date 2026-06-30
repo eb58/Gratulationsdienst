@@ -2,7 +2,7 @@
 import { months, sokoColors, streetGroupDisplay } from './domain.js';
 import { state } from './state.js';
 import { selectedCitizen, selectedTemplate, selectedSender, selectedMember, selectedStreet, filteredCitizens, activeCitizens, groupForCitizen, isCheckedCitizen, receiptCitizens, receiptReviewCitizensForGroup, isReceiptGroupReady } from './assignment.js';
-import { field, emailField, ibanField, selectField, textField, checkField, radioField, streetRuleRows, assignmentPill, gridHost, groupOptions, sokoSelectOptions, senderOptions, templateOptions, occasionOptions, formatOptions } from './fields.js';
+import { field, emailField, postalCodeField, ibanField, selectField, textField, checkField, radioField, streetRuleRows, assignmentPill, gridHost, groupOptions, sokoSelectOptions, senderOptions, templateOptions, occasionOptions, formatOptions } from './fields.js';
 import { streetMapSvg, mapSegmentCounts, mapAddressPointGroups } from './map.js';
 import { documentBackPreview, documentPreview } from './documents.js';
 import { qrCodeSvg } from './qr.js';
@@ -172,7 +172,7 @@ export const citizenDetailContent = citizen => `
     ${field("birthDate", "Geburtsdatum", citizen.birthDate, "date")}
     ${field("street", "Straße", citizen.street)}
     ${field("houseNo", "Hausnummer", citizen.houseNo)}
-    ${field("postalCode", "PLZ", citizen.postalCode)}
+    ${postalCodeField("postalCode", "PLZ", citizen.postalCode)}
     ${field("district", "Ortsteil", citizen.district)}
     ${field("phone", "Telefon", citizen.phone)}
     ${emailField("email", "E-Mail", citizen.email)}
@@ -413,7 +413,7 @@ export const views = {
           ${[["alle", "Alle Alter"], ["85", "85 Jahre"], ["90plus", "90+"], ["100", "100+"]].map(option => `<option value="${option[0]}" ${state.filters.age === option[0] ? "selected" : ""}>${option[1]}</option>`).join("")}
         </select>
         <select name="status" data-filter>
-          ${[["alle", "Alle Status"], ["offen", "offen"], ["geprüft", "geprüft"], ["gedruckt", "gedruckt"]].map(option => `<option value="${option[0]}" ${state.filters.status === option[0] ? "selected" : ""}>${option[1]}</option>`).join("")}
+          ${[["alle", "Alle Status"], ["offen", "offen"], ["importiert", "importiert"], ["geprüft", "geprüft"], ["gedruckt", "gedruckt"]].map(option => `<option value="${option[0]}" ${state.filters.status === option[0] ? "selected" : ""}>${option[1]}</option>`).join("")}
         </select>
       </div>
       <div class="${citizen ? "citizen-split" : ""}" ${citizen ? `style="--citizen-left:${state.citizenSplit}%"` : ""}>
@@ -432,7 +432,7 @@ export const views = {
             ${field("birthDate", "Geburtsdatum", citizen.birthDate, "date")}
             ${field("street", "Straße", citizen.street)}
             ${field("houseNo", "Hausnummer", citizen.houseNo)}
-            ${field("postalCode", "PLZ", citizen.postalCode)}
+            ${postalCodeField("postalCode", "PLZ", citizen.postalCode)}
             ${field("district", "Ortsteil", citizen.district)}
             ${field("phone", "Telefon", citizen.phone)}
             ${emailField("email", "E-Mail", citizen.email)}
@@ -465,6 +465,7 @@ export const views = {
         <select name="groupId" data-filter>${groupOptions().map(group => `<option value="${group[0]}" ${state.filters.groupId === group[0] ? "selected" : ""}>${group[1]}</option>`).join("")}</select>
         <button type="button" class="ghost-button" data-action="new-member">Neues Mitglied</button>
         <button type="button" class="ghost-button" data-action="export-soko">XLSX/CSV Export</button>
+        <button type="button" class="ghost-button danger-button" data-action="reset-soko-members">Testdaten zurücksetzen</button>
       </div>
       <div class="soko-split" style="--soko-left:${state.sokoSplit}%">
         <section class="panel template-panel">
@@ -481,18 +482,24 @@ export const views = {
                 ${selectField("salutation", "Anrede", member.salutation, [["Frau", "Frau"], ["Herr", "Herr"]])}
                 ${field("firstName", "Vorname", member.firstName)}
                 ${field("lastName", "Nachname", member.lastName)}
+                ${field("birthDate", "Geburtsdatum", member.birthDate, "date")}
                 ${selectField("groupId", "SOKO", member.groupId, sokoSelectOptions())}
                 ${field("street", "Straße", member.street, "text", "full")}
-                ${field("postalCode", "PLZ", member.postalCode)}
+                ${postalCodeField("postalCode", "PLZ", member.postalCode)}
                 ${field("city", "Ort", member.city)}
                 ${field("phone", "Telefon", member.phone)}
                 ${field("mobile", "Handy", member.mobile)}
                 ${emailField("email", "E-Mail", member.email)}
                 ${ibanField("bank", "Bankverbindung / IBAN", member.bank, "full")}
-                ${field("allowance", "Aufwandspauschale", member.allowance)}
-                ${field("billingAmount", "Abrechnungsbetrag", member.billingAmount)}
+                ${field("accountHolder", "Kontoinhaber", member.accountHolder, "text", "full")}
+                ${field("allowance", "Aufwandspauschale", member.allowance, "text", "", 'inputmode="decimal" data-amount-field')}
+                ${field("billingAmount", "Abrechnungsbetrag", member.billingAmount, "text", "", 'inputmode="decimal" data-amount-field')}
                 ${field("termFrom", "Berufung von", member.termFrom, "date")}
                 ${field("termTo", "Berufung bis", member.termTo, "date")}
+                ${field("zpNr", "Zahlungspartner-Nummer", member.zpNr)}
+                ${field("kassenzeichen", "Kassenzeichen", member.kassenzeichen)}
+                ${field("misc", "Sonstiges", member.misc, "text", "full")}
+                ${textField("note", "Bemerkung", member.note, "full")}
                 ${selectField("isLeader", "Rolle", String(member.isLeader), [["false", "Mitglied"], ["true", "Leitung"]], "full")}
                 <div class="field full button-row">
                   <button type="button" class="primary-button" data-action="save-member">Speichern</button>
@@ -671,6 +678,7 @@ export const views = {
     const checkedCount = filteredCitizens().filter(c => c.status === "geprüft").length;
     const previewCitizen = previewDoc ? byId(state.data.citizens, previewDoc.citizenId) : filteredCitizens().find(c => c.status === "geprüft") || selectedCitizen();
     const previewTemplate = previewDoc ? byId(state.data.templates, previewDoc.templateId) || template : template;
+    const printablePreviewTemplate = state.printBackground ? previewTemplate : { ...previewTemplate, backgroundImage: "", backBackgroundImage: "" };
     const previewSender = previewDoc ? byId(state.data.senders, previewDoc.senderId) || sender : sender;
     return `
       <div class="panel">
@@ -698,7 +706,7 @@ export const views = {
         <div class="vertical-splitter" data-splitter="print" role="separator" aria-orientation="vertical" aria-label="Druckliste und Vorschau aufteilen" aria-valuemin="20" aria-valuemax="80" aria-valuenow="${state.printSplit}" tabindex="0"></div>
         <section class="panel">
           <h2>Seriendruck-Vorschau</h2>
-          ${docs.length ? documentPreviewStack(previewTemplate, previewCitizen, previewSender) : `<div class="empty-state">Kein Dokument ausgewählt</div>`}
+          ${docs.length ? documentPreviewStack(printablePreviewTemplate, previewCitizen, previewSender) : `<div class="empty-state">Kein Dokument ausgewählt</div>`}
         </section>
       </div>
       <div class="print-pages print-only">
@@ -763,7 +771,7 @@ export const views = {
       <form id="quittung-form" class="form-grid">
         <div class="field">
           <label>Betrag pro Jubilar (€)</label>
-          <input type="text" name="quittungBetrag" data-bind="quittungBetrag" value="${escapeHtml(state.quittungBetrag)}" style="max-width:120px">
+          <input type="text" name="quittungBetrag" data-bind="quittungBetrag" value="${escapeHtml(state.quittungBetrag)}" inputmode="decimal" data-amount-field style="max-width:120px">
         </div>
         <div class="field">
           <label>Telefon</label>
@@ -799,7 +807,7 @@ export const views = {
                 <span>Nur Testzwecke</span>
                 <strong>${state.data.citizens.length.toLocaleString("de-DE")} Jubilare · ${state.data.importLog.length.toLocaleString("de-DE")} Log</strong>
               </div>
-              <button type="button" class="ghost-button test-action-button" data-action="seed-citizens">30 CSV simulieren</button>
+              <button type="button" class="ghost-button test-action-button" data-action="seed-citizens">${Math.max(30, state.data.sokoGroups.length)} CSV simulieren</button>
               <button type="button" class="danger-button test-action-button" data-action="clear-citizens">Löschen</button>
             </div>
           ` : ""}

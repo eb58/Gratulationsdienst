@@ -1,5 +1,5 @@
 import { canAccessView, isAdmin, state, loadAuthStatus, loadCollectionData } from './modules/state.js';
-import { MONTH_KEY, QUITTUNG_MONTH_KEY, MAP_MONTH_KEY, storeSplit, isValidEmail } from './modules/utils.js';
+import { MONTH_KEY, QUITTUNG_MONTH_KEY, MAP_MONTH_KEY, storeSplit, isValidEmail, normalizeIban, isValidIban, normalizeAmount, normalizeDigits, isValidPostalCode } from './modules/utils.js';
 import { viewTitles, sokoMapInfoHtml } from './modules/views.js';
 import { findNearestAddress } from './modules/map.js';
 import { render, renderDialog } from './modules/render.js';
@@ -69,6 +69,42 @@ const updateFilter = input => {
   applyFilter(input.name, next);
   return true;
 };
+const updateIbanValidity = input => {
+  const normalized = normalizeIban(input.value);
+  const valid = !normalized || isValidIban(normalized);
+  input.classList.toggle("invalid", !valid);
+  const hint = input.closest(".field")?.querySelector(".field-hint");
+  if (!hint) return;
+  hint.classList.toggle("error", !valid);
+  hint.textContent = normalized ? valid ? "IBAN gültig" : "IBAN-Prüfziffer ist ungültig" : "Optional, mit IBAN-Prüfzifferprüfung";
+};
+const updateEmailValidity = input => {
+  const hasValue = String(input.value ?? "").trim();
+  const valid = isValidEmail(input.value);
+  input.classList.toggle("invalid", !valid);
+  const hint = input.closest(".field")?.querySelector(".field-hint");
+  if (!hint) return;
+  hint.classList.toggle("error", Boolean(hasValue && !valid));
+  hint.textContent = hasValue && !valid ? "E-Mail-Adresse ist ungültig" : "";
+};
+const updateAmountInput = input => {
+  const normalized = normalizeAmount(input.value);
+  if (input.value !== normalized) input.value = normalized;
+};
+const updateDigitsInput = input => {
+  const normalized = normalizeDigits(input.value);
+  if (input.value !== normalized) input.value = normalized;
+};
+const updatePostalCodeValidity = input => {
+  updateDigitsInput(input);
+  const hasValue = String(input.value ?? "").trim();
+  const valid = isValidPostalCode(input.value);
+  input.classList.toggle("invalid", !valid);
+  const hint = input.closest(".field")?.querySelector(".field-hint");
+  if (!hint) return;
+  hint.classList.toggle("error", Boolean(hasValue && !valid));
+  hint.textContent = hasValue && !valid ? "PLZ muss 5 Ziffern haben" : "";
+};
 
 document.addEventListener("click", event => {
   const skipLink = event.target.closest(".skip-link");
@@ -116,10 +152,18 @@ document.addEventListener("input", event => {
     updateFilter(input);
     return;
   }
+  const email = event.target.closest("input[type='email']");
+  if (email) updateEmailValidity(email);
+  const iban = event.target.closest("[data-iban-field]");
+  if (iban) updateIbanValidity(iban);
+  const amount = event.target.closest("[data-amount-field]");
+  if (amount) updateAmountInput(amount);
+  const postalCode = event.target.closest("[data-postal-code-field]");
+  if (postalCode) updatePostalCodeValidity(postalCode);
+  const digits = event.target.closest("[data-digits-field]:not([data-postal-code-field])");
+  if (digits) updateDigitsInput(digits);
   const bound = event.target.closest("[data-bind]");
   if (bound) state[bound.dataset.bind] = bound.value;
-  const email = event.target.closest("input[type='email']");
-  if (email) email.classList.toggle("invalid", !isValidEmail(email.value));
 });
 
 document.addEventListener("submit", event => event.preventDefault());

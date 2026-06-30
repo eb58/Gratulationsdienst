@@ -1,21 +1,39 @@
-import { escapeHtml, isValidEmail, normalizeIban, isValidIban } from './utils.js';
+import { escapeHtml, isValidEmail, normalizeIban, isValidIban, isValidPostalCode } from './utils.js';
 import { sokoCodesFromDirectory, sokoGroupId, defaultData } from './domain.js';
 import { state, mergeById } from './state.js';
 import { groupForCitizen } from './assignment.js';
 
-export const field = (name, label, value, type = "text", extra = "", inputAttrs = "") => `
-  <div class="field ${extra}">
-    <label for="${name}">${label}</label>
-    <input id="${name}" name="${name}" type="${type}" value="${escapeHtml(value)}" ${inputAttrs}>
-  </div>
-`;
+const emailHint = value => String(value ?? "").trim() && !isValidEmail(value) ? "E-Mail-Adresse ist ungültig" : "";
+const postalCodeHint = value => String(value ?? "").trim() && !isValidPostalCode(value) ? "PLZ muss 5 Ziffern haben" : "";
+
+export const field = (name, label, value, type = "text", extra = "", inputAttrs = "") => {
+  const isEmail = type === "email";
+  const valid = !isEmail || isValidEmail(value);
+  return `
+    <div class="field ${extra}">
+      <label for="${name}">${label}</label>
+      <input id="${name}" name="${name}" class="${valid ? "" : "invalid"}" type="${type}" value="${escapeHtml(value)}" ${inputAttrs}>
+      ${isEmail ? `<small class="field-hint error">${emailHint(value)}</small>` : ""}
+    </div>
+  `;
+};
 export const emailField = (name, label, value, extra = "") => {
   const valid = isValidEmail(value);
   return `
     <div class="field ${extra}">
       <label for="${name}">${label}</label>
       <input id="${name}" name="${name}" class="${valid ? "" : "invalid"}" type="email" value="${escapeHtml(value)}" placeholder="name@example.de" autocomplete="email">
-      <small class="field-hint ${valid ? "" : "error"}">${String(value ?? "").trim() ? valid ? "E-Mail gültig" : "E-Mail-Adresse ist ungültig" : ""}</small>
+      <small class="field-hint error">${emailHint(value)}</small>
+    </div>
+  `;
+};
+export const postalCodeField = (name, label, value, extra = "") => {
+  const valid = isValidPostalCode(value);
+  return `
+    <div class="field ${extra}">
+      <label for="${name}">${label}</label>
+      <input id="${name}" name="${name}" class="${valid ? "" : "invalid"}" type="text" value="${escapeHtml(value)}" inputmode="numeric" data-digits-field data-postal-code-field>
+      <small class="field-hint error">${postalCodeHint(value)}</small>
     </div>
   `;
 };
@@ -25,7 +43,7 @@ export const ibanField = (name, label, value, extra = "") => {
   return `
     <div class="field ${extra}">
       <label for="${name}">${label}</label>
-      <input id="${name}" name="${name}" class="${valid ? "" : "invalid"}" type="text" value="${escapeHtml(value)}" placeholder="DE89 3704 0044 0532 0130 00" autocomplete="off">
+      <input id="${name}" name="${name}" class="${valid ? "" : "invalid"}" type="text" value="${escapeHtml(value)}" placeholder="DE89 3704 0044 0532 0130 00" autocomplete="off" data-iban-field>
       <small class="field-hint ${valid ? "" : "error"}">${normalized ? valid ? "IBAN gültig" : "IBAN-Prüfziffer ist ungültig" : "Optional, mit IBAN-Prüfzifferprüfung"}</small>
     </div>
   `;
@@ -77,7 +95,7 @@ export const streetRuleRows = street => `
     ${(street.rules?.length ? street.rules : [{ id: "new" }]).map((rule, index) => `
       <div class="street-rule-row" data-rule-row>
         <input type="hidden" name="ruleId" value="${escapeHtml(rule.id || `new-${index}`)}">
-        <input name="plz" value="${escapeHtml(rule.plz || "")}" inputmode="numeric" placeholder="134...">
+        <input name="plz" class="${isValidPostalCode(rule.plz) ? "" : "invalid"}" value="${escapeHtml(rule.plz || "")}" inputmode="numeric" placeholder="134..." data-digits-field data-postal-code-field>
         <input name="ortsteil" value="${escapeHtml(rule.ortsteil || street.district || "")}">
         <input name="von" value="${escapeHtml(rule.von || "")}" placeholder="alle">
         <input name="bis" value="${escapeHtml(rule.bis || "")}" placeholder="alle">
@@ -89,7 +107,16 @@ export const streetRuleRows = street => `
   </div>
 `;
 
-export const statusPill = status => `<span class="pill ${status === "offen" ? "gold" : status === "geprüft" ? "green" : ""}">${escapeHtml(status)}</span>`;
+export const statusPill = status => {
+  const color = status === "offen" ? "#d09b2c"
+    : status === "importiert" ? "#315a8c"
+    : status === "geprüft" ? "#2f7d4f"
+    : status === "gedruckt" ? "#0f5d58"
+    : "#66706d";
+  return status === "offen"
+    ? `<span class="pill gold">${escapeHtml(status)}</span>`
+    : `<span class="pill" style="background:color-mix(in srgb, ${color} 16%, white);color:${color};border:1px solid color-mix(in srgb, ${color} 28%, white)">${escapeHtml(status)}</span>`;
+};
 export const assignmentPill = citizen => {
   const group = groupForCitizen(citizen);
   return group ? `<span class="pill">${escapeHtml(group.id)}</span>` : `<span class="pill red">offen</span>`;

@@ -1,5 +1,5 @@
 export const detectDelimiter = text => [";", "\t", ","]
-  .map(delimiter => [delimiter, ((text.split("\n")[0] || "").split(delimiter).length - 1)])
+  .map(delimiter => [delimiter, (((String(text ?? "").trimStart()).split(/\r?\n/)[0] || "").split(delimiter).length - 1)])
   .sort((a, b) => b[1] - a[1])[0][0];
 export const cleanCell = value => String(value ?? "").trim().replace(/^"|"$/g, "").replaceAll('""', '"');
 export const parseCsv = text => {

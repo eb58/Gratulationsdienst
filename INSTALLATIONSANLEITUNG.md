@@ -87,11 +87,15 @@ Der Hostname muss innerhalb von Docker `db` lauten, nicht `localhost`. Benutzer,
 
 ### 3.4 Container bauen und starten
 
+Die Docker-Dateien liegen im Verzeichnis `docker/`. Alle folgenden `docker compose`-Befehle werden aus dem Projektverzeichnis ausgeführt.
+
 Alle Dienste im Hintergrund starten:
 
 ```powershell
 docker compose -f docker/docker-compose.yml up -d --build
 ```
+
+Die Option `--build` baut über den `build:`-Block in `docker/docker-compose.yml` das Image für den Dienst `web` aus `docker/Dockerfile`. Das Dockerfile erweitert das Standard-Image `php:8.2-apache` um die für diese Anwendung nötigen Bausteine: die MySQL-Treiber `pdo_mysql`/`mysqli` für die Datenbankverbindung sowie `mod_rewrite` und `AllowOverride All`, damit die `.htaccess` der API greift. Die Dienste `db` und `phpmyadmin` nutzen dagegen fertige Images von Docker Hub und werden nicht lokal gebaut. Das Dockerfile wird nie direkt aufgerufen, sondern immer über `docker compose`.
 
 Beim ersten Start werden die Images heruntergeladen, das PHP-Image gebaut und die MySQL-Datenbank initialisiert. Das kann einige Minuten dauern. Den Status zeigt:
 

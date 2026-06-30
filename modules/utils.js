@@ -3,7 +3,7 @@ export const MONTH_KEY = "gd_month_filter";
 export const QUITTUNG_MONTH_KEY = "gd_quittung_month";
 export const QUITTUNG_SETTINGS_KEY = "gd_quittung_settings";
 export const MAP_MONTH_KEY = "gd_map_month";
-export const API_BASE = import.meta.env.VITE_API_BASE ?? "/php-api";
+export const API_BASE = import.meta.env?.VITE_API_BASE ?? "/php-api";
 export const SPLITTERS_KEY = "gratulationsdienst.splitters";
 const storedSplitters = () => {
   try { return JSON.parse(localStorage.getItem(SPLITTERS_KEY)) || {}; }
@@ -19,9 +19,27 @@ export const $$ = selector => [...document.querySelectorAll(selector)];
 export const todayIso = () => new Date().toISOString().slice(0, 10);
 export const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[char]);
 export const normalize = value => String(value ?? "").trim().toLowerCase();
+export const normalizeEmail = value => String(value ?? "").trim();
+export const normalizeDigits = value => String(value ?? "").replace(/\D/g, "");
+export const isValidPostalCode = value => {
+  const postalCode = normalizeDigits(value);
+  return !postalCode || postalCode.length === 5;
+};
+export const normalizeAmount = value => {
+  const chars = [...String(value ?? "").trim().replace(".", ",")];
+  const result = chars.reduce((acc, char) => {
+    if (/\d/.test(char)) return acc.separator ? { ...acc, decimals: `${acc.decimals}${char}`.slice(0, 2) } : { ...acc, euros: `${acc.euros}${char}` };
+    if (char === "," && !acc.separator) return { ...acc, separator: true };
+    return acc;
+  }, { euros: "", separator: false, decimals: "" });
+  return result.separator && result.euros ? `${result.euros},${result.decimals}` : result.euros;
+};
 export const byId = (items, id) => items.find(item => item.id === id);
 export const formatDate = value => value ? new Intl.DateTimeFormat("de-DE").format(new Date(value)) : "";
-export const isValidEmail = value => !String(value ?? "").trim() || /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(value).trim());
+export const isValidEmail = value => {
+  const email = normalizeEmail(value);
+  return !email || /^[^\s@]+@(?:[^\s@.]+\.)+[^\s@.]{2,}$/.test(email);
+};
 export const normalizeIban = value => String(value ?? "").replace(/\s/g, "").toUpperCase();
 export const formatIban = value => normalizeIban(value).match(/.{1,4}/g)?.join(" ") || "";
 export const ibanToNumeric = value => [...value].map(char => /[A-Z]/.test(char) ? String(char.charCodeAt(0) - 55) : char).join("");
@@ -50,9 +68,14 @@ export const formatDateDe = iso => {
   const [y, m, d] = iso.split("-");
   return `${d}.${m}.${y}`;
 };
-export const repairMojibakeText = value => typeof value === "string"
-  ? value.replace(/(?:Ã.|Â.)+/gu, match => new TextDecoder().decode(Uint8Array.from([...match].map(char => char.charCodeAt(0) & 255))))
-  : value;
+const mojibakeByte = char => char === "\u0192" ? 0x83 : char.charCodeAt(0) & 255;
+const decodeMojibakeText = value => new TextDecoder().decode(Uint8Array.from([...value].map(mojibakeByte)));
+const repairMojibakeString = (value, remaining = 2) => {
+  if (!remaining || !/[ÃÂ]/u.test(value)) return value;
+  const repaired = decodeMojibakeText(value);
+  return repaired === value ? value : repairMojibakeString(repaired, remaining - 1);
+};
+export const repairMojibakeText = value => typeof value === "string" ? repairMojibakeString(value) : value;
 export const repairStoredText = value => Array.isArray(value)
   ? value.map(repairStoredText)
   : value && typeof value === "object"

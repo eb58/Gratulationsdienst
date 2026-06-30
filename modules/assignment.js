@@ -6,14 +6,14 @@ export const isPrintedCitizen = citizen => citizen.status === "gedruckt";
 export const isCheckedCitizen = citizen => normalize(citizen.status).startsWith("gepr") || isPrintedCitizen(citizen);
 export const wantsVisit = citizen => normalize(citizen.wish).startsWith("besuch");
 export const activeCitizens = () => state.data.citizens.filter(citizen => !isPrintedCitizen(citizen));
-export const duplicateKey = citizen => normalize([
+export const duplicateKey = citizen => [
   citizen.firstName,
   citizen.lastName,
   citizen.street,
   citizen.houseNo,
   citizen.postalCode,
   calculateAge(citizen.birthDate)
-].join("|"));
+].map(normalize).join("|");
 
 export const streetNameVariants = value => {
   const name = String(value ?? "").trim();

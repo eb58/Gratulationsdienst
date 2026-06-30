@@ -104,7 +104,6 @@ export const state = {
   selectedStreetId: "STR-001",
   selectedSenderId: "A-001",
   selectedTemplateId: "T-001",
-  quittungSplit: storedSplit("quittung", 50),
   quittungBetrag: quittungSettings.quittungBetrag,
   quittungTelefon: quittungSettings.quittungTelefon,
   quittungKapitel: quittungSettings.quittungKapitel,
@@ -234,6 +233,10 @@ export const loadCollectionData = () => {
       }
       state.data = normalizeLoadedData(data);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state.data));
+      if (!data.sokoGroups?.length && state.data.sokoGroups.length && isAdmin()) {
+        saveBackendCollection("sokoGroups", state.data.sokoGroups).catch(() => {});
+        saveBackendCollection("sokoMembers", state.data.sokoMembers).catch(() => {});
+      }
       render();
       toast("Daten aus der Datenbank geladen.");
     })

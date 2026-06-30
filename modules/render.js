@@ -10,6 +10,18 @@ const focusElement = selector => {
   if (element?.focus) element.focus({ preventScroll: true });
 };
 
+const previewObserver = new ResizeObserver(entries => entries.forEach(({ target }) => {
+  const size = Math.min(560, Math.max(0, target.clientWidth - 16));
+  const baseSize = target.querySelector(".document-sheet")?.offsetWidth || 1;
+  target.style.setProperty("--square-preview-size", `${size}px`);
+  target.style.setProperty("--square-preview-scale", size / baseSize);
+}));
+
+const mountDocumentPreviews = () => {
+  previewObserver.disconnect();
+  $$(".document-preview.format-square").forEach(preview => previewObserver.observe(preview));
+};
+
 export const applyPendingFocus = () => {
   const focusTarget = state.focusTarget || (state.dialog ? ".dialog-box [data-autofocus]" : "");
   state.focusTarget = "";
@@ -43,6 +55,7 @@ export const render = () => {
   $("#view").className = `view view-${state.view}`;
   $("#view").innerHTML = locked ? authView() : `${views[state.view]()}${confirmDialog()}`;
   mountGrids();
+  mountDocumentPreviews();
   rememberDirtyFormBaselines($("#view"));
   applyPendingFocus();
 };

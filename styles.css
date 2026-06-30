@@ -448,6 +448,29 @@ h3 {
   flex-direction: column;
 }
 
+.view-soko {
+  display: flex;
+  flex-direction: column;
+}
+
+.view-regions {
+  display: flex;
+  flex-direction: column;
+}
+
+.view-regions > .grid.two {
+  flex: 1;
+  min-height: 0;
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.view-senders,
+.view-profile,
+.view-users {
+  display: flex;
+  flex-direction: column;
+}
+
 .view-import {
   display: flex;
   flex-direction: column;
@@ -545,16 +568,8 @@ h3 {
   display: grid;
   grid-template-columns: minmax(0, calc(var(--region-left, 50%) - 6px)) 12px minmax(0, calc(100% - var(--region-left, 50%) - 6px));
   align-items: stretch;
-  height: min(760px, calc(100vh - 190px));
-  min-height: 560px;
-}
-
-.quittung-split {
-  display: grid;
-  grid-template-columns: minmax(0, calc(var(--quittung-left, 50%) - 6px)) 12px minmax(0, calc(100% - var(--quittung-left, 50%) - 6px));
-  align-items: stretch;
-  height: min(700px, calc(100vh - 190px));
-  min-height: 480px;
+  flex: 1;
+  min-height: 0;
 }
 
 .template-split {
@@ -569,16 +584,16 @@ h3 {
   display: grid;
   grid-template-columns: minmax(0, calc(var(--profile-left, 50%) - 6px)) 12px minmax(0, calc(100% - var(--profile-left, 50%) - 6px));
   align-items: stretch;
-  height: min(700px, calc(100vh - 190px));
-  min-height: 480px;
+  flex: 1;
+  min-height: 0;
 }
 
 .users-split {
   display: grid;
   grid-template-columns: minmax(0, calc(var(--users-left, 50%) - 6px)) 12px minmax(0, calc(100% - var(--users-left, 50%) - 6px));
   align-items: stretch;
-  height: min(700px, calc(100vh - 190px));
-  min-height: 480px;
+  flex: 1;
+  min-height: 0;
 }
 
 .template-panel {
@@ -615,8 +630,8 @@ h3 {
   display: grid;
   grid-template-columns: minmax(0, calc(var(--soko-left, 50%) - 6px)) 12px minmax(0, calc(100% - var(--soko-left, 50%) - 6px));
   align-items: stretch;
-  height: min(700px, calc(100vh - 250px));
-  min-height: 500px;
+  flex: 1;
+  min-height: 0;
 }
 
 .soko-grid-scroll {
@@ -634,7 +649,8 @@ h3 {
   display: grid;
   grid-template-columns: minmax(0, calc(var(--sender-left, 50%) - 6px)) 12px minmax(0, calc(100% - var(--sender-left, 50%) - 6px));
   align-items: stretch;
-  height: min(700px, calc(100vh - 190px));
+  flex: 1;
+  min-height: 0;
 }
 
 .print-split {
@@ -1668,16 +1684,21 @@ tbody tr.selected {
 }
 
 .document-preview.format-square .document-sheet {
-  width: 560px;
-  max-width: 100%;
-  aspect-ratio: 1;
+  width: 210mm;
+  height: 210mm;
+  max-width: none;
   padding: 0;
+  border: 0;
   background: #fff;
+  box-shadow: 0 0 0 1px #cfc8b8;
+  transform: scale(var(--square-preview-scale, 0.7056));
+  transform-origin: top center;
 }
 
 .document-preview.format-square {
+  height: calc(var(--square-preview-size, 560px) + 16px);
   max-height: none;
-  overflow: visible;
+  overflow: hidden;
 }
 
 .square-card-preview-image {
@@ -1691,34 +1712,35 @@ tbody tr.selected {
 
 .square-greeting {
   position: absolute;
-  top: 54%;
+  top: 113mm;
   right: 0;
-  bottom: 18%;
+  bottom: 38mm;
   left: 0;
   z-index: 1;
   box-sizing: border-box;
   overflow: hidden;
-  padding: 20px 46px 0;
+  padding: 8mm 18mm 0;
+  font-family: Arial, sans-serif;
 }
 
 .document-preview.square-greeting-card .doc-title {
   max-width: none;
-  margin: 0 0 10px;
+  margin: 0 0 3mm;
   color: #173b38;
-  font-size: 16px;
+  font-size: 12pt;
   line-height: 1.18;
 }
 
 .document-preview.square-greeting-card .doc-body {
   max-width: none;
-  font-size: 10.5px;
+  font-size: 9.5pt;
   line-height: 1.32;
 }
 
 .document-preview.square-greeting-card .signature {
-  margin-top: 8px;
+  margin-top: 3mm;
   color: var(--teal);
-  font-size: 18px;
+  font-size: 14pt;
 }
 
 .document-preview.format-a5-landscape .doc-letterhead {
@@ -1755,26 +1777,32 @@ tbody tr.selected {
 }
 
 .document-preview.square-card-back .document-sheet {
-  width: 560px;
-  max-width: 100%;
-  aspect-ratio: 1;
+  width: 210mm;
+  height: 210mm;
+  max-width: none;
   padding: 0;
   background: #fff;
 }
 
+.square-back-content {
+  position: absolute;
+  inset: 0;
+  transform: rotate(180deg);
+}
+
 .square-back-address {
   position: absolute;
-  top: 77%;
-  left: 9.5%;
+  top: 168mm;
+  left: 20mm;
   z-index: 1;
   font-family: Arial, sans-serif;
-  font-size: 8px;
-  line-height: 1.55;
+  font-size: 10.5pt;
+  line-height: 6.5mm;
 }
 
 .square-back-meta {
-  font-size: 8px !important;
-  margin-top: 4px !important;
+  margin-top: 1mm !important;
+  font-size: 8.5pt !important;
 }
 
 .document-preview.birthday-card .document-sheet {
@@ -1826,6 +1854,12 @@ tbody tr.selected {
   z-index: 1;
 }
 
+.document-preview.birthday-card .doc-address,
+.document-preview.birthday-card .doc-meta {
+  font-size: 13px;
+  line-height: 1.35;
+}
+
 .document-preview.birthday-card .doc-title {
   max-width: 330px;
   color: #173b38;
@@ -1835,10 +1869,13 @@ tbody tr.selected {
 
 .document-preview.birthday-card .doc-body {
   max-width: 340px;
+  font-size: 15px;
+  line-height: 1.42;
 }
 
 .document-preview.birthday-card .signature {
   color: var(--teal);
+  font-size: 24px;
 }
 
 .document-preview .document-sheet.has-template-background {
@@ -1870,7 +1907,7 @@ tbody tr.selected {
 .document-preview.format-a5-landscape.birthday-card .doc-body {
   max-width: none;
   padding-right: 70px;
-  font-size: 10px;
+  font-size: 11px;
   line-height: 1.28;
 }
 
@@ -2392,7 +2429,6 @@ tbody tr.selected {
   .dashboard-metrics,
   .import-split,
   .region-split,
-  .quittung-split,
   .citizen-split,
   .template-split,
   .soko-split,
@@ -2404,6 +2440,11 @@ tbody tr.selected {
   .file-action-row,
   .split-controls {
     grid-template-columns: 1fr;
+  }
+
+  .view-regions > .grid.two {
+    flex: none;
+    grid-template-rows: auto;
   }
 
   .street-rule-head {
@@ -2419,7 +2460,6 @@ tbody tr.selected {
   }
 
   .region-split,
-  .quittung-split,
   .citizen-split,
   .template-split,
   .profile-split,
@@ -2475,7 +2515,7 @@ tbody tr.selected {
     font-size: 28px;
   }
 
-  .document-sheet {
+  .document-preview:not(.format-square) .document-sheet {
     padding: 20px;
   }
 }
@@ -2619,6 +2659,7 @@ tbody tr.selected {
     break-inside: avoid;
     background: none;
     overflow: hidden;
+    transform: none;
   }
 
   .print-page.format-square .square-card-preview-image {
