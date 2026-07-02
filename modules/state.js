@@ -209,6 +209,7 @@ export const state = {
   generatedDocs: [],
   cleanupPreview: null,
   printBackground: true,
+  showMapPeople: true,
   dashboardSort: { key: "group", dir: "asc" },
   selectedUserId: "",
   focusTarget: "",

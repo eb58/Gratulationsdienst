@@ -100,6 +100,7 @@ beforeEach(() => {
   state.generatedDocs = [];
   state.cleanupPreview = null;
   state.printBackground = true;
+  state.showMapPeople = true;
   state.filters = { q: '', month: 'alle', groupId: 'alle', age: 'alle', status: 'alle', occasion: 'Geburtstag' };
   state.gridApis = {};
   state.auth.user = { id: 'demo', email: 'demo@local', role: 'admin' };
@@ -133,6 +134,11 @@ describe('Auswahl- und Sortier-Actions', () => {
   it('toggle-print-background übernimmt den Checkbox-Zustand', () => {
     actions['toggle-print-background']({ target: { checked: false } });
     assert.equal(state.printBackground, false);
+  });
+  it('toggle-map-people blendet personenbezogene Kartendaten aus', () => {
+    actions['toggle-map-people']({ target: { checked: false } });
+
+    assert.equal(state.showMapPeople, false);
   });
 });
 

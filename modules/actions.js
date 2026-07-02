@@ -718,6 +718,10 @@ export const actions = {
   },
   "print-docs": printCurrentRun,
   "toggle-print-background": e => { state.printBackground = e.target.checked; },
+  "toggle-map-people": e => {
+    state.showMapPeople = Boolean(e.target.checked);
+    render();
+  },
   "save-quittung-settings": () => {
     const settings = { ...quittungSettingsFromForm(), quittungBetrag: normalizeAmount(state.quittungBetrag) };
     saveQuittungSettings(settings)

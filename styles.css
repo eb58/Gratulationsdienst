@@ -2374,6 +2374,10 @@ tbody tr.selected {
   background: var(--panel);
 }
 
+.map-people-toggle {
+  justify-content: space-between;
+}
+
 .map-info-header {
   display: flex;
   align-items: center;

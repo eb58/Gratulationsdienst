@@ -153,6 +153,7 @@ beforeEach(() => {
   }];
   state.cleanupPreview = null;
   state.printBackground = true;
+  state.showMapPeople = true;
   state.importText = 'Vorname;Nachname';
   state.dashboardSort = { key: 'group', dir: 'asc' };
 });
@@ -225,6 +226,12 @@ describe('view partials', () => {
     assert.match(html, /Lea Leitung/);
     assert.match(html, /Erika Mustermann/);
     assert.match(html, /1 Adressen/);
+
+    state.showMapPeople = false;
+    const hiddenHtml = sokoMapInfoHtml('SOKO 01', 'TeststraÃŸe');
+    assert.doesNotMatch(hiddenHtml, /Lea Leitung/);
+    assert.doesNotMatch(hiddenHtml, /Erika Mustermann/);
+    assert.match(hiddenHtml, /1 Adressen/);
   });
 });
 
@@ -249,6 +256,7 @@ describe('main views', () => {
     assert.match(views.templates(), /template-form/);
     assert.match(views.documents(), /Druckliste/);
     assert.match(views.map(), /id="map-month-select" name="month" data-filter/);
+    assert.match(views.map(), /data-action="toggle-map-people"/);
     assert.match(views.import(), /soko-print/);
     assert.doesNotMatch(views.import(), /Alte Jubilare löschen/);
   });

@@ -393,14 +393,14 @@ export const sokoMapInfoHtml = (groupId, streetName = "") => {
       <span>${addrCount.toLocaleString("de-DE")} Adressen</span>
       <span>${segCount.toLocaleString("de-DE")} Straßenabschnitte</span>
     </div>
-    <div class="map-info-box">
+    ${state.showMapPeople ? `<div class="map-info-box">
       <strong>Mitglieder</strong>
       ${members.length ? members.map(m => `<div>${escapeHtml(`${m.firstName} ${m.lastName}`)}${m.isLeader ? " <em>(Ltg.)</em>" : ""}</div>`).join("") : `<div class="muted">Keine Mitglieder</div>`}
     </div>
     <div class="map-info-box">
       <strong>Jubilare ${escapeHtml(monthLabel)}</strong>
       ${citizens.length ? citizens.map(c => `<div>${escapeHtml(`${c.firstName} ${c.lastName}`)} <span class="muted">(${calculateAge(c.birthDate)})</span></div>`).join("") : `<div class="muted">Keine Jubilare</div>`}
-    </div>
+    </div>` : ""}
   `;
 };
 
@@ -640,6 +640,10 @@ export const views = {
                 ${months.map(([v, l]) => `<option value="${v}"${state.filters.month === v ? " selected" : ""}>${escapeHtml(l)}</option>`).join("")}
               </select>
             </div>
+            <label class="toggle-label map-people-toggle">
+              <input type="checkbox" class="toggle" data-action="toggle-map-people" ${state.showMapPeople ? "checked" : ""}>
+              Personendaten
+            </label>
             <div id="map-soko-info">${sokoMapInfoHtml("")}</div>
           </aside>
         </div>
