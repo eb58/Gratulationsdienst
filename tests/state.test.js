@@ -52,6 +52,7 @@ const {
   normalizeTemplate,
   normalizeTemplates,
   loadData,
+  loadCollectionData,
   saveData,
   saveQuittungSettings,
   state,
@@ -65,6 +66,7 @@ beforeEach(() => {
   state.auth.token = '';
   state.collectionVersions = {};
   state.collectionBaselines = {};
+  state.localChangeVersion = 0;
   globalThis.localStorage.clear();
 });
 
@@ -265,6 +267,42 @@ describe('backend and permission helpers', () => {
     assert.equal(isConflictError({ status: 409 }), true);
     assert.equal(state.data.citizens[0].firstName, 'Remote');
     assert.deepEqual(state.collectionVersions.citizens, { 'G-1': '2' });
+  });
+
+  it('does not let a stale backend load overwrite local imports', async () => {
+    globalThis.location.protocol = 'http:';
+    state.auth.token = 'token';
+    state.auth.user = { role: 'admin' };
+    state.data = {
+      citizens: [],
+      sokoGroups: [],
+      sokoMembers: [],
+      streets: [],
+      senders: [],
+      templates: []
+    };
+    let resolveCitizens;
+    const citizensPromise = new Promise(resolve => { resolveCitizens = resolve; });
+    globalThis.fetch = (url, options = {}) => {
+      const method = options.method || 'GET';
+      const path = String(url).replace(/.*\/php-api/, '');
+      if (method === 'GET' && path === '/citizens') return citizensPromise;
+      if (method === 'GET' && path === '/settings/receipt') return Promise.resolve({ ok: true, json: async () => ({}) });
+      if (method === 'POST' && path === '/citizens') {
+        const body = JSON.parse(options.body);
+        return Promise.resolve({ ok: true, json: async () => ({ ...body, _version: '2' }) });
+      }
+      return Promise.resolve({ ok: true, json: async () => [] });
+    };
+
+    const loadPromise = loadCollectionData();
+    state.data.citizens = [{ id: 'G-2026-001', firstName: 'Importiert' }];
+    await saveData();
+    resolveCitizens({ ok: true, json: async () => [] });
+    await loadPromise;
+
+    assert.equal(state.data.citizens.length, 1);
+    assert.equal(state.data.citizens[0].firstName, 'Importiert');
   });
 });
 

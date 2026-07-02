@@ -213,7 +213,8 @@ export const state = {
   gridApis: {},
   dialog: null,
   collectionVersions: {},
-  collectionBaselines: {}
+  collectionBaselines: {},
+  localChangeVersion: 0
 };
 
 export const apiCollections = ["citizens", "sokoGroups", "sokoMembers", "streets", "senders", "templates"];
@@ -305,7 +306,7 @@ const handleSaveError = error => {
   if (isConflictError(error)) {
     console.warn("Datenbank-Konflikt erkannt.", error);
     toast("Daten wurden parallel geändert. Der aktuelle Stand wird neu geladen; bitte die Änderung erneut prüfen.");
-    return loadCollectionData();
+    return loadCollectionData({ force: true });
   }
   console.warn("Datenbank-Speicherung nicht verfügbar.", error);
   return null;
@@ -346,14 +347,16 @@ export const saveCollectionData = data => {
 };
 
 export const saveData = () => {
+  state.localChangeVersion += 1;
   if (usesLocalDataStorage()) safeStorageSetItem(localStorage, STORAGE_KEY, JSON.stringify(dataForPersistence(state.data)), "Daten");
   else localStorage.removeItem(STORAGE_KEY);
   return saveCollectionData(state.data);
 };
 
-export const loadCollectionData = () => {
+export const loadCollectionData = ({ force = false } = {}) => {
   if (location.protocol === "file:") return Promise.resolve();
   if (!state.auth.user || !state.auth.token) return Promise.resolve();
+  const loadChangeVersion = state.localChangeVersion;
   return Promise.all([
     Promise.all(apiCollections.map(loadBackendCollection)),
     loadBackendQuittungSettings().catch(error => {
@@ -362,6 +365,7 @@ export const loadCollectionData = () => {
     })
   ])
     .then(([entries]) => {
+      if (!force && state.localChangeVersion !== loadChangeVersion) return;
       const data = Object.fromEntries(entries);
       if (!hasBackendData(data)) {
         state.collectionVersions = {};

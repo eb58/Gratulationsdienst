@@ -1,4 +1,4 @@
-import { $, todayIso, CLEANUP_MONTHS_KEY, cleanupMonthsValue, isAnniversaryOlderThanMonths, isValidEmail, isValidIban, formatIban, updateItem, nextId, csvEscape, downloadText, toast, byId, normalizeEmail, normalizeAmount, normalizeDigits, isValidPostalCode, safeStorageSetItem } from './utils.js';
+import { $, todayIso, MONTH_KEY, CLEANUP_MONTHS_KEY, cleanupMonthsValue, isAnniversaryOlderThanMonths, isValidEmail, isValidIban, formatIban, updateItem, nextId, csvEscape, downloadText, toast, byId, normalizeEmail, normalizeAmount, normalizeDigits, isValidPostalCode, safeStorageSetItem } from './utils.js';
 import { normalizeStreetRules, streetDistrictSummary, streetGroupSummary, normalizeStreetDistrict, defaultData } from './domain.js';
 import { state, saveData, saveQuittungSettings, apiRequest, setAuthSession, clearAuthSession, loadCollectionData } from './state.js';
 import { streetAssignment, filteredCitizens, documentCitizens, isPrintedCitizen, selectedTemplate, selectedSender, selectedMember, activeCitizens, groupForCitizen, isReceiptGroupReady, receiptCitizens, receiptCitizensForReadyGroups } from './assignment.js';
@@ -164,10 +164,21 @@ const refreshSokoPdfImportUi = result => {
   renderCitizenDetail();
   showCitizenGridRow(selectedRow);
 };
+const resetCitizenReviewFilters = () => {
+  state.filters = { ...state.filters, q: "", month: "alle", groupId: "alle", age: "alle", status: "alle" };
+  safeStorageSetItem(localStorage, MONTH_KEY, "alle", "Monatsfilter");
+};
+const selectImportedCitizen = result => {
+  const importedIds = new Set([...result.updates, ...result.newRows].map(citizen => citizen.id));
+  const visible = filteredCitizens();
+  state.selectedCitizenId = (visible.find(citizen => importedIds.has(citizen.id)) || visible[0])?.id || "";
+};
 const importMappedRows = mapped => {
   const result = buildImportResult(mapped, state.data.citizens, row => streetAssignment(row)?.groupId);
   const updatesById = new Map(result.updates.map(c => [c.id, c]));
   state.data.citizens = [...state.data.citizens.map(c => updatesById.get(c.id) ?? c), ...result.newRows];
+  resetCitizenReviewFilters();
+  selectImportedCitizen(result);
   saveData();
   render();
   importToast(importNotice(result));
