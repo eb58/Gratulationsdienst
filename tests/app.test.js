@@ -50,6 +50,7 @@ const domElement = () => ({
   hidden: false,
   querySelector: () => null,
   querySelectorAll: () => [],
+  toggleAttribute(name, force) { this[name] = Boolean(force); },
   focus() { this.focused = true; },
   insertAdjacentHTML() {}
 });
@@ -99,6 +100,7 @@ const elements = {
   '#topbar-actions': domElement(),
   '#view': domElement(),
   '#toast': domElement(),
+  '#busy-indicator': domElement(),
   '#map-soko-info': domElement(),
   '[data-action="save-citizen"]': domElement(),
   '[data-nav-toggle]': domElement(),
@@ -314,6 +316,27 @@ describe('app filter and change handlers', () => {
     await new Promise(resolve => setTimeout(resolve, 0));
 
     assert.equal(state.importText, 'Vorname;Nachname\nErika;Mustermann');
+  });
+
+  it('shows a busy signal while import files are processed', async () => {
+    let resolveText;
+    const textPromise = new Promise(resolve => { resolveText = resolve; });
+    const file = { text: () => textPromise };
+    const target = eventTarget({ files: [file], matches: selector => selector === '#import-file' });
+
+    listeners.change({ target });
+
+    assert.equal(document.body.classList.contains('is-busy'), true);
+    assert.equal(document.body.classList.contains('is-busy-visible'), true);
+    assert.equal(elements['#busy-indicator'].hidden, false);
+
+    resolveText('Vorname;Nachname\nErika;Mustermann');
+    await new Promise(resolve => setTimeout(resolve, 0));
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    assert.equal(document.body.classList.contains('is-busy'), false);
+    assert.equal(document.body.classList.contains('is-busy-visible'), false);
+    assert.equal(elements['#busy-indicator'].hidden, true);
   });
 });
 
