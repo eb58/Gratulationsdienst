@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS gd_soko_groups (
     name VARCHAR(160) NOT NULL DEFAULT '',
     region VARCHAR(255) NOT NULL DEFAULT '',
     leader_id VARCHAR(32) NOT NULL DEFAULT '',
+    row_version BIGINT UNSIGNED NOT NULL DEFAULT 1,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_gd_soko_groups_leader (leader_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -31,6 +32,7 @@ CREATE TABLE IF NOT EXISTS gd_soko_members (
     misc VARCHAR(255) NOT NULL DEFAULT '',
     note TEXT NULL,
     is_leader TINYINT(1) NOT NULL DEFAULT 0,
+    row_version BIGINT UNSIGNED NOT NULL DEFAULT 1,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_gd_soko_members_group (group_id),
     INDEX idx_gd_soko_members_name (last_name, first_name)
@@ -43,6 +45,7 @@ CREATE TABLE IF NOT EXISTS gd_streets (
     rules JSON NULL,
     area VARCHAR(120) NOT NULL DEFAULT '',
     group_id VARCHAR(32) NOT NULL DEFAULT '',
+    row_version BIGINT UNSIGNED NOT NULL DEFAULT 1,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_gd_streets_name (name),
     INDEX idx_gd_streets_district (district),
@@ -74,6 +77,7 @@ CREATE TABLE IF NOT EXISTS gd_citizens (
     wedding_date DATE NULL,
     spouse_name VARCHAR(180) NOT NULL DEFAULT '',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    row_version BIGINT UNSIGNED NOT NULL DEFAULT 1,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_gd_citizens_name (last_name, first_name),
     INDEX idx_gd_citizens_birthday (birth_date),
@@ -93,6 +97,7 @@ CREATE TABLE IF NOT EXISTS gd_senders (
     logo VARCHAR(160) NOT NULL DEFAULT '',
     signature VARCHAR(120) NOT NULL DEFAULT '',
     color VARCHAR(32) NOT NULL DEFAULT '',
+    row_version BIGINT UNSIGNED NOT NULL DEFAULT 1,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_gd_senders_role (role)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -108,6 +113,7 @@ CREATE TABLE IF NOT EXISTS gd_templates (
     background_image LONGTEXT NULL,
     back_background_image LONGTEXT NULL,
     updated_at_date DATE NULL,
+    row_version BIGINT UNSIGNED NOT NULL DEFAULT 1,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_gd_templates_sender (sender_id),
     INDEX idx_gd_templates_occasion (occasion)
@@ -178,4 +184,5 @@ CREATE TABLE IF NOT EXISTS gd_api_meta (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT IGNORE INTO gd_api_meta (name, value) VALUES ('schema_version', '2');
+INSERT INTO gd_api_meta (name, value) VALUES ('schema_version', '3')
+ON DUPLICATE KEY UPDATE value = VALUES(value);

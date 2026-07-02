@@ -15,6 +15,22 @@ globalThis.localStorage = storage();
 globalThis.sessionStorage = storage();
 globalThis.location = { protocol: 'file:', href: 'file:///test/index.html' };
 globalThis.window = globalThis;
+const domElement = () => ({
+  textContent: '',
+  className: '',
+  innerHTML: '',
+  hidden: false,
+  style: { setProperty() {}, removeProperty() {} },
+  classList: { add() {}, remove() {}, toggle() {} },
+  querySelector: () => null,
+  querySelectorAll: () => []
+});
+globalThis.document = {
+  body: { classList: { add() {}, remove() {}, toggle() {} } },
+  querySelector: () => domElement(),
+  querySelectorAll: () => []
+};
+globalThis.requestAnimationFrame = callback => callback();
 globalThis.ResizeObserver = class {
   observe() {}
   disconnect() {}
@@ -26,8 +42,10 @@ globalThis.SOKO_STRASSENVERZEICHNIS = {
 const stateModule = await import('../modules/state.js');
 const {
   canAccessView,
+  collectionVersionMap,
   dataForPersistence,
   hasBackendData,
+  isConflictError,
   isAdmin,
   mergeById,
   normalizeLoadedData,
@@ -45,6 +63,8 @@ beforeEach(() => {
   globalThis.location.protocol = 'file:';
   state.auth.user = { role: 'admin' };
   state.auth.token = '';
+  state.collectionVersions = {};
+  state.collectionBaselines = {};
   globalThis.localStorage.clear();
 });
 
@@ -136,7 +156,7 @@ describe('backend and permission helpers', () => {
     assert.equal(writableCollections().includes('sokoMembers'), true);
   });
 
-  it('uses browser data storage only in file mode', () => {
+  it('uses browser data storage only in file mode', async () => {
     assert.equal(usesLocalDataStorage(), true);
     state.data = { ...state.data, citizens: [{ id: 'G-local', firstName: 'Lokal' }] };
     saveData();
@@ -146,7 +166,7 @@ describe('backend and permission helpers', () => {
     globalThis.fetch = () => Promise.resolve({ ok: true, json: async () => [] });
     state.auth.token = 'token';
     localStorage.setItem('gratulationsdienst', JSON.stringify({ citizens: [{ id: 'G-old' }] }));
-    saveData();
+    await saveData();
 
     assert.equal(usesLocalDataStorage(), false);
     assert.equal(localStorage.getItem('gratulationsdienst'), null);
@@ -157,6 +177,94 @@ describe('backend and permission helpers', () => {
     globalThis.location.protocol = 'http:';
 
     assert.equal(loadData().citizens.some(citizen => citizen.id === 'G-old'), false);
+  });
+
+  it('builds version maps for backend optimistic locking', () => {
+    assert.deepEqual(collectionVersionMap([
+      { id: 'G-1', _version: 3 },
+      { id: 'G-2' },
+      { id: 'G-3', _version: '7' }
+    ]), { 'G-1': '3', 'G-3': '7' });
+  });
+
+  it('writes only changed backend records and stores fresh versions', async () => {
+    const calls = [];
+    globalThis.location.protocol = 'http:';
+    state.auth.token = 'token';
+    state.auth.user = { role: 'admin' };
+    state.collectionVersions = { citizens: { 'G-1': '3' } };
+    state.collectionBaselines = { citizens: { 'G-1': { id: 'G-1', firstName: 'Grace' } } };
+    state.data = {
+      citizens: [{ id: 'G-1', firstName: 'Ada' }],
+      sokoGroups: [],
+      sokoMembers: [],
+      streets: [],
+      senders: [],
+      templates: []
+    };
+    globalThis.fetch = (url, options = {}) => {
+      const path = String(url).replace(/.*\/php-api/, '');
+      const body = options.body ? JSON.parse(options.body) : null;
+      calls.push({ method: options.method || 'GET', path, body });
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({ ...body, _version: '4' })
+      });
+    };
+
+    await saveData();
+
+    assert.equal(calls.length, 1);
+    const citizensSave = calls[0];
+    assert.equal(citizensSave.method, 'PUT');
+    assert.equal(citizensSave.path, '/citizens/G-1');
+    assert.equal(citizensSave.body._version, '3');
+    assert.equal(citizensSave.body.firstName, 'Ada');
+    assert.equal(state.data.citizens[0]._version, '4');
+    assert.deepEqual(state.collectionVersions.citizens, { 'G-1': '4' });
+    assert.deepEqual(state.collectionBaselines.citizens['G-1'], { id: 'G-1', firstName: 'Ada' });
+  });
+
+  it('reloads backend data after a save conflict', async () => {
+    globalThis.location.protocol = 'http:';
+    state.auth.token = 'token';
+    state.auth.user = { role: 'admin' };
+    state.collectionVersions = { citizens: { 'G-1': '1' } };
+    state.collectionBaselines = { citizens: { 'G-1': { id: 'G-1', firstName: 'Alt' } } };
+    state.data = {
+      citizens: [{ id: 'G-1', firstName: 'Lokal', _version: '1' }],
+      sokoGroups: [],
+      sokoMembers: [],
+      streets: [],
+      senders: [],
+      templates: []
+    };
+    globalThis.fetch = (url, options = {}) => {
+      const method = options.method || 'GET';
+      const path = String(url).replace(/.*\/php-api/, '');
+      if (method === 'PUT' && path === '/citizens/G-1') {
+        return Promise.resolve({ ok: false, status: 409, json: async () => ({ error: 'parallel', collection: 'citizens', id: 'G-1' }) });
+      }
+      if (method === 'GET' && path === '/citizens') {
+        return Promise.resolve({ ok: true, json: async () => [{ id: 'G-1', firstName: 'Remote', _version: '2' }] });
+      }
+      if (method === 'GET' && path === '/settings/receipt') {
+        return Promise.resolve({ ok: true, json: async () => ({}) });
+      }
+      return Promise.resolve({ ok: true, json: async () => [] });
+    };
+
+    const realWarn = console.warn;
+    console.warn = () => {};
+    try {
+      await saveData();
+    } finally {
+      console.warn = realWarn;
+    }
+
+    assert.equal(isConflictError({ status: 409 }), true);
+    assert.equal(state.data.citizens[0].firstName, 'Remote');
+    assert.deepEqual(state.collectionVersions.citizens, { 'G-1': '2' });
   });
 });
 

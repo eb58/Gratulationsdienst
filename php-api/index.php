@@ -10,12 +10,26 @@ const PASSWORD_RESET_RATE_LIMIT_SECONDS = 3600;
 const PASSWORD_RESET_RATE_LIMIT_MAX = 5;
 const MFA_ISSUER = 'Gratulationsdienst Reinickendorf';
 const RECEIPT_SETTINGS_NAME = 'receipt';
+const VERSION_FIELD = '_version';
 const DEFAULT_RECEIPT_SETTINGS = [
     'quittungBetrag' => '8,50',
     'quittungTelefon' => '90294 4055',
     'quittungKapitel' => '3930',
     'quittungTitel' => '68154',
 ];
+
+class ApiError extends RuntimeException
+{
+    public function __construct(public int $status, string $message, public array $details = [])
+    {
+        parent::__construct($message);
+    }
+
+    public function response(): array
+    {
+        return ['error' => $this->getMessage()] + $this->details;
+    }
+}
 
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
@@ -32,6 +46,8 @@ try {
     initSchema($db);
     migrateLegacyCollections($db);
     dispatch($db);
+} catch (ApiError $error) {
+    respond($error->response(), $error->status);
 } catch (Throwable $error) {
     respond(['error' => $error->getMessage()], 500);
 }
@@ -229,7 +245,8 @@ function handleData(array $db, string $method, array $user): void
         transaction($db, static function () use ($db, $data): void {
             foreach (COLLECTIONS as $collection) {
                 if (array_key_exists($collection, $data)) {
-                    replaceCollection($db, $collection, requireList($data[$collection], $collection));
+                    ['items' => $items, 'knownVersions' => $knownVersions] = collectionPayload($data[$collection], $collection);
+                    replaceCollection($db, $collection, $items, $knownVersions);
                 }
             }
         });
@@ -253,7 +270,8 @@ function handleCollection(array $db, string $method, string $collection, ?string
     if ($method !== 'GET' && in_array($collection, ADMIN_COLLECTIONS, true)) requireAdmin($user);
 
     if ($method === 'PUT' && $id === null) {
-        replaceCollection($db, $collection, requireList(readJson(), $collection));
+        ['items' => $items, 'knownVersions' => $knownVersions] = collectionPayload(readJson(), $collection);
+        replaceCollection($db, $collection, $items, $knownVersions);
         respond(readCollection($db, $collection));
     }
 
@@ -261,6 +279,7 @@ function handleCollection(array $db, string $method, string $collection, ?string
         $item = requireObject(readJson());
         $itemId = itemId($item);
         if ($itemId === '') respond(['error' => 'Datensatz braucht ein id-Feld.'], 422);
+        assertItemVersionAllowsWrite($db, $collection, $itemId, $item);
         upsertItem($db, $collection, $itemId, $item);
         respond(readItem($db, $collection, $itemId), 201);
     }
@@ -268,11 +287,13 @@ function handleCollection(array $db, string $method, string $collection, ?string
     if ($method === 'PUT' && $id !== null) {
         $item = requireObject(readJson());
         $item['id'] = $id;
+        assertItemVersionAllowsWrite($db, $collection, $id, $item);
         upsertItem($db, $collection, $id, $item);
         respond(readItem($db, $collection, $id));
     }
 
     if ($method === 'DELETE' && $id !== null) {
+        assertItemVersionAllowsDelete($db, $collection, $id, requestExpectedVersion() ?? '');
         respond(['deleted' => deleteItem($db, $collection, $id)]);
     }
 
@@ -566,7 +587,11 @@ function db(): array
 function initSchema(array $db): void
 {
     executeSqlScript($db, file_get_contents(__DIR__ . '/schema.mysql.sql'));
-ensureColumn($db, 'gd_citizens', 'press_publication', 'ALTER TABLE gd_citizens ADD COLUMN press_publication TINYINT(1) NOT NULL DEFAULT 0 AFTER printed_year');
+    foreach (COLLECTIONS as $collection) {
+        $config = collectionConfig($collection);
+        ensureColumn($db, $config['table'], 'row_version', 'ALTER TABLE ' . $config['table'] . ' ADD COLUMN row_version BIGINT UNSIGNED NOT NULL DEFAULT 1');
+    }
+    ensureColumn($db, 'gd_citizens', 'press_publication', 'ALTER TABLE gd_citizens ADD COLUMN press_publication TINYINT(1) NOT NULL DEFAULT 0 AFTER printed_year');
     ensureColumn($db, 'gd_citizens', 'wedding_anniversary', "ALTER TABLE gd_citizens ADD COLUMN wedding_anniversary VARCHAR(80) NOT NULL DEFAULT '' AFTER press_publication");
     ensureColumn($db, 'gd_citizens', 'wedding_date', 'ALTER TABLE gd_citizens ADD COLUMN wedding_date DATE NULL AFTER wedding_anniversary');
     ensureColumn($db, 'gd_citizens', 'spouse_name', "ALTER TABLE gd_citizens ADD COLUMN spouse_name VARCHAR(180) NOT NULL DEFAULT '' AFTER wedding_date");
@@ -683,10 +708,166 @@ function questionnairePageFromRow(array $row): array
     ];
 }
 
+function versionColumn(array $config): string
+{
+    return $config['versionColumn'] ?? 'row_version';
+}
+
+function selectColumns(array $config): array
+{
+    return [...array_map(static fn ($column) => $column[0], $config['columns']), versionColumn($config)];
+}
+
+function collectionPayload(mixed $payload, string $collection): array
+{
+    if (is_array($payload) && array_is_list($payload)) {
+        return ['items' => requireList($payload, $collection), 'knownVersions' => null];
+    }
+
+    $object = requireObject($payload);
+    return [
+        'items' => requireList($object['items'] ?? [], $collection),
+        'knownVersions' => array_key_exists('knownVersions', $object) ? normalizedKnownVersions($object['knownVersions']) : null,
+    ];
+}
+
+function normalizedKnownVersions(mixed $versions): array
+{
+    $object = requireObject($versions);
+    $normalized = [];
+    foreach ($object as $id => $version) {
+        $normalized[trim((string)$id)] = trim((string)$version);
+    }
+    return $normalized;
+}
+
+function incomingItemsById(array $items, string $collection): array
+{
+    $byId = [];
+    foreach ($items as $item) {
+        $item = requireObject($item);
+        $id = itemId($item);
+        if ($id === '') throw new RuntimeException("Datensatz in {$collection} braucht ein id-Feld.");
+        if (array_key_exists($id, $byId)) throw new RuntimeException("Datensatz {$id} ist in {$collection} doppelt enthalten.");
+        $item['id'] = $id;
+        $byId[$id] = $item;
+    }
+    return $byId;
+}
+
+function itemsById(array $items): array
+{
+    $byId = [];
+    foreach ($items as $item) {
+        $id = itemId($item);
+        if ($id !== '') $byId[$id] = $item;
+    }
+    return $byId;
+}
+
+function itemVersion(array $item): string
+{
+    return trim((string)($item[VERSION_FIELD] ?? ''));
+}
+
+function expectedVersionForItem(array $item, ?array $knownVersions, string $id): string
+{
+    $itemVersion = itemVersion($item);
+    if ($itemVersion !== '') return $itemVersion;
+    return trim((string)($knownVersions[$id] ?? ''));
+}
+
+function requestExpectedVersion(): ?string
+{
+    $header = trim((string)($_SERVER['HTTP_IF_MATCH'] ?? ''));
+    if ($header !== '') return trim($header, " \t\n\r\0\x0B\"");
+    if (array_key_exists('version', $_GET)) return trim((string)$_GET['version']);
+    return null;
+}
+
+function assertCollectionVersionsAllowReplace(string $collection, array $incomingById, array $currentById, ?array $knownVersions): void
+{
+    if ($knownVersions === null && !incomingPayloadHasVersions($incomingById)) {
+        if ($currentById) throwConflict($collection, '', '');
+        return;
+    }
+
+    foreach ($currentById as $id => $currentItem) {
+        $currentVersion = itemVersion($currentItem);
+        if (array_key_exists($id, $incomingById)) {
+            $expectedVersion = expectedVersionForItem($incomingById[$id], $knownVersions, $id);
+            if ($expectedVersion === '' || $expectedVersion !== $currentVersion) {
+                throwConflict($collection, $id, $currentVersion);
+            }
+            continue;
+        }
+
+        $expectedVersion = trim((string)($knownVersions[$id] ?? ''));
+        if ($expectedVersion === '' || $expectedVersion !== $currentVersion) {
+            throwConflict($collection, $id, $currentVersion);
+        }
+    }
+
+    foreach ($incomingById as $id => $item) {
+        if (array_key_exists($id, $currentById)) continue;
+        if (expectedVersionForItem($item, $knownVersions, $id) !== '') throwConflict($collection, $id, '');
+    }
+}
+
+function incomingPayloadHasVersions(array $incomingById): bool
+{
+    foreach ($incomingById as $item) {
+        if (itemVersion($item) !== '') return true;
+    }
+    return false;
+}
+
+function assertItemVersionAllowsWrite(array $db, string $collection, string $id, array $item): void
+{
+    $current = readItem($db, $collection, $id);
+    $expectedVersion = itemVersion($item);
+    if (!$current) {
+        if ($expectedVersion !== '') throwConflict($collection, $id, '');
+        return;
+    }
+    if ($expectedVersion === '' || $expectedVersion !== itemVersion($current)) {
+        throwConflict($collection, $id, itemVersion($current));
+    }
+}
+
+function assertItemVersionAllowsDelete(array $db, string $collection, string $id, string $expectedVersion): void
+{
+    $current = readItem($db, $collection, $id);
+    if (!$current) return;
+    if ($expectedVersion === '' || $expectedVersion !== itemVersion($current)) {
+        throwConflict($collection, $id, itemVersion($current));
+    }
+}
+
+function throwConflict(string $collection, string $id, string $currentVersion): never
+{
+    throw new ApiError(409, 'Der Datensatz wurde parallel geändert. Bitte Daten neu laden und die Änderung erneut prüfen.', [
+        'collection' => $collection,
+        'id' => $id,
+        'currentVersion' => $currentVersion,
+    ]);
+}
+
+function itemsEqualForPersistence(array $incoming, array $current, array $config): bool
+{
+    foreach ($config['columns'] as $apiField => [, $type]) {
+        if ($type === 'createdAt' && !array_key_exists($apiField, $incoming)) continue;
+        if (valueForDb($incoming[$apiField] ?? null, $type) !== valueForDb($current[$apiField] ?? null, $type)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 function readCollection(array $db, string $collection): array
 {
     $config = collectionConfig($collection);
-    $dbColumns = array_map(static fn ($column) => $column[0], $config['columns']);
+    $dbColumns = selectColumns($config);
     $sql = 'SELECT ' . implode(', ', $dbColumns) . ' FROM ' . $config['table'] . ' ORDER BY ' . $config['order'];
 
     if ($db['driver'] === 'mysqli') {
@@ -700,22 +881,27 @@ function readCollection(array $db, string $collection): array
 function readItem(array $db, string $collection, string $id): ?array
 {
     $config = collectionConfig($collection);
-    $dbColumns = array_map(static fn ($column) => $column[0], $config['columns']);
+    $dbColumns = selectColumns($config);
     $sql = 'SELECT ' . implode(', ', $dbColumns) . ' FROM ' . $config['table'] . ' WHERE id = ?';
     $row = fetchOne($db, $sql, [$id]);
     return $row ? rowToItem($row, $config) : null;
 }
 
-function replaceCollection(array $db, string $collection, array $items): void
+function replaceCollection(array $db, string $collection, array $items, ?array $knownVersions = null): void
 {
     $config = collectionConfig($collection);
-    executeStatement($db, 'DELETE FROM ' . $config['table']);
-    foreach ($items as $item) {
-        $item = requireObject($item);
-        $id = itemId($item);
-        if ($id === '') throw new RuntimeException("Datensatz in {$collection} braucht ein id-Feld.");
-        $item['id'] = $id;
-        upsertItem($db, $collection, $id, $item);
+    $incomingById = incomingItemsById($items, $collection);
+    $currentById = itemsById(readCollection($db, $collection));
+    assertCollectionVersionsAllowReplace($collection, $incomingById, $currentById, $knownVersions);
+
+    foreach ($currentById as $id => $currentItem) {
+        if (!array_key_exists($id, $incomingById)) deleteItem($db, $collection, $id);
+    }
+
+    foreach ($incomingById as $id => $item) {
+        if (!array_key_exists($id, $currentById) || !itemsEqualForPersistence($item, $currentById[$id], $config)) {
+            upsertItem($db, $collection, $id, $item);
+        }
     }
 }
 
@@ -729,13 +915,19 @@ function upsertItem(array $db, string $collection, string $id, array $item): voi
 
     if ($db['driver'] === 'mysqli' || $db['driver'] === 'mysql') {
         $placeholders = implode(', ', array_fill(0, count($dbColumns), '?'));
-        $updates = implode(', ', array_map(static fn ($column) => "{$column} = VALUES({$column})", array_filter($dbColumns, static fn ($column) => $column !== 'id')));
+        $updates = implode(', ', [
+            ...array_map(static fn ($column) => "{$column} = VALUES({$column})", array_filter($dbColumns, static fn ($column) => $column !== 'id')),
+            versionColumn($config) . ' = ' . versionColumn($config) . ' + 1',
+        ]);
         executeStatement($db, 'INSERT INTO ' . $config['table'] . ' (' . implode(', ', $dbColumns) . ') VALUES (' . $placeholders . ') ON DUPLICATE KEY UPDATE ' . $updates, $values);
         return;
     }
 
     $placeholders = implode(', ', array_fill(0, count($dbColumns), '?'));
-    $updates = implode(', ', array_map(static fn ($column) => "{$column} = excluded.{$column}", array_filter($dbColumns, static fn ($column) => $column !== 'id')));
+    $updates = implode(', ', [
+        ...array_map(static fn ($column) => "{$column} = excluded.{$column}", array_filter($dbColumns, static fn ($column) => $column !== 'id')),
+        versionColumn($config) . ' = ' . versionColumn($config) . ' + 1',
+    ]);
     executeStatement($db, 'INSERT INTO ' . $config['table'] . ' (' . implode(', ', $dbColumns) . ') VALUES (' . $placeholders . ') ON CONFLICT(id) DO UPDATE SET ' . $updates, $values);
 }
 
@@ -751,6 +943,8 @@ function rowToItem(array $row, array $config): array
     foreach ($config['columns'] as $apiField => [$dbField, $type]) {
         $item[$apiField] = valueFromDb($row[$dbField] ?? null, $type);
     }
+    $versionColumn = versionColumn($config);
+    if (array_key_exists($versionColumn, $row)) $item[VERSION_FIELD] = (string)$row[$versionColumn];
     return $item;
 }
 

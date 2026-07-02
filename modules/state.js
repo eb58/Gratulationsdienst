@@ -70,6 +70,76 @@ export const dataForPersistence = data => ({
   citizens: Array.isArray(data?.citizens) ? data.citizens.map(withoutTransientCitizenFields) : data?.citizens
 });
 
+export const collectionVersionMap = items => Object.fromEntries((items || [])
+  .filter(item => item?.id && item._version)
+  .map(item => [item.id, String(item._version)]));
+
+const withoutVersion = item => {
+  const { _version, ...persisted } = item || {};
+  return persisted;
+};
+const sortKeys = value => {
+  if (Array.isArray(value)) return value.map(sortKeys);
+  if (!value || typeof value !== "object") return value;
+  return Object.fromEntries(Object.keys(value).sort().map(key => [key, sortKeys(value[key])]));
+};
+const itemSignature = item => JSON.stringify(sortKeys(withoutVersion(item)));
+const itemsById = items => Object.fromEntries((items || []).filter(item => item?.id).map(item => [item.id, item]));
+const collectionBaselineMap = items => Object.fromEntries((items || [])
+  .filter(item => item?.id)
+  .map(item => [item.id, withoutVersion(item)]));
+const persistedCollectionItems = (data, collection) => dataForPersistence(data)[collection] || [];
+
+const refreshCollectionBaseline = collection => {
+  state.collectionBaselines[collection] = collectionBaselineMap(persistedCollectionItems(state.data, collection));
+};
+
+const trackCollectionState = data => {
+  for (const collection of persistedCollections) {
+    const items = persistedCollectionItems(data, collection);
+    state.collectionVersions[collection] = collectionVersionMap(items);
+    state.collectionBaselines[collection] = collectionBaselineMap(items);
+  }
+};
+
+const withKnownVersion = (collection, item) => {
+  const knownVersions = state.collectionVersions[collection] || {};
+  const version = item?._version || knownVersions[item?.id] || "";
+  return version ? { ...item, _version: version } : item;
+};
+
+const applySavedItemVersion = (collection, savedItem) => {
+  if (!savedItem?.id || !savedItem._version) return;
+  state.collectionVersions[collection] = { ...(state.collectionVersions[collection] || {}), [savedItem.id]: String(savedItem._version) };
+  if (!Array.isArray(state.data?.[collection])) return;
+  state.data[collection] = state.data[collection].map(item => item.id === savedItem.id
+    ? { ...item, _version: String(savedItem._version) }
+    : item);
+};
+
+const collectionOperations = (collection, items) => {
+  const baseline = state.collectionBaselines[collection] || {};
+  const currentById = itemsById(items);
+  const operations = [];
+
+  for (const [id, item] of Object.entries(currentById)) {
+    const baselineItem = baseline[id];
+    if (!baselineItem) {
+      operations.push({ type: "save", collection, item: withKnownVersion(collection, item) });
+      continue;
+    }
+    if (itemSignature(item) !== itemSignature(baselineItem)) {
+      operations.push({ type: "save", collection, item: withKnownVersion(collection, item) });
+    }
+  }
+
+  for (const id of Object.keys(baseline)) {
+    if (!currentById[id]) operations.push({ type: "delete", collection, id, version: state.collectionVersions[collection]?.[id] || "" });
+  }
+
+  return operations;
+};
+
 export const normalizeLoadedData = data => {
   const repaired = repairStoredText(data);
   const activeGroupIds = new Set(defaultData.sokoGroups.map(group => group.id));
@@ -141,7 +211,9 @@ export const state = {
   selectedUserId: "",
   focusTarget: "",
   gridApis: {},
-  dialog: null
+  dialog: null,
+  collectionVersions: {},
+  collectionBaselines: {}
 };
 
 export const apiCollections = ["citizens", "sokoGroups", "sokoMembers", "streets", "senders", "templates"];
@@ -203,10 +275,18 @@ export const loadAuthStatus = () => {
     });
 };
 export const loadBackendCollection = collection => apiRequest(`/${collection}`).then(items => [collection, items]);
-export const saveBackendCollection = (collection, items) => apiRequest(`/${collection}`, {
-  method: "PUT",
-  body: JSON.stringify(items)
-});
+export const saveBackendItem = (collection, item) => {
+  const payload = withKnownVersion(collection, item);
+  const version = payload?._version || "";
+  const path = version ? `/${collection}/${encodeURIComponent(item.id)}` : `/${collection}`;
+  return apiRequest(path, {
+    method: version ? "PUT" : "POST",
+    body: JSON.stringify(payload)
+  }).then(savedItem => [collection, savedItem]);
+};
+export const deleteBackendItem = (collection, id, version = "") => apiRequest(`/${collection}/${encodeURIComponent(id)}?version=${encodeURIComponent(version)}`, {
+  method: "DELETE"
+}).then(result => [collection, { id, deleted: !!result?.deleted }]);
 export const saveQuittungSettings = settings => {
   const normalized = normalizeQuittungSettings(settings);
   if (location.protocol === "file:" || !state.auth.token) return Promise.resolve(applyQuittungSettings(normalized));
@@ -219,22 +299,62 @@ export const loadBackendQuittungSettings = () => location.protocol === "file:" |
   ? Promise.resolve(null)
   : apiRequest("/settings/receipt").then(applyQuittungSettings);
 
-export const saveCollectionData = data => location.protocol === "file:"
-  ? Promise.resolve()
-  : !state.auth.token ? Promise.resolve()
-  : Promise.all(writableCollections().map(collection => saveBackendCollection(collection, dataForPersistence(data)[collection] || [])))
-    .catch(error => console.warn("Datenbank-Speicherung nicht verfügbar.", error));
+export const isConflictError = error => error?.status === 409;
+
+const handleSaveError = error => {
+  if (isConflictError(error)) {
+    console.warn("Datenbank-Konflikt erkannt.", error);
+    toast("Daten wurden parallel geändert. Der aktuelle Stand wird neu geladen; bitte die Änderung erneut prüfen.");
+    return loadCollectionData();
+  }
+  console.warn("Datenbank-Speicherung nicht verfügbar.", error);
+  return null;
+};
+
+const persistBackendCollections = async data => {
+  const persisted = dataForPersistence(data);
+  const operations = writableCollections().flatMap(collection => collectionOperations(collection, persisted[collection] || []));
+  if (!operations.length) return {};
+  const results = await Promise.allSettled(operations.map(operation => operation.type === "delete"
+    ? deleteBackendItem(operation.collection, operation.id, operation.version)
+    : saveBackendItem(operation.collection, operation.item)));
+  results
+    .filter(result => result.status === "fulfilled")
+    .map(result => result.value)
+    .forEach(([collection, savedItem]) => {
+      if (savedItem?.deleted) delete state.collectionVersions[collection]?.[savedItem.id];
+      else applySavedItemVersion(collection, savedItem);
+    });
+  [...new Set(results
+    .filter(result => result.status === "fulfilled")
+    .map(result => result.value[0]))]
+    .forEach(refreshCollectionBaseline);
+  const rejected = results.find(result => result.status === "rejected");
+  if (rejected) throw rejected.reason;
+  return Object.fromEntries(results.map(result => result.value));
+};
+
+let saveQueue = Promise.resolve();
+
+export const saveCollectionData = data => {
+  if (location.protocol === "file:" || !state.auth.token) return Promise.resolve();
+  saveQueue = saveQueue
+    .catch(() => null)
+    .then(() => persistBackendCollections(state.data))
+    .catch(error => handleSaveError(error));
+  return saveQueue;
+};
 
 export const saveData = () => {
   if (usesLocalDataStorage()) safeStorageSetItem(localStorage, STORAGE_KEY, JSON.stringify(dataForPersistence(state.data)), "Daten");
   else localStorage.removeItem(STORAGE_KEY);
-  saveCollectionData(state.data);
+  return saveCollectionData(state.data);
 };
 
 export const loadCollectionData = () => {
-  if (location.protocol === "file:") return;
-  if (!state.auth.user || !state.auth.token) return;
-  Promise.all([
+  if (location.protocol === "file:") return Promise.resolve();
+  if (!state.auth.user || !state.auth.token) return Promise.resolve();
+  return Promise.all([
     Promise.all(apiCollections.map(loadBackendCollection)),
     loadBackendQuittungSettings().catch(error => {
       console.warn("Quittungs-Einstellungen konnten nicht geladen werden.", error);
@@ -244,16 +364,20 @@ export const loadCollectionData = () => {
     .then(([entries]) => {
       const data = Object.fromEntries(entries);
       if (!hasBackendData(data)) {
+        state.collectionVersions = {};
+        state.collectionBaselines = {};
         saveCollectionData(state.data);
         localStorage.removeItem(STORAGE_KEY);
         render();
         return;
       }
       state.data = normalizeLoadedData(data);
+      trackCollectionState(state.data);
       localStorage.removeItem(STORAGE_KEY);
       if (!data.sokoGroups?.length && state.data.sokoGroups.length && isAdmin()) {
-        saveBackendCollection("sokoGroups", state.data.sokoGroups).catch(() => {});
-        saveBackendCollection("sokoMembers", state.data.sokoMembers).catch(() => {});
+        state.collectionBaselines.sokoGroups = {};
+        state.collectionBaselines.sokoMembers = {};
+        saveCollectionData(state.data).catch(() => {});
       }
       render();
       toast("Daten aus der Datenbank geladen.");
