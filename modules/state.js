@@ -165,6 +165,10 @@ export const loadData = () => {
 };
 
 const quittungSettings = storedQuittungSettings();
+const storedSelectedMonth = () => localStorage.getItem(MONTH_KEY)
+  || localStorage.getItem(QUITTUNG_MONTH_KEY)
+  || localStorage.getItem(MAP_MONTH_KEY)
+  || "alle";
 
 export const state = {
   view: "dashboard",
@@ -180,7 +184,7 @@ export const state = {
     users: [],
     mfaSetup: null
   },
-  filters: { q: "", month: localStorage.getItem(MONTH_KEY) || "alle", groupId: "alle", age: "alle", status: "alle", occasion: "Geburtstag" },
+  filters: { q: "", month: storedSelectedMonth(), groupId: "alle", age: "alle", status: "alle", occasion: "Geburtstag" },
   selectedCitizenId: "",
   selectedMemberId: "",
   selectedStreetId: "STR-001",
@@ -190,9 +194,7 @@ export const state = {
   quittungTelefon: quittungSettings.quittungTelefon,
   quittungKapitel: quittungSettings.quittungKapitel,
   quittungTitel: quittungSettings.quittungTitel,
-  quittungMonat: localStorage.getItem(QUITTUNG_MONTH_KEY) || new Date().toISOString().slice(5, 7),
   cleanupMonths: cleanupMonthsValue(localStorage.getItem(CLEANUP_MONTHS_KEY)),
-  mapMonth: localStorage.getItem(MAP_MONTH_KEY) || new Date().toISOString().slice(5, 7),
   importText: "",
   importSplit: storedSplit("import", 50),
   citizenSplit: storedSplit("citizen", 50),

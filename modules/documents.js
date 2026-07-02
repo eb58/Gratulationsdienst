@@ -250,7 +250,7 @@ export const printCurrentRun = () => {
 
 export const renderSokoQuittung = (citizens, groupId = "", betragProPerson = "8,50", telefon = "90294 4055", monat = "", kapitel = "3930", titel = "68154") => {
   const today = formatDateDe(todayIso());
-  const month = monat || todayIso().slice(5, 7);
+  const month = monat === "alle" ? "" : monat || todayIso().slice(5, 7);
   const leader = state.data.sokoMembers.find(m => m.isLeader && m.groupId === groupId);
   const leaderAddr = [leader?.street, [leader?.postalCode, leader?.city].filter(Boolean).join(" ")].filter(Boolean).join(", ");
   const leaderLine = leader ? `${escapeHtml(leader.salutation)} ${escapeHtml(leader.firstName)} ${escapeHtml(leader.lastName)}, ${escapeHtml(leaderAddr)}` : "";

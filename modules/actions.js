@@ -184,6 +184,7 @@ const importMappedRows = mapped => {
   importToast(importNotice(result));
 };
 const importToast = message => toast(message, { anchor: ".soko-pdf-action-row, .import-action-row" });
+const selectedReceiptMonth = () => state.filters.month;
 const sokoPdfNotice = pages => {
   const checked = pages.filter(page => page.ok).length;
   const manual = pages.filter(page => page.applied && !page.ok).length;
@@ -687,7 +688,7 @@ export const actions = {
     state.selectedTemplateId = template.id;
     state.selectedSenderId = sender.id;
     state.filters.month = $("#doc-month").value;
-    safeStorageSetItem(localStorage, "gd_month_filter", state.filters.month, "Monatsfilter");
+    safeStorageSetItem(localStorage, MONTH_KEY, state.filters.month, "Monatsfilter");
     state.filters.groupId = $("#doc-group").value;
     const citizens = documentCitizens();
     state.generatedDocs = citizens.map(citizen => ({
@@ -731,7 +732,7 @@ export const actions = {
     if (!isReceiptGroupReady(groupId)) { toast("Quittungsdruck erst möglich, wenn alle Jubilare dieser SOKO geprüft sind."); return; }
     const citizens = receiptCitizens().filter(c => groupForCitizen(c)?.id === groupId);
     if (!citizens.length) { toast("Keine Jubilare mit Besuchswunsch für diese SOKO."); return; }
-    openPrintWindow(renderSokoQuittung(citizens, groupId, state.quittungBetrag, state.quittungTelefon, state.quittungMonat, state.quittungKapitel, state.quittungTitel), "Quittung");
+    openPrintWindow(renderSokoQuittung(citizens, groupId, state.quittungBetrag, state.quittungTelefon, selectedReceiptMonth(), state.quittungKapitel, state.quittungTitel), "Quittung");
   },
   "print-quittung-all": () => {
     const citizens = receiptCitizensForReadyGroups();
@@ -744,7 +745,7 @@ export const actions = {
     }, {});
     const pages = Object.entries(byGroup)
       .sort(([a], [b]) => a.localeCompare(b))
-      .map(([gid, gc]) => renderSokoQuittung(gc, gid, state.quittungBetrag, state.quittungTelefon, state.quittungMonat, state.quittungKapitel, state.quittungTitel))
+      .map(([gid, gc]) => renderSokoQuittung(gc, gid, state.quittungBetrag, state.quittungTelefon, selectedReceiptMonth(), state.quittungKapitel, state.quittungTitel))
       .join("");
     openPrintWindow(pages, "Quittungen");
   },

@@ -1,5 +1,5 @@
 import { canAccessView, isAdmin, state, loadAuthStatus, loadCollectionData } from './modules/state.js';
-import { MONTH_KEY, QUITTUNG_MONTH_KEY, MAP_MONTH_KEY, storeSplit, safeStorageSetItem, isValidEmail, normalizeIban, isValidIban, normalizeAmount, normalizeDigits, isValidPostalCode, cleanupMonthsValue } from './modules/utils.js';
+import { MONTH_KEY, storeSplit, safeStorageSetItem, isValidEmail, normalizeIban, isValidIban, normalizeAmount, normalizeDigits, isValidPostalCode, cleanupMonthsValue } from './modules/utils.js';
 import { viewTitles, sokoMapInfoHtml } from './modules/views.js';
 import { findNearestAddress } from './modules/map.js';
 import { render, renderDialog } from './modules/render.js';
@@ -290,17 +290,9 @@ document.addEventListener("change", event => {
   if (input) { updateFilter(input); return; }
   if (event.target.matches('[name="wish"]')) { document.querySelector('[data-action="save-citizen"]')?.classList.remove("btn-disabled"); return; }
   if (event.target.matches("#doc-template, #doc-sender, #doc-month, #doc-group")) { runActionByName("generate-docs"); return; }
-  if (event.target.matches("#map-month-select")) {
-    state.mapMonth = event.target.value;
-    safeStorageSetItem(localStorage, MAP_MONTH_KEY, event.target.value, "Kartenmonat");
-    const info = document.querySelector("#map-soko-info");
-    if (info) info.innerHTML = sokoMapInfoHtml(info.dataset.groupId || "");
-    return;
-  }
   const bound = event.target.closest("[data-bind]");
   if (bound) {
     state[bound.dataset.bind] = boundValue(bound);
-    if (bound.dataset.bind === "quittungMonat") safeStorageSetItem(localStorage, QUITTUNG_MONTH_KEY, bound.value, "Quittungsmonat");
     if (dirtyTracked) return;
     render();
     return;

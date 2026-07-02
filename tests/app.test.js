@@ -287,25 +287,24 @@ describe('app filter and change handlers', () => {
     assert.equal(saveButton.classList.contains('btn-disabled'), false);
   });
 
-  it('updates map month and refreshes the map info panel', () => {
-    const target = eventTarget({ value: '07', matches: selector => selector === '#map-month-select' });
-    elements['#map-soko-info'].dataset.groupId = 'offen';
+  it('updates the shared month from the map month selector', () => {
+    const target = input({ value: '07', dataset: { filter: '1' } });
+    target.name = 'month';
 
     listeners.change({ target });
 
-    assert.equal(state.mapMonth, '07');
-    assert.equal(localStorage.getItem('gd_map_month'), '07');
-    assert.match(elements['#map-soko-info'].innerHTML, /Über eine SOKO/);
+    assert.equal(state.filters.month, '07');
+    assert.equal(localStorage.getItem('gd_month_filter'), '07');
   });
 
-  it('persists bound receipt month changes', () => {
-    const bound = eventTarget({ dataset: { bind: 'quittungMonat' }, value: '08' });
-    const target = eventTarget({ closest: { '[data-bind]': bound } });
+  it('persists receipt month changes through the shared month filter', () => {
+    const target = input({ value: '08', dataset: { filter: '1' } });
+    target.name = 'month';
 
     listeners.change({ target });
 
-    assert.equal(state.quittungMonat, '08');
-    assert.equal(localStorage.getItem('gd_quittung_month'), '08');
+    assert.equal(state.filters.month, '08');
+    assert.equal(localStorage.getItem('gd_month_filter'), '08');
   });
 
   it('loads import files and runs the import action', async () => {

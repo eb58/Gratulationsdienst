@@ -128,8 +128,6 @@ beforeEach(() => {
     templates: [template]
   };
   state.filters = { q: '', month: '06', groupId: 'alle', age: 'alle', status: 'alle', occasion: 'Geburtstag' };
-  state.mapMonth = '06';
-  state.quittungMonat = '06';
   state.quittungBetrag = '8,50';
   state.quittungTelefon = '030 123';
   state.quittungKapitel = '3930';
@@ -237,12 +235,14 @@ describe('main views', () => {
     assert.match(views.senders(), /sender-form/);
     assert.match(views.templates(), /template-form/);
     assert.match(views.documents(), /Druckliste/);
+    assert.match(views.map(), /id="map-month-select" name="month" data-filter/);
     assert.match(views.import(), /soko-print/);
     assert.doesNotMatch(views.import(), /Alte Jubilare löschen/);
   });
 
   it('renders receipt, profile and user administration states', () => {
     assert.match(views.quittung(), /Alle fertigen drucken/);
+    assert.match(views.quittung(), /<select name="month" data-filter>/);
     assert.match(views.quittungStamm(), /quittung-form/);
     assert.match(views.profile(), /mfa-setup/);
     assert.match(views.privacy(), /Datenbereinigung/);

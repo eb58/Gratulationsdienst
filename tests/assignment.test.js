@@ -95,7 +95,6 @@ const resetState = () => {
   };
   state.filters = { q: '', month: 'alle', groupId: 'alle', age: 'alle', status: 'alle', occasion: 'Geburtstag' };
   state.selectedCitizenId = '';
-  state.quittungMonat = '06';
   delete globalThis.findeSoko;
 };
 
@@ -181,6 +180,7 @@ describe('selection and receipt helpers', () => {
   });
 
   it('filters receipt citizens by month, visit wish, group and readiness', () => {
+    state.filters.month = '06';
     state.data.citizens = [
       baseCitizen({ id: 'ready-visit', houseNo: '12', birthDate: '1936-06-01', status: 'geprüft', wish: 'Besuch erwünscht' }),
       baseCitizen({ id: 'ready-post', houseNo: '14', birthDate: '1936-06-02', status: 'geprüft', wish: 'per Post' }),

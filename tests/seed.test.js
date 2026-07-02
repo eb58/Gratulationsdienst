@@ -59,7 +59,6 @@ const seed = () => {
 before(() => {
   state.data.streets = buildStreetData();
   state.data.citizens = [];
-  state.quittungMonat = '06';
 });
 
 describe('seed-citizens integration (echtes Strassenverzeichnis)', () => {

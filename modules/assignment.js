@@ -77,6 +77,8 @@ export const selectedSender = () => byId(state.data.senders, state.selectedSende
 export const selectedMember = () => byId(state.data.sokoMembers, state.selectedMemberId) || state.data.sokoMembers[0];
 export const selectedStreet = () => byId(state.data.streets, state.selectedStreetId) || state.data.streets[0];
 
+export const matchesSelectedMonth = citizen => state.filters.month === "alle" || birthdayMonth(citizen.birthDate) === state.filters.month;
+
 export const filteredCitizens = () => state.data.citizens.filter(citizen => {
   const haystack = normalize([citizen.firstName, citizen.lastName, citizen.street, citizen.district, citizen.wish].join(" "));
   const age = calculateAge(citizen.birthDate);
@@ -86,13 +88,13 @@ export const filteredCitizens = () => state.data.citizens.filter(citizen => {
     || (state.filters.age === "90plus" && age >= 90)
     || (state.filters.age === "100" && age >= 100);
   return (!state.filters.q || haystack.includes(normalize(state.filters.q)))
-    && (state.filters.month === "alle" || String(new Date(citizen.birthDate).getMonth() + 1).padStart(2, "0") === state.filters.month)
+    && matchesSelectedMonth(citizen)
     && (state.filters.groupId === "alle" || group?.id === state.filters.groupId)
     && (state.filters.status === "alle" || citizen.status === state.filters.status)
     && ageOk;
 });
 export const documentCitizens = () => filteredCitizens().filter(citizen => isCheckedCitizen(citizen) && !isPrintedCitizen(citizen) && wantsGreeting(citizen));
-export const receiptReviewCitizens = () => activeCitizens().filter(citizen => birthdayMonth(citizen.birthDate) === state.quittungMonat && wantsVisit(citizen));
+export const receiptReviewCitizens = () => activeCitizens().filter(citizen => matchesSelectedMonth(citizen) && wantsVisit(citizen));
 export const allReceiptCitizensChecked = () => receiptReviewCitizens().every(isCheckedCitizen);
 export const receiptCitizens = () => receiptReviewCitizens().filter(citizen => groupForCitizen(citizen));
 export const receiptReviewCitizensForGroup = groupId => receiptReviewCitizens().filter(citizen => groupForCitizen(citizen)?.id === groupId);
