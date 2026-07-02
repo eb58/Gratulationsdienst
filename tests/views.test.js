@@ -204,6 +204,19 @@ describe('view partials', () => {
     assert.doesNotMatch(html, /citizen-questionnaire-image/);
   });
 
+  it('shows questionnaire scans without the import date caption', () => {
+    state.data.citizens = [{
+      ...citizen,
+      sokoQuestionnaireImages: [{ image: 'data:image/png;base64,abc', createdAt: '2026-06-01' }]
+    }];
+
+    const html = views.citizens();
+
+    assert.match(html, /citizen-questionnaire-image/);
+    assert.doesNotMatch(html, /<figcaption>/);
+    assert.doesNotMatch(html, /01\.06\.2026/);
+  });
+
   it('renders map info for empty and assigned SOKO selections', () => {
     assert.match(sokoMapInfoHtml('offen'), /Über eine SOKO/);
 

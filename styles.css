@@ -706,10 +706,9 @@ h3 {
 
 .citizen-questionnaire-image {
   margin: 0 0 12px;
-  padding: 8px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: #fff;
+  padding: 0;
+  border: 0;
+  background: transparent;
 }
 
 .citizen-questionnaire-image img {
@@ -718,14 +717,7 @@ h3 {
   max-height: 72vh;
   height: auto;
   object-fit: contain;
-  border: 1px solid #d6dedc;
-}
-
-.citizen-questionnaire-image figcaption {
-  margin-top: 6px;
-  color: var(--muted);
-  font-size: 12px;
-  line-height: 1.2;
+  border: 1px solid var(--line);
 }
 
 .citizen-panel-scroll {
