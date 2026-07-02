@@ -78,6 +78,7 @@ const { state } = await import('../modules/state.js');
 const { defaultData } = await import('../modules/domain.js');
 const { monthAfterNext } = await import('../modules/testdata.js');
 const { normalizeAmount } = await import('../modules/utils.js');
+const { filteredCitizens } = await import('../modules/assignment.js');
 
 const idEvent = id => ({ target: { closest: () => ({ dataset: { id } }) } });
 beforeEach(() => {
@@ -351,9 +352,18 @@ describe('Import-Lauf', () => {
   });
 
   it('run-import verarbeitet vorhandenen Importtext', () => {
+    state.filters = { q: 'unsichtbar', month: '01', groupId: 'SOKO 99', age: '100', status: 'geprüft', occasion: 'Geburtstag' };
+    localStorage.setItem('gd_month_filter', '01');
     state.importText = 'Vorname;Nachname;Strasse;Hausnummer;PLZ;Geburtsdatum\nMax;Muster;Hauptstr;1;13407;5.4.1936';
     actions['run-import']();
     assert.ok(state.data.citizens.length > 0);
+    assert.deepEqual(
+      { q: state.filters.q, month: state.filters.month, groupId: state.filters.groupId, age: state.filters.age, status: state.filters.status },
+      { q: '', month: 'alle', groupId: 'alle', age: 'alle', status: 'alle' }
+    );
+    assert.equal(localStorage.getItem('gd_month_filter'), 'alle');
+    assert.equal(filteredCitizens().length, state.data.citizens.length);
+    assert.equal(state.selectedCitizenId, state.data.citizens[0].id);
   });
 });
 

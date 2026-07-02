@@ -48,6 +48,11 @@ body {
   letter-spacing: 0;
 }
 
+body.is-busy,
+body.is-busy * {
+  cursor: wait !important;
+}
+
 button,
 input,
 select,
@@ -2616,6 +2621,53 @@ tbody tr.selected {
 
 .toast.anchored.show {
   transform: translate(-50%, 0) scale(1);
+}
+
+.busy-indicator {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(31, 41, 40, 0.18);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.12s ease, visibility 0.12s ease;
+}
+
+body.is-busy-visible .busy-indicator {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: all;
+}
+
+.busy-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 12px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  color: #fff;
+  background: #1f2928;
+  box-shadow: var(--shadow);
+  font-weight: 750;
+}
+
+.busy-spinner {
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.28);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: busy-spin 0.8s linear infinite;
+}
+
+@keyframes busy-spin {
+  to { transform: rotate(360deg); }
 }
 
 .dialog-backdrop {

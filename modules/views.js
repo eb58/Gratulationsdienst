@@ -376,8 +376,8 @@ export const sokoMapInfoHtml = (groupId, streetName = "") => {
   if (!groupId || groupId === "offen") return `<p class="map-soko-hint muted">Über eine SOKO auf der Karte fahren</p>`;
   const group = state.data.sokoGroups.find(g => g.id === groupId);
   const members = state.data.sokoMembers.filter(m => m.groupId === groupId).sort((a, b) => b.isLeader - a.isLeader);
-  const citizens = activeCitizens().filter(c => groupForCitizen(c)?.id === groupId && c.birthDate?.slice(5, 7) === state.mapMonth);
-  const monthLabel = months.find(([v]) => v === state.mapMonth)?.[1] || state.mapMonth;
+  const citizens = activeCitizens().filter(c => groupForCitizen(c)?.id === groupId && (state.filters.month === "alle" || c.birthDate?.slice(5, 7) === state.filters.month));
+  const monthLabel = months.find(([v]) => v === state.filters.month)?.[1] || state.filters.month;
   const addrCount = (mapAddressPointGroups()[groupId] || []).length;
   const segCount = mapSegmentCounts()[groupId] || 0;
   const color = sokoColors[groupId] || sokoColors.offen;
@@ -637,8 +637,8 @@ export const views = {
           <aside class="map-side-panel">
             <div class="map-month-row">
               <label for="map-month-select">Monat</label>
-              <select id="map-month-select">
-                ${months.filter(([v]) => v !== "alle").map(([v, l]) => `<option value="${v}"${state.mapMonth === v ? " selected" : ""}>${escapeHtml(l)}</option>`).join("")}
+              <select id="map-month-select" name="month" data-filter>
+                ${months.map(([v, l]) => `<option value="${v}"${state.filters.month === v ? " selected" : ""}>${escapeHtml(l)}</option>`).join("")}
               </select>
             </div>
             <div id="map-soko-info">${sokoMapInfoHtml("")}</div>
@@ -813,7 +813,7 @@ export const views = {
 
   quittung: () => {
     const reviewEntries = activeCitizens()
-      .filter(citizen => birthdayMonth(citizen.birthDate) === state.quittungMonat)
+      .filter(citizen => state.filters.month === "alle" || birthdayMonth(citizen.birthDate) === state.filters.month)
       .filter(wantsVisit)
       .map(citizen => ({ citizen, group: groupForCitizen(citizen) }))
       .filter(entry => entry.group);
@@ -846,8 +846,8 @@ export const views = {
     return `
     <div class="toolbar">
       <label>Für Monat</label>
-      <select data-bind="quittungMonat">
-        ${months.filter(([v]) => v !== "alle").map(([v, l]) => `<option value="${v}"${state.quittungMonat === v ? " selected" : ""}>${escapeHtml(l)}</option>`).join("")}
+      <select name="month" data-filter>
+        ${months.map(([v, l]) => `<option value="${v}"${state.filters.month === v ? " selected" : ""}>${escapeHtml(l)}</option>`).join("")}
       </select>
       ${groups.length ? `<button type="button" class="primary-button" data-action="print-quittung-all" ${canPrintAny ? "" : "disabled"}>Alle fertigen drucken</button>` : ""}
     </div>

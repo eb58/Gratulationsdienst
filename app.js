@@ -1,10 +1,11 @@
 import { canAccessView, isAdmin, state, loadAuthStatus, loadCollectionData } from './modules/state.js';
-import { MONTH_KEY, QUITTUNG_MONTH_KEY, MAP_MONTH_KEY, storeSplit, safeStorageSetItem, isValidEmail, normalizeIban, isValidIban, normalizeAmount, normalizeDigits, isValidPostalCode, cleanupMonthsValue } from './modules/utils.js';
+import { MONTH_KEY, storeSplit, safeStorageSetItem, isValidEmail, normalizeIban, isValidIban, normalizeAmount, normalizeDigits, isValidPostalCode, cleanupMonthsValue } from './modules/utils.js';
 import { viewTitles, sokoMapInfoHtml } from './modules/views.js';
 import { findNearestAddress } from './modules/map.js';
 import { render, renderDialog } from './modules/render.js';
 import { actions } from './modules/actions.js';
 import { hasDirtyForm, requestDirtyFormLeave, trackDirtyFormChange } from './modules/dirtyForms.js';
+import { runBusy } from './modules/busy.js';
 
 window.GRATULATIONSDIENST_VERSION = "20260608-6";
 
@@ -60,14 +61,46 @@ const guardedActionIds = {
   "select-user": id => id !== state.selectedUserId
 };
 const guardedActions = new Set(["new-member", "delete-member", "new-template", "new-user", "load-users", "user-reset-password", "user-reset-mfa", "delete-user", "delete-template", "auth-logout"]);
+const busyActions = new Set([
+  "auth-login",
+  "auth-mfa-login",
+  "auth-setup",
+  "auth-reset-request",
+  "auth-reset-apply",
+  "auth-logout",
+  "load-users",
+  "save-user",
+  "confirm-delete-user",
+  "run-import",
+  "seed-citizens",
+  "confirm-clear-citizens",
+  "confirm-delete-old-citizens",
+  "generate-docs",
+  "save-quittung-settings",
+  "simulate-soko-pdf-import",
+  "run-soko-pdf-import",
+  "soko-print",
+  "print-all-receipts"
+]);
+const immediateBusyActions = new Set(["run-import", "seed-citizens", "generate-docs", "simulate-soko-pdf-import", "run-soko-pdf-import"]);
 const actionLeavesDirtyMask = action => {
   const id = action.closest("[data-id]")?.dataset.id || "";
   const actionName = action.dataset.action;
   return guardedActionIds[actionName]?.(id) || guardedActions.has(actionName);
 };
+const runActionByName = (actionName, event, options = {}) => {
+  const action = actions[actionName];
+  if (!action) return undefined;
+  const shouldShowBusy = options.busy ?? busyActions.has(actionName);
+  if (!shouldShowBusy) return action(event);
+  return runBusy(() => action(event), {
+    immediate: options.immediate ?? immediateBusyActions.has(actionName),
+    defer: options.defer ?? immediateBusyActions.has(actionName)
+  });
+};
 const afterViewChange = () => {
-  if (state.view === "documents") actions["generate-docs"]();
-  if (state.view === "users") actions["load-users"]();
+  if (state.view === "documents") runActionByName("generate-docs");
+  if (state.view === "users") runActionByName("load-users");
 };
 const isPdfFile = file => file?.type === "application/pdf" || /\.pdf$/i.test(file?.name || "");
 const goToView = view => {
@@ -171,7 +204,7 @@ document.addEventListener("click", event => {
   if (action) {
     const runAction = () => {
       state.focusTarget = focusSelectorFor(action);
-      actions[action.dataset.action]?.(event);
+      runActionByName(action.dataset.action, event);
     };
     if (actionLeavesDirtyMask(action)) {
       if (!requestDirtyFormLeave(runAction)) renderDialog();
@@ -251,38 +284,33 @@ document.addEventListener("keydown", event => {
 });
 
 document.addEventListener("change", event => {
-  if (event.target.dataset.action) { actions[event.target.dataset.action]?.(event); return; }
+  if (event.target.dataset.action) { runActionByName(event.target.dataset.action, event); return; }
   const dirtyTracked = trackDirtyFormChange(event);
   const input = event.target.closest("[data-filter]");
   if (input) { updateFilter(input); return; }
   if (event.target.matches('[name="wish"]')) { document.querySelector('[data-action="save-citizen"]')?.classList.remove("btn-disabled"); return; }
-  if (event.target.matches("#doc-template, #doc-sender, #doc-month, #doc-group")) { actions["generate-docs"](); return; }
-  if (event.target.matches("#map-month-select")) {
-    state.mapMonth = event.target.value;
-    safeStorageSetItem(localStorage, MAP_MONTH_KEY, event.target.value, "Kartenmonat");
-    const info = document.querySelector("#map-soko-info");
-    if (info) info.innerHTML = sokoMapInfoHtml(info.dataset.groupId || "");
-    return;
-  }
+  if (event.target.matches("#doc-template, #doc-sender, #doc-month, #doc-group")) { runActionByName("generate-docs"); return; }
   const bound = event.target.closest("[data-bind]");
   if (bound) {
     state[bound.dataset.bind] = boundValue(bound);
-    if (bound.dataset.bind === "quittungMonat") safeStorageSetItem(localStorage, QUITTUNG_MONTH_KEY, bound.value, "Quittungsmonat");
     if (dirtyTracked) return;
     render();
     return;
   }
   const sokoPdfFile = event.target.matches("#soko-pdf-file") ? event.target.files[0] : null;
   if (sokoPdfFile) {
-    Promise.resolve(actions["run-soko-pdf-import"]({ file: sokoPdfFile })).finally(() => { event.target.value = ""; });
+    runActionByName("run-soko-pdf-import", { file: sokoPdfFile }).finally(() => { event.target.value = ""; });
     return;
   }
   const file = event.target.matches("#import-file") ? event.target.files[0] : null;
   if (file && isPdfFile(file)) {
-    Promise.resolve(actions["run-soko-pdf-import"]({ file })).finally(() => { event.target.value = ""; });
+    runActionByName("run-soko-pdf-import", { file }).finally(() => { event.target.value = ""; });
     return;
   }
-  if (file) file.text().then(text => { state.importText = text; actions["run-import"](); }).finally(() => { event.target.value = ""; });
+  if (file) runBusy(async () => {
+    state.importText = await file.text();
+    await runActionByName("run-import");
+  }, { immediate: true, defer: true }).finally(() => { event.target.value = ""; });
 });
 
 globalThis.addEventListener("beforeunload", event => {
@@ -344,12 +372,12 @@ if (initialParams.get("resetToken")) {
 }
 restoreSidebarState();
 render();
-loadAuthStatus().then(() => {
+runBusy(() => loadAuthStatus().then(() => {
   if (initialParams.get("resetToken")) {
     state.auth.mode = "reset";
     state.auth.resetToken = initialParams.get("resetToken");
   }
   render();
-  if (state.auth.user) loadCollectionData();
-  if (state.auth.user && state.view === "users") actions["load-users"]();
-});
+  if (state.auth.user) runBusy(() => loadCollectionData());
+  if (state.auth.user && state.view === "users") runActionByName("load-users");
+}));

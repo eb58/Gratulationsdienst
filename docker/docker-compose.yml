@@ -4,8 +4,8 @@ services:
   # 1. PHP & Apache Webserver
   web:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: docker/Dockerfile
     container_name: php_webserver
     restart: always
     ports:
@@ -15,7 +15,6 @@ services:
       - ../php-api:/var/www/html/gratulationsdienst/php-api
     depends_on:
       - db
-
 
   # 2. MySQL Datenbank-Server
   db:

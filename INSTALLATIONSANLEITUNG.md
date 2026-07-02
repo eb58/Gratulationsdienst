@@ -38,6 +38,8 @@ npm install
 
 Mit Docker laufen Apache/PHP, MySQL und phpMyAdmin in getrennten Containern. PHP und MySQL müssen dafür nicht zusätzlich auf dem Rechner installiert werden.
 
+Die Docker-Dateien liegen im Verzeichnis `docker/`. Alle folgenden Befehle werden im Wurzelverzeichnis des Projekts ausgeführt.
+
 ### 3.1 Docker Desktop starten
 
 Docker Desktop öffnen und warten, bis die Docker Engine vollständig gestartet ist. Anschließend im Projektverzeichnis prüfen, ob Docker Compose erreichbar ist:
@@ -85,16 +87,12 @@ Der Hostname muss innerhalb von Docker `db` lauten, nicht `localhost`. Benutzer,
 
 ### 3.4 Container bauen und starten
 
-Die Docker-Dateien liegen im Verzeichnis `docker/`. Alle folgenden `docker compose`-Befehle werden dort ausgeführt. Zunächst dorthin wechseln:
-
-```powershell
-cd docker
-```
+Die Docker-Dateien liegen im Verzeichnis `docker/`. Alle folgenden `docker compose`-Befehle werden aus dem Projektverzeichnis ausgeführt.
 
 Alle Dienste im Hintergrund starten:
 
 ```powershell
-docker compose up -d --build
+docker compose -f docker/docker-compose.yml up -d --build
 ```
 
 Die Option `--build` baut über den `build:`-Block in `docker/docker-compose.yml` das Image für den Dienst `web` aus `docker/Dockerfile`. Das Dockerfile erweitert das Standard-Image `php:8.2-apache` um die für diese Anwendung nötigen Bausteine: die MySQL-Treiber `pdo_mysql`/`mysqli` für die Datenbankverbindung sowie `mod_rewrite` und `AllowOverride All`, damit die `.htaccess` der API greift. Die Dienste `db` und `phpmyadmin` nutzen dagegen fertige Images von Docker Hub und werden nicht lokal gebaut. Das Dockerfile wird nie direkt aufgerufen, sondern immer über `docker compose`.
@@ -102,7 +100,7 @@ Die Option `--build` baut über den `build:`-Block in `docker/docker-compose.yml
 Beim ersten Start werden die Images heruntergeladen, das PHP-Image gebaut und die MySQL-Datenbank initialisiert. Das kann einige Minuten dauern. Den Status zeigt:
 
 ```powershell
-docker compose ps
+docker compose -f docker/docker-compose.yml ps
 ```
 
 Die Dienste `web`, `db` und `phpmyadmin` sollten den Status `Up` beziehungsweise `running` haben.
@@ -152,40 +150,40 @@ Für die Anmeldung die MySQL-Daten aus `docker/docker-compose.yml` verwenden, st
 Container stoppen, ohne die Datenbank zu löschen:
 
 ```powershell
-docker compose stop
+docker compose -f docker/docker-compose.yml stop
 ```
 
 Gestoppte Container wieder starten:
 
 ```powershell
-docker compose start
+docker compose -f docker/docker-compose.yml start
 ```
 
 Container entfernen, aber die gespeicherte Datenbank behalten:
 
 ```powershell
-docker compose down
+docker compose -f docker/docker-compose.yml down
 ```
 
 Protokolle anzeigen:
 
 ```powershell
-docker compose logs -f
+docker compose -f docker/docker-compose.yml logs -f
 ```
 
 Nach einer Änderung am Frontend erneut `npm run build` ausführen. Änderungen unter `php-api/` werden durch die Docker-Verzeichnisfreigabe direkt übernommen. Nach Änderungen an `docker/Dockerfile` oder `docker/docker-compose.yml` neu bauen und starten:
 
 ```powershell
-docker compose up -d --build
+docker compose -f docker/docker-compose.yml up -d --build
 ```
 
-Die Datenbank liegt im Docker-Volume `db_data`. Der Befehl `docker compose down -v` löscht dieses Volume und damit sämtliche Anwendungsdaten; er sollte nur für eine bewusst gewünschte vollständige Neuinstallation verwendet werden.
+Die Datenbank liegt im Docker-Volume `db_data`. Der Befehl `docker compose -f docker/docker-compose.yml down -v` löscht dieses Volume und damit sämtliche Anwendungsdaten; er sollte nur für eine bewusst gewünschte vollständige Neuinstallation verwendet werden.
 
 ### 3.8 Häufige Docker-Probleme
 
 - **Port 80 ist belegt:** Einen anderen Webserver wie XAMPP/IIS stoppen oder in `docker/docker-compose.yml` beispielsweise `8081:80` eintragen. Die Anwendung ist dann unter `http://localhost:8081/gratulationsdienst/` erreichbar.
 - **Health-Test liefert 404:** Prüfen, ob `../php-api` im Dienst `web` nach `/var/www/html/gratulationsdienst/php-api` eingebunden ist.
-- **Health-Test liefert 500:** Mit `docker compose logs web` das Apache/PHP-Protokoll und mit `docker compose logs db` den Datenbankstart prüfen.
+- **Health-Test liefert 500:** Mit `docker compose -f docker/docker-compose.yml logs web` das Apache/PHP-Protokoll und mit `docker compose -f docker/docker-compose.yml logs db` den Datenbankstart prüfen.
 - **Datenbankverbindung schlägt fehl:** In `php-api/config.php` muss der Datenbankhost `db` sein. Zugangsdaten müssen mit `docker/docker-compose.yml` übereinstimmen.
 - **Altes Frontend wird angezeigt:** `npm run build` erneut ausführen und die Browserseite ohne Cache neu laden.
 
