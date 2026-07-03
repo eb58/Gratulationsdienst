@@ -27,6 +27,24 @@ describe('CSV parsing', () => {
     ]);
   });
 
+  it('keeps delimiters and escaped quotes inside quoted cells', () => {
+    assert.deepEqual(parseCsv('Vorname;Nachname;Notiz\nErika;Mustermann;"Haus; Eingang ""B"""'), [
+      { Vorname: 'Erika', Nachname: 'Mustermann', Notiz: 'Haus; Eingang "B"' }
+    ]);
+  });
+
+  it('keeps line breaks inside quoted cells', () => {
+    assert.deepEqual(parseCsv('Vorname;Notiz\nErika;"Zeile 1\nZeile 2"'), [
+      { Vorname: 'Erika', Notiz: 'Zeile 1\nZeile 2' }
+    ]);
+  });
+
+  it('parses quoted cells with comma delimiter', () => {
+    assert.deepEqual(parseCsv('Name,Notiz\n"Mustermann, Erika","A, B"'), [
+      { Name: 'Mustermann, Erika', Notiz: 'A, B' }
+    ]);
+  });
+
   it('ignores blank lines around the data', () => {
     assert.deepEqual(parseCsv('\nVorname,Nachname\nErika,Mustermann\n\n'), [
       { Vorname: 'Erika', Nachname: 'Mustermann' }

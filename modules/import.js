@@ -1,10 +1,41 @@
-export const detectDelimiter = text => [";", "\t", ","]
-  .map(delimiter => [delimiter, (((String(text ?? "").trimStart()).split(/\r?\n/)[0] || "").split(delimiter).length - 1)])
-  .sort((a, b) => b[1] - a[1])[0][0];
 export const cleanCell = value => String(value ?? "").trim().replace(/^"|"$/g, "").replaceAll('""', '"');
+const parsedCell = value => String(value ?? "").trim();
+const parseCsvRecords = (text, delimiter) => {
+  const records = [];
+  let row = [];
+  let cell = "";
+  let inQuotes = false;
+  const source = String(text ?? "").replace(/^\uFEFF/, "").trim();
+  for (let index = 0; index < source.length; index++) {
+    const char = source[index];
+    if (char === '"' && (inQuotes || cell.trim() === "")) {
+      if (inQuotes && source[index + 1] === '"') {
+        cell += '"';
+        index += 1;
+      } else inQuotes = !inQuotes;
+    } else if (char === delimiter && !inQuotes) {
+      row.push(parsedCell(cell));
+      cell = "";
+    } else if ((char === "\n" || char === "\r") && !inQuotes) {
+      if (char === "\r" && source[index + 1] === "\n") index += 1;
+      row.push(parsedCell(cell));
+      records.push(row);
+      row = [];
+      cell = "";
+    } else cell += char;
+  }
+  if (cell !== "" || row.length) {
+    row.push(parsedCell(cell));
+    records.push(row);
+  }
+  return records.filter(record => record.some(value => value !== ""));
+};
+export const detectDelimiter = text => [";", "\t", ","]
+  .map(delimiter => [delimiter, (parseCsvRecords(text, delimiter)[0]?.length || 1) - 1])
+  .sort((a, b) => b[1] - a[1])[0][0];
 export const parseCsv = text => {
   const delimiter = detectDelimiter(text);
-  const rows = text.trim().split(/\r?\n/).filter(Boolean).map(line => line.split(delimiter).map(cleanCell));
+  const rows = parseCsvRecords(text, delimiter);
   const headers = rows[0] || [];
   return rows.slice(1).map(row => Object.fromEntries(headers.map((header, index) => [header, row[index] || ""])));
 };
