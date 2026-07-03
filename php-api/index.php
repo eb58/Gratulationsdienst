@@ -218,7 +218,7 @@ function dispatch(array $db): void
     }
 
     if (($route[0] ?? '') === 'questionnaire-pages') {
-        handleQuestionnairePages($db, $method, array_slice($route, 1));
+        handleQuestionnairePages($db, $method, array_slice($route, 1), $user);
         return;
     }
 
@@ -321,7 +321,7 @@ function handleSettings(array $db, string $method, array $route, array $user): v
     respond(['error' => 'Methode nicht erlaubt.'], 405);
 }
 
-function handleQuestionnairePages(array $db, string $method, array $route): void
+function handleQuestionnairePages(array $db, string $method, array $route, array $user): void
 {
     if ($method === 'GET') {
         $citizenId = trim((string)($_GET['citizenId'] ?? ''));
@@ -348,6 +348,7 @@ function handleQuestionnairePages(array $db, string $method, array $route): void
             deleteQuestionnairePagesForCitizens($db, $citizenIds);
             respond(['ok' => true, 'deletedCitizenIds' => $citizenIds]);
         }
+        requireAdmin($user);
         executeStatement($db, 'DELETE FROM gd_questionnaire_pages', []);
         respond(['ok' => true]);
     }
