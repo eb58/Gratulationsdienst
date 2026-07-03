@@ -51,7 +51,8 @@ try {
 } catch (ApiError $error) {
     respond($error->response(), $error->status);
 } catch (Throwable $error) {
-    respond(['error' => $error->getMessage()], 500);
+    error_log(sprintf('Gratulationsdienst-API: %s in %s:%d', $error->getMessage(), $error->getFile(), $error->getLine()));
+    respond(['error' => 'Interner Serverfehler.'], 500);
 }
 
 function collectionConfig(string $collection): array
@@ -686,7 +687,7 @@ function deleteQuestionnairePagesForCitizens(array $db, array $citizenIds): int
 function saveQuestionnairePage(array $db, array $page, int $index): array
 {
     $citizenId = trim((string)($page['citizenId'] ?? $page['citizen_id'] ?? ''));
-    if ($citizenId === '') throw new RuntimeException('Fragebogen-Seite braucht citizenId.');
+    if ($citizenId === '') throw new ApiError(422, 'Fragebogen-Seite braucht citizenId.');
     [$mimeType, $imageData] = questionnaireImageFromDataUrl((string)($page['image'] ?? ''));
     $id = trim((string)($page['id'] ?? '')) ?: newId('QP');
     $source = substr(trim((string)($page['source'] ?? 'pdf')), 0, 40);
@@ -705,10 +706,10 @@ function saveQuestionnairePage(array $db, array $page, int $index): array
 function questionnaireImageFromDataUrl(string $image): array
 {
     if (!preg_match('/^data:([^;,]+);base64,(.+)$/s', trim($image), $match)) {
-        throw new RuntimeException('Fragebogen-Bild muss ein Data-URL sein.');
+        throw new ApiError(422, 'Fragebogen-Bild muss ein Data-URL sein.');
     }
     $data = base64_decode(str_replace(["\r", "\n"], '', $match[2]), true);
-    if ($data === false || $data === '') throw new RuntimeException('Fragebogen-Bild ist ungültig.');
+    if ($data === false || $data === '') throw new ApiError(422, 'Fragebogen-Bild ist ungültig.');
     return [$match[1], $data];
 }
 
@@ -764,8 +765,8 @@ function incomingItemsById(array $items, string $collection): array
     foreach ($items as $item) {
         $item = requireObject($item);
         $id = itemId($item);
-        if ($id === '') throw new RuntimeException("Datensatz in {$collection} braucht ein id-Feld.");
-        if (array_key_exists($id, $byId)) throw new RuntimeException("Datensatz {$id} ist in {$collection} doppelt enthalten.");
+        if ($id === '') throw new ApiError(422, "Datensatz in {$collection} braucht ein id-Feld.");
+        if (array_key_exists($id, $byId)) throw new ApiError(422, "Datensatz {$id} ist in {$collection} doppelt enthalten.");
         $item['id'] = $id;
         $byId[$id] = $item;
     }
@@ -1422,13 +1423,13 @@ function readJson(): mixed
 
 function requireObject(mixed $value): array
 {
-    if (!is_array($value) || array_is_list($value)) throw new RuntimeException('JSON-Objekt erwartet.');
+    if (!is_array($value) || array_is_list($value)) throw new ApiError(400, 'JSON-Objekt erwartet.');
     return $value;
 }
 
 function requireList(mixed $value, string $name): array
 {
-    if (!is_array($value) || !array_is_list($value)) throw new RuntimeException("{$name} muss eine Liste sein.");
+    if (!is_array($value) || !array_is_list($value)) throw new ApiError(400, "{$name} muss eine Liste sein.");
     return $value;
 }
 
