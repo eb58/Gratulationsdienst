@@ -75,8 +75,7 @@ export const deleteQuestionnairePagesForCitizens = citizenIds => {
 export const saveQuestionnairePages = pages => {
   const payload = pagesWithImages(pages);
   if (!payload.length) return Promise.resolve([]);
-  attachPages(payload);
-  if (!hasBackend()) return Promise.resolve(payload);
+  if (!hasBackend()) return Promise.resolve(attachPages(payload));
   return apiRequest("/questionnaire-pages", {
     method: "POST",
     body: JSON.stringify({ pages: payload })
@@ -89,6 +88,6 @@ export const saveQuestionnairePages = pages => {
     })
     .catch(error => {
       console.warn("Fragebogen-Scans konnten nicht in der Datenbank gespeichert werden.", error);
-      return [];
+      throw Object.assign(new Error("Fragebogen-Scans konnten nicht in der Datenbank gespeichert werden."), { cause: error });
     });
 };

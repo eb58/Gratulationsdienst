@@ -226,9 +226,15 @@ const applySokoPdfImport = async (file, generatedPages = []) => {
     ? parsed.pages.map((page, index) => ({ ...page, citizenId: generatedPages[index]?.citizenId || page.citizenId }))
     : parsed.pages;
   const result = applySokoQuestionnaireResults(state.data.citizens, pages);
+  const previousCitizens = state.data.citizens;
   state.data.citizens = result.citizens;
   const imagePages = sokoQuestionnaireImagePages(result.pages, generatedPages.length ? generatedPages : parsed.pages);
-  await saveQuestionnairePages(imagePages);
+  try {
+    await saveQuestionnairePages(imagePages);
+  } catch (error) {
+    state.data.citizens = previousCitizens;
+    throw error;
+  }
   return result;
 };
 

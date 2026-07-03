@@ -26,6 +26,7 @@ globalThis.document = {
 };
 
 let renderCitizenDetailCount = 0;
+let saveQuestionnairePagesImpl = async pages => pages;
 
 mock.module('../modules/render.js', {
   namedExports: { render: () => {}, renderDialog: () => {}, applyPendingFocus: () => {} }
@@ -49,7 +50,7 @@ mock.module('../modules/sokoQuestionnaireSimulation.js', {
 });
 mock.module('../modules/questionnairePages.js', {
   namedExports: {
-    saveQuestionnairePages: async pages => pages,
+    saveQuestionnairePages: pages => saveQuestionnairePagesImpl(pages),
     deleteAllQuestionnairePages: async () => {},
     deleteQuestionnairePagesForCitizens: async () => {}
   }
@@ -57,7 +58,9 @@ mock.module('../modules/questionnairePages.js', {
 mock.module('../modules/sokoQuestionnaire.js', {
   namedExports: {
     applySokoQuestionnaireResults: citizens => ({
-      citizens,
+      citizens: citizens.map(citizen => citizen.id === 'G-1'
+        ? { ...citizen, wish: 'per Post', status: 'geladen' }
+        : citizen),
       pages: [{ applied: true, ok: true, citizen: { id: 'G-1' }, image: 'data:image/png;base64,a', marks: {} }]
     })
   }
@@ -95,6 +98,7 @@ const setVisibleCitizenRows = ids => {
 
 beforeEach(() => {
   renderCitizenDetailCount = 0;
+  saveQuestionnairePagesImpl = async pages => pages;
   state.data = {
     citizens: [citizen('G-1', 'Alpha'), citizen('G-2', 'Beta')],
     sokoGroups: [],
@@ -125,5 +129,16 @@ describe('SOKO-PDF UI refresh', () => {
     await actions['run-soko-pdf-import']({ file: { name: 'scan.pdf', type: 'application/pdf' } });
 
     assert.equal(state.selectedCitizenId, 'G-2');
+  });
+
+  it('rolls back citizen changes when questionnaire scans cannot be saved', async () => {
+    saveQuestionnairePagesImpl = async () => { throw new Error('scan save failed'); };
+    const previousCitizens = structuredClone(state.data.citizens);
+    setVisibleCitizenRows(['G-1']);
+
+    await actions['run-soko-pdf-import']({ file: { name: 'scan.pdf', type: 'application/pdf' } });
+
+    assert.deepEqual(state.data.citizens, previousCitizens);
+    assert.equal(renderCitizenDetailCount, 0);
   });
 });
