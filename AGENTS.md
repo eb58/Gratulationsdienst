@@ -15,6 +15,7 @@
 - `docs/lastenheft-kurz.md` ist die komprimierte fachliche Lesefassung.
 - `Lastenheft.pdf` im Repo-Root ist die fachliche Referenz und bei Anforderungen zuerst zu beachten.
 - Import- und Dokumentenlauf-Aenderungen immer zusammen mit den zugehoerigen Tests anfassen.
+- Bei Schemaaenderungen (neue `ensureColumn`/`ensureIndex`-Zeile in `initSchema`) die Konstante `SCHEMA_VERSION` in `php-api/index.php` erhoehen, sonst laeuft die Migration nach dem Deployment nicht.
 - Wenn ein Verhalten dauerhaft fuer Codex relevant ist, gehoert es hier hinein, nicht nur in den Prompt.
 
 ## Pruefen

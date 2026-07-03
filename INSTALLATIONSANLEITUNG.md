@@ -229,7 +229,7 @@ return [
 
 `config.php` enthält Zugangsdaten und darf nicht veröffentlicht oder in Git eingecheckt werden. Die Datei ist bereits über `php-api/.gitignore` ausgeschlossen.
 
-Das Datenbankschema muss nicht manuell importiert werden. Die API führt `php-api/schema.mysql.sql` beim ersten Aufruf selbst aus und ergänzt bei späteren Versionen fehlende Spalten und Indizes.
+Das Datenbankschema muss nicht manuell importiert werden. Die API führt `php-api/schema.mysql.sql` selbst aus und ergänzt fehlende Spalten und Indizes. Gesteuert wird das über die Konstante `SCHEMA_VERSION` in `php-api/index.php`: Die Migration läuft nur, wenn die in `gd_api_meta` gespeicherte Version davon abweicht (also einmal nach einem Deployment mit Schemaänderung), sonst überspringt jeder Request sie.
 
 ## 6. Lokal ohne Docker starten
 

@@ -1,6 +1,9 @@
 <?php
 declare(strict_types=1);
 
+// Bei jeder Schema-Aenderung (neue ensureColumn/ensureIndex-Zeile in initSchema) erhoehen,
+// damit die Migration nach dem Deployment einmal laeuft; danach ueberspringt sie jeder Request.
+const SCHEMA_VERSION = '4';
 const COLLECTIONS = ['citizens', 'sokoGroups', 'sokoMembers', 'streets', 'senders', 'templates'];
 const ADMIN_COLLECTIONS = ['sokoGroups', 'sokoMembers', 'streets', 'senders', 'templates'];
 const SESSION_TTL_SECONDS = 28800;
@@ -45,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 try {
     $db = db();
-    initSchema($db);
+    ensureSchema($db);
     dispatch($db);
 } catch (ApiError $error) {
     respond($error->response(), $error->status);
@@ -599,6 +602,32 @@ function db(): array
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
     return ['driver' => $pdo->getAttribute(PDO::ATTR_DRIVER_NAME), 'pdo' => $pdo, 'config' => $config];
+}
+
+function ensureSchema(array $db): void
+{
+    if (storedSchemaVersion($db) === SCHEMA_VERSION) return;
+    initSchema($db);
+    setSchemaVersion($db, SCHEMA_VERSION);
+}
+
+function storedSchemaVersion(array $db): string
+{
+    try {
+        $row = fetchOne($db, 'SELECT value FROM gd_api_meta WHERE name = ?', ['schema_version']);
+        return (string)($row['value'] ?? '');
+    } catch (Throwable) {
+        return ''; // gd_api_meta existiert noch nicht -> initSchema legt sie an.
+    }
+}
+
+function setSchemaVersion(array $db, string $version): void
+{
+    if ($db['driver'] === 'mysqli' || $db['driver'] === 'mysql') {
+        executeStatement($db, 'INSERT INTO gd_api_meta (name, value) VALUES (?, ?) ON DUPLICATE KEY UPDATE value = VALUES(value)', ['schema_version', $version]);
+        return;
+    }
+    executeStatement($db, 'INSERT INTO gd_api_meta (name, value) VALUES (?, ?) ON CONFLICT(name) DO UPDATE SET value = excluded.value', ['schema_version', $version]);
 }
 
 function initSchema(array $db): void
