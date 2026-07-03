@@ -151,6 +151,8 @@ Rollen:
 
 Nur Admins dürfen Stammdaten bearbeiten oder Testdaten löschen/erzeugen.
 
+Anmeldung, MFA-Verifikation und Passwort-Reset sind ratenbegrenzt (Tabelle `gd_auth_rate_limits`): pro E-Mail-Adresse und pro IP gilt ein Versuchslimit, bei Überschreitung antwortet die API mit HTTP 429. Ein MFA-Ticket wird nach fünf Fehlversuchen entwertet; ein erfolgreicher Login setzt den Zähler der E-Mail-Adresse zurück.
+
 ### 6.9 Bestehende Datenquellen
 
 Die Leistungsbeschreibung nennt drei relevante Datenquellen:
@@ -275,5 +277,5 @@ Die folgende Liste ist eine technische Vorprüfung, kein formales BITV-Audit. Si
 ## 11. Wichtige Annahmen und Grenzen
 
 - Die Anwendung ist bewusst auf Browser-Rendering ausgelegt, nicht auf eine serverseitig gerenderte Architektur.
-- Die API erlaubt im aktuellen Stand CORS für alle Origins. Festgelegt wird das in `php-api/index.php` über den Header `Access-Control-Allow-Origin`; produktiv sollte dort die tatsächliche Domain eingetragen werden.
+- Die API sendet keine CORS-Freigaben; Frontend und API laufen in allen Betriebsarten same-origin (produktiv unter derselben Domain, im Dev-Modus über den Vite-Proxy). Ein Cross-Origin-Betrieb würde eine explizite, auf die konkrete Herkunft beschränkte Freigabe in `php-api/index.php` erfordern.
 - Kartenkacheln kommen von OpenStreetMap, die Geometrien und Address-Points aus den mitgelieferten Daten.

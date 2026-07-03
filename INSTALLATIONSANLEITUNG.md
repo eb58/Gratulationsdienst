@@ -328,7 +328,7 @@ Das mitgelieferte Skript `deploy.ps1` ist auf den derzeit hinterlegten Server un
 - Anwendung ausschließlich über HTTPS bereitstellen.
 - Datenbankzugang nur für den notwendigen Host freigeben.
 - `php-api/config.php` außerhalb öffentlicher Downloads halten und restriktive Dateirechte setzen.
-- In `php-api/index.php` den derzeit offenen CORS-Header `Access-Control-Allow-Origin: *` auf die tatsächliche Herkunft der Anwendung einschränken.
+- Frontend und API unter derselben Domain betreiben; die API sendet keine CORS-Freigaben. Nur bei einem bewussten Cross-Origin-Setup eine auf die konkrete Herkunft beschränkte Freigabe in `php-api/index.php` ergänzen (nie `*`).
 - Regelmäßige Sicherungen der MySQL-Datenbank einrichten.
 - E-Mail-Versand testen, falls Benutzer den Passwort-Reset verwenden sollen.
 
