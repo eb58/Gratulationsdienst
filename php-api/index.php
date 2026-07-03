@@ -13,6 +13,9 @@ const PASSWORD_RESET_RATE_LIMIT_SECONDS = 3600;
 const PASSWORD_RESET_RATE_LIMIT_MAX = 5;
 const LOGIN_RATE_LIMIT_SECONDS = 900;
 const LOGIN_RATE_LIMIT_MAX = 10;
+// Fester Bcrypt-Hash (cost 10, wie PASSWORD_DEFAULT), gegen den bei unbekannter E-Mail
+// verifiziert wird, damit die Antwortzeit keine Konten verraet (User-Enumeration).
+const LOGIN_DUMMY_HASH = '$2y$10$LMkJZ/MwWMBzkrchox2mzOoW4AXQQTkViWY9JE7NjBJRgeIKpFkrq';
 const MFA_VERIFY_MAX_ATTEMPTS = 5;
 // Aufbewahrung muss das größte Fenster abdecken, sonst unterläuft das Aufräumen längere Limits.
 const RATE_LIMIT_RETENTION_SECONDS = PASSWORD_RESET_RATE_LIMIT_SECONDS;
@@ -399,7 +402,9 @@ function handleAuth(array $db, string $method, array $route): void
             && rateLimit($db, 'login-ip:' . hash('sha256', clientIp()), LOGIN_RATE_LIMIT_MAX * 2, LOGIN_RATE_LIMIT_SECONDS);
         if (!$allowed) respond(['error' => 'Zu viele Anmeldeversuche. Bitte später erneut probieren.'], 429);
         $user = userByEmail($db, $email);
-        if (!$user || !(bool)$user['active'] || !password_verify((string)($data['password'] ?? ''), (string)$user['password_hash'])) {
+        $active = $user && (bool)$user['active'];
+        $passwordOk = password_verify((string)($data['password'] ?? ''), $active ? (string)$user['password_hash'] : LOGIN_DUMMY_HASH);
+        if (!$active || !$passwordOk) {
             respond(['error' => 'Anmeldung fehlgeschlagen.'], 401);
         }
         clearRateLimit($db, $emailLimitKey);
