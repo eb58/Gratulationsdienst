@@ -46,7 +46,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 try {
     $db = db();
     initSchema($db);
-    migrateLegacyCollections($db);
     dispatch($db);
 } catch (ApiError $error) {
     respond($error->response(), $error->status);
@@ -1354,53 +1353,6 @@ function ensureIndex(array $db, string $table, string $index, string $sql): void
     }
 
     if (!fetchOne($db, "SHOW INDEX FROM {$table} WHERE Key_name = ?", [$index])) executeStatement($db, $sql);
-}
-
-function migrateLegacyCollections(array $db): void
-{
-    if (!legacyTableExists($db) || relationalDataExists($db)) return;
-
-    transaction($db, static function () use ($db): void {
-        foreach (COLLECTIONS as $collection) {
-            $legacyRows = legacyCollection($db, $collection);
-            if ($legacyRows) replaceCollection($db, $collection, $legacyRows);
-        }
-    });
-    dropLegacyTable($db);
-}
-
-function legacyTableExists(array $db): bool
-{
-    return (bool)fetchOne($db, "SHOW TABLES LIKE 'gd_data_items'");
-}
-
-function relationalDataExists(array $db): bool
-{
-    foreach (COLLECTIONS as $collection) {
-        $config = collectionConfig($collection);
-        $row = fetchOne($db, 'SELECT COUNT(*) AS count_rows FROM ' . $config['table']);
-        if ((int)($row['count_rows'] ?? 0) > 0) return true;
-    }
-    return false;
-}
-
-function legacyCollection(array $db, string $collection): array
-{
-    if ($db['driver'] === 'mysqli') {
-        $stmt = $db['mysqli']->prepare('SELECT payload FROM gd_data_items WHERE collection = ? ORDER BY item_id');
-        $stmt->bind_param('s', $collection);
-        $stmt->execute();
-        return array_map(static fn ($row) => json_decode($row['payload'], true, flags: JSON_THROW_ON_ERROR), $stmt->get_result()->fetch_all(MYSQLI_ASSOC));
-    }
-
-    $stmt = $db['pdo']->prepare('SELECT payload FROM gd_data_items WHERE collection = ? ORDER BY item_id');
-    $stmt->execute([$collection]);
-    return array_map(static fn ($row) => json_decode($row['payload'], true, flags: JSON_THROW_ON_ERROR), $stmt->fetchAll());
-}
-
-function dropLegacyTable(array $db): void
-{
-    executeStatement($db, 'DROP TABLE IF EXISTS gd_data_items');
 }
 
 function parseDsn(string $dsn): array
