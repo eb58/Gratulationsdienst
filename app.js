@@ -7,7 +7,7 @@ import { actions } from './modules/actions.js';
 import { hasDirtyForm, requestDirtyFormLeave, trackDirtyFormChange } from './modules/dirtyForms.js';
 import { runBusy } from './modules/busy.js';
 
-window.GRATULATIONSDIENST_VERSION = "20260608-6";
+window.GRATULATIONSDIENST_VERSION = typeof __APP_VERSION__ === "undefined" ? "dev" : __APP_VERSION__;
 
 const SIDEBAR_COLLAPSED_KEY = "gd_sidebar_collapsed";
 const initialParams = new URLSearchParams(location.search);
