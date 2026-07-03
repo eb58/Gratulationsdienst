@@ -228,7 +228,7 @@ describe('view partials', () => {
     assert.match(html, /1 Adressen/);
 
     state.showMapPeople = false;
-    const hiddenHtml = sokoMapInfoHtml('SOKO 01', 'TeststraÃŸe');
+    const hiddenHtml = sokoMapInfoHtml('SOKO 01', 'Teststraße');
     assert.doesNotMatch(hiddenHtml, /Lea Leitung/);
     assert.doesNotMatch(hiddenHtml, /Erika Mustermann/);
     assert.match(hiddenHtml, /1 Adressen/);

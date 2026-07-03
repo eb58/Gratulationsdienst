@@ -691,7 +691,7 @@ function questionnaireImageFromDataUrl(string $image): array
         throw new RuntimeException('Fragebogen-Bild muss ein Data-URL sein.');
     }
     $data = base64_decode(str_replace(["\r", "\n"], '', $match[2]), true);
-    if ($data === false || $data === '') throw new RuntimeException('Fragebogen-Bild ist ungÃ¼ltig.');
+    if ($data === false || $data === '') throw new RuntimeException('Fragebogen-Bild ist ungültig.');
     return [$match[1], $data];
 }
 
@@ -1348,9 +1348,6 @@ function migrateLegacyCollections(array $db): void
 
 function legacyTableExists(array $db): bool
 {
-    if ($db['driver'] === 'mysqli') {
-        return (bool)fetchOne($db, "SHOW TABLES LIKE 'gd_data_items'");
-    }
     return (bool)fetchOne($db, "SHOW TABLES LIKE 'gd_data_items'");
 }
 
