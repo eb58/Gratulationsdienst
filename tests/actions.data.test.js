@@ -186,6 +186,7 @@ describe('SOKO-Mitglieder', () => {
   it('export-soko erzeugt eine CSV mit Kopfzeile und Mitglied', () => {
     actions['export-soko']();
     const csv = lastBlobParts[0];
+    assert.equal(csv.codePointAt(0), 0xFEFF); // BOM, damit Excel UTF-8 korrekt liest
     assert.match(csv, /"id";"anrede";"vorname"/); // csvEscape quotet jeden Wert
     assert.match(csv, new RegExp(state.data.sokoMembers[0].id));
   });
