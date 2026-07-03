@@ -8,6 +8,11 @@ const MFA_TICKET_TTL_SECONDS = 300;
 const PASSWORD_RESET_TTL_SECONDS = 900;
 const PASSWORD_RESET_RATE_LIMIT_SECONDS = 3600;
 const PASSWORD_RESET_RATE_LIMIT_MAX = 5;
+const LOGIN_RATE_LIMIT_SECONDS = 900;
+const LOGIN_RATE_LIMIT_MAX = 10;
+const MFA_VERIFY_MAX_ATTEMPTS = 5;
+// Aufbewahrung muss das größte Fenster abdecken, sonst unterläuft das Aufräumen längere Limits.
+const RATE_LIMIT_RETENTION_SECONDS = PASSWORD_RESET_RATE_LIMIT_SECONDS;
 const MFA_ISSUER = 'Gratulationsdienst Reinickendorf';
 const RECEIPT_SETTINGS_NAME = 'receipt';
 const VERSION_FIELD = '_version';
@@ -387,10 +392,16 @@ function handleAuth(array $db, string $method, array $route): void
 
     if ($method === 'POST' && $action === 'login') {
         $data = requireObject(readJson());
-        $user = userByEmail($db, normalizedEmail($data['email'] ?? ''));
+        $email = normalizedEmail($data['email'] ?? '');
+        $emailLimitKey = 'login-email:' . hash('sha256', $email);
+        $allowed = rateLimit($db, $emailLimitKey, LOGIN_RATE_LIMIT_MAX, LOGIN_RATE_LIMIT_SECONDS)
+            && rateLimit($db, 'login-ip:' . hash('sha256', clientIp()), LOGIN_RATE_LIMIT_MAX * 2, LOGIN_RATE_LIMIT_SECONDS);
+        if (!$allowed) respond(['error' => 'Zu viele Anmeldeversuche. Bitte später erneut probieren.'], 429);
+        $user = userByEmail($db, $email);
         if (!$user || !(bool)$user['active'] || !password_verify((string)($data['password'] ?? ''), (string)$user['password_hash'])) {
             respond(['error' => 'Anmeldung fehlgeschlagen.'], 401);
         }
+        clearRateLimit($db, $emailLimitKey);
         if ((bool)$user['mfa_enabled']) {
             $ticket = createAuthToken($db, $user['id'], 'mfa', MFA_TICKET_TTL_SECONDS);
             respond(['mfaRequired' => true, 'ticket' => $ticket, 'user' => publicUser($user)]);
@@ -406,12 +417,20 @@ function handleAuth(array $db, string $method, array $route): void
 
     if ($method === 'POST' && $action === 'mfa' && ($route[1] ?? '') === 'verify') {
         $data = requireObject(readJson());
-        $tokenRow = authTokenRow($db, (string)($data['ticket'] ?? ''), 'mfa');
+        $ticket = (string)($data['ticket'] ?? '');
+        if (!rateLimit($db, 'mfa-ip:' . hash('sha256', clientIp()), LOGIN_RATE_LIMIT_MAX * 2, LOGIN_RATE_LIMIT_SECONDS)) {
+            respond(['error' => 'Zu viele Versuche. Bitte später erneut probieren.'], 429);
+        }
+        $tokenRow = authTokenRow($db, $ticket, 'mfa');
         $user = $tokenRow ? userById($db, (string)$tokenRow['user_id']) : null;
         if (!$user || !verifyTotp((string)$user['mfa_secret'], (string)($data['code'] ?? ''))) {
+            // Nach zu vielen Fehlversuchen das Ticket entwerten, sonst ließe sich der Code durchprobieren.
+            if ($tokenRow && !rateLimit($db, 'mfa-ticket:' . tokenHash($ticket), MFA_VERIFY_MAX_ATTEMPTS, MFA_TICKET_TTL_SECONDS)) {
+                deleteAuthToken($db, $ticket);
+            }
             respond(['error' => 'MFA-Code ist ungültig.'], 401);
         }
-        deleteAuthToken($db, (string)$data['ticket']);
+        deleteAuthToken($db, $ticket);
         respond(authResponse($db, $user));
     }
 
@@ -1078,7 +1097,7 @@ function cleanupAuthTokens(array $db): void
 
 function rateLimit(array $db, string $key, int $maxAttempts, int $windowSeconds): bool
 {
-    cleanupRateLimits($db, $windowSeconds);
+    cleanupRateLimits($db, RATE_LIMIT_RETENTION_SECONDS);
     $now = time();
     $row = fetchOne($db, 'SELECT attempts, first_attempt_at FROM gd_auth_rate_limits WHERE limit_key = ?', [$key]);
     if (!$row || strtotime((string)$row['first_attempt_at']) <= $now - $windowSeconds) {
@@ -1102,6 +1121,11 @@ function upsertRateLimit(array $db, string $key, int $attempts, string $firstAtt
 function cleanupRateLimits(array $db, int $windowSeconds): void
 {
     executeStatement($db, 'DELETE FROM gd_auth_rate_limits WHERE last_attempt_at <= ?', [sqlDateTime(time() - $windowSeconds)]);
+}
+
+function clearRateLimit(array $db, string $key): void
+{
+    executeStatement($db, 'DELETE FROM gd_auth_rate_limits WHERE limit_key = ?', [$key]);
 }
 
 function sendPasswordResetMail(array $db, array $user, string $token): void
