@@ -54,10 +54,17 @@ describe('buildImportResult', () => {
   });
 
   it('continues ids after existing citizens', () => {
-    const existing = [row({ firstName: 'Alt', lastName: 'Bestand', birthDate: '1930-01-01' })];
+    const existing = [row({ id: 'G-2026-001', firstName: 'Alt', lastName: 'Bestand', birthDate: '1930-01-01' })];
     const result = buildImportResult([row()], existing, assignTegel);
 
     assert.equal(result.newRows[0].id, 'G-2026-002');
+  });
+
+  it('reuses freed numbers only above the highest remaining id', () => {
+    const existing = [row({ id: 'G-2026-001', firstName: 'Alt', lastName: 'Bestand', birthDate: '1930-01-01' }), row({ id: 'G-2026-005', firstName: 'Zweit', lastName: 'Bestand', birthDate: '1931-01-01' })];
+    const result = buildImportResult([row()], existing, assignTegel);
+
+    assert.equal(result.newRows[0].id, 'G-2026-006');
   });
 
   it('flags rows with missing mandatory fields as errors without importing them', () => {

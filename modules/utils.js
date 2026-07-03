@@ -120,7 +120,14 @@ export const repairStoredText = value => Array.isArray(value)
     ? Object.fromEntries(Object.entries(value).map(([key, entry]) => [key, repairStoredText(entry)]))
     : repairMojibakeText(value);
 export const updateItem = (items, id, patch) => items.map(item => item.id === id ? { ...item, ...patch } : item);
-export const nextId = (prefix, items) => `${prefix}-${String(items.length + 1).padStart(3, "0")}`;
+export const nextId = (prefix, items) => {
+  const pattern = new RegExp(`^${prefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}-(\\d+)$`);
+  const highest = (items || []).reduce((max, item) => {
+    const match = pattern.exec(String(item?.id ?? ""));
+    return match ? Math.max(max, Number(match[1])) : max;
+  }, 0);
+  return `${prefix}-${String(highest + 1).padStart(3, "0")}`;
+};
 export const csvEscape = value => `"${String(value ?? "").replaceAll('"', '""')}"`;
 export const formatStreetAddress = item => [item.street, item.houseNo].filter(Boolean).join(" ");
 export const downloadText = (name, content, type = "text/plain;charset=utf-8") => {

@@ -167,9 +167,15 @@ describe('collection helpers', () => {
     ]);
   });
 
-  it('creates the next padded id from item count', () => {
+  it('creates the next padded id from the highest existing number', () => {
     assert.equal(nextId('S', []), 'S-001');
-    assert.equal(nextId('S', [{}, {}, {}]), 'S-004');
+    assert.equal(nextId('S', [{ id: 'S-001' }, { id: 'S-002' }, { id: 'S-003' }]), 'S-004');
+  });
+
+  it('avoids collisions after deletions and ignores foreign ids', () => {
+    assert.equal(nextId('S', [{ id: 'S-001' }, { id: 'S-003' }]), 'S-004');
+    assert.equal(nextId('S', [{ id: 'S-002' }, { id: 'T-009' }, {}]), 'S-003');
+    assert.equal(nextId('G-2026', [{ id: 'G-2026-001' }, { id: 'G-85' }]), 'G-2026-002');
   });
 });
 
