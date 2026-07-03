@@ -348,13 +348,13 @@ function handleQuestionnairePages(array $db, string $method, array $route, array
     }
 
     if ($method === 'DELETE') {
+        requireAdmin($user);
         $payload = readJson();
         $citizenIds = is_array($payload) && !array_is_list($payload) ? array_values(array_filter(array_map(static fn ($id) => trim((string)$id), $payload['citizenIds'] ?? []))) : [];
         if ($citizenIds) {
             deleteQuestionnairePagesForCitizens($db, $citizenIds);
             respond(['ok' => true, 'deletedCitizenIds' => $citizenIds]);
         }
-        requireAdmin($user);
         executeStatement($db, 'DELETE FROM gd_questionnaire_pages', []);
         respond(['ok' => true]);
     }
