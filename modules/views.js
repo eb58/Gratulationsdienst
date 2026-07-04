@@ -3,7 +3,7 @@ import { months, sokoColors, streetGroupDisplay } from './domain.js';
 import { state } from './state.js';
 import { selectedCitizen, selectedTemplate, selectedSender, selectedMember, selectedStreet, filteredCitizens, activeCitizens, groupForCitizen, isCheckedCitizen, isPrintedCitizen, wantsVisit } from './assignment.js';
 import { field, emailField, postalCodeField, ibanField, selectField, textField, checkField, radioField, streetRuleRows, assignmentPill, gridHost, groupOptions, sokoSelectOptions, senderOptions, templateOptions, occasionOptions, formatOptions } from './fields.js';
-import { streetMapSvg, mapSegmentCounts, mapAddressPointGroups } from './map.js';
+import { streetMapSvg, mapSegmentCounts, mapAddressPointGroups, mapDataLoaded, ensureMapData } from './map.js';
 import { documentBackPreview, documentPreview } from './documents.js';
 import { qrCodeSvg } from './qr.js';
 import { SOKO_QUESTIONNAIRE_IMPORTED_STATUS } from './sokoQuestionnaire.js';
@@ -627,6 +627,10 @@ export const views = {
   },
 
   map: () => {
+    if (!mapDataLoaded()) {
+      ensureMapData().then(() => { if (state.view === "map") render(); });
+      return `<div class="panel map-main-panel"><div class="empty-state">Kartendaten werden geladen…</div></div>`;
+    }
     const segCounts = mapSegmentCounts();
     const addrCounts = Object.fromEntries(Object.entries(mapAddressPointGroups()).map(([g, a]) => [g, a.length]));
     return `

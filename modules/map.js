@@ -2,6 +2,14 @@ import { normalize, escapeHtml } from './utils.js';
 import { sokoGroupId, sokoColors } from './domain.js';
 import { state } from './state.js';
 import { streetNameVariants } from './assignment.js';
+import { loadScript } from './scriptLoader.js';
+
+export const mapDataLoaded = () => Boolean(globalThis.REINICKENDORF_STREET_GEOMETRIES && globalThis.REINICKENDORF_ADDRESS_POINTS);
+let mapDataPromise = null;
+export const ensureMapData = () => mapDataPromise ||= Promise.all([
+  loadScript("/data/reinickendorf-street-geometries.js"),
+  loadScript("/data/reinickendorf-address-points.js")
+]);
 
 export const mapData = () => window.REINICKENDORF_STREET_GEOMETRIES || { bbox: [], segments: [] };
 export const addressPointData = () => window.REINICKENDORF_ADDRESS_POINTS || { addresses: [] };
