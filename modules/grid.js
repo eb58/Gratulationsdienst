@@ -7,6 +7,10 @@ import { render, renderDialog } from './render.js'; // Zyklus OK: render wird nu
 import { renderCitizenDetail, renderRegionAssignment } from './views.js'; // Zyklus OK: lazy
 import { requestDirtyFormLeave } from './dirtyForms.js';
 import { loadQuestionnairePagesForCitizen } from './questionnairePages.js';
+import { loadScript } from './scriptLoader.js';
+
+let agGridPromise = null;
+export const ensureAgGrid = () => agGridPromise ||= loadScript(`${import.meta.env?.BASE_URL ?? "/"}vendor/ag-grid-community.min.js`);
 
 export const gridTheme = () => window.agGrid?.themeQuartz?.withParams ? window.agGrid.themeQuartz.withParams({
   accentColor: "#0f5d58",
@@ -337,7 +341,10 @@ export const mountGrid = element => {
   const definition = gridDefinitions[gridKey]?.();
   if (!definition) return;
   if (!window.agGrid?.createGrid) {
-    element.innerHTML = `<div class="empty-state">AG Grid konnte nicht geladen werden.</div>`;
+    element.innerHTML = `<div class="empty-state">AG Grid wird geladen…</div>`;
+    ensureAgGrid().then(() => render()).catch(() => {
+      element.innerHTML = `<div class="empty-state">AG Grid konnte nicht geladen werden.</div>`;
+    });
     return;
   }
   const storedPageSize = storedGridState(gridKey).paginationPageSize;

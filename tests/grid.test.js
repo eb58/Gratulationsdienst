@@ -150,7 +150,7 @@ describe('mountGrid', () => {
 
     mountGrid(element);
 
-    assert.match(element.innerHTML, /AG Grid konnte nicht geladen werden/);
+    assert.match(element.innerHTML, /AG Grid wird geladen/);
   });
 
   it('creates grids, restores state and saves changed state', () => {
