@@ -284,10 +284,12 @@ describe('Straßen-Zuständigkeit', () => {
 describe('Jubilare löschen und Testdaten', () => {
   it('clear-citizens nur für Admins; confirm leert Jubilare', () => {
     state.data.citizens = [{ id: 'G-1' }];
+    state.data.weddingAnniversaries = [{ id: 'WA-G-1', citizenId: 'G-1' }];
     actions['clear-citizens']();
     assert.equal(state.dialog.type, 'clear-citizens');
     actions['confirm-clear-citizens']();
     assert.deepEqual(state.data.citizens, []);
+    assert.deepEqual(state.data.weddingAnniversaries, []);
   });
 
   it('clear-citizens wird für Nicht-Admins blockiert', () => {
@@ -309,6 +311,11 @@ describe('Jubilare löschen und Testdaten', () => {
     ];
     state.selectedCitizenId = 'old-1';
     state.generatedDocs = [{ citizenId: 'old-1' }, { citizenId: 'fresh' }];
+    state.data.weddingAnniversaries = [
+      { id: 'WA-old-1', citizenId: 'old-1' },
+      { id: 'WA-old-2', citizenId: 'old-2' },
+      { id: 'WA-fresh', citizenId: 'fresh' }
+    ];
     setField('#cleanup-months', '5');
 
     actions['preview-old-citizens']();
@@ -326,6 +333,7 @@ describe('Jubilare löschen und Testdaten', () => {
     await actions['confirm-delete-old-citizens']();
 
     assert.deepEqual(state.data.citizens.map(citizen => citizen.id), ['boundary', 'fresh', 'future-created', 'future']);
+    assert.deepEqual(state.data.weddingAnniversaries.map(item => item.id), ['WA-fresh']);
     assert.equal(state.selectedCitizenId, '');
     assert.deepEqual(state.generatedDocs, [{ citizenId: 'fresh' }]);
     assert.equal(state.cleanupPreview, null);
