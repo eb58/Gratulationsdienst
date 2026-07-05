@@ -1,6 +1,6 @@
 import { $, todayIso, MONTH_KEY, CLEANUP_MONTHS_KEY, cleanupMonthsValue, isAnniversaryOlderThanMonths, isValidEmail, isValidIban, formatIban, updateItem, nextId, csvEscape, downloadText, toast, byId, normalizeEmail, normalizeAmount, normalizeDigits, isValidPostalCode, safeStorageSetItem } from './utils.js';
 import { normalizeStreetRules, streetDistrictSummary, streetGroupSummary, normalizeStreetDistrict, defaultData } from './domain.js';
-import { state, saveData, saveQuittungSettings, apiRequest, setAuthSession, clearAuthSession, loadCollectionData } from './state.js';
+import { state, saveData, saveCollectionData, saveQuittungSettings, apiRequest, setAuthSession, clearAuthSession, loadCollectionData } from './state.js';
 import { streetAssignment, filteredCitizens, documentCitizens, isPrintedCitizen, selectedTemplate, selectedSender, selectedMember, activeCitizens, groupForCitizen, isReceiptGroupReady, receiptCitizens, receiptCitizensForReadyGroups } from './assignment.js';
 import { printCurrentRun, completePrintRun, renderSokoForm, renderSokoQuittung } from './documents.js';
 import { parseCsv, mapImportRow } from './import.js';
@@ -46,7 +46,12 @@ const saveTemplatePatch = patch => {
 const authDone = session => {
   setAuthSession(session);
   render();
-  loadCollectionData();
+  // Lief die Session ab (401 beim Speichern), liegen lokal noch ungespeicherte Änderungen vor.
+  // Die werden nach dem Login zuerst nachgespeichert, sonst würde loadCollectionData sie verwerfen.
+  // Baselines existieren nur, wenn in diesem Tab bereits Server-Daten geladen wurden; bei einem
+  // Konflikt lädt handleSaveError ohnehin den Server-Stand.
+  const pushPending = Object.keys(state.collectionBaselines || {}).length > 0 ? saveCollectionData(state.data) : Promise.resolve();
+  pushPending.then(() => loadCollectionData());
 };
 const authFail = error => {
   state.auth.message = error.message || "Aktion fehlgeschlagen.";

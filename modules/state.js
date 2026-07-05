@@ -90,10 +90,6 @@ const collectionBaselineMap = items => Object.fromEntries((items || [])
   .map(item => [item.id, withoutVersion(item)]));
 const persistedCollectionItems = (data, collection) => dataForPersistence(data)[collection] || [];
 
-const refreshCollectionBaseline = collection => {
-  state.collectionBaselines[collection] = collectionBaselineMap(persistedCollectionItems(state.data, collection));
-};
-
 const trackCollectionState = data => {
   for (const collection of persistedCollections) {
     const items = persistedCollectionItems(data, collection);
@@ -106,15 +102,6 @@ const withKnownVersion = (collection, item) => {
   const knownVersions = state.collectionVersions[collection] || {};
   const version = item?._version || knownVersions[item?.id] || "";
   return version ? { ...item, _version: version } : item;
-};
-
-const applySavedItemVersion = (collection, savedItem) => {
-  if (!savedItem?.id || !savedItem._version) return;
-  state.collectionVersions[collection] = { ...(state.collectionVersions[collection] || {}), [savedItem.id]: String(savedItem._version) };
-  if (!Array.isArray(state.data?.[collection])) return;
-  state.data[collection] = state.data[collection].map(item => item.id === savedItem.id
-    ? { ...item, _version: String(savedItem._version) }
-    : item);
 };
 
 const collectionOperations = (collection, items) => {
@@ -279,18 +266,10 @@ export const loadAuthStatus = () => {
     });
 };
 export const loadBackendCollection = collection => apiRequest(`/${collection}`).then(items => [collection, items]);
-export const saveBackendItem = (collection, item) => {
-  const payload = withKnownVersion(collection, item);
-  const version = payload?._version || "";
-  const path = version ? `/${collection}/${encodeURIComponent(item.id)}` : `/${collection}`;
-  return apiRequest(path, {
-    method: version ? "PUT" : "POST",
-    body: JSON.stringify(payload)
-  }).then(savedItem => [collection, savedItem]);
-};
-export const deleteBackendItem = (collection, id, version = "") => apiRequest(`/${collection}/${encodeURIComponent(id)}?version=${encodeURIComponent(version)}`, {
-  method: "DELETE"
-}).then(result => [collection, { id, deleted: !!result?.deleted }]);
+export const saveBackendCollection = (collection, items) => apiRequest(`/${collection}`, {
+  method: "PUT",
+  body: JSON.stringify({ items: items.map(item => withKnownVersion(collection, item)), knownVersions: state.collectionVersions[collection] || {} })
+}).then(savedItems => [collection, savedItems]);
 export const saveQuittungSettings = settings => {
   const normalized = normalizeQuittungSettings(settings);
   if (location.protocol === "file:" || !state.auth.token) return Promise.resolve(applyQuittungSettings(normalized));
@@ -312,27 +291,28 @@ const handleSaveError = error => {
     return loadCollectionData({ force: true });
   }
   console.warn("Datenbank-Speicherung nicht verfügbar.", error);
+  toast(error?.status === 401
+    ? "Anmeldung abgelaufen – Änderungen wurden NICHT gespeichert. Bitte neu anmelden, danach werden sie nachgespeichert."
+    : "Speichern fehlgeschlagen – Änderungen sind nur lokal vorhanden.");
   return null;
 };
 
 const persistBackendCollections = async data => {
   const persisted = dataForPersistence(data);
-  const operations = writableCollections().flatMap(collection => collectionOperations(collection, persisted[collection] || []));
-  if (!operations.length) return {};
-  const results = await Promise.allSettled(operations.map(operation => operation.type === "delete"
-    ? deleteBackendItem(operation.collection, operation.id, operation.version)
-    : saveBackendItem(operation.collection, operation.item)));
+  const changedCollections = writableCollections().filter(collection => collectionOperations(collection, persisted[collection] || []).length > 0);
+  if (!changedCollections.length) return {};
+  const results = await Promise.allSettled(changedCollections.map(collection => saveBackendCollection(collection, persisted[collection] || [])));
   results
     .filter(result => result.status === "fulfilled")
     .map(result => result.value)
-    .forEach(([collection, savedItem]) => {
-      if (savedItem?.deleted) delete state.collectionVersions[collection]?.[savedItem.id];
-      else applySavedItemVersion(collection, savedItem);
+    .forEach(([collection, savedItems]) => {
+      state.collectionVersions[collection] = collectionVersionMap(savedItems);
+      state.collectionBaselines[collection] = collectionBaselineMap(savedItems);
+      if (Array.isArray(state.data?.[collection])) {
+        const versionById = new Map(savedItems.map(item => [item.id, item._version]));
+        state.data[collection] = state.data[collection].map(item => versionById.has(item.id) ? { ...item, _version: versionById.get(item.id) } : item);
+      }
     });
-  [...new Set(results
-    .filter(result => result.status === "fulfilled")
-    .map(result => result.value[0]))]
-    .forEach(refreshCollectionBaseline);
   const rejected = results.find(result => result.status === "rejected");
   if (rejected) throw rejected.reason;
   return Object.fromEntries(results.map(result => result.value));

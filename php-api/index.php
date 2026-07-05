@@ -946,20 +946,22 @@ function readItem(array $db, string $collection, string $id): ?array
 
 function replaceCollection(array $db, string $collection, array $items, ?array $knownVersions = null): void
 {
-    $config = collectionConfig($collection);
-    $incomingById = incomingItemsById($items, $collection);
-    $currentById = itemsById(readCollection($db, $collection));
-    assertCollectionVersionsAllowReplace($collection, $incomingById, $currentById, $knownVersions);
+    transaction($db, static function () use ($db, $collection, $items, $knownVersions): void {
+        $config = collectionConfig($collection);
+        $incomingById = incomingItemsById($items, $collection);
+        $currentById = itemsById(readCollection($db, $collection));
+        assertCollectionVersionsAllowReplace($collection, $incomingById, $currentById, $knownVersions);
 
-    foreach ($currentById as $id => $currentItem) {
-        if (!array_key_exists($id, $incomingById)) deleteItem($db, $collection, $id);
-    }
-
-    foreach ($incomingById as $id => $item) {
-        if (!array_key_exists($id, $currentById) || !itemsEqualForPersistence($item, $currentById[$id], $config)) {
-            upsertItem($db, $collection, $id, $item);
+        foreach ($currentById as $id => $currentItem) {
+            if (!array_key_exists($id, $incomingById)) deleteItem($db, $collection, $id);
         }
-    }
+
+        foreach ($incomingById as $id => $item) {
+            if (!array_key_exists($id, $currentById) || !itemsEqualForPersistence($item, $currentById[$id], $config)) {
+                upsertItem($db, $collection, $id, $item);
+            }
+        }
+    });
 }
 
 function upsertItem(array $db, string $collection, string $id, array $item): void
@@ -1421,7 +1423,9 @@ function readJson(): mixed
 
 function requireObject(mixed $value): array
 {
-    if (!is_array($value) || array_is_list($value)) throw new ApiError(400, 'JSON-Objekt erwartet.');
+    // json_decode(..., true) liefert fuer "{}" ein leeres Array, das array_is_list() faelschlich
+    // als Liste einstuft (PHP kann leere Objekte/Listen nach dem Decodieren nicht unterscheiden).
+    if (!is_array($value) || (array_is_list($value) && $value !== [])) throw new ApiError(400, 'JSON-Objekt erwartet.');
     return $value;
 }
 

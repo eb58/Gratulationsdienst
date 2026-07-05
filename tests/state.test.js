@@ -189,7 +189,7 @@ describe('backend and permission helpers', () => {
     ]), { 'G-1': '3', 'G-3': '7' });
   });
 
-  it('writes only changed backend records and stores fresh versions', async () => {
+  it('speichert eine geaenderte Collection in einem einzigen Bulk-Request', async () => {
     const calls = [];
     globalThis.location.protocol = 'http:';
     state.auth.token = 'token';
@@ -210,21 +210,92 @@ describe('backend and permission helpers', () => {
       calls.push({ method: options.method || 'GET', path, body });
       return Promise.resolve({
         ok: true,
-        json: async () => ({ ...body, _version: '4' })
+        json: async () => body.items.map(item => ({ ...item, _version: '4' }))
       });
     };
 
     await saveData();
 
     assert.equal(calls.length, 1);
-    const citizensSave = calls[0];
-    assert.equal(citizensSave.method, 'PUT');
-    assert.equal(citizensSave.path, '/citizens/G-1');
-    assert.equal(citizensSave.body._version, '3');
-    assert.equal(citizensSave.body.firstName, 'Ada');
+    assert.equal(calls[0].method, 'PUT');
+    assert.equal(calls[0].path, '/citizens');
+    assert.deepEqual(calls[0].body.knownVersions, { 'G-1': '3' });
+    assert.equal(calls[0].body.items[0].firstName, 'Ada');
     assert.equal(state.data.citizens[0]._version, '4');
     assert.deepEqual(state.collectionVersions.citizens, { 'G-1': '4' });
     assert.deepEqual(state.collectionBaselines.citizens['G-1'], { id: 'G-1', firstName: 'Ada' });
+  });
+
+  it('speichert viele neue Jubilare (z.B. aus Testdaten-Erzeugung) in einem Request statt vieler Einzelaufrufe', async () => {
+    const calls = [];
+    globalThis.location.protocol = 'http:';
+    state.auth.token = 'token';
+    state.auth.user = { role: 'admin' };
+    state.collectionVersions = {};
+    state.collectionBaselines = { citizens: {} };
+    state.data = {
+      citizens: Array.from({ length: 500 }, (_, i) => ({ id: `G-${i}`, firstName: `Person ${i}` })),
+      sokoGroups: [],
+      sokoMembers: [],
+      streets: [],
+      senders: [],
+      templates: []
+    };
+    globalThis.fetch = (url, options = {}) => {
+      const path = String(url).replace(/.*\/php-api/, '');
+      const body = options.body ? JSON.parse(options.body) : null;
+      calls.push({ method: options.method || 'GET', path });
+      return Promise.resolve({ ok: true, json: async () => body.items.map(item => ({ ...item, _version: '1' })) });
+    };
+
+    await saveData();
+
+    assert.equal(calls.filter(call => call.path === '/citizens').length, 1);
+    assert.equal(state.data.citizens.length, 500);
+    assert.ok(state.collectionBaselines.citizens['G-499']);
+  });
+
+  it('verliert keine neuen Jubilare, wenn ein zweiter Speichervorgang startet, waehrend der erste noch laeuft', async () => {
+    globalThis.location.protocol = 'http:';
+    state.auth.token = 'token';
+    state.auth.user = { role: 'admin' };
+    state.collectionVersions = { citizens: { 'A': '1', 'B': '1' } };
+    state.collectionBaselines = { citizens: { A: { id: 'A' }, B: { id: 'B' } } };
+    state.data = {
+      citizens: [{ id: 'A' }, { id: 'B' }],
+      sokoGroups: [], sokoMembers: [], streets: [], senders: [], templates: []
+    };
+
+    let resolveFirstPut;
+    const firstPutPromise = new Promise(resolve => { resolveFirstPut = resolve; });
+    const calls = [];
+    globalThis.fetch = (url, options = {}) => {
+      const path = String(url).replace(/.*\/php-api/, '');
+      const body = options.body ? JSON.parse(options.body) : null;
+      if (options.method === 'PUT' && path === '/citizens') {
+        const callIndex = calls.push({ body }) - 1;
+        return callIndex === 0
+          ? firstPutPromise
+          : Promise.resolve({ ok: true, json: async () => body.items.map(item => ({ ...item, _version: '1' })) });
+      }
+      return Promise.resolve({ ok: true, json: async () => [] });
+    };
+
+    // Aktion 1: alle Jubilare loeschen; der PUT-Request startet und haengt (firstPutPromise)
+    state.data.citizens = [];
+    const firstSave = saveData();
+    await new Promise(resolve => setTimeout(resolve, 0)); // sicherstellen, dass der erste PUT bereits mit leerem state.data losgeschickt wurde
+
+    // Aktion 2: 500 neue Jubilare erzeugen, bevor der erste Speichervorgang beim Server angekommen ist
+    state.data.citizens = Array.from({ length: 500 }, (_, i) => ({ id: `G-${i}` }));
+    const secondSave = saveData();
+
+    resolveFirstPut({ ok: true, json: async () => [] });
+    await Promise.all([firstSave, secondSave]);
+
+    const citizensPutBodies = calls.map(call => call.body.items.length);
+    assert.ok(citizensPutBodies.includes(500), `erwartete einen PUT mit 500 Jubilaren, gesendet wurden: ${citizensPutBodies.join(', ')}`);
+    assert.equal(Object.keys(state.collectionBaselines.citizens).length, 500);
   });
 
   it('reloads backend data after a save conflict', async () => {
@@ -244,7 +315,7 @@ describe('backend and permission helpers', () => {
     globalThis.fetch = (url, options = {}) => {
       const method = options.method || 'GET';
       const path = String(url).replace(/.*\/php-api/, '');
-      if (method === 'PUT' && path === '/citizens/G-1') {
+      if (method === 'PUT' && path === '/citizens') {
         return Promise.resolve({ ok: false, status: 409, json: async () => ({ error: 'parallel', collection: 'citizens', id: 'G-1' }) });
       }
       if (method === 'GET' && path === '/citizens') {
