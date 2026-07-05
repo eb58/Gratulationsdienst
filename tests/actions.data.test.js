@@ -357,6 +357,36 @@ describe('Jubilare löschen und Testdaten', () => {
     assert.equal(state.data.citizens.length, 500);
     assert.deepEqual([...new Set(state.data.citizens.map(citizen => citizen.birthDate.slice(5, 7)))], [monthAfterNext()]);
   });
+
+  it('seed-citizens-year-questionnaire erzeugt 500 Jahresdaten mit realistischen Fragebogenwerten', () => {
+    actions['seed-citizens-year-questionnaire']();
+
+    const citizens = state.data.citizens;
+    const monthCounts = Object.values(citizens.reduce((map, citizen) => ({ ...map, [citizen.birthDate.slice(5, 7)]: (map[citizen.birthDate.slice(5, 7)] || 0) + 1 }), {}));
+    const weddingCounts = citizens.reduce((map, citizen) => ({ ...map, [citizen.weddingAnniversary || '-']: (map[citizen.weddingAnniversary || '-'] || 0) + 1 }), {});
+    const wishCounts = citizens.reduce((map, citizen) => ({ ...map, [citizen.wish]: (map[citizen.wish] || 0) + 1 }), {});
+
+    assert.equal(citizens.length, 500);
+    assert.equal(monthCounts.length, 12);
+    assert.ok(Math.max(...monthCounts) - Math.min(...monthCounts) <= 1);
+    assert.equal(citizens[0].createdAt.slice(0, 7), `${new Date().getFullYear() - 1}-${monthAfterNext()}`);
+    assert.ok(citizens.every(citizen => citizen.status === 'gedruckt'));
+    assert.ok(citizens.every(citizen => citizen.printedAt && citizen.printedYear && Number.isFinite(citizen.printedAge)));
+    assert.equal(citizens[0].printedAt, citizens[0].createdAt);
+    assert.equal(citizens[0].printedYear, Number(citizens[0].printedAt.slice(0, 4)));
+    assert.equal(citizens[0].printedAge, 85);
+    assert.equal(citizens[0].printedYear - Number(citizens[0].birthDate.slice(0, 4)), 85);
+    assert.ok(citizens.every(citizen => citizen.wish && citizen.wish !== 'offen'));
+    assert.deepEqual(wishCounts, { keine: 70, 'Besuch erwünscht': 145, 'per Post': 285 });
+    assert.equal(citizens.filter(citizen => citizen.pressPublication).length, 180);
+    assert.deepEqual({
+      gold: weddingCounts['Goldene Hochzeit'],
+      diamant: weddingCounts['Diamantene Hochzeit'],
+      eisen: weddingCounts['Eiserne Hochzeit'],
+      gnade: weddingCounts['Gnadenhochzeit']
+    }, { gold: 23, diamant: 15, eisen: 5, gnade: 2 });
+    assert.ok(citizens.filter(citizen => citizen.weddingAnniversary).every(citizen => citizen.weddingDate && citizen.spouseName));
+  });
 });
 
 describe('Import-Lauf', () => {

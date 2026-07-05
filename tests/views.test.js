@@ -258,6 +258,7 @@ describe('main views', () => {
     assert.match(views.map(), /id="map-month-select" name="month" data-filter/);
     assert.match(views.map(), /data-action="toggle-map-people"/);
     assert.match(views.import(), /soko-print/);
+    assert.match(views.import(), /<select name="month" data-filter>/);
     assert.doesNotMatch(views.import(), /Alte Jubilare löschen/);
   });
 

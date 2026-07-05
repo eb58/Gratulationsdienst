@@ -905,10 +905,18 @@ export const views = {
     </section>
   `,
 
-  import: () => `
+  import: () => {
+    const importedCitizens = state.data.citizens.filter(citizen => citizen.source === "CSV Import" && (state.filters.month === "alle" || birthdayMonth(citizen.birthDate) === state.filters.month));
+    return `
     <div class="stack import-view-stack">
       <section class="panel">
         <h2>CSV-Import</h2>
+        <div class="toolbar">
+          <label>Für Monat</label>
+          <select name="month" data-filter>
+            ${months.map(([value, label]) => `<option value="${value}"${state.filters.month === value ? " selected" : ""}>${escapeHtml(label)}</option>`).join("")}
+          </select>
+        </div>
         <div class="file-action-row import-action-row">
           <label class="file-picker import-file-picker" for="import-file">
             <span>Aus CSV laden</span>
@@ -922,6 +930,7 @@ export const views = {
               </div>
               <button type="button" class="ghost-button test-action-button" data-action="seed-citizens">${Math.max(50, state.data.sokoGroups.length)} CSV simulieren</button>
               <button type="button" class="ghost-button test-action-button" data-action="seed-citizens" data-row-count="500">500 CSV simulieren</button>
+              <button type="button" class="ghost-button test-action-button" data-action="seed-citizens-year-questionnaire">500 Jahr + Fragebogen simulieren</button>
               <button type="button" class="danger-button test-action-button" data-action="clear-citizens">Löschen</button>
             </div>
           ` : ""}
@@ -931,14 +940,15 @@ export const views = {
       <section class="panel import-log-panel">
         <h2>Importierte Jubilare</h2>
         <div class="import-log-content">
-          ${state.data.citizens.some(citizen => citizen.source === "CSV Import") ? gridHost("imported") : `<div class="empty-state">Noch keine Jubilare importiert</div>`}
+          ${importedCitizens.length ? gridHost("imported") : `<div class="empty-state">Noch keine Jubilare importiert</div>`}
         </div>
         <div class="button-row" style="margin-top:12px">
           <button type="button" class="primary-button" data-action="soko-print">Drucke SOKO-Fragebögen</button>
         </div>
       </section>
     </div>
-  `,
+  `;
+  },
 
   profile: () => {
     const user = state.auth.user;

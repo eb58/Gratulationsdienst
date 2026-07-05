@@ -127,6 +127,19 @@ describe('grid definitions', () => {
     assert.equal(gridDefinitions.cleanupPreview().columnDefs.at(-1).field, 'anniversary');
   });
 
+  it('filtert importierte Jubilare nach ausgewaehltem Monat', () => {
+    state.data.citizens = [
+      { ...citizen, id: 'G-6', source: 'CSV Import', birthDate: '1936-06-01' },
+      { ...citizen, id: 'G-7', source: 'CSV Import', birthDate: '1936-07-01' },
+      { ...citizen, id: 'G-manual', source: '', birthDate: '1936-06-01' }
+    ];
+    state.filters.month = '06';
+
+    assert.deepEqual(gridDefinitions.imported().rowData.map(row => row.id), ['G-6']);
+
+    state.filters.month = 'alle';
+    assert.deepEqual(gridDefinitions.imported().rowData.map(row => row.id), ['G-6', 'G-7']);
+  });
 
   it('renders SOKO and status cell badges', () => {
     const citizenDefinition = gridDefinitions.citizens();

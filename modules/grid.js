@@ -1,4 +1,4 @@
-import { normalize, escapeHtml, formatDate, safeStorageSetItem, anniversaryDateFromCreatedAt } from './utils.js';
+import { normalize, escapeHtml, formatDate, safeStorageSetItem, anniversaryDateFromCreatedAt, birthdayMonth } from './utils.js';
 import { streetGroupDisplay, sokoColors } from './domain.js';
 import { state } from './state.js';
 import { filteredCitizens, groupForCitizen, selectedCitizen } from './assignment.js';
@@ -290,7 +290,10 @@ export const gridDefinitions = {
   }),
   imported: () => ({
     ...baseGridOptions(),
-    rowData: state.data.citizens.filter(citizen => citizen.source === "CSV Import").map(citizen => ({
+    rowData: state.data.citizens
+      .filter(citizen => citizen.source === "CSV Import")
+      .filter(citizen => state.filters.month === "alle" || birthdayMonth(citizen.birthDate) === state.filters.month)
+      .map(citizen => ({
       id: citizen.id,
       name: `${citizen.lastName}, ${citizen.firstName}`,
       birthday: citizen.birthDate,

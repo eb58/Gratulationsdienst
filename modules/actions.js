@@ -187,8 +187,82 @@ const importMappedRows = mapped => {
   saveData();
   render();
   importToast(importNotice(result));
+  return result;
 };
 const importToast = message => toast(message, { anchor: ".soko-pdf-action-row, .import-action-row" });
+const rowCountFromEvent = (event, fallback) => {
+  const requested = Number.parseInt(event?.target?.closest("[data-row-count]")?.dataset.rowCount || "", 10);
+  return Number.isFinite(requested) && requested > 0 ? requested : fallback;
+};
+const seedCsv = (rowCount, dateForIndex) => {
+  const groups = groupedTestAssignments(state.data.streets);
+  if (!groups.length) return "";
+  const assignments = balancedTestAssignments(groups, rowCount);
+  const firstNames = shuffledTestValues(testFirstNames);
+  const lastNames = shuffledTestValues(testLastNames);
+  const names = assignments.map((_, index) => {
+    const [salutation, firstName] = firstNames[index % firstNames.length];
+    return { salutation, firstName, lastName: lastNames[index % lastNames.length] };
+  });
+  const ages = mortalityWeightedTestAges(rowCount, names.map(name => name.salutation));
+  return testCsvText(assignments.map((assignment, index) => {
+    const date = dateForIndex(index);
+    const month = date instanceof Date ? String(date.getMonth() + 1).padStart(2, "0") : date;
+    const row = testCsvRow(index, names[index], assignment, month, Math.random, ages[index]);
+    return date instanceof Date ? { ...row, Geburtsdatum: `${date.getFullYear() - ages[index]}-${row.Geburtsdatum.slice(5)}` } : row;
+  }));
+};
+const isoLocalDate = date => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+const rollingSimulationStart = (date = new Date()) => new Date(date.getFullYear() - 1, Number(monthAfterNext(date)) - 1, 1);
+const rollingSimulationOffset = (index, rowCount) => Math.min(11, Math.floor((index * 12) / rowCount));
+const rollingSimulationDate = (index, rowCount, day = 1, date = new Date()) => {
+  const start = rollingSimulationStart(date);
+  return new Date(start.getFullYear(), start.getMonth() + rollingSimulationOffset(index, rowCount), day);
+};
+const pseudoBucket = (index, modulo, step) => (index * step) % modulo;
+const questionnaireWish = index => {
+  const bucket = pseudoBucket(index, 100, 37);
+  return bucket < 14 ? "keine" : bucket < 43 ? "Besuch erwünscht" : "per Post";
+};
+const questionnaireWedding = index => {
+  const bucket = pseudoBucket(index, 1000, 41);
+  if (bucket < 45) return ["Goldene Hochzeit", 50];
+  if (bucket < 75) return ["Diamantene Hochzeit", 60];
+  if (bucket < 84) return ["Eiserne Hochzeit", 65];
+  if (bucket < 87) return ["Gnadenhochzeit", 70];
+  return ["", 0];
+};
+const spouseNameFor = (citizen, index) => {
+  const spouseSalutation = citizen.salutation === "Frau" ? "Herr" : "Frau";
+  const names = testFirstNames.filter(([salutation]) => salutation === spouseSalutation);
+  return names[index % names.length]?.[1] || "";
+};
+const questionnaireCitizenPatch = (citizen, index, rowCount) => {
+  const [weddingAnniversary, weddingYears] = questionnaireWedding(index);
+  const day = Number.parseInt(citizen.birthDate?.slice(8, 10) || "1", 10);
+  const anniversary = rollingSimulationDate(index, rowCount, Math.max(1, Math.min(28, day)));
+  const printedAt = isoLocalDate(anniversary);
+  const printedYear = anniversary.getFullYear();
+  const weddingDate = weddingYears ? isoLocalDate(new Date(anniversary.getFullYear() - weddingYears, anniversary.getMonth(), anniversary.getDate())) : "";
+  return {
+    ...citizen,
+    createdAt: isoLocalDate(rollingSimulationDate(index, rowCount)),
+    updatedAt: todayIso(),
+    status: "gedruckt",
+    printedAt,
+    printedAge: printedYear - Number(citizen.birthDate?.slice(0, 4)),
+    printedYear,
+    wish: questionnaireWish(index),
+    pressPublication: pseudoBucket(index, 100, 53) < 36,
+    weddingAnniversary,
+    weddingDate,
+    spouseName: weddingAnniversary ? spouseNameFor(citizen, index) : ""
+  };
+};
+const importedCitizensFromResult = result => {
+  const ids = new Set([...result.updates, ...result.newRows].map(citizen => citizen.id));
+  return state.data.citizens.filter(citizen => ids.has(citizen.id));
+};
 const selectedReceiptMonth = () => state.filters.month;
 const sokoPdfNotice = pages => {
   const checked = pages.filter(page => page.ok).length;
@@ -662,22 +736,25 @@ export const actions = {
     if (state.auth.user?.role !== "admin") { toast("Nur Admins können Testdaten erzeugen."); return; }
     const groups = groupedTestAssignments(state.data.streets);
     if (!groups.length) { toast("Keine SOKO-Zuordnungen für Testdaten gefunden."); return; }
-    const requestedRowCount = Number.parseInt(event?.target?.closest("[data-row-count]")?.dataset.rowCount || "", 10);
-    const rowCount = Number.isFinite(requestedRowCount) && requestedRowCount > 0 ? requestedRowCount : Math.max(50, groups.length);
-    const assignments = balancedTestAssignments(groups, rowCount);
-    const firstNames = shuffledTestValues(testFirstNames);
-    const lastNames = shuffledTestValues(testLastNames);
-    const names = assignments.map((_, index) => {
-      const [salutation, firstName] = firstNames[index % firstNames.length];
-      return { salutation, firstName, lastName: lastNames[index % lastNames.length] };
-    });
-    const ages = mortalityWeightedTestAges(rowCount, names.map(name => name.salutation));
+    const rowCount = rowCountFromEvent(event, Math.max(50, groups.length));
     const birthdayMonth = monthAfterNext();
-    const csv = testCsvText(assignments.map((assignment, index) => {
-      return testCsvRow(index, names[index], assignment, birthdayMonth, Math.random, ages[index]);
-    }));
+    const csv = seedCsv(rowCount, () => birthdayMonth);
     state.importText = csv;
     importMappedRows(parseCsv(csv).map(mapImportRow));
+  },
+  "seed-citizens-year-questionnaire": () => {
+    if (state.auth.user?.role !== "admin") { toast("Nur Admins können Testdaten erzeugen."); return; }
+    const groups = groupedTestAssignments(state.data.streets);
+    if (!groups.length) { toast("Keine SOKO-Zuordnungen für Testdaten gefunden."); return; }
+    const rowCount = 500;
+    const csv = seedCsv(rowCount, index => rollingSimulationDate(index, rowCount));
+    state.importText = csv;
+    const result = importMappedRows(parseCsv(csv).map(mapImportRow));
+    const patches = new Map(importedCitizensFromResult(result).map((citizen, index) => [citizen.id, questionnaireCitizenPatch(citizen, index, rowCount)]));
+    state.data.citizens = state.data.citizens.map(citizen => patches.get(citizen.id) || citizen);
+    saveData();
+    render();
+    importToast(`${patches.size.toLocaleString("de-DE")} Jahres-Testdaten mit Fragebogen-Rückmeldungen simuliert.`);
   },
   "reset-soko-members": () => {
     if (state.auth.user?.role !== "admin") { toast("Nur Admins können Testdaten zurücksetzen."); return; }
