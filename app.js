@@ -7,7 +7,7 @@ import { actions } from './modules/actions.js';
 import { hasDirtyForm, requestDirtyFormLeave, trackDirtyFormChange } from './modules/dirtyForms.js';
 import { runBusy } from './modules/busy.js';
 
-window.GRATULATIONSDIENST_VERSION = typeof __APP_VERSION__ === "undefined" ? "dev" : __APP_VERSION__;
+globalThis.GRATULATIONSDIENST_VERSION = typeof __APP_VERSION__ === "undefined" ? "dev" : __APP_VERSION__;
 
 const SIDEBAR_COLLAPSED_KEY = "gd_sidebar_collapsed";
 const splitterKeyDelta = key => {
@@ -16,7 +16,7 @@ const splitterKeyDelta = key => {
   return 0;
 };
 const initialParams = new URLSearchParams(location.search);
-const cssEscape = value => globalThis.CSS?.escape ? globalThis.CSS.escape(value) : String(value).replace(/"/g, '\\"');
+const cssEscape = value => globalThis.CSS?.escape ? globalThis.CSS.escape(value) : String(value).replaceAll('"', String.raw`\"`);
 const focusSelectorFor = element => {
   if (!element) return "";
   if (element.id) return `#${cssEscape(element.id)}`;
@@ -176,6 +176,49 @@ const boundValue = input => {
   return value;
 };
 
+const handleSkipLinkClick = skipLink => {
+  if (!skipLink) return false;
+  state.focusTarget = "#view";
+  document.querySelector("#view")?.focus();
+  return true;
+};
+const handleNavToggleClick = navToggle => {
+  if (!navToggle) return false;
+  const open = document.body.classList.toggle("nav-open");
+  navToggle.setAttribute("aria-expanded", String(open));
+  navToggle.setAttribute("aria-label", open ? "Menü schließen" : "Menü öffnen");
+  return true;
+};
+const handleSidebarToggleClick = sidebarToggle => {
+  if (!sidebarToggle) return false;
+  setSidebarCollapsed(!document.body.classList.contains("sidebar-collapsed"));
+  return true;
+};
+const handleNavClick = nav => {
+  if (!nav) return false;
+  if (!state.auth.user) return true;
+  if (!canAccessView(nav.dataset.nav)) return true;
+  if (nav.dataset.nav === state.view) {
+    closeNav();
+    return true;
+  }
+  if (!requestDirtyFormLeave(() => goToView(nav.dataset.nav))) renderDialog();
+  return true;
+};
+const handleActionClick = (action, event) => {
+  if (!action) return false;
+  const runAction = () => {
+    state.focusTarget = focusSelectorFor(action);
+    runActionByName(action.dataset.action, event);
+  };
+  if (actionLeavesDirtyMask(action)) {
+    if (!requestDirtyFormLeave(runAction)) renderDialog();
+    return true;
+  }
+  runAction();
+  return true;
+};
+
 document.addEventListener("click", event => {
   const skipLink = event.target.closest(".skip-link");
   const navToggle = event.target.closest("[data-nav-toggle]");
@@ -183,41 +226,12 @@ document.addEventListener("click", event => {
   const nav = event.target.closest("[data-nav]");
   const action = event.target.closest("[data-action]");
   const adminOnly = event.target.closest("[data-admin-only]");
-  if (skipLink) {
-    event.preventDefault();
-    state.focusTarget = "#view";
-    document.querySelector("#view")?.focus();
-    return;
-  }
-  if (navToggle) {
-    const open = document.body.classList.toggle("nav-open");
-    navToggle.setAttribute("aria-expanded", String(open));
-    navToggle.setAttribute("aria-label", open ? "Menü schließen" : "Menü öffnen");
-    return;
-  }
-  if (sidebarToggle) {
-    setSidebarCollapsed(!document.body.classList.contains("sidebar-collapsed"));
-    return;
-  }
+  if (handleSkipLinkClick(skipLink)) { event.preventDefault(); return; }
+  if (handleNavToggleClick(navToggle)) return;
+  if (handleSidebarToggleClick(sidebarToggle)) return;
   if ((nav || action) && adminOnly && !isAdmin()) return;
-  if (nav) {
-    if (!state.auth.user) return;
-    if (!canAccessView(nav.dataset.nav)) return;
-    if (nav.dataset.nav === state.view) { closeNav(); return; }
-    if (!requestDirtyFormLeave(() => goToView(nav.dataset.nav))) renderDialog();
-    return;
-  }
-  if (action) {
-    const runAction = () => {
-      state.focusTarget = focusSelectorFor(action);
-      runActionByName(action.dataset.action, event);
-    };
-    if (actionLeavesDirtyMask(action)) {
-      if (!requestDirtyFormLeave(runAction)) renderDialog();
-      return;
-    }
-    runAction();
-  }
+  if (handleNavClick(nav)) return;
+  handleActionClick(action, event);
 });
 
 document.addEventListener("input", event => {

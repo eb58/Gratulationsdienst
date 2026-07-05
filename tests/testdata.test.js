@@ -214,8 +214,9 @@ describe('seed CSV generation', () => {
 describe('shuffledTestValues', () => {
   it('returns a permutation with the same elements', () => {
     const shuffled = shuffledTestValues(testLastNames);
+    const alphabetical = (a, b) => a.localeCompare(b);
     assert.equal(shuffled.length, testLastNames.length);
-    assert.deepEqual([...shuffled].sort(), [...testLastNames].sort());
+    assert.deepEqual([...shuffled].sort(alphabetical), [...testLastNames].sort(alphabetical));
     assert.equal(testFirstNames.length, 80);
   });
 });

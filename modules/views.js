@@ -435,6 +435,16 @@ const citizenDetailSplitHtml = (citizen, showQuestionnairePanel, citizenSplit) =
           </section>
         </div>`;
 };
+const unfinishedReceiptGroupLabel = item => `${escapeHtml(item.group.id)} (${item.uncheckedCount} offen)`;
+const unfinishedReceiptGroupsAlert = unfinishedGroups => {
+  if (!unfinishedGroups.length) return "";
+  const labels = unfinishedGroups.map(unfinishedReceiptGroupLabel).join(", ");
+  return `<div class="alert" style="margin-top:12px">Quittungsdruck ist pro SOKO möglich, sobald dort alle Jubilare für diesen Monat geprüft sind. Noch nicht fertig: ${labels}</div>`;
+};
+const receiptStatusPill = (canPrint, uncheckedCount) => {
+  if (canPrint) return `<span class="pill green">fertig</span>`;
+  return `<span class="pill gold">${uncheckedCount} offen</span>`;
+};
 export const sokoMapInfoHtml = (groupId, streetName = "") => {
   if (!groupId || groupId === "offen") return `<p class="map-soko-hint muted">Über eine SOKO auf der Karte fahren</p>`;
   const group = state.data.sokoGroups.find(g => g.id === groupId);
@@ -919,7 +929,7 @@ export const views = {
         <td>${escapeHtml(group.id)}</td>
         <td>${gc.length}</td>
         <td style="text-align:right">${summe} €</td>
-        <td>${canPrint ? `<span class="pill green">fertig</span>` : `<span class="pill gold">${uncheckedCount} offen</span>`}</td>
+        <td>${receiptStatusPill(canPrint, uncheckedCount)}</td>
         <td><button type="button" class="primary-button" style="min-height:30px;padding:0 12px" data-action="print-quittung" data-group-id="${escapeHtml(group.id)}" ${canPrint ? "" : "disabled"}>Drucken</button></td>
       </tr>`;
     }).join("");
@@ -931,7 +941,7 @@ export const views = {
       </select>
       ${groups.length ? `<button type="button" class="primary-button" data-action="print-quittung-all" ${canPrintAny ? "" : "disabled"}>Alle fertigen drucken</button>` : ""}
     </div>
-    ${unfinishedGroups.length ? `<div class="alert" style="margin-top:12px">Quittungsdruck ist pro SOKO möglich, sobald dort alle Jubilare für diesen Monat geprüft sind. Noch nicht fertig: ${unfinishedGroups.map(item => `${escapeHtml(item.group.id)} (${item.uncheckedCount} offen)`).join(", ")}</div>` : ""}
+    ${unfinishedReceiptGroupsAlert(unfinishedGroups)}
     <section class="panel" style="margin-top:12px">
       <h2>SOKOs</h2>
       ${groups.length ? `
