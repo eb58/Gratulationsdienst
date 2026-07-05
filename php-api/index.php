@@ -3,8 +3,8 @@ declare(strict_types=1);
 
 // Bei jeder Schema-Aenderung (neue ensureColumn/ensureIndex-Zeile in initSchema) erhoehen,
 // damit die Migration nach dem Deployment einmal laeuft; danach ueberspringt sie jeder Request.
-const SCHEMA_VERSION = '4';
-const COLLECTIONS = ['citizens', 'sokoGroups', 'sokoMembers', 'streets', 'senders', 'templates'];
+const SCHEMA_VERSION = '5';
+const COLLECTIONS = ['citizens', 'weddingAnniversaries', 'sokoGroups', 'sokoMembers', 'streets', 'senders', 'templates'];
 const ADMIN_COLLECTIONS = ['sokoGroups', 'sokoMembers', 'streets', 'senders', 'templates'];
 const SESSION_TTL_SECONDS = 28800;
 const MFA_TICKET_TTL_SECONDS = 300;
@@ -101,6 +101,28 @@ function collectionConfig(string $collection): array
                 'name' => ['name', 'string'],
                 'region' => ['region', 'string'],
                 'leaderId' => ['leader_id', 'string'],
+            ],
+        ],
+        'weddingAnniversaries' => [
+            'table' => 'gd_wedding_anniversaries',
+            'order' => 'wedding_date, last_name, first_name, id',
+            'columns' => [
+                'id' => ['id', 'string'],
+                'citizenId' => ['citizen_id', 'string'],
+                'salutation' => ['salutation', 'string'],
+                'firstName' => ['first_name', 'string'],
+                'lastName' => ['last_name', 'string'],
+                'birthDate' => ['birth_date', 'date'],
+                'street' => ['street', 'string'],
+                'houseNo' => ['house_no', 'string'],
+                'postalCode' => ['postal_code', 'string'],
+                'district' => ['district', 'string'],
+                'weddingAnniversary' => ['wedding_anniversary', 'string'],
+                'weddingDate' => ['wedding_date', 'date'],
+                'spouseName' => ['spouse_name', 'string'],
+                'source' => ['source', 'string'],
+                'capturedAt' => ['captured_at_date', 'date'],
+                'updatedAt' => ['updated_at_date', 'date'],
             ],
         ],
         'sokoMembers' => [

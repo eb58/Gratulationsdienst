@@ -9,6 +9,7 @@ import { parseSokoQuestionnairePdf } from './sokoQuestionnairePdf.js';
 import { applySokoQuestionnaireResults } from './sokoQuestionnaire.js';
 import { createSokoQuestionnaireSimulation } from './sokoQuestionnaireSimulation.js';
 import { saveQuestionnairePages, deleteAllQuestionnairePages, deleteQuestionnairePagesForCitizens } from './questionnairePages.js';
+import { upsertWeddingAnniversaryForCitizen, upsertWeddingAnniversariesForCitizens } from './weddingAnniversaries.js';
 import { groupedTestAssignments, balancedTestAssignments, shuffledTestValues, testFirstNames, testLastNames, mortalityWeightedTestAges, monthAfterNext, testCsvRow, testCsvText } from './testdata.js';
 import { render, renderDialog } from './render.js';
 import { renderCitizenDetail } from './views.js';
@@ -169,6 +170,9 @@ const refreshSokoPdfImportUi = result => {
   renderCitizenDetail();
   showCitizenGridRow(selectedRow);
 };
+const syncWeddingAnniversaries = (citizens, source = "Fragebogen") => {
+  state.data.weddingAnniversaries = upsertWeddingAnniversariesForCitizens(state.data.weddingAnniversaries || [], citizens, source);
+};
 const resetCitizenReviewFilters = () => {
   state.filters = { ...state.filters, q: "", month: "alle", groupId: "alle", age: "alle", status: "alle" };
   safeStorageSetItem(localStorage, MONTH_KEY, "alle", "Monatsfilter");
@@ -306,12 +310,15 @@ const applySokoPdfImport = async (file, generatedPages = []) => {
     : parsed.pages;
   const result = applySokoQuestionnaireResults(state.data.citizens, pages);
   const previousCitizens = state.data.citizens;
+  const previousWeddingAnniversaries = state.data.weddingAnniversaries;
   state.data.citizens = result.citizens;
+  syncWeddingAnniversaries(result.pages.filter(page => page.applied).map(page => page.citizen).filter(Boolean), "SOKO-PDF");
   const imagePages = sokoQuestionnaireImagePages(result.pages, generatedPages.length ? generatedPages : parsed.pages);
   try {
     await saveQuestionnairePages(imagePages);
   } catch (error) {
     state.data.citizens = previousCitizens;
+    state.data.weddingAnniversaries = previousWeddingAnniversaries;
     throw error;
   }
   return result;
@@ -467,7 +474,9 @@ export const actions = {
     const currentIds = currentRows.map(row => row.id);
     const currentIndex = currentIds.indexOf(values.id);
     const status = isPrintedCitizen(byId(state.data.citizens, values.id)) ? "gedruckt" : "geprüft";
-    state.data.citizens = updateItem(state.data.citizens, values.id, { ...values, postalCode: normalizeDigits(values.postalCode), updatedAt: todayIso(), status });
+    const updatedCitizen = { ...values, postalCode: normalizeDigits(values.postalCode), updatedAt: todayIso(), status };
+    state.data.citizens = updateItem(state.data.citizens, values.id, updatedCitizen);
+    state.data.weddingAnniversaries = upsertWeddingAnniversaryForCitizen(state.data.weddingAnniversaries || [], updatedCitizen);
     const nextCitizenId = currentIds[currentIndex + 1] || "";
     const reachedEnd = !nextCitizenId || currentIndex < 0;
     state.selectedCitizenId = nextCitizenId || values.id;
@@ -708,6 +717,7 @@ export const actions = {
   },
   "confirm-clear-citizens": async () => {
     state.data.citizens = [];
+    state.data.weddingAnniversaries = [];
     state.selectedCitizenId = "";
     state.generatedDocs = [];
     state.dialog = null;
@@ -722,6 +732,7 @@ export const actions = {
     if (!citizenIds.length) return;
     const deleteIds = new Set(citizenIds);
     state.data.citizens = state.data.citizens.filter(citizen => !deleteIds.has(citizen.id));
+    state.data.weddingAnniversaries = (state.data.weddingAnniversaries || []).filter(item => !deleteIds.has(item.citizenId));
     if (deleteIds.has(state.selectedCitizenId)) state.selectedCitizenId = "";
     state.generatedDocs = state.generatedDocs.filter(doc => !deleteIds.has(doc.citizenId));
     state.cleanupPreview = null;
@@ -752,6 +763,7 @@ export const actions = {
     const result = importMappedRows(parseCsv(csv).map(mapImportRow));
     const patches = new Map(importedCitizensFromResult(result).map((citizen, index) => [citizen.id, questionnaireCitizenPatch(citizen, index, rowCount)]));
     state.data.citizens = state.data.citizens.map(citizen => patches.get(citizen.id) || citizen);
+    syncWeddingAnniversaries([...patches.values()], "Simulation");
     saveData();
     render();
     importToast(`${patches.size.toLocaleString("de-DE")} Jahres-Testdaten mit Fragebogen-Rückmeldungen simuliert.`);

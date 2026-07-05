@@ -133,6 +133,7 @@ export const normalizeLoadedData = data => {
   return {
     ...repaired,
     citizens: Array.isArray(repaired?.citizens) ? repaired.citizens.map(withoutTransientCitizenFields) : repaired?.citizens,
+    weddingAnniversaries: Array.isArray(repaired?.weddingAnniversaries) ? repaired.weddingAnniversaries : [],
     sokoGroups: mergeById(repaired?.sokoGroups, defaultData.sokoGroups, group => activeGroupIds.has(group.id)),
     sokoMembers: mergeById(repaired?.sokoMembers, defaultData.sokoMembers, member => activeGroupIds.has(member.groupId)),
     streets: mergeStreets(repaired?.streets || [], buildStreetData()),
@@ -207,10 +208,10 @@ export const state = {
   localChangeVersion: 0
 };
 
-export const apiCollections = ["citizens", "sokoGroups", "sokoMembers", "streets", "senders", "templates"];
+export const apiCollections = ["citizens", "weddingAnniversaries", "sokoGroups", "sokoMembers", "streets", "senders", "templates"];
 export const adminCollections = ["sokoGroups", "sokoMembers", "streets", "senders", "templates"];
 export const adminViews = ["soko", "regions", "map", "senders", "templates", "quittungStamm", "privacy", "users"];
-export const persistedCollections = ["citizens", "sokoGroups", "sokoMembers", "streets", "senders", "templates"];
+export const persistedCollections = apiCollections;
 export const hasBackendData = data => data && persistedCollections.some(key => Array.isArray(data[key]) && data[key].length);
 export const isAdmin = () => state.auth.user?.role === "admin";
 export const canAccessView = view => !adminViews.includes(view) || isAdmin();

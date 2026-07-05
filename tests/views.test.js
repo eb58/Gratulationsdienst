@@ -97,6 +97,17 @@ beforeEach(() => {
   };
   state.data = {
     citizens: [citizen],
+    weddingAnniversaries: [{
+      id: 'WA-G-1-1976-06-01',
+      citizenId: citizen.id,
+      firstName: citizen.firstName,
+      lastName: citizen.lastName,
+      weddingAnniversary: 'Goldene Hochzeit',
+      weddingDate: '1976-06-01',
+      spouseName: 'Heinz',
+      source: 'Fragebogen',
+      capturedAt: '2026-06-01'
+    }],
     sokoGroups: [{ id: 'SOKO 01', region: 'Tegel - Teststraße', leaderId: 'S-001' }],
     sokoMembers: [{
       id: 'S-001',
@@ -255,6 +266,10 @@ describe('main views', () => {
     assert.match(views.senders(), /sender-form/);
     assert.match(views.templates(), /template-form/);
     assert.match(views.documents(), /Druckliste/);
+    assert.match(views.weddingAnniversaries(), /data-grid="weddingAnniversaries"/);
+    assert.match(views.weddingAnniversaries(), /<select name="month" data-filter>/);
+    assert.doesNotMatch(views.weddingAnniversaries(), /<span>Anzahl<\/span>/);
+    assert.doesNotMatch(views.weddingAnniversaries(), /<span>Gesamt<\/span>/);
     assert.match(views.map(), /id="map-month-select" name="month" data-filter/);
     assert.match(views.map(), /data-action="toggle-map-people"/);
     assert.match(views.import(), /soko-print/);

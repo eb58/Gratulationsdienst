@@ -386,6 +386,11 @@ describe('Jubilare löschen und Testdaten', () => {
       gnade: weddingCounts['Gnadenhochzeit']
     }, { gold: 23, diamant: 15, eisen: 5, gnade: 2 });
     assert.ok(citizens.filter(citizen => citizen.weddingAnniversary).every(citizen => citizen.weddingDate && citizen.spouseName));
+    assert.equal(state.data.weddingAnniversaries.length, citizens.filter(citizen => citizen.weddingAnniversary).length);
+    assert.deepEqual(
+      state.data.weddingAnniversaries.map(item => item.citizenId).sort(),
+      citizens.filter(citizen => citizen.weddingAnniversary).map(citizen => citizen.id).sort()
+    );
   });
 });
 
@@ -408,6 +413,61 @@ describe('Import-Lauf', () => {
     assert.equal(localStorage.getItem('gd_month_filter'), 'alle');
     assert.equal(filteredCitizens().length, state.data.citizens.length);
     assert.equal(state.selectedCitizenId, state.data.citizens[0].id);
+  });
+});
+
+describe('Jubilare pruefen', () => {
+  it('save-citizen speichert erfasste Hochzeitsjubilaeen in einer eigenen Collection', () => {
+    state.data.citizens = [{
+      id: 'G-1',
+      salutation: 'Frau',
+      firstName: 'Erika',
+      lastName: 'Muster',
+      street: 'Teststrasse',
+      houseNo: '1',
+      postalCode: '13437',
+      district: 'Tegel',
+      birthDate: '1936-06-01',
+      wish: 'offen',
+      status: 'geladen',
+      source: 'CSV Import',
+      updatedAt: '2026-06-01'
+    }];
+    setForm('#citizen-form', {
+      id: 'G-1',
+      salutation: 'Frau',
+      firstName: 'Erika',
+      lastName: 'Muster',
+      street: 'Teststrasse',
+      houseNo: '1',
+      postalCode: '13437',
+      district: 'Tegel',
+      birthDate: '1936-06-01',
+      phone: '',
+      email: '',
+      wish: 'Besuch erwünscht',
+      notes: '',
+      source: 'CSV Import',
+      pressPublication: 'on',
+      weddingAnniversary: 'Goldene Hochzeit',
+      weddingDate: '1976-06-01',
+      spouseName: 'Heinz'
+    });
+
+    actions['save-citizen']();
+
+    assert.equal(state.data.weddingAnniversaries.length, 1);
+    assert.deepEqual({
+      citizenId: state.data.weddingAnniversaries[0].citizenId,
+      weddingAnniversary: state.data.weddingAnniversaries[0].weddingAnniversary,
+      weddingDate: state.data.weddingAnniversaries[0].weddingDate,
+      spouseName: state.data.weddingAnniversaries[0].spouseName
+    }, {
+      citizenId: 'G-1',
+      weddingAnniversary: 'Goldene Hochzeit',
+      weddingDate: '1976-06-01',
+      spouseName: 'Heinz'
+    });
   });
 });
 

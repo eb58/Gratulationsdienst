@@ -288,6 +288,37 @@ export const gridDefinitions = {
     getRowClass: params => params.data.citizenId === state.selectedCitizenId ? "selected" : "",
     onRowClicked: params => { state.selectedCitizenId = params.data.citizenId; render(); }
   }),
+  weddingAnniversaries: () => ({
+    ...baseGridOptions(),
+    rowData: (state.data.weddingAnniversaries || [])
+      .filter(item => state.filters.month === "alle" || item.weddingDate?.slice(5, 7) === state.filters.month)
+      .map(item => ({
+        id: item.id,
+        citizenId: item.citizenId,
+        name: `${item.lastName || ""}, ${item.firstName || ""}`.replace(/^, /, ""),
+        weddingAnniversary: item.weddingAnniversary,
+        weddingDate: item.weddingDate,
+        spouseName: item.spouseName,
+        address: `${item.street || ""} ${item.houseNo || ""}`.trim(),
+        postalCode: item.postalCode,
+        district: item.district,
+        source: item.source,
+        capturedAt: item.capturedAt
+      })),
+    columnDefs: [
+      { headerName: "Name", field: "name", width: 220, minWidth: 160 },
+      { headerName: "Jubiläum", field: "weddingAnniversary", width: 190, minWidth: 160 },
+      { headerName: "Hochzeitstag", field: "weddingDate", width: 145, minWidth: 130, valueFormatter: params => formatDate(params.value) },
+      { headerName: "Ehegatte", field: "spouseName", width: 170, minWidth: 140 },
+      { headerName: "Adresse", field: "address", width: 240, minWidth: 170 },
+      { headerName: "Ortsteil", field: "district", width: 145, minWidth: 120 },
+      { headerName: "Quelle", field: "source", width: 130, minWidth: 115 },
+      { headerName: "Erfasst am", field: "capturedAt", width: 135, minWidth: 120, valueFormatter: params => formatDate(params.value) }
+    ],
+    getRowId: params => params.data.id,
+    getRowClass: params => params.data.citizenId === state.selectedCitizenId ? "selected" : "",
+    onRowClicked: params => { state.selectedCitizenId = params.data.citizenId; render(); }
+  }),
   imported: () => ({
     ...baseGridOptions(),
     rowData: state.data.citizens

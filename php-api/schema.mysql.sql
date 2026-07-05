@@ -86,6 +86,30 @@ CREATE TABLE IF NOT EXISTS gd_citizens (
     INDEX idx_gd_citizens_printed (printed_year, printed_age)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS gd_wedding_anniversaries (
+    id VARCHAR(80) NOT NULL PRIMARY KEY,
+    citizen_id VARCHAR(32) NOT NULL DEFAULT '',
+    salutation VARCHAR(32) NOT NULL DEFAULT '',
+    first_name VARCHAR(120) NOT NULL DEFAULT '',
+    last_name VARCHAR(120) NOT NULL DEFAULT '',
+    birth_date DATE NULL,
+    street VARCHAR(180) NOT NULL DEFAULT '',
+    house_no VARCHAR(32) NOT NULL DEFAULT '',
+    postal_code VARCHAR(16) NOT NULL DEFAULT '',
+    district VARCHAR(120) NOT NULL DEFAULT '',
+    wedding_anniversary VARCHAR(80) NOT NULL DEFAULT '',
+    wedding_date DATE NULL,
+    spouse_name VARCHAR(180) NOT NULL DEFAULT '',
+    source VARCHAR(80) NOT NULL DEFAULT '',
+    captured_at_date DATE NULL,
+    updated_at_date DATE NULL,
+    row_version BIGINT UNSIGNED NOT NULL DEFAULT 1,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_gd_wedding_anniversaries_citizen (citizen_id),
+    INDEX idx_gd_wedding_anniversaries_date (wedding_date),
+    INDEX idx_gd_wedding_anniversaries_name (last_name, first_name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS gd_senders (
     id VARCHAR(32) NOT NULL PRIMARY KEY,
     role VARCHAR(120) NOT NULL DEFAULT '',

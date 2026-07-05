@@ -54,6 +54,20 @@ beforeEach(() => {
   delete window.agGrid;
   state.data = {
     citizens: [citizen],
+    weddingAnniversaries: [{
+      id: 'WA-G-1-1976-06-01',
+      citizenId: 'G-1',
+      firstName: 'Erika',
+      lastName: 'Mustermann',
+      weddingAnniversary: 'Goldene Hochzeit',
+      weddingDate: '1976-06-01',
+      spouseName: 'Heinz',
+      street: 'Teststraße',
+      houseNo: '12',
+      district: 'Tegel',
+      source: 'Fragebogen',
+      capturedAt: '2026-06-01'
+    }],
     sokoGroups: [{ id: 'SOKO 01', region: 'Tegel' }],
     sokoMembers: [{
       id: 'S-001',
@@ -120,6 +134,7 @@ describe('grid definitions', () => {
     assert.equal(gridDefinitions.members().rowData[0].role, 'Leitung');
     assert.equal(gridDefinitions.streets().rowData[0].ruleCount, 1);
     assert.equal(gridDefinitions.documents().rowData[0].recipient, 'Erika Mustermann');
+    assert.equal(gridDefinitions.weddingAnniversaries().rowData[0].weddingAnniversary, 'Goldene Hochzeit');
     assert.equal(gridDefinitions.cleanupPreview().rowData[0].name, 'Mustermann, Erika');
     assert.equal(gridDefinitions.cleanupPreview().rowData[0].createdAt, '2026-04-01');
     assert.ok(gridDefinitions.cleanupPreview().columnDefs.some(column => column.field === 'createdAt'));
@@ -139,6 +154,19 @@ describe('grid definitions', () => {
 
     state.filters.month = 'alle';
     assert.deepEqual(gridDefinitions.imported().rowData.map(row => row.id), ['G-6', 'G-7']);
+  });
+
+  it('filtert Hochzeitsjubilaeen nach ausgewaehltem Monat', () => {
+    state.data.weddingAnniversaries = [
+      { id: 'WA-1', citizenId: 'G-1', firstName: 'Erika', lastName: 'Juni', weddingDate: '1976-06-01', weddingAnniversary: 'Goldene Hochzeit' },
+      { id: 'WA-2', citizenId: 'G-2', firstName: 'Eva', lastName: 'Juli', weddingDate: '1966-07-01', weddingAnniversary: 'Diamantene Hochzeit' }
+    ];
+    state.filters.month = '06';
+
+    assert.deepEqual(gridDefinitions.weddingAnniversaries().rowData.map(row => row.id), ['WA-1']);
+
+    state.filters.month = 'alle';
+    assert.deepEqual(gridDefinitions.weddingAnniversaries().rowData.map(row => row.id), ['WA-1', 'WA-2']);
   });
 
   it('renders SOKO and status cell badges', () => {

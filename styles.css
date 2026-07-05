@@ -616,6 +616,30 @@ h3 {
   flex-direction: column;
 }
 
+.view-weddingAnniversaries {
+  display: flex;
+  flex-direction: column;
+}
+
+.wedding-anniversaries-panel,
+.wedding-anniversaries-content {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.wedding-anniversaries-content {
+  margin-top: 12px;
+}
+
+.wedding-anniversaries-content .ag-grid-host,
+.wedding-anniversaries-content .empty-state {
+  flex: 1;
+  height: 100%;
+  min-height: 360px;
+}
+
 
 .grid {
   display: grid;

@@ -19,6 +19,7 @@ export const viewTitles = {
   senders: "Stammdaten: Absender",
   templates: "Stammdaten: Vorlagen",
   documents: "Dokumentlauf",
+  weddingAnniversaries: "Hochzeitsjubiläen",
   quittung: "Quittungsdruck",
   quittungStamm: "Stammdaten: Quittung",
   import: "LABO-Import",
@@ -824,6 +825,25 @@ export const views = {
       <div class="print-pages print-only">
         ${docs.length ? `<!-- Druckseiten werden beim Drucken generiert -->` : ""}
       </div>
+    `;
+  },
+
+  weddingAnniversaries: () => {
+    const anniversaries = (state.data.weddingAnniversaries || [])
+      .filter(item => state.filters.month === "alle" || item.weddingDate?.slice(5, 7) === state.filters.month);
+    return `
+      <section class="panel wedding-anniversaries-panel">
+        <h2>Hochzeitsjubiläen</h2>
+        <div class="toolbar">
+          <label>Für Monat</label>
+          <select name="month" data-filter>
+            ${months.map(([value, label]) => `<option value="${value}"${state.filters.month === value ? " selected" : ""}>${escapeHtml(label)}</option>`).join("")}
+          </select>
+        </div>
+        <div class="wedding-anniversaries-content">
+          ${anniversaries.length ? gridHost("weddingAnniversaries") : `<div class="empty-state">Keine Hochzeitsjubiläen erfasst</div>`}
+        </div>
+      </section>
     `;
   },
 
