@@ -23,10 +23,21 @@ export const streetNameVariants = value => {
   ].filter(Boolean))];
 };
 const stripParens = s => s.replace(/\s*\([^)]*\)/g, "").trim();
-export const streetByName = name => {
-  const norm = normalize(name);
-  return state.data.streets.find(street => normalize(street.name) === norm || normalize(stripParens(street.name)) === norm);
+let streetLookupSource = null;
+let streetLookupCache = new Map();
+const streetLookup = () => {
+  if (streetLookupSource === state.data.streets) return streetLookupCache;
+  streetLookupSource = state.data.streets;
+  streetLookupCache = new Map();
+  state.data.streets.forEach(street => {
+    const nameKey = normalize(street.name);
+    const strippedKey = normalize(stripParens(street.name));
+    if (!streetLookupCache.has(nameKey)) streetLookupCache.set(nameKey, street);
+    if (!streetLookupCache.has(strippedKey)) streetLookupCache.set(strippedKey, street);
+  });
+  return streetLookupCache;
 };
+export const streetByName = name => streetLookup().get(normalize(name));
 export const houseNumberValue = value => Number.parseInt(String(value ?? "").match(/\d+/)?.[0] || "", 10);
 export const ruleMatchesHouseNo = (rule, houseNo) => {
   const number = houseNumberValue(houseNo);

@@ -653,11 +653,12 @@ export const actions = {
     await deleteQuestionnairePagesForCitizens(citizenIds);
     toast(`${citizenIds.length.toLocaleString("de-DE")} alte Jubilare wurden gelöscht.`);
   },
-  "seed-citizens": () => {
+  "seed-citizens": event => {
     if (state.auth.user?.role !== "admin") { toast("Nur Admins können Testdaten erzeugen."); return; }
     const groups = groupedTestAssignments(state.data.streets);
     if (!groups.length) { toast("Keine SOKO-Zuordnungen für Testdaten gefunden."); return; }
-    const rowCount = Math.max(50, groups.length);
+    const requestedRowCount = Number.parseInt(event?.target?.closest("[data-row-count]")?.dataset.rowCount || "", 10);
+    const rowCount = Number.isFinite(requestedRowCount) && requestedRowCount > 0 ? requestedRowCount : Math.max(50, groups.length);
     const assignments = balancedTestAssignments(groups, rowCount);
     const firstNames = shuffledTestValues(testFirstNames);
     const lastNames = shuffledTestValues(testLastNames);

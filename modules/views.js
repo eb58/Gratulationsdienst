@@ -251,13 +251,22 @@ const selectedMonthLabel = () => months.find(([value]) => value === state.filter
 const selectedMonthSuffix = () => state.filters.month === "alle" ? "in allen Monaten" : `im ${selectedMonthLabel()}`;
 const isQuestionnaireReturned = citizen => isCheckedCitizen(citizen);
 const dashboardCitizens = () => activeCitizens().filter(citizen => state.filters.month === "alle" || birthdayMonth(citizen.birthDate) === state.filters.month);
-const dashboardRows = () => state.data.sokoGroups.map(group => {
-  const citizens = dashboardCitizens().filter(citizen => groupForCitizen(citizen)?.id === group.id);
-  const returns = citizens.filter(isQuestionnaireReturned).length;
-  const members = state.data.sokoMembers.filter(member => member.groupId === group.id).length;
-  const rate = citizens.length ? Math.round((returns / citizens.length) * 100) : 0;
-  return { group, members, citizens: citizens.length, returns, open: citizens.length - returns, rate };
-});
+const dashboardRows = () => {
+  const citizensByGroup = dashboardCitizens().reduce((map, citizen) => {
+    const groupId = groupForCitizen(citizen)?.id;
+    if (!groupId) return map;
+    if (!map.has(groupId)) map.set(groupId, []);
+    map.get(groupId).push(citizen);
+    return map;
+  }, new Map());
+  return state.data.sokoGroups.map(group => {
+    const citizens = citizensByGroup.get(group.id) || [];
+    const returns = citizens.filter(isQuestionnaireReturned).length;
+    const members = state.data.sokoMembers.filter(member => member.groupId === group.id).length;
+    const rate = citizens.length ? Math.round((returns / citizens.length) * 100) : 0;
+    return { group, members, citizens: citizens.length, returns, open: citizens.length - returns, rate };
+  });
+};
 const groupedQuittungEntries = entries => entries.reduce((map, { citizen, group }) => {
   if (!map.has(group.id)) map.set(group.id, { group, citizens: [] });
   map.get(group.id).citizens.push(citizen);
@@ -912,6 +921,7 @@ export const views = {
                 <strong>${state.data.citizens.length.toLocaleString("de-DE")} Jubilare</strong>
               </div>
               <button type="button" class="ghost-button test-action-button" data-action="seed-citizens">${Math.max(50, state.data.sokoGroups.length)} CSV simulieren</button>
+              <button type="button" class="ghost-button test-action-button" data-action="seed-citizens" data-row-count="500">500 CSV simulieren</button>
               <button type="button" class="danger-button test-action-button" data-action="clear-citizens">Löschen</button>
             </div>
           ` : ""}

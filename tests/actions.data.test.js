@@ -350,6 +350,13 @@ describe('Jubilare löschen und Testdaten', () => {
     assert.ok(state.data.citizens.length >= 30);
     assert.deepEqual([...new Set(state.data.citizens.map(citizen => citizen.birthDate.slice(5, 7)))], [monthAfterNext()]);
   });
+
+  it('seed-citizens erzeugt auf Wunsch 500 CSV-Zeilen', () => {
+    actions['seed-citizens']({ target: { closest: selector => selector === '[data-row-count]' ? { dataset: { rowCount: '500' } } : null } });
+
+    assert.equal(state.data.citizens.length, 500);
+    assert.deepEqual([...new Set(state.data.citizens.map(citizen => citizen.birthDate.slice(5, 7)))], [monthAfterNext()]);
+  });
 });
 
 describe('Import-Lauf', () => {
