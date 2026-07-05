@@ -4,11 +4,22 @@ import { duplicateKey } from './assignment.js';
 const LABO_FIELDS = ['salutation', 'street', 'houseNo', 'postalCode', 'district', 'phone', 'email'];
 const ADDRESS_FIELDS = ['street', 'houseNo', 'postalCode'];
 const todayDe = () => todayIso().split('-').reverse().join('.');
+const monthOf = value => String(value || "").slice(5, 7);
+const importMonths = mapped => new Set(mapped.flatMap(row => [monthOf(row.birthDate), monthOf(row.weddingDate)]).filter(Boolean));
+const missingFromImport = (remaining, months) => [...remaining.values()]
+  .filter(citizen => citizen.source === "CSV Import")
+  .filter(citizen => months.has(monthOf(citizen.birthDate)) || months.has(monthOf(citizen.weddingDate)));
 
 const mergeCitizen = (existing, incoming, hasGroup) => {
   const merged = {
     ...existing,
     ...Object.fromEntries(LABO_FIELDS.map(key => [key, incoming[key] ?? existing[key]])),
+    status: hasGroup ? "importiert" : "offen",
+    printedAt: "",
+    printedAge: "",
+    printedYear: "",
+    wish: "offen",
+    pressPublication: false,
     updatedAt: todayIso()
   };
   const addressChanged = ADDRESS_FIELDS.some(f => incoming[f] && incoming[f] !== existing[f]);
@@ -21,6 +32,7 @@ const mergeCitizen = (existing, incoming, hasGroup) => {
 
 export const buildImportResult = (mapped, existingCitizens, assignGroup) => {
   const existingByKey = new Map(existingCitizens.map(c => [duplicateKey(c), c]));
+  const months = importMonths(mapped);
   const seen = new Set();
   const newRows = [];
   const updates = [];
@@ -40,14 +52,15 @@ export const buildImportResult = (mapped, existingCitizens, assignGroup) => {
       newRows.push({ ...row, id: nextId("G-2026", [...existingCitizens, ...newRows]), source: "CSV Import", createdAt: row.createdAt || todayIso(), updatedAt: todayIso(), status: group ? "importiert" : "offen" });
     }
   }
-  return { newRows, updates, skipped };
+  return { newRows, updates, skipped, missing: missingFromImport(existingByKey, months) };
 };
 
-export const importNotice = ({ newRows, updates, skipped }) => {
+export const importNotice = ({ newRows, updates, skipped, missing = [] }) => {
   const parts = [];
   if (newRows.length) parts.push(`${newRows.length} neue Datensätze importiert`);
   if (updates.length) parts.push(`${updates.length} Bestände aktualisiert`);
   if (skipped) parts.push(`${skipped} Dubletten übersprungen`);
+  if (missing.length) parts.push(`${missing.length} bisherige Datensätze im neuen Import nicht enthalten`);
   return parts.length ? parts.join(", ") + "." : "Keine Änderungen.";
 };
 

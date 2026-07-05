@@ -41,6 +41,7 @@ const {
   testLastNames,
   seedCsvRows,
   seedCsv,
+  followUpSeedCsvRows,
   rollingSimulationDate,
   questionnaireCitizenPatch
 } = await import('../modules/testdata.js');
@@ -189,6 +190,32 @@ describe('seed CSV generation', () => {
     assert.equal(csv.split('\n').length, 5);
     assert.deepEqual(assignments.map(assignment => assignment.rule.soko), ['01', '02', '01', '02']);
     assert.deepEqual([...new Set(rows.map(row => row.Geburtsdatum.slice(5, 7)))], ['06']);
+  });
+
+  it('builds a follow-up LABO CSV from existing birthdays', () => {
+    const citizens = Array.from({ length: 10 }, (_, index) => ({
+      id: `G-${index + 1}`,
+      salutation: index % 2 ? 'Herr' : 'Frau',
+      firstName: `Vor${index + 1}`,
+      lastName: `Nach${index + 1}`,
+      street: 'Astraße',
+      houseNo: String(index * 2 + 1),
+      postalCode: '13437',
+      district: 'Tegel',
+      birthDate: `1936-06-${String(index + 1).padStart(2, '0')}`,
+      phone: '',
+      email: ''
+    }));
+
+    const result = followUpSeedCsvRows(streets, citizens, null, '06', () => 0);
+
+    assert.equal(result.rows.length, 10);
+    assert.deepEqual(result.removedIds, ['G-1', 'G-2', 'G-3']);
+    assert.equal(result.rows.some(row => row.Vorname === 'Vor1'), false);
+    assert.equal(result.rows.filter(row => /^Vor/.test(row.Vorname)).length, 7);
+    assert.equal(result.rows.filter(row => !/^Vor/.test(row.Vorname)).length, 3);
+    assert.ok(result.rows.some(row => row.Vorname === 'Vor4' && row.Strasse === 'Bweg'), 'ein Bestandsfall bekommt eine neue Adresse');
+    assert.deepEqual([...new Set(result.rows.map(row => row.Geburtsdatum.slice(5, 7)))], ['06']);
   });
 
   it('spreads rolling simulation dates across twelve months', () => {

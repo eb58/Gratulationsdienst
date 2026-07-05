@@ -8,6 +8,7 @@ import { renderCitizenDetail, renderRegionAssignment } from './views.js'; // Zyk
 import { requestDirtyFormLeave } from './dirtyForms.js';
 import { loadQuestionnairePagesForCitizen } from './questionnairePages.js';
 import { loadScript } from './scriptLoader.js';
+import { weddingAnniversaryLabel } from './weddingAnniversaries.js';
 
 let agGridPromise = null;
 export const ensureAgGrid = () => agGridPromise ||= loadScript(`${import.meta.env?.BASE_URL ?? "/"}vendor/ag-grid-community.min.js`);
@@ -40,13 +41,14 @@ const sokoBadgeCell = value => value === "offen"
   ? badgeCell("offen", "red")
   : accentBadgeCell(value, sokoColors[value] || "#0f5d58");
 const statusBadgeCell = value => {
-  const color = value === "offen" ? "#d09b2c"
-    : value === "importiert" ? "#315a8c"
+  if (value === "offen") return badgeCell(value, "gold");
+  if (value === "verschwunden") return badgeCell(value, "red");
+  const color = value === "importiert" ? "#315a8c"
     : value === "geprüft" ? "#2f7d4f"
     : value === SOKO_QUESTIONNAIRE_IMPORTED_STATUS ? "#7a4f9f"
     : value === "gedruckt" ? "#0f5d58"
     : "#66706d";
-  return value === "offen" ? badgeCell(value, "gold") : accentBadgeCell(value, color);
+  return accentBadgeCell(value, color);
 };
 const wishBadgeCell = value => {
   const normalized = normalize(value);
@@ -301,7 +303,7 @@ export const gridDefinitions = {
         id: item.id,
         citizenId: item.citizenId,
         name: `${item.lastName || ""}, ${item.firstName || ""}`.replace(/^, /, ""),
-        weddingAnniversary: item.weddingAnniversary,
+        weddingAnniversary: weddingAnniversaryLabel(item.weddingDate, item.capturedAt),
         weddingDate: item.weddingDate,
         spouseName: item.spouseName,
         address: `${item.street || ""} ${item.houseNo || ""}`.trim(),
@@ -324,30 +326,33 @@ export const gridDefinitions = {
     getRowClass: params => params.data.citizenId === state.selectedCitizenId ? "selected" : "",
     onRowClicked: params => { state.selectedCitizenId = params.data.citizenId; render(); }
   }),
-  imported: () => ({
-    ...baseGridOptions(),
-    rowData: state.data.citizens
-      .filter(citizen => citizen.source === "CSV Import")
-      .filter(citizen => state.filters.month === "alle" || birthdayMonth(citizen.birthDate) === state.filters.month)
-      .map(citizen => ({
-      id: citizen.id,
-      name: `${citizen.lastName}, ${citizen.firstName}`,
-      birthday: citizen.birthDate,
-      age: Number(new Date().getFullYear()) - Number(citizen.birthDate?.slice(0, 4)),
-      address: `${citizen.street} ${citizen.houseNo}`,
-      groupId: groupForCitizen(citizen)?.id || "offen",
-      status: citizen.status
-    })),
-    columnDefs: [
-      { headerName: "Name", field: "name", width: 230, minWidth: 170 },
-      { headerName: "Geburtstag", field: "birthday", width: 130, minWidth: 120, valueFormatter: params => formatDate(params.value) },
-      { headerName: "Alter", field: "age", width: 90, minWidth: 80, filter: "agNumberColumnFilter" },
-      { headerName: "Adresse", field: "address", width: 280, minWidth: 180 },
-      { headerName: "SOKO", field: "groupId", width: 115, minWidth: 105, cellRenderer: params => sokoBadgeCell(params.value) },
-      { headerName: "Status", field: "status", width: 135, minWidth: 115, cellRenderer: params => statusBadgeCell(params.value) }
-    ],
-    getRowId: params => params.data.id
-  })
+  imported: () => {
+    const missingIds = new Set((state.importMissingCitizens || []).map(citizen => citizen.id));
+    return {
+      ...baseGridOptions(),
+      rowData: state.data.citizens
+        .filter(citizen => citizen.source === "CSV Import")
+        .filter(citizen => missingIds.has(citizen.id) || state.filters.month === "alle" || birthdayMonth(citizen.birthDate) === state.filters.month)
+        .map(citizen => ({
+        id: citizen.id,
+        name: `${citizen.lastName}, ${citizen.firstName}`,
+        birthday: citizen.birthDate,
+        age: Number(new Date().getFullYear()) - Number(citizen.birthDate?.slice(0, 4)),
+        address: `${citizen.street} ${citizen.houseNo}`,
+        groupId: groupForCitizen(citizen)?.id || "offen",
+        status: missingIds.has(citizen.id) ? "verschwunden" : citizen.status
+      })),
+      columnDefs: [
+        { headerName: "Name", field: "name", width: 230, minWidth: 170 },
+        { headerName: "Geburtstag", field: "birthday", width: 130, minWidth: 120, valueFormatter: params => formatDate(params.value) },
+        { headerName: "Alter", field: "age", width: 90, minWidth: 80, filter: "agNumberColumnFilter" },
+        { headerName: "Adresse", field: "address", width: 280, minWidth: 180 },
+        { headerName: "SOKO", field: "groupId", width: 115, minWidth: 105, cellRenderer: params => sokoBadgeCell(params.value) },
+        { headerName: "Status", field: "status", width: 135, minWidth: 115, cellRenderer: params => statusBadgeCell(params.value) }
+      ],
+      getRowId: params => params.data.id
+    };
+  }
 };
 
 export const mountGrid = element => {

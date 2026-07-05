@@ -165,6 +165,7 @@ beforeEach(() => {
   state.printBackground = true;
   state.showMapPeople = true;
   state.importText = 'Vorname;Nachname';
+  state.importMissingCitizens = [];
   state.dashboardSort = { key: 'group', dir: 'asc' };
 });
 
@@ -274,6 +275,9 @@ describe('main views', () => {
     assert.match(views.import(), /soko-print/);
     assert.match(views.import(), /<select name="month" data-filter>/);
     assert.doesNotMatch(views.import(), /Alte Jubilare löschen/);
+    state.importMissingCitizens = [{ id: 'G-missing', firstName: 'Eva', lastName: 'Fehlt', birthDate: '1936-04-06' }];
+    assert.match(views.import(), /data-action="delete-missing-citizens"/);
+    assert.match(views.import(), /Verschwundene endgültig löschen \(1\)/);
   });
 
   it('renders receipt, profile and user administration states', () => {

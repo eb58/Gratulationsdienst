@@ -100,6 +100,7 @@ beforeEach(() => {
     templateName: 'Standard'
   }];
   state.filters = { q: '', month: 'alle', groupId: 'alle', age: 'alle', status: 'alle', occasion: 'Geburtstag' };
+  state.importMissingCitizens = [];
   state.selectedCitizenId = 'G-1';
   state.selectedMemberId = 'S-001';
   state.selectedStreetId = 'STR-001';
@@ -147,6 +148,31 @@ describe('grid definitions', () => {
     assert.deepEqual(gridDefinitions.imported().rowData.map(row => row.id), ['G-6']);
 
     state.filters.month = 'alle';
+    assert.deepEqual(gridDefinitions.imported().rowData.map(row => row.id), ['G-6', 'G-7']);
+  });
+
+  it('zeigt im neuen Import fehlende Jubilare mit Status verschwunden in der Liste importierter Jubilare', () => {
+    state.data.citizens = [
+      { ...citizen, id: 'G-6', source: 'CSV Import', birthDate: '1936-06-01', status: 'geprüft' },
+      { ...citizen, id: 'G-7', source: 'CSV Import', birthDate: '1936-06-02', status: 'geprüft' }
+    ];
+    state.filters.month = 'alle';
+    state.importMissingCitizens = [{ id: 'G-7' }];
+
+    const rows = gridDefinitions.imported().rowData;
+    assert.deepEqual(rows.map(row => row.id), ['G-6', 'G-7']);
+    assert.equal(rows.find(row => row.id === 'G-6').status, 'geprüft');
+    assert.equal(rows.find(row => row.id === 'G-7').status, 'verschwunden');
+  });
+
+  it('zeigt verschwundene Jubilare auch ausserhalb des gewaehlten Monatsfilters', () => {
+    state.data.citizens = [
+      { ...citizen, id: 'G-6', source: 'CSV Import', birthDate: '1936-06-01' },
+      { ...citizen, id: 'G-7', source: 'CSV Import', birthDate: '1936-07-01' }
+    ];
+    state.filters.month = '06';
+    state.importMissingCitizens = [{ id: 'G-7' }];
+
     assert.deepEqual(gridDefinitions.imported().rowData.map(row => row.id), ['G-6', 'G-7']);
   });
 

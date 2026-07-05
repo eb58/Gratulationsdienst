@@ -5,7 +5,8 @@ import {
   upsertWeddingAnniversaryForCitizen,
   upsertWeddingAnniversariesForCitizens,
   weddingAnniversaryFromCitizen,
-  weddingAnniversaryId
+  weddingAnniversaryId,
+  weddingAnniversaryLabel
 } from '../modules/weddingAnniversaries.js';
 
 const citizen = {
@@ -31,11 +32,21 @@ describe('wedding anniversaries', () => {
     assert.equal(weddingAnniversaryId(citizen), 'WA-G-1-1976-06-01');
     assert.equal(entry.id, 'WA-G-1-1976-06-01');
     assert.equal(entry.citizenId, 'G-1');
-    assert.equal(entry.weddingAnniversary, 'Goldene Hochzeit');
+    assert.equal(entry.weddingAnniversary, undefined, 'Jubiläums-Label wird nicht gespeichert, sondern in der UI berechnet');
     assert.equal(entry.weddingDate, '1976-06-01');
     assert.equal(entry.spouseName, 'Heinz');
     assert.equal(entry.source, 'SOKO-PDF');
     assert.equal(entry.capturedAt, '2026-06-01');
+  });
+
+  it('berechnet das Jubiläums-Label aus Hochzeitsdatum und Erfassungsdatum', () => {
+    assert.equal(weddingAnniversaryLabel('1976-06-01', '2026-06-01'), 'Goldene Hochzeit');
+    assert.equal(weddingAnniversaryLabel('1966-06-01', '2026-06-01'), 'Diamantene Hochzeit');
+    assert.equal(weddingAnniversaryLabel('1961-06-01', '2026-06-01'), 'Eiserne Hochzeit');
+    assert.equal(weddingAnniversaryLabel('1956-06-01', '2026-06-01'), 'Gnadenhochzeit');
+    assert.equal(weddingAnniversaryLabel('1980-06-01', '2026-06-01'), '');
+    assert.equal(weddingAnniversaryLabel('', '2026-06-01'), '');
+    assert.equal(weddingAnniversaryLabel('1976-06-01', ''), '');
   });
 
   it('upserts one current wedding anniversary per citizen', () => {

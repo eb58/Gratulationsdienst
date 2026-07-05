@@ -97,6 +97,7 @@ beforeEach(() => {
   state.selectedTemplateId = state.data.templates[0].id;
   state.selectedUserId = '';
   state.importText = '';
+  state.importMissingCitizens = [];
   state.generatedDocs = [];
   state.printBackground = true;
   state.showMapPeople = true;
@@ -281,19 +282,9 @@ describe('Straßen-Zuständigkeit', () => {
 });
 
 describe('Jubilare löschen und Testdaten', () => {
-  it('clear-citizens nur für Admins; confirm leert Jubilare', () => {
-    state.data.citizens = [{ id: 'G-1' }];
-    state.data.weddingAnniversaries = [{ id: 'WA-G-1', citizenId: 'G-1' }];
-    actions['clear-citizens']();
-    assert.equal(state.dialog.type, 'clear-citizens');
-    actions['confirm-clear-citizens']();
-    assert.deepEqual(state.data.citizens, []);
-    assert.deepEqual(state.data.weddingAnniversaries, []);
-  });
-
-  it('clear-citizens wird für Nicht-Admins blockiert', () => {
+  it('reset-test-database wird für Nicht-Admins blockiert', () => {
     state.auth.user = { id: 'u', role: 'user' };
-    actions['clear-citizens']();
+    actions['reset-test-database']();
     assert.equal(state.dialog, null);
   });
 
@@ -304,17 +295,39 @@ describe('Jubilare löschen und Testdaten', () => {
     assert.deepEqual([...new Set(state.data.citizens.map(citizen => citizen.birthDate.slice(5, 7)))], [monthAfterNext()]);
   });
 
-  it('seed-citizens erzeugt auf Wunsch 500 CSV-Zeilen', () => {
-    actions['seed-citizens']({ target: { closest: selector => selector === '[data-row-count]' ? { dataset: { rowCount: '500' } } : null } });
-
-    assert.equal(state.data.citizens.length, 500);
-    assert.deepEqual([...new Set(state.data.citizens.map(citizen => citizen.birthDate.slice(5, 7)))], [monthAfterNext()]);
+  it('seed-citizens lässt die aktuelle Monatsauswahl unverändert', () => {
+    state.filters = { ...state.filters, month: '05' };
+    actions['seed-citizens']();
+    assert.equal(state.filters.month, '05');
   });
 
-  it('seed-citizens-year-questionnaire erzeugt 500 Jahresdaten mit realistischen Fragebogenwerten', () => {
-    actions['seed-citizens-year-questionnaire']();
+  it('seed-citizens simuliert bei Bestand einen Folge-LABO-Lauf', () => {
+    actions['seed-citizens']();
+    const initialCount = state.data.citizens.length;
 
-    const citizens = state.data.citizens;
+    actions['seed-citizens']();
+
+    assert.equal(state.importText.trim().split('\n').length, initialCount + 1);
+    assert.ok(state.data.citizens.length > initialCount, 'neue LABO-Fälle werden ergänzt');
+  });
+
+  it('reset-test-database loescht Bestand, laesst Monatsauswahl unveraendert und erzeugt 500 Jahresdaten mit realistischen Fragebogenwerten', async () => {
+    state.data.citizens = [{ id: 'G-old' }];
+    state.data.weddingAnniversaries = [{ id: 'WA-G-old', citizenId: 'G-old' }];
+    state.filters = { ...state.filters, month: '05' };
+
+    actions['reset-test-database']();
+    assert.equal(state.dialog.type, 'reset-test-database');
+    assert.equal(state.data.citizens.length, 1, 'noch nicht geloescht vor Bestaetigung');
+
+    await actions['confirm-reset-test-database']();
+
+    assert.equal(state.dialog, null);
+    assert.equal(state.filters.month, '05');
+
+    const allCitizens = state.data.citizens;
+    const citizens = allCitizens.filter(citizen => citizen.status === 'gedruckt');
+    const openCitizens = allCitizens.filter(citizen => citizen.status !== 'gedruckt');
     const monthCounts = Object.values(citizens.reduce((map, citizen) => ({ ...map, [citizen.birthDate.slice(5, 7)]: (map[citizen.birthDate.slice(5, 7)] || 0) + 1 }), {}));
     const weddingCounts = citizens.reduce((map, citizen) => ({ ...map, [citizen.weddingAnniversary || '-']: (map[citizen.weddingAnniversary || '-'] || 0) + 1 }), {});
     const wishCounts = citizens.reduce((map, citizen) => ({ ...map, [citizen.wish]: (map[citizen.wish] || 0) + 1 }), {});
@@ -323,7 +336,6 @@ describe('Jubilare löschen und Testdaten', () => {
     assert.equal(monthCounts.length, 12);
     assert.ok(Math.max(...monthCounts) - Math.min(...monthCounts) <= 1);
     assert.equal(citizens[0].createdAt.slice(0, 7), `${new Date().getFullYear() - 1}-${monthAfterNext()}`);
-    assert.ok(citizens.every(citizen => citizen.status === 'gedruckt'));
     assert.ok(citizens.every(citizen => citizen.printedAt && citizen.printedYear && Number.isFinite(citizen.printedAge)));
     assert.equal(citizens[0].printedAt, citizens[0].createdAt);
     assert.equal(citizens[0].printedYear, Number(citizens[0].printedAt.slice(0, 4)));
@@ -344,6 +356,10 @@ describe('Jubilare löschen und Testdaten', () => {
       state.data.weddingAnniversaries.map(item => item.citizenId).sort(),
       citizens.filter(citizen => citizen.weddingAnniversary).map(citizen => citizen.id).sort()
     );
+
+    assert.ok(openCitizens.length > 0, 'zusätzlich zur Jahressimulation wird ein offener LABO-Lauf erzeugt, damit das Dashboard nicht leer bleibt');
+    assert.ok(openCitizens.every(citizen => citizen.birthDate.slice(5, 7) === monthAfterNext()));
+    assert.ok(openCitizens.every(citizen => citizen.status === 'importiert' || citizen.status === 'offen'));
   });
 });
 
@@ -353,7 +369,7 @@ describe('Import-Lauf', () => {
     assert.equal(state.data.citizens.length, 0);
   });
 
-  it('run-import verarbeitet vorhandenen Importtext', () => {
+  it('run-import verarbeitet vorhandenen Importtext und stellt den Geburtsmonat der CSV als Filter ein', () => {
     state.filters = { q: 'unsichtbar', month: '01', groupId: 'SOKO 99', age: '100', status: 'geprüft', occasion: 'Geburtstag' };
     localStorage.setItem('gd_month_filter', '01');
     state.importText = 'Vorname;Nachname;Strasse;Hausnummer;PLZ;Geburtsdatum\nMax;Muster;Hauptstr;1;13407;5.4.1936';
@@ -361,11 +377,54 @@ describe('Import-Lauf', () => {
     assert.ok(state.data.citizens.length > 0);
     assert.deepEqual(
       { q: state.filters.q, month: state.filters.month, groupId: state.filters.groupId, age: state.filters.age, status: state.filters.status },
-      { q: '', month: 'alle', groupId: 'alle', age: 'alle', status: 'alle' }
+      { q: '', month: '04', groupId: 'alle', age: 'alle', status: 'alle' }
     );
-    assert.equal(localStorage.getItem('gd_month_filter'), 'alle');
+    assert.equal(localStorage.getItem('gd_month_filter'), '04');
     assert.equal(filteredCitizens().length, state.data.citizens.length);
     assert.equal(state.selectedCitizenId, state.data.citizens[0].id);
+  });
+
+  it('run-import faellt bei gemischten Geburtsmonaten in der CSV auf "alle" zurueck', () => {
+    state.importText = 'Vorname;Nachname;Strasse;Hausnummer;PLZ;Geburtsdatum\nMax;Muster;Hauptstr;1;13407;5.4.1936\nEva;Fehlt;Hauptstr;2;13407;6.6.1940';
+    actions['run-import']();
+
+    assert.equal(state.filters.month, 'alle');
+    assert.equal(localStorage.getItem('gd_month_filter'), 'alle');
+  });
+
+  it('run-import merkt bisherige Jubilare, die im neuen Import fehlen', () => {
+    state.data.citizens = [
+      { id: 'G-2026-001', source: 'CSV Import', firstName: 'Max', lastName: 'Muster', birthDate: '1936-04-05', street: 'Hauptstr', houseNo: '1', postalCode: '13407' },
+      { id: 'G-2026-002', source: 'CSV Import', firstName: 'Eva', lastName: 'Fehlt', birthDate: '1936-04-06', street: 'Hauptstr', houseNo: '2', postalCode: '13407' }
+    ];
+    state.importText = 'Vorname;Nachname;Strasse;Hausnummer;PLZ;Geburtsdatum\nMax;Muster;Hauptstr;1;13407;5.4.1936';
+
+    actions['run-import']();
+
+    assert.deepEqual(state.importMissingCitizens.map(citizen => citizen.id), ['G-2026-002']);
+  });
+
+  it('delete-missing-citizens fragt nach und entfernt die fehlenden Jubilare erst nach Bestaetigung', () => {
+    state.data.citizens = [
+      { id: 'G-2026-001', source: 'CSV Import', firstName: 'Max', lastName: 'Muster', birthDate: '1936-04-05', street: 'Hauptstr', houseNo: '1', postalCode: '13407' },
+      { id: 'G-2026-002', source: 'CSV Import', firstName: 'Eva', lastName: 'Fehlt', birthDate: '1936-04-06', street: 'Hauptstr', houseNo: '2', postalCode: '13407' }
+    ];
+    state.data.weddingAnniversaries = [{ id: 'WA-1', citizenId: 'G-2026-002', weddingAnniversary: 'Goldene Hochzeit' }];
+    state.selectedCitizenId = 'G-2026-002';
+    state.importText = 'Vorname;Nachname;Strasse;Hausnummer;PLZ;Geburtsdatum\nMax;Muster;Hauptstr;1;13407;5.4.1936';
+    actions['run-import']();
+
+    actions['delete-missing-citizens']();
+    assert.equal(state.dialog?.confirmAction, 'confirm-delete-missing-citizens');
+    assert.equal(state.data.citizens.some(citizen => citizen.id === 'G-2026-002'), true, 'noch nicht geloescht vor Bestaetigung');
+
+    actions['confirm-delete-missing-citizens']();
+
+    assert.equal(state.data.citizens.some(citizen => citizen.id === 'G-2026-002'), false);
+    assert.equal(state.data.weddingAnniversaries.some(item => item.citizenId === 'G-2026-002'), false);
+    assert.deepEqual(state.importMissingCitizens, []);
+    assert.notEqual(state.selectedCitizenId, 'G-2026-002');
+    assert.equal(state.dialog, null);
   });
 });
 
@@ -412,15 +471,14 @@ describe('Jubilare pruefen', () => {
     assert.equal(state.data.weddingAnniversaries.length, 1);
     assert.deepEqual({
       citizenId: state.data.weddingAnniversaries[0].citizenId,
-      weddingAnniversary: state.data.weddingAnniversaries[0].weddingAnniversary,
       weddingDate: state.data.weddingAnniversaries[0].weddingDate,
       spouseName: state.data.weddingAnniversaries[0].spouseName
     }, {
       citizenId: 'G-1',
-      weddingAnniversary: 'Goldene Hochzeit',
       weddingDate: '1976-06-01',
       spouseName: 'Heinz'
     });
+    assert.equal(state.data.weddingAnniversaries[0].weddingAnniversary, undefined, 'Jubiläums-Label wird nicht gespeichert, sondern in der UI berechnet');
   });
 });
 

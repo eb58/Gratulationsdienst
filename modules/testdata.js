@@ -120,6 +120,72 @@ export const seedCsvRows = (streets, rowCount, dateForIndex, rand = Math.random)
 };
 export const seedCsv = (streets, rowCount, dateForIndex, rand = Math.random) => testCsvText(seedCsvRows(streets, rowCount, dateForIndex, rand).rows);
 
+const shuffledBy = (values, rand = Math.random) => values.map(value => ({ value, order: rand() })).sort((a, b) => a.order - b.order).map(item => item.value);
+const csvRowFromCitizen = citizen => ({
+  Anrede: citizen.salutation,
+  Vorname: citizen.firstName,
+  Nachname: citizen.lastName,
+  Strasse: citizen.street,
+  Hausnummer: citizen.houseNo,
+  PLZ: citizen.postalCode,
+  Ortsteil: citizen.district,
+  Geburtsdatum: citizen.birthDate,
+  Telefon: citizen.phone,
+  Email: citizen.email
+});
+const simulationMonthMatches = (citizen, month) => citizen.birthDate?.slice(5, 7) === month;
+const removedFollowUpCount = count => count >= 8 ? 3 : count >= 4 ? 2 : 0;
+const changedAddressCitizen = (citizen, assignment, rand = Math.random) => ({
+  ...citizen,
+  street: assignment.street.name,
+  houseNo: testHouseNo(assignment.rule, assignment.street.rules || [], rand),
+  postalCode: assignment.rule.plz || citizen.postalCode || "13437",
+  district: assignment.rule.ortsteil || assignment.street.district || citizen.district || ""
+});
+const assignmentDiffersFromCitizen = (assignment, citizen) =>
+  assignment.street.name !== citizen.street || (assignment.rule.plz && assignment.rule.plz !== citizen.postalCode);
+const withOneChangedAddress = (citizens, groups, rand = Math.random) => {
+  const assignments = shuffledBy(groups.flatMap(group => group.assignments), rand);
+  const index = citizens.findIndex(citizen => assignments.some(assignment => assignmentDiffersFromCitizen(assignment, citizen)));
+  if (index < 0) return citizens;
+  const assignment = assignments.find(item => assignmentDiffersFromCitizen(item, citizens[index]));
+  return citizens.map((citizen, citizenIndex) => citizenIndex === index ? changedAddressCitizen(citizen, assignment, rand) : citizen);
+};
+const csvDuplicateKey = row => [row.Vorname, row.Nachname, row.Geburtsdatum].map(value => String(value ?? "").trim().toLowerCase()).join("|");
+const avoidExistingCsvDuplicates = (rows, existingRows) => {
+  const existing = new Set(existingRows.map(csvDuplicateKey));
+  return rows.map((row, index) => {
+    const key = csvDuplicateKey(row);
+    if (!existing.has(key)) {
+      existing.add(key);
+      return row;
+    }
+    const unique = { ...row, Nachname: `${row.Nachname}-${index + 1}` };
+    existing.add(csvDuplicateKey(unique));
+    return unique;
+  });
+};
+export const followUpSeedCsvRows = (streets, citizens = [], targetRowCount = null, month = monthAfterNext(), rand = Math.random) => {
+  const groups = groupedTestAssignments(streets);
+  if (!groups.length || !citizens.length) return null;
+  const candidates = citizens.filter(citizen => simulationMonthMatches(citizen, month));
+  if (!candidates.length) return null;
+  const target = Math.max(1, targetRowCount || candidates.length);
+  const removedIds = new Set(shuffledBy(candidates, rand).slice(0, removedFollowUpCount(candidates.length)).map(citizen => citizen.id));
+  const kept = withOneChangedAddress(candidates.filter(citizen => !removedIds.has(citizen.id)), groups, rand);
+  const newCount = Math.max(0, target - kept.length);
+  const keptRows = kept.map(csvRowFromCitizen);
+  const newRows = avoidExistingCsvDuplicates(seedCsvRows(streets, newCount, () => month, rand).rows, keptRows);
+  return {
+    removedIds: [...removedIds],
+    rows: [...keptRows, ...newRows]
+  };
+};
+export const followUpSeedCsv = (streets, citizens = [], targetRowCount = null, month = monthAfterNext(), rand = Math.random) => {
+  const result = followUpSeedCsvRows(streets, citizens, targetRowCount, month, rand);
+  return result ? testCsvText(result.rows) : "";
+};
+
 export const isoLocalDate = date => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 export const rollingSimulationStart = (date = new Date()) => new Date(date.getFullYear() - 1, Number(monthAfterNext(date)) - 1, 1);
 export const rollingSimulationOffset = (index, rowCount) => Math.min(11, Math.floor((index * 12) / rowCount));

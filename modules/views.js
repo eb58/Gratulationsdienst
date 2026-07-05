@@ -166,15 +166,15 @@ export const citizenDetailContent = citizen => `
       <button type="button" class="primary-button${citizen.wish && citizen.wish !== "offen" ? "" : " btn-disabled"}" data-action="save-citizen">Speichern</button>
       ${isPrintedCitizen(citizen) ? `<button type="button" class="ghost-button" data-action="reset-selected-for-reprint">Für Nachdruck auf geprüft setzen</button>` : ""}
     </div>
-    ${radioField("wish", "Glückwünsche", citizen.wish, [["Besuch erwünscht", "Besuch erwünscht"], ["per Post", "per Post"], ["keine", "keine"]], "full")}
+    ${radioField("wish", "Glückwünsche", citizen.wish, [["per Post", "per Post"], ["Besuch erwünscht", "Besuch erwünscht"], ["keine", "keine"]], "full")}
     ${checkField("pressPublication", "Veröffentlichung in der lokalen Presse", citizen.pressPublication, "full")}
     ${radioField("weddingAnniversary", "Es steht bevor die", citizen.weddingAnniversary ?? "", [
-      ["", "—"],
-      ["Goldene Hochzeit", "Goldene Hochzeit"],
-      ["Diamantene Hochzeit", "Diamantene Hochzeit"],
-      ["Eiserne Hochzeit", "Eiserne Hochzeit"],
-      ["Gnadenhochzeit", "Gnadenhochzeit"]
-    ], "full")}
+  ["", "—"],
+  ["Goldene Hochzeit", "Goldene Hochzeit"],
+  ["Diamantene Hochzeit", "Diamantene Hochzeit"],
+  ["Eiserne Hochzeit", "Eiserne Hochzeit"],
+  ["Gnadenhochzeit", "Gnadenhochzeit"]
+], "full")}
     ${field("weddingDate", "am", citizen.weddingDate ?? "", "date", "hochzeit-date-field")}
     ${field("spouseName", "Name des Ehegatten", citizen.spouseName ?? "", "text", "hochzeit-spouse-field")}
     ${textField("notes", "Notiz", citizen.notes, "full notes-field")}
@@ -693,8 +693,8 @@ export const views = {
         </div>
         <div class="map-legend">
           ${state.data.sokoGroups.map(group => {
-            const district = group.region.split(" - ")[0];
-            return `<div class="legend-item">
+      const district = group.region.split(" - ")[0];
+      return `<div class="legend-item">
               <span style="background:${escapeHtml(sokoColors[group.id])}"></span>
               <div class="legend-item-body">
                 <strong>${escapeHtml(group.id)}</strong>
@@ -702,7 +702,7 @@ export const views = {
                 <small>${(addrCounts[group.id] || 0).toLocaleString("de-DE")} Adr. &middot; ${(segCounts[group.id] || 0).toLocaleString("de-DE")} Abschn.</small>
               </div>
             </div>`;
-          }).join("")}
+    }).join("")}
         </div>
       </div>
     `;
@@ -956,7 +956,9 @@ export const views = {
   `,
 
   import: () => {
-    const importedCitizens = state.data.citizens.filter(citizen => citizen.source === "CSV Import" && (state.filters.month === "alle" || birthdayMonth(citizen.birthDate) === state.filters.month));
+    const missingCitizens = state.importMissingCitizens || [];
+    const missingIds = new Set(missingCitizens.map(citizen => citizen.id));
+    const importedCitizens = state.data.citizens.filter(citizen => citizen.source === "CSV Import" && (missingIds.has(citizen.id) || state.filters.month === "alle" || birthdayMonth(citizen.birthDate) === state.filters.month));
     return `
     <div class="stack import-view-stack">
       <section class="panel">
@@ -978,10 +980,8 @@ export const views = {
                 <span>Nur Testzwecke</span>
                 <strong>${state.data.citizens.length.toLocaleString("de-DE")} Jubilare</strong>
               </div>
-              <button type="button" class="ghost-button test-action-button" data-action="seed-citizens">${Math.max(50, state.data.sokoGroups.length)} CSV simulieren</button>
-              <button type="button" class="ghost-button test-action-button" data-action="seed-citizens" data-row-count="500">500 CSV simulieren</button>
-              <button type="button" class="ghost-button test-action-button" data-action="seed-citizens-year-questionnaire">500 Jahr + Fragebogen simulieren</button>
-              <button type="button" class="danger-button test-action-button" data-action="clear-citizens">Löschen</button>
+              <button type="button" class="ghost-button test-action-button" data-action="seed-citizens">LABO-Import simulieren</button>
+              <button type="button" class="danger-button test-action-button" data-action="reset-test-database">Reset Test-Datenbank</button>
             </div>
           ` : ""}
           <input id="import-file" class="file-input" type="file" accept=".csv,text/csv">
@@ -994,6 +994,7 @@ export const views = {
         </div>
         <div class="button-row" style="margin-top:12px">
           <button type="button" class="primary-button" data-action="soko-print">Drucke SOKO-Fragebögen</button>
+          ${missingCitizens.length ? `<button type="button" class="danger-button" data-action="delete-missing-citizens">Verschwundene endgültig löschen (${missingCitizens.length})</button>` : ""}
         </div>
       </section>
     </div>

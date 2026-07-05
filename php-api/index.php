@@ -117,7 +117,6 @@ function collectionConfig(string $collection): array
                 'houseNo' => ['house_no', 'string'],
                 'postalCode' => ['postal_code', 'string'],
                 'district' => ['district', 'string'],
-                'weddingAnniversary' => ['wedding_anniversary', 'string'],
                 'weddingDate' => ['wedding_date', 'date'],
                 'spouseName' => ['spouse_name', 'string'],
                 'source' => ['source', 'string'],

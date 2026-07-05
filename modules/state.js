@@ -184,6 +184,7 @@ export const state = {
   quittungKapitel: quittungSettings.quittungKapitel,
   quittungTitel: quittungSettings.quittungTitel,
   importText: "",
+  importMissingCitizens: [],
   importSplit: storedSplit("import", 50),
   citizenSplit: storedSplit("citizen", 50),
   citizenDetailSplit: storedSplit("citizenDetail", 42, 25, 55),

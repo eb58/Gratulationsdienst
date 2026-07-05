@@ -78,8 +78,7 @@ const busyActions = new Set([
   "confirm-delete-user",
   "run-import",
   "seed-citizens",
-  "seed-citizens-year-questionnaire",
-  "confirm-clear-citizens",
+  "confirm-reset-test-database",
   "generate-docs",
   "save-quittung-settings",
   "simulate-soko-pdf-import",
@@ -87,7 +86,7 @@ const busyActions = new Set([
   "soko-print",
   "print-all-receipts"
 ]);
-const immediateBusyActions = new Set(["run-import", "seed-citizens", "seed-citizens-year-questionnaire", "generate-docs", "simulate-soko-pdf-import", "run-soko-pdf-import"]);
+const immediateBusyActions = new Set(["run-import", "seed-citizens", "confirm-reset-test-database", "generate-docs", "simulate-soko-pdf-import", "run-soko-pdf-import"]);
 const actionLeavesDirtyMask = action => {
   const id = action.closest("[data-id]")?.dataset.id || "";
   const actionName = action.dataset.action;

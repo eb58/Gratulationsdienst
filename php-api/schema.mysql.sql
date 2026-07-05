@@ -97,7 +97,6 @@ CREATE TABLE IF NOT EXISTS gd_wedding_anniversaries (
     house_no VARCHAR(32) NOT NULL DEFAULT '',
     postal_code VARCHAR(16) NOT NULL DEFAULT '',
     district VARCHAR(120) NOT NULL DEFAULT '',
-    wedding_anniversary VARCHAR(80) NOT NULL DEFAULT '',
     wedding_date DATE NULL,
     spouse_name VARCHAR(180) NOT NULL DEFAULT '',
     source VARCHAR(80) NOT NULL DEFAULT '',
