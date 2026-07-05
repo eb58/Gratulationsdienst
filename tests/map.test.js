@@ -34,6 +34,8 @@ const {
   mapProject,
   mapSegmentCounts,
   mapSegmentGroupIds,
+  mapStreetAddressPoints,
+  mapNamedSegmentPoints,
   mapSokoLabelPositions,
   mapSokoLabelsSvg,
   mapStreetByName,
@@ -89,6 +91,45 @@ describe('map street helpers', () => {
   it('counts only mapped or directly matched map segments', () => {
     assert.deepEqual(mapSegmentCounts(), { 'SOKO 01': 1 });
   });
+
+  it('narrows a multi-SOKO street segment to the nearest address point instead of stacking all groups', () => {
+    state.data.streets = [{ name: 'Ringstraße', rules: [{ soko: '01' }, { soko: '02' }] }];
+    globalThis.REINICKENDORF_ADDRESS_POINTS = {
+      addresses: [
+        { street: 'Ringstraße', houseNumber: '1', postalCode: '13437', soko: '01', lon: 0, lat: 0 },
+        { street: 'Ringstraße', houseNumber: '99', postalCode: '13437', soko: '02', lon: 10, lat: 10 }
+      ]
+    };
+    const addressIndex = mapStreetAddressPoints();
+    assert.deepEqual(mapSegmentGroupIds({ name: 'Ringstraße', coords: [[0.1, 0.1]] }, undefined, addressIndex), ['SOKO 01']);
+    assert.deepEqual(mapSegmentGroupIds({ name: 'Ringstraße', coords: [[9.9, 9.9]] }, undefined, addressIndex), ['SOKO 02']);
+  });
+
+  it('keeps every SOKO stacked when no address points exist for the street', () => {
+    assert.deepEqual(mapSegmentGroupIds({ name: 'Nebenstr.', coords: [[0, 0]] }), ['SOKO 02', 'SOKO 03']);
+  });
+
+  it('narrows a segment whose OSM name has a suffix (Nord/Ost) via the resolved street name', () => {
+    state.data.streets = [{ name: 'Ringstraße', rules: [{ soko: '01' }, { soko: '02' }] }];
+    globalThis.REINICKENDORF_ADDRESS_POINTS = {
+      addresses: [
+        { street: 'Ringstraße', houseNumber: '1', postalCode: '13437', soko: '01', lon: 0, lat: 0 },
+        { street: 'Ringstraße', houseNumber: '99', postalCode: '13437', soko: '02', lon: 10, lat: 10 }
+      ]
+    };
+    const addressIndex = mapStreetAddressPoints();
+    assert.deepEqual(mapSegmentGroupIds({ name: 'Ringstraße Nord', coords: [[0.1, 0.1]] }, undefined, addressIndex), ['SOKO 01']);
+  });
+
+  it('rejects an untrustworthy "nearby" name guess that has no real segment of that street close by', () => {
+    state.data.streets = [{ name: 'Ringstraße', rules: [{ soko: '01' }] }];
+    const namedSegment = { name: 'Ringstraße', coords: [[0, 0], [0.0001, 0.0001]] };
+    const farGuess = { name: 'Ringstraße', coords: [[9, 9]], matchSource: 'nearby' };
+    const closeGuess = { name: 'Ringstraße', coords: [[0.0002, 0.0002]], matchSource: 'nearby' };
+    const namedPoints = mapNamedSegmentPoints([namedSegment, farGuess, closeGuess]);
+    assert.deepEqual(mapSegmentGroupIds(farGuess, undefined, undefined, namedPoints), ['offen']);
+    assert.deepEqual(mapSegmentGroupIds(closeGuess, undefined, undefined, namedPoints), ['SOKO 01']);
+  });
 });
 
 describe('map projection helpers', () => {
@@ -110,7 +151,15 @@ describe('map projection helpers', () => {
     ], ([x, y]) => [x, y]);
 
     assert.equal(groups.length, 3);
-    assert.ok(groups.some(group => group.groupId === 'SOKO 03' && group.dash === '6'));
+    assert.ok(groups.some(group => group.groupId === 'SOKO 03' && group.dashIndex === 1 && group.dashCount === 2));
+  });
+
+  it('splits the dash pattern evenly across all SOKOs of a street', () => {
+    const svg = map.mapStreetPathsSvg([
+      { name: 'Ringstraße', groupIds: ['SOKO 29', 'SOKO 30', 'SOKO 31', 'SOKO 32'], coords: [[0, 0], [1, 1]] }
+    ], ([x, y]) => [x, y]);
+    assert.match(svg, /data-group-id="SOKO 29"[\s\S]*?stroke-dasharray="10 30" stroke-dashoffset="0"/);
+    assert.match(svg, /data-group-id="SOKO 32"[\s\S]*?stroke-dasharray="10 30" stroke-dashoffset="-30"/);
   });
 
   it('places SOKO labels on a street point near the median of their segments', () => {

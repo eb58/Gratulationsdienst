@@ -2588,8 +2588,9 @@ tbody tr.selected {
 }
 
 .street-map .map-soko-label circle {
-  fill: rgba(255, 255, 255, 0.92);
-  stroke-width: 2.5;
+  fill: rgba(255, 255, 255, 0.62);
+  stroke: #000;
+  stroke-width: 1;
 }
 
 .street-map .map-soko-label text {
@@ -2600,8 +2601,8 @@ tbody tr.selected {
 }
 
 .street-map .map-soko-label:hover circle {
-  fill: #fff;
-  stroke-width: 3.5;
+  fill: rgba(255, 255, 255, 0.92);
+  stroke-width: 1.5;
 }
 
 .map-attribution {

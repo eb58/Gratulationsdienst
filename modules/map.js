@@ -33,17 +33,56 @@ export const mapStreetByName = (name, lookup = mapStreetLookup()) => {
   return variants.map(variant => lookup[normalize(variant)]).find(Boolean)
     || state.data.streets.find(street => variants.some(variant => tokenIncludes(normalize(street.name), normalize(variant)) || tokenIncludes(normalize(variant), normalize(street.name))));
 };
-export const mapSegmentGroupIds = (segment, lookup = mapStreetLookup()) => {
+export const mapStreetAddressPoints = () => (addressPointData().addresses || []).reduce((index, address) => {
+  if (!address.soko || !Number.isFinite(address.lon) || !Number.isFinite(address.lat)) return index;
+  streetNameVariants(address.street).forEach(name => {
+    const key = normalize(name);
+    index[key] ||= [];
+    index[key].push(address);
+  });
+  return index;
+}, {});
+const squaredDistance = (lon, lat, address) => (address.lon - lon) ** 2 + (address.lat - lat) ** 2;
+const nearestAddressSoko = (coords, candidates) => coords.reduce((best, [lon, lat]) => candidates.reduce((closest, address) => {
+  const dist = squaredDistance(lon, lat, address);
+  return dist < closest.dist ? { dist, soko: address.soko } : closest;
+}, best), { dist: Infinity, soko: null }).soko;
+export const mapNamedSegmentPoints = (segments = mapData().segments || [], lookup = mapStreetLookup()) => segments.reduce((index, segment) => {
+  if (segment.matchSource === 'nearby') return index;
   const street = mapStreetByName(segment.name, lookup);
+  const key = normalize(street?.name || segment.name);
+  index[key] ||= [];
+  index[key].push(...segment.coords);
+  return index;
+}, {});
+const NEARBY_TRUST_DEGREES_SQUARED = 0.0015 ** 2;
+// Unbenannte Wege (z.B. Wirtschaftswege) werden bei der Datengenerierung per reiner Naehe einem
+// Strassennamen zugeordnet ("nearby"). Ohne einen echten, tatsaechlich in der Umgebung liegenden
+// Abschnitt derselben Strasse ist diese Zuordnung nicht vertrauenswuerdig genug zum Einfaerben.
+const nearbyGuessIsTrustworthy = (segment, street, namedPoints) => {
+  const points = namedPoints[normalize(street?.name || segment.name)];
+  return Boolean(points?.length) && segment.coords.some(([lon, lat]) =>
+    points.some(([nlon, nlat]) => (nlon - lon) ** 2 + (nlat - lat) ** 2 < NEARBY_TRUST_DEGREES_SQUARED));
+};
+export const mapSegmentGroupIds = (segment, lookup = mapStreetLookup(), addressIndex = mapStreetAddressPoints(), namedPoints = mapNamedSegmentPoints(undefined, lookup)) => {
+  const street = mapStreetByName(segment.name, lookup);
+  if (segment.matchSource === 'nearby' && !nearbyGuessIsTrustworthy(segment, street, namedPoints)) return ["offen"];
   const groups = [...new Set((street?.rules || []).map(rule => rule.soko).filter(Boolean))]
-    .sort((a, b) => Number(a) - Number(b))
-    .map(sokoGroupId);
-  return groups.length ? groups : ["offen"];
+    .sort((a, b) => Number(a) - Number(b));
+  if (groups.length > 1 && street?.name) {
+    const candidates = streetNameVariants(street.name).map(variant => addressIndex[normalize(variant)]).find(Boolean);
+    const nearestSoko = candidates?.length && nearestAddressSoko(segment.coords, candidates);
+    if (nearestSoko && groups.includes(nearestSoko)) return [sokoGroupId(nearestSoko)];
+  }
+  return groups.length ? groups.map(sokoGroupId) : ["offen"];
 };
 export const mapSegments = () => {
   const lookup = mapStreetLookup();
-  return (mapData().segments || [])
-    .map(segment => ({ ...segment, groupIds: mapSegmentGroupIds(segment, lookup) }))
+  const addressIndex = mapStreetAddressPoints();
+  const rawSegments = mapData().segments || [];
+  const namedPoints = mapNamedSegmentPoints(rawSegments, lookup);
+  return rawSegments
+    .map(segment => ({ ...segment, groupIds: mapSegmentGroupIds(segment, lookup, addressIndex, namedPoints) }))
     .filter(segment => segment.matchSource !== 'nearby' || segment.groupIds[0] !== 'offen');
 };
 export const mapSegmentCounts = () => mapSegments().reduce((counts, segment) => {
@@ -102,9 +141,8 @@ export const mapStreetPathGroups = (segments, project) => {
   segments.forEach(segment => {
     const path = mapPath(segment.coords, project);
     segment.groupIds.forEach((groupId, index) => {
-      const dash = segment.groupIds.length > 1 ? `${index * 6}` : "";
-      const key = `${groupId}|${segment.name}|${dash}`;
-      groups[key] = groups[key] || { groupId, streetName: segment.name, dash, paths: [], count: 0 };
+      const key = `${groupId}|${segment.name}|${index}`;
+      groups[key] = groups[key] || { groupId, streetName: segment.name, dashIndex: index, dashCount: segment.groupIds.length, paths: [], count: 0 };
       groups[key].paths.push(path);
       groups[key].count += 1;
     });
@@ -113,7 +151,8 @@ export const mapStreetPathGroups = (segments, project) => {
 };
 export const mapStreetPathsSvg = (segments, project) => mapStreetPathGroups(segments, project).filter(group => group.groupId !== "offen").map(group => {
   const d = group.paths.join(" ");
-  const dash = group.dash ? `stroke-dasharray="12 8" stroke-dashoffset="${group.dash}"` : "";
+  // Jede SOKO bekommt einen gleich langen, ueberlappungsfreien Abschnitt des Dash-Musters
+  const dash = group.dashCount > 1 ? `stroke-dasharray="10 ${10 * (group.dashCount - 1)}" stroke-dashoffset="${-10 * group.dashIndex}"` : "";
   return `
   <g class="map-street-group" data-group-id="${escapeHtml(group.groupId)}" data-street-name="${escapeHtml(group.streetName || '')}">
     <path class="map-street-hit" d="${d}"></path>
@@ -137,7 +176,7 @@ export const mapSokoLabelPositions = (segments, project) => {
 };
 export const mapSokoLabelsSvg = (segments, project) => mapSokoLabelPositions(segments, project).map(({ groupId, x, y }) => `
   <g class="map-soko-label" data-group-id="${escapeHtml(groupId)}" transform="translate(${x.toFixed(1)} ${y.toFixed(1)})">
-    <circle r="11" style="stroke:${escapeHtml(sokoColors[groupId] || sokoColors.offen)}"></circle>
+    <circle r="11"></circle>
     <text dy="0.35em">${escapeHtml(groupId.replace(/\D/g, ""))}</text>
   </g>`).join("");
 export const mapAddressPointGroups = () => {
