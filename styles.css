@@ -690,7 +690,8 @@ h3 {
 }
 
 .citizen-detail-split.has-questionnaire-images {
-  grid-template-columns: minmax(240px, calc(var(--citizenDetail-left, 42%) - 18px)) 12px minmax(360px, 1fr);
+  gap: 0;
+  grid-template-columns: minmax(240px, calc(var(--citizenDetail-left, 42%) - 6px)) 12px minmax(360px, calc(100% - var(--citizenDetail-left, 42%) - 6px));
 }
 
 .citizen-questionnaire-panel[hidden] {
