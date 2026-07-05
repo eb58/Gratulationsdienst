@@ -218,4 +218,35 @@ describe('mountGrid', () => {
 
     assert.deepEqual(mounted, ['citizens', 'members']);
   });
+
+  it('destroys the previous grid instance before mounting a new one for the same key', () => {
+    const destroyCalls = [];
+    const makeApi = label => ({ destroy: () => destroyCalls.push(label) });
+    let created = 0;
+    window.agGrid = { createGrid: (_element, options) => { created += 1; options.onGridReady({ api: makeApi(created) }); } };
+    const element = { dataset: { grid: 'citizens' }, innerHTML: '' };
+
+    mountGrid(element);
+    mountGrid(element);
+
+    assert.equal(created, 2);
+    assert.deepEqual(destroyCalls, [1]);
+    assert.ok(state.gridApis.citizens);
+  });
+
+  it('destroys and drops grid apis whose host disappeared from the document', () => {
+    const destroyCalls = [];
+    state.gridApis = {
+      citizens: { destroy: () => destroyCalls.push('citizens') },
+      members: { destroy: () => destroyCalls.push('members') }
+    };
+    globalThis.document = { querySelectorAll: selector => selector === '[data-grid]' ? [{ dataset: { grid: 'citizens' } }] : [] };
+    window.agGrid = { createGrid: (_element, options) => options.onGridReady({ api: { destroy: () => {} } }) };
+
+    mountGrids();
+
+    assert.deepEqual(destroyCalls, ['members', 'citizens']);
+    assert.ok(!('members' in state.gridApis));
+    assert.ok('citizens' in state.gridApis);
+  });
 });

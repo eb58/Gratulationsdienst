@@ -347,6 +347,7 @@ export const mountGrid = element => {
     });
     return;
   }
+  state.gridApis[gridKey]?.destroy?.();
   const storedPageSize = storedGridState(gridKey).paginationPageSize;
   if (Number.isFinite(storedPageSize)) definition.paginationPageSize = storedPageSize;
   let ready = false;
@@ -369,4 +370,12 @@ export const mountGrid = element => {
   definition.onPaginationChanged = params => { onPaginationChanged?.(params); if (ready && params.newPageSize) saveGridState(gridKey, params.api); };
   window.agGrid.createGrid(element, definition);
 };
-export const mountGrids = () => [...document.querySelectorAll("[data-grid]")].forEach(mountGrid);
+export const mountGrids = () => {
+  const hostKeys = new Set([...document.querySelectorAll("[data-grid]")].map(element => element.dataset.grid));
+  Object.keys(state.gridApis).forEach(gridKey => {
+    if (hostKeys.has(gridKey)) return;
+    state.gridApis[gridKey]?.destroy?.();
+    delete state.gridApis[gridKey];
+  });
+  document.querySelectorAll("[data-grid]").forEach(mountGrid);
+};
