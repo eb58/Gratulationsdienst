@@ -34,7 +34,11 @@ const {
   testCsvRow,
   testCsvText,
   testFirstNames,
-  testLastNames
+  testLastNames,
+  seedCsvRows,
+  seedCsv,
+  rollingSimulationDate,
+  questionnaireCitizenPatch
 } = await import('../modules/testdata.js');
 
 const streets = [
@@ -168,6 +172,38 @@ describe('test CSV row and text', () => {
     assert.equal(lines.length, 2);
     assert.equal(lines[0], ['Anrede', 'Vorname', 'Nachname', 'Strasse', 'Hausnummer', 'PLZ', 'Ortsteil', 'Geburtsdatum', 'Telefon', 'Email'].map(h => `"${h}"`).join(';'));
     assert.equal(lines[1].startsWith('"Frau";"Anna";"Berger";""'), true);
+  });
+});
+
+describe('seed CSV generation', () => {
+  it('returns structured seed rows and matching CSV text', () => {
+    const { assignments, rows } = seedCsvRows(streets, 4, () => '06', () => 0);
+    const csv = seedCsv(streets, 4, () => '06', () => 0);
+
+    assert.equal(assignments.length, 4);
+    assert.equal(rows.length, 4);
+    assert.equal(csv.split('\n').length, 5);
+    assert.deepEqual(assignments.map(assignment => assignment.rule.soko), ['01', '02', '01', '02']);
+    assert.deepEqual([...new Set(rows.map(row => row.Geburtsdatum.slice(5, 7)))], ['06']);
+  });
+
+  it('spreads rolling simulation dates across twelve months', () => {
+    const dates = Array.from({ length: 12 }, (_, index) => rollingSimulationDate(index, 12, 3, new Date(2026, 5, 28)));
+    const local = date => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+
+    assert.equal(local(dates[0]), '2025-08-03');
+    assert.equal(local(dates.at(-1)), '2026-07-03');
+  });
+
+  it('builds questionnaire patches with deterministic distributions', () => {
+    const citizen = { id: 'G-1', salutation: 'Frau', birthDate: '1940-08-01' };
+    const patch = questionnaireCitizenPatch(citizen, 0, 500);
+
+    assert.equal(patch.status, 'gedruckt');
+    assert.equal(patch.wish, 'keine');
+    assert.equal(patch.weddingAnniversary, 'Goldene Hochzeit');
+    assert.equal(patch.weddingDate, `${Number(patch.printedAt.slice(0, 4)) - 50}-${patch.printedAt.slice(5)}`);
+    assert.equal(patch.spouseName.length > 0, true);
   });
 });
 

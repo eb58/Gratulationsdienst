@@ -26,8 +26,8 @@ const dirCode = readFileSync(new URL('../public/data/soko-strassenverzeichnis.js
 (0, eval)(dirCode);
 
 const { buildStreetData } = await import('../modules/domain.js');
-const { groupedTestAssignments, balancedTestAssignments, shuffledTestValues, testFirstNames, testLastNames, mortalityWeightedTestAges, monthAfterNext, testCsvRow, testCsvText } = await import('../modules/testdata.js');
-const { parseCsv, mapImportRow } = await import('../modules/import.js');
+const { groupedTestAssignments, monthAfterNext, seedCsvRows } = await import('../modules/testdata.js');
+const { mapImportRow } = await import('../modules/import.js');
 const { buildImportResult } = await import('../modules/citizens.js');
 const { streetAssignment } = await import('../modules/assignment.js');
 const { state } = await import('../modules/state.js');
@@ -36,23 +36,12 @@ const pad = code => String(code).padStart(2, '0');
 const counts = arr => arr.reduce((map, value) => (map[value] = (map[value] || 0) + 1, map), {});
 const distinct = arr => new Set(arr).size;
 
-// Exakt die Pipeline aus actions.js -> "seed-citizens"
 const seed = () => {
   const groups = groupedTestAssignments(state.data.streets);
   const rowCount = Math.max(50, groups.length);
-  const assignments = balancedTestAssignments(groups, rowCount);
-  const firstNames = shuffledTestValues(testFirstNames);
-  const lastNames = shuffledTestValues(testLastNames);
-  const names = assignments.map((_, index) => {
-    const [salutation, firstName] = firstNames[index % firstNames.length];
-    return { salutation, firstName, lastName: lastNames[index % lastNames.length] };
-  });
-  const ages = mortalityWeightedTestAges(rowCount, names.map(name => name.salutation));
   const birthdayMonth = monthAfterNext();
-  const csvRows = assignments.map((assignment, index) => {
-    return testCsvRow(index, names[index], assignment, birthdayMonth, Math.random, ages[index]);
-  });
-  const mapped = parseCsv(testCsvText(csvRows)).map(mapImportRow);
+  const { assignments, rows: csvRows } = seedCsvRows(state.data.streets, rowCount, () => birthdayMonth);
+  const mapped = csvRows.map(mapImportRow);
   return { rowCount, assignments, csvRows, mapped };
 };
 

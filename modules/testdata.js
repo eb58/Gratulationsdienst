@@ -98,3 +98,72 @@ export const testCsvText = rows => {
     .map(row => row.map(csvEscape).join(";"))
     .join("\n");
 };
+
+export const seedCsvRows = (streets, rowCount, dateForIndex, rand = Math.random) => {
+  const groups = groupedTestAssignments(streets);
+  if (!groups.length) return { assignments: [], rows: [] };
+  const assignments = balancedTestAssignments(groups, rowCount, rand);
+  const firstNames = shuffledTestValues(testFirstNames);
+  const lastNames = shuffledTestValues(testLastNames);
+  const names = assignments.map((_, index) => {
+    const [salutation, firstName] = firstNames[index % firstNames.length];
+    return { salutation, firstName, lastName: lastNames[index % lastNames.length] };
+  });
+  const ages = mortalityWeightedTestAges(rowCount, names.map(name => name.salutation));
+  const rows = assignments.map((assignment, index) => {
+    const date = dateForIndex(index);
+    const month = date instanceof Date ? String(date.getMonth() + 1).padStart(2, "0") : date;
+    const row = testCsvRow(index, names[index], assignment, month, rand, ages[index]);
+    return date instanceof Date ? { ...row, Geburtsdatum: `${date.getFullYear() - ages[index]}-${row.Geburtsdatum.slice(5)}` } : row;
+  });
+  return { assignments, rows };
+};
+export const seedCsv = (streets, rowCount, dateForIndex, rand = Math.random) => testCsvText(seedCsvRows(streets, rowCount, dateForIndex, rand).rows);
+
+export const isoLocalDate = date => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+export const rollingSimulationStart = (date = new Date()) => new Date(date.getFullYear() - 1, Number(monthAfterNext(date)) - 1, 1);
+export const rollingSimulationOffset = (index, rowCount) => Math.min(11, Math.floor((index * 12) / rowCount));
+export const rollingSimulationDate = (index, rowCount, day = 1, date = new Date()) => {
+  const start = rollingSimulationStart(date);
+  return new Date(start.getFullYear(), start.getMonth() + rollingSimulationOffset(index, rowCount), day);
+};
+const pseudoBucket = (index, modulo, step) => (index * step) % modulo;
+export const questionnaireWish = index => {
+  const bucket = pseudoBucket(index, 100, 37);
+  return bucket < 14 ? "keine" : bucket < 43 ? "Besuch erwünscht" : "per Post";
+};
+export const questionnaireWedding = index => {
+  const bucket = pseudoBucket(index, 1000, 41);
+  if (bucket < 45) return ["Goldene Hochzeit", 50];
+  if (bucket < 75) return ["Diamantene Hochzeit", 60];
+  if (bucket < 84) return ["Eiserne Hochzeit", 65];
+  if (bucket < 87) return ["Gnadenhochzeit", 70];
+  return ["", 0];
+};
+const spouseNameFor = (citizen, index) => {
+  const spouseSalutation = citizen.salutation === "Frau" ? "Herr" : "Frau";
+  const names = testFirstNames.filter(([salutation]) => salutation === spouseSalutation);
+  return names[index % names.length]?.[1] || "";
+};
+export const questionnaireCitizenPatch = (citizen, index, rowCount) => {
+  const [weddingAnniversary, weddingYears] = questionnaireWedding(index);
+  const day = Number.parseInt(citizen.birthDate?.slice(8, 10) || "1", 10);
+  const anniversary = rollingSimulationDate(index, rowCount, Math.max(1, Math.min(28, day)));
+  const printedAt = isoLocalDate(anniversary);
+  const printedYear = anniversary.getFullYear();
+  const weddingDate = weddingYears ? isoLocalDate(new Date(anniversary.getFullYear() - weddingYears, anniversary.getMonth(), anniversary.getDate())) : "";
+  return {
+    ...citizen,
+    createdAt: isoLocalDate(rollingSimulationDate(index, rowCount)),
+    updatedAt: todayIso(),
+    status: "gedruckt",
+    printedAt,
+    printedAge: printedYear - Number(citizen.birthDate?.slice(0, 4)),
+    printedYear,
+    wish: questionnaireWish(index),
+    pressPublication: pseudoBucket(index, 100, 53) < 36,
+    weddingAnniversary,
+    weddingDate,
+    spouseName: weddingAnniversary ? spouseNameFor(citizen, index) : ""
+  };
+};
