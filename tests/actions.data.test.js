@@ -98,7 +98,6 @@ beforeEach(() => {
   state.selectedUserId = '';
   state.importText = '';
   state.generatedDocs = [];
-  state.cleanupPreview = null;
   state.printBackground = true;
   state.showMapPeople = true;
   state.filters = { q: '', month: 'alle', groupId: 'alle', age: 'alle', status: 'alle', occasion: 'Geburtstag' };
@@ -295,60 +294,6 @@ describe('Jubilare löschen und Testdaten', () => {
   it('clear-citizens wird für Nicht-Admins blockiert', () => {
     state.auth.user = { id: 'u', role: 'user' };
     actions['clear-citizens']();
-    assert.equal(state.dialog, null);
-  });
-
-  it('delete-old-citizens erzwingt mindestens sechs Monate und löscht nur ältere Jubiläen', async () => {
-    mock.timers.enable({ apis: ['Date'], now: new Date(2026, 5, 28) });
-    state.data.citizens = [
-      { id: 'old-1', birthDate: '1936-10-15', createdAt: '2025-07-15' },
-      { id: 'old-2', birthDate: '1936-11-20', createdAt: '2025-08-20' },
-      { id: 'old-created', birthDate: '1936-12-20', createdAt: '2025-09-20' },
-      { id: 'boundary', birthDate: '1936-12-28', createdAt: '2025-09-28' },
-      { id: 'fresh', birthDate: '1936-01-15', createdAt: '2025-10-15' },
-      { id: 'future-created', birthDate: '1936-08-01', createdAt: '2026-05-01' },
-      { id: 'future', birthDate: '1936-11-01', createdAt: '2026-08-01' }
-    ];
-    state.selectedCitizenId = 'old-1';
-    state.generatedDocs = [{ citizenId: 'old-1' }, { citizenId: 'fresh' }];
-    state.data.weddingAnniversaries = [
-      { id: 'WA-old-1', citizenId: 'old-1' },
-      { id: 'WA-old-2', citizenId: 'old-2' },
-      { id: 'WA-fresh', citizenId: 'fresh' }
-    ];
-    setField('#cleanup-months', '5');
-
-    actions['preview-old-citizens']();
-
-    assert.equal(state.cleanupMonths, 6);
-    assert.equal(localStorage.getItem('gd_cleanup_months'), '6');
-    assert.equal(state.dialog, null);
-    assert.deepEqual(state.cleanupPreview, { months: 6, citizenIds: ['old-1', 'old-2', 'old-created'] });
-
-    actions['delete-old-citizens']();
-
-    assert.equal(state.dialog.type, 'delete-old-citizens');
-    assert.deepEqual(state.dialog.citizenIds, ['old-1', 'old-2', 'old-created']);
-
-    await actions['confirm-delete-old-citizens']();
-
-    assert.deepEqual(state.data.citizens.map(citizen => citizen.id), ['boundary', 'fresh', 'future-created', 'future']);
-    assert.deepEqual(state.data.weddingAnniversaries.map(item => item.id), ['WA-fresh']);
-    assert.equal(state.selectedCitizenId, '');
-    assert.deepEqual(state.generatedDocs, [{ citizenId: 'fresh' }]);
-    assert.equal(state.cleanupPreview, null);
-  });
-
-  it('delete-old-citizens wird für Nicht-Admins blockiert', () => {
-    state.auth.user = { id: 'u', role: 'user' };
-    state.data.citizens = [{ id: 'old-1', birthDate: '1936-10-15', createdAt: '2025-07-15' }];
-    actions['preview-old-citizens']();
-    assert.equal(state.dialog, null);
-  });
-
-  it('delete-old-citizens öffnet ohne Vorschau keinen Löschdialog', () => {
-    state.data.citizens = [{ id: 'old-1', birthDate: '1936-10-15', createdAt: '2025-07-15' }];
-    actions['delete-old-citizens']();
     assert.equal(state.dialog, null);
   });
 

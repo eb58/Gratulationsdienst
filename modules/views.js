@@ -1,4 +1,4 @@
-import { escapeHtml, normalize, formatDate, byId, birthdayMonth, calculateAge, anniversaryDateFromCreatedAt } from './utils.js';
+import { escapeHtml, normalize, formatDate, byId, birthdayMonth, calculateAge } from './utils.js';
 import { months, sokoColors, streetGroupDisplay } from './domain.js';
 import { state } from './state.js';
 import { selectedCitizen, selectedTemplate, selectedSender, selectedMember, selectedStreet, filteredCitizens, activeCitizens, groupForCitizen, isCheckedCitizen, isPrintedCitizen, wantsVisit } from './assignment.js';
@@ -24,7 +24,6 @@ export const viewTitles = {
   quittungStamm: "Stammdaten: Quittung",
   import: "LABO-Import",
   profile: "Mein Zugang",
-  privacy: "Datenschutz",
   users: "Benutzerverwaltung"
 };
 
@@ -292,29 +291,6 @@ const ageDistribution = citizens => {
   return ages.map(age => ({ age, count: counts.get(age) || 0 }));
 };
 const ageLabel = age => age === 85 || age % 5 === 0 ? age : "";
-const cleanupPreviewContent = () => {
-  const preview = state.cleanupPreview;
-  if (!preview) return "";
-  const ids = new Set(preview.citizenIds || []);
-  const citizens = state.data.citizens
-    .filter(citizen => ids.has(citizen.id))
-    .sort((a, b) => anniversaryDateFromCreatedAt(a.birthDate, a.createdAt) - anniversaryDateFromCreatedAt(b.birthDate, b.createdAt) || String(a.lastName || "").localeCompare(String(b.lastName || "")));
-  return `
-    <section id="cleanup-preview" class="panel cleanup-preview-panel" tabindex="-1">
-      <h2>Zu löschende Jubilare</h2>
-      <div class="data-list">
-        <div><span>Frist</span><strong>${escapeHtml(preview.months)} Monate</strong></div>
-        <div><span>Anzahl</span><strong>${citizens.length.toLocaleString("de-DE")}</strong></div>
-      </div>
-      ${citizens.length ? `
-        ${gridHost("cleanupPreview", 420)}
-        <div class="button-row" style="margin-top:12px">
-          <button type="button" class="danger-button" data-action="delete-old-citizens">Angezeigte Jubilare löschen</button>
-        </div>
-      ` : `<div class="empty-state" style="margin-top:12px">Keine Jubilare für diese Frist gefunden</div>`}
-    </section>
-  `;
-};
 const ageDistributionChart = citizens => {
   const groups = ageDistribution(citizens);
   const max = Math.max(1, ...groups.map(group => group.count));
@@ -1077,26 +1053,6 @@ export const views = {
       </div>
     `;
   },
-
-  privacy: () => `
-    <section class="panel">
-      <h2>Datenbereinigung</h2>
-      <div class="data-list">
-        <div><span>Aktuelle Jubilare</span><strong>${state.data.citizens.length.toLocaleString("de-DE")}</strong></div>
-        <div><span>Mindestfrist</span><strong>6 Monate</strong></div>
-      </div>
-      <div class="alert" style="margin-top:12px">Aus Datenschutzgründen können Jubilare gelöscht werden, deren Jubiläum mehr als die eingestellte Anzahl Monate zurückliegt.</div>
-      <div class="cleanup-admin-actions">
-        <label class="cleanup-months-field">
-          <span>Jubiläum älter als</span>
-          <input id="cleanup-months" type="number" min="6" step="1" data-bind="cleanupMonths" value="${escapeHtml(state.cleanupMonths)}">
-          <span>Monate</span>
-        </label>
-        <button type="button" class="primary-button" data-action="preview-old-citizens">Betroffene anzeigen</button>
-      </div>
-    </section>
-    ${cleanupPreviewContent()}
-  `,
 
   users: () => {
     const users = state.auth.users || [];

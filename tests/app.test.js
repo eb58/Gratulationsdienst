@@ -259,16 +259,6 @@ describe('app filter and change handlers', () => {
     assert.equal(state.customValue, '12');
   });
 
-  it('enforces the cleanup month minimum on bound input', () => {
-    state.cleanupMonths = 6;
-    const element = input({ value: '5', dataset: { bind: 'cleanupMonths' } });
-
-    listeners.input({ target: element });
-
-    assert.equal(element.value, '6');
-    assert.equal(state.cleanupMonths, 6);
-  });
-
   it('prevents form submissions', () => {
     let prevented = false;
 

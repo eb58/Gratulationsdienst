@@ -147,14 +147,12 @@ describe('backend and permission helpers', () => {
     state.auth.user = { role: 'user' };
     assert.equal(isAdmin(), false);
     assert.equal(canAccessView('soko'), false);
-    assert.equal(canAccessView('privacy'), false);
     assert.equal(canAccessView('dashboard'), true);
     assert.equal(writableCollections().includes('sokoMembers'), false);
 
     state.auth.user = { role: 'admin' };
     assert.equal(isAdmin(), true);
     assert.equal(canAccessView('soko'), true);
-    assert.equal(canAccessView('privacy'), true);
     assert.equal(writableCollections().includes('sokoMembers'), true);
   });
 

@@ -162,7 +162,6 @@ beforeEach(() => {
     sender: sender.role,
     createdAt: '2026-06-01'
   }];
-  state.cleanupPreview = null;
   state.printBackground = true;
   state.showMapPeople = true;
   state.importText = 'Vorname;Nachname';
@@ -282,13 +281,6 @@ describe('main views', () => {
     assert.match(views.quittung(), /<select name="month" data-filter>/);
     assert.match(views.quittungStamm(), /quittung-form/);
     assert.match(views.profile(), /mfa-setup/);
-    assert.match(views.privacy(), /Datenbereinigung/);
-    assert.match(views.privacy(), /Betroffene anzeigen/);
-    assert.doesNotMatch(views.privacy(), /Angezeigte Jubilare löschen/);
-    state.cleanupPreview = { months: 6, citizenIds: [citizen.id] };
-    assert.match(views.privacy(), /Zu löschende Jubilare/);
-    assert.match(views.privacy(), /data-grid="cleanupPreview"/);
-    assert.match(views.privacy(), /Angezeigte Jubilare löschen/);
     assert.match(views.users(), /user-form/);
 
     state.auth.user.mfaEnabled = true;

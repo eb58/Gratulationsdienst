@@ -1,4 +1,4 @@
-import { $, todayIso, MONTH_KEY, CLEANUP_MONTHS_KEY, cleanupMonthsValue, isAnniversaryOlderThanMonths, isValidEmail, isValidIban, formatIban, updateItem, nextId, csvEscape, downloadText, toast, byId, normalizeEmail, normalizeAmount, normalizeDigits, isValidPostalCode, safeStorageSetItem } from './utils.js';
+import { $, todayIso, MONTH_KEY, isValidEmail, isValidIban, formatIban, updateItem, nextId, csvEscape, downloadText, toast, byId, normalizeEmail, normalizeAmount, normalizeDigits, isValidPostalCode, safeStorageSetItem } from './utils.js';
 import { normalizeStreetRules, streetDistrictSummary, streetGroupSummary, normalizeStreetDistrict, defaultData } from './domain.js';
 import { state, saveData, saveCollectionData, saveQuittungSettings, apiRequest, setAuthSession, clearAuthSession, loadCollectionData } from './state.js';
 import { streetAssignment, filteredCitizens, documentCitizens, isPrintedCitizen, selectedTemplate, selectedSender, selectedMember, activeCitizens, groupForCitizen, isReceiptGroupReady, receiptCitizens, receiptCitizensForReadyGroups } from './assignment.js';
@@ -8,7 +8,7 @@ import { buildImportResult, importNotice, citizenGridRow, nextMemberIdAfterDelet
 import { parseSokoQuestionnairePdf } from './sokoQuestionnairePdf.js';
 import { applySokoQuestionnaireResults } from './sokoQuestionnaire.js';
 import { createSokoQuestionnaireSimulation } from './sokoQuestionnaireSimulation.js';
-import { saveQuestionnairePages, deleteAllQuestionnairePages, deleteQuestionnairePagesForCitizens } from './questionnairePages.js';
+import { saveQuestionnairePages, deleteAllQuestionnairePages } from './questionnairePages.js';
 import { upsertWeddingAnniversaryForCitizen, upsertWeddingAnniversariesForCitizens } from './weddingAnniversaries.js';
 import { groupedTestAssignments, monthAfterNext, questionnaireCitizenPatch, rollingSimulationDate, seedCsv } from './testdata.js';
 import { render, renderDialog } from './render.js';
@@ -20,10 +20,6 @@ const formValues = selector => Object.fromEntries([...new FormData($(selector)).
 const TEMPLATE_BACKGROUND_MAX_BYTES = 1_500_000;
 const quittungSettingKeys = ["quittungBetrag", "quittungTelefon", "quittungKapitel", "quittungTitel"];
 const quittungSettingsFromForm = () => Object.fromEntries(quittungSettingKeys.map(key => [key, $(`[data-bind="${key}"]`)?.value ?? state[key]]));
-const cleanupMonthsFromForm = () => cleanupMonthsValue($("#cleanup-months")?.value ?? state.cleanupMonths);
-const cleanupCitizenIds = months => state.data.citizens
-  .filter(citizen => isAnniversaryOlderThanMonths(citizen.birthDate, months, new Date(), citizen.createdAt))
-  .map(citizen => citizen.id);
 const readFileAsDataUrl = file => new Promise((resolve, reject) => {
   const reader = new FileReader();
   reader.addEventListener("load", () => resolve(typeof reader.result === "string" ? reader.result : ""), { once: true });
@@ -629,34 +625,6 @@ export const actions = {
     state.focusTarget = ".dialog-box [data-autofocus]";
     render();
   },
-  "preview-old-citizens": () => {
-    if (state.auth.user?.role !== "admin") { toast("Nur Admins können Jubilare bereinigen."); return; }
-    const months = cleanupMonthsFromForm();
-    state.cleanupMonths = months;
-    safeStorageSetItem(localStorage, CLEANUP_MONTHS_KEY, String(months), "Bereinigungsfrist");
-    const citizenIds = cleanupCitizenIds(months);
-    state.cleanupPreview = { months, citizenIds };
-    if (!citizenIds.length) { toast(`Keine Jubilare mit Jubiläum vor mehr als ${months} Monaten gefunden.`); render(); return; }
-    state.focusTarget = "#cleanup-preview";
-    render();
-  },
-  "delete-old-citizens": () => {
-    if (state.auth.user?.role !== "admin") { toast("Nur Admins können Jubilare bereinigen."); return; }
-    const { citizenIds: previewIds = [], months = state.cleanupMonths } = state.cleanupPreview || {};
-    const citizenIds = previewIds.filter(id => byId(state.data.citizens, id));
-    if (!citizenIds.length) { toast("Bitte zuerst die zu löschenden Jubilare anzeigen."); return; }
-    state.dialog = {
-      type: "delete-old-citizens",
-      citizenIds,
-      months,
-      title: "Alte Jubilare löschen",
-      message: `Sollen ${citizenIds.length.toLocaleString("de-DE")} geprüfte Jubilare endgültig gelöscht werden? Es werden genau die Einträge aus der angezeigten Vorschau gelöscht.`,
-      confirmLabel: "Angezeigte Jubilare löschen",
-      confirmAction: "confirm-delete-old-citizens"
-    };
-    state.focusTarget = ".dialog-box [data-autofocus]";
-    render();
-  },
   "confirm-clear-citizens": async () => {
     state.data.citizens = [];
     state.data.weddingAnniversaries = [];
@@ -668,22 +636,6 @@ export const actions = {
     render();
     await deleteAllQuestionnairePages();
     toast("Alle Jubilare wurden gelöscht.");
-  },
-  "confirm-delete-old-citizens": async () => {
-    const citizenIds = state.dialog?.citizenIds || [];
-    if (!citizenIds.length) return;
-    const deleteIds = new Set(citizenIds);
-    state.data.citizens = state.data.citizens.filter(citizen => !deleteIds.has(citizen.id));
-    state.data.weddingAnniversaries = (state.data.weddingAnniversaries || []).filter(item => !deleteIds.has(item.citizenId));
-    if (deleteIds.has(state.selectedCitizenId)) state.selectedCitizenId = "";
-    state.generatedDocs = state.generatedDocs.filter(doc => !deleteIds.has(doc.citizenId));
-    state.cleanupPreview = null;
-    state.dialog = null;
-    state.focusTarget = "#view";
-    saveData();
-    render();
-    await deleteQuestionnairePagesForCitizens(citizenIds);
-    toast(`${citizenIds.length.toLocaleString("de-DE")} alte Jubilare wurden gelöscht.`);
   },
   "seed-citizens": event => {
     if (state.auth.user?.role !== "admin") { toast("Nur Admins können Testdaten erzeugen."); return; }

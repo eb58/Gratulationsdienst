@@ -1,4 +1,4 @@
-import { normalize, escapeHtml, formatDate, safeStorageSetItem, anniversaryDateFromCreatedAt, birthdayMonth } from './utils.js';
+import { normalize, escapeHtml, formatDate, safeStorageSetItem, birthdayMonth } from './utils.js';
 import { streetGroupDisplay, sokoColors } from './domain.js';
 import { state } from './state.js';
 import { filteredCitizens, groupForCitizen, selectedCitizen } from './assignment.js';
@@ -347,32 +347,7 @@ export const gridDefinitions = {
       { headerName: "Status", field: "status", width: 135, minWidth: 115, cellRenderer: params => statusBadgeCell(params.value) }
     ],
     getRowId: params => params.data.id
-  }),
-  cleanupPreview: () => {
-    const ids = new Set(state.cleanupPreview?.citizenIds || []);
-    const rowData = state.data.citizens
-      .filter(citizen => ids.has(citizen.id))
-      .map(citizen => ({
-        id: citizen.id,
-        name: `${citizen.lastName || ""}, ${citizen.firstName || ""}`.replace(/^, /, ""),
-        birthday: citizen.birthDate,
-        createdAt: citizen.createdAt,
-        anniversary: anniversaryDateFromCreatedAt(citizen.birthDate, citizen.createdAt)
-      }))
-      .sort((a, b) => a.anniversary - b.anniversary || String(a.name).localeCompare(String(b.name)));
-    return {
-      ...baseGridOptions(),
-      rowData,
-      columnDefs: [
-        { headerName: "ID", field: "id", width: 150, minWidth: 130 },
-        { headerName: "Name", field: "name", width: 240, minWidth: 170 },
-        { headerName: "Geburtsdatum", field: "birthday", width: 145, minWidth: 130, valueFormatter: params => formatDate(params.value) },
-        { headerName: "Angelegt am", field: "createdAt", width: 150, minWidth: 135, valueFormatter: params => formatDate(params.value) },
-        { headerName: "Jubiläum", field: "anniversary", width: 145, minWidth: 130, valueFormatter: params => formatDate(params.value) }
-      ],
-      getRowId: params => params.data.id
-    };
-  }
+  })
 };
 
 export const mountGrid = element => {

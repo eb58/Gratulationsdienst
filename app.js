@@ -1,5 +1,5 @@
 import { canAccessView, isAdmin, state, loadAuthStatus, loadCollectionData } from './modules/state.js';
-import { MONTH_KEY, storeSplit, safeStorageSetItem, isValidEmail, normalizeIban, isValidIban, normalizeAmount, normalizeDigits, isValidPostalCode, cleanupMonthsValue } from './modules/utils.js';
+import { MONTH_KEY, storeSplit, safeStorageSetItem, isValidEmail, normalizeIban, isValidIban, normalizeAmount, normalizeDigits, isValidPostalCode } from './modules/utils.js';
 import { viewTitles, sokoMapInfoHtml } from './modules/views.js';
 import { findNearestAddress } from './modules/map.js';
 import { render, renderDialog } from './modules/render.js';
@@ -80,7 +80,6 @@ const busyActions = new Set([
   "seed-citizens",
   "seed-citizens-year-questionnaire",
   "confirm-clear-citizens",
-  "confirm-delete-old-citizens",
   "generate-docs",
   "save-quittung-settings",
   "simulate-soko-pdf-import",
@@ -169,12 +168,7 @@ const updatePostalCodeValidity = input => {
   hint.classList.toggle("error", Boolean(hasValue && !valid));
   hint.textContent = hasValue && !valid ? "PLZ muss 5 Ziffern haben" : "";
 };
-const boundValue = input => {
-  if (input.dataset.bind !== "cleanupMonths") return input.value;
-  const value = cleanupMonthsValue(input.value);
-  input.value = String(value);
-  return value;
-};
+const boundValue = input => input.value;
 
 const handleSkipLinkClick = skipLink => {
   if (!skipLink) return false;

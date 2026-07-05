@@ -99,7 +99,6 @@ beforeEach(() => {
     wish: 'Besuch erwünscht',
     templateName: 'Standard'
   }];
-  state.cleanupPreview = { months: 6, citizenIds: ['G-1'] };
   state.filters = { q: '', month: 'alle', groupId: 'alle', age: 'alle', status: 'alle', occasion: 'Geburtstag' };
   state.selectedCitizenId = 'G-1';
   state.selectedMemberId = 'S-001';
@@ -135,11 +134,6 @@ describe('grid definitions', () => {
     assert.equal(gridDefinitions.streets().rowData[0].ruleCount, 1);
     assert.equal(gridDefinitions.documents().rowData[0].recipient, 'Erika Mustermann');
     assert.equal(gridDefinitions.weddingAnniversaries().rowData[0].weddingAnniversary, 'Goldene Hochzeit');
-    assert.equal(gridDefinitions.cleanupPreview().rowData[0].name, 'Mustermann, Erika');
-    assert.equal(gridDefinitions.cleanupPreview().rowData[0].createdAt, '2026-04-01');
-    assert.ok(gridDefinitions.cleanupPreview().columnDefs.some(column => column.field === 'createdAt'));
-    assert.equal(gridDefinitions.cleanupPreview().rowData[0].anniversary.getFullYear(), 2026);
-    assert.equal(gridDefinitions.cleanupPreview().columnDefs.at(-1).field, 'anniversary');
   });
 
   it('filtert importierte Jubilare nach ausgewaehltem Monat', () => {
