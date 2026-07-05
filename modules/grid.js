@@ -122,12 +122,17 @@ const filteredMembers = () => state.data.sokoMembers.filter(member => {
 
 const legacyGridColumnStorageKey = gridKey => `gratulationsdienst.grid.${gridKey}.columnWidths`;
 const gridStateStorageKey = gridKey => `gratulationsdienst.grid.${gridKey}.state`;
+const normalizedColumnSort = sort => {
+  if (sort) return { sort };
+  if (sort === null) return { sort: null };
+  return {};
+};
 const normalizedColumnState = columnState => Array.isArray(columnState)
   ? columnState
     .map(({ colId, width, sort, sortIndex }) => ({
       colId,
       width,
-      ...(sort ? { sort } : sort === null ? { sort: null } : {}),
+      ...normalizedColumnSort(sort),
       ...(Number.isFinite(sortIndex) ? { sortIndex } : {})
     }))
     .filter(item => item.colId && Number.isFinite(item.width))

@@ -10,6 +10,11 @@ import { runBusy } from './modules/busy.js';
 window.GRATULATIONSDIENST_VERSION = typeof __APP_VERSION__ === "undefined" ? "dev" : __APP_VERSION__;
 
 const SIDEBAR_COLLAPSED_KEY = "gd_sidebar_collapsed";
+const splitterKeyDelta = key => {
+  if (key === "ArrowLeft") return -4;
+  if (key === "ArrowRight") return 4;
+  return 0;
+};
 const initialParams = new URLSearchParams(location.search);
 const cssEscape = value => globalThis.CSS?.escape ? globalThis.CSS.escape(value) : String(value).replace(/"/g, '\\"');
 const focusSelectorFor = element => {
@@ -272,7 +277,7 @@ document.addEventListener("keydown", event => {
   if (!splitter) return;
   const key = splitter.dataset.splitter;
   const split = splitter.closest(`[data-split="${key}"]`) || splitter.closest(`.${key}-split`);
-  const delta = event.key === "ArrowLeft" ? -4 : event.key === "ArrowRight" ? 4 : 0;
+  const delta = splitterKeyDelta(event.key);
   if (!split || !delta) return;
   event.preventDefault();
   const min = Number(splitter.getAttribute?.("aria-valuemin")) || 20;

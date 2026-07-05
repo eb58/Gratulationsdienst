@@ -6,6 +6,10 @@ import { SOKO_QUESTIONNAIRE_IMPORTED_STATUS } from './sokoQuestionnaire.js';
 
 const emailHint = value => String(value ?? "").trim() && !isValidEmail(value) ? "E-Mail-Adresse ist ungültig" : "";
 const postalCodeHint = value => String(value ?? "").trim() && !isValidPostalCode(value) ? "PLZ muss 5 Ziffern haben" : "";
+const ibanHint = (normalized, valid) => {
+  if (!normalized) return "Optional, mit IBAN-Prüfzifferprüfung";
+  return valid ? "IBAN gültig" : "IBAN-Prüfziffer ist ungültig";
+};
 
 export const field = (name, label, value, type = "text", extra = "", inputAttrs = "") => {
   const isEmail = type === "email";
@@ -45,7 +49,7 @@ export const ibanField = (name, label, value, extra = "") => {
     <div class="field ${extra}">
       <label for="${name}">${label}</label>
       <input id="${name}" name="${name}" class="${valid ? "" : "invalid"}" type="text" value="${escapeHtml(value)}" placeholder="DE89 3704 0044 0532 0130 00" autocomplete="off" data-iban-field>
-      <small class="field-hint ${valid ? "" : "error"}">${normalized ? valid ? "IBAN gültig" : "IBAN-Prüfziffer ist ungültig" : "Optional, mit IBAN-Prüfzifferprüfung"}</small>
+      <small class="field-hint ${valid ? "" : "error"}">${ibanHint(normalized, valid)}</small>
     </div>
   `;
 };

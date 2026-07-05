@@ -5,9 +5,17 @@ import { render } from './render.js'; // Zyklus OK: render wird nur in Callbacks
 import { qrCodeSvg } from './qr.js';
 import { SOKO_CHECKBOXES, SOKO_CHECKBOX_SIZE_MM, SOKO_QR_BOX, SOKO_QR_BOX2, sokoQuestionnaireCode } from './sokoQuestionnaire.js';
 
-export const letterSalutation = salutation => salutation === "Herr"
-  ? "Sehr geehrter Herr"
-  : salutation === "Frau" ? "Sehr geehrte Frau" : "Sehr geehrte Damen und Herren";
+export const letterSalutation = salutation => {
+  if (salutation === "Herr") return "Sehr geehrter Herr";
+  if (salutation === "Frau") return "Sehr geehrte Frau";
+  return "Sehr geehrte Damen und Herren";
+};
+
+const documentSize = value => {
+  if (value.includes("quadrat") || value.includes("square")) return "square";
+  if (value.includes("a5")) return "a5";
+  return "a4";
+};
 
 export const renderTemplate = (template = selectedTemplate(), citizen = selectedCitizen(), sender = selectedSender()) => {
   const group = groupForCitizen(citizen);
@@ -29,7 +37,7 @@ export const renderTemplate = (template = selectedTemplate(), citizen = selected
 
 export const documentFormat = template => {
   const value = normalize(template.format);
-  const size = value.includes("quadrat") || value.includes("square") ? "square" : value.includes("a5") ? "a5" : "a4";
+  const size = documentSize(value);
   const orientation = value.includes("quer") || value.includes("landscape") ? "landscape" : "portrait";
   return { className: `format-${size}${orientation === "landscape" ? "-landscape" : ""}`, orientation, size };
 };

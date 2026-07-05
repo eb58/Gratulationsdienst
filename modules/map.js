@@ -46,8 +46,10 @@ export const mapSegments = () => {
     .map(segment => ({ ...segment, groupIds: mapSegmentGroupIds(segment, lookup) }))
     .filter(segment => segment.matchSource !== 'nearby' || segment.groupIds[0] !== 'offen');
 };
-export const mapSegmentCounts = () => mapSegments().reduce((counts, segment) =>
-  segment.groupIds.reduce((next, groupId) => ({ ...next, [groupId]: (next[groupId] || 0) + 1 }), counts), {});
+export const mapSegmentCounts = () => mapSegments().reduce((counts, segment) => {
+  segment.groupIds.forEach(groupId => { counts[groupId] = (counts[groupId] || 0) + 1; });
+  return counts;
+}, {});
 
 export const lonLatToWorld = ([lon, lat], zoom) => {
   const scale = 256 * 2 ** zoom;

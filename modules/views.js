@@ -341,10 +341,14 @@ const ageDistributionChart = citizens => {
 };
 const genderDistribution = citizens => citizens.reduce((counts, citizen) => {
   const salutation = normalize(citizen.salutation);
-  const key = salutation === "frau" ? "female" : salutation === "herr" ? "male" : "unknown";
-  counts[key] += 1;
+  counts[genderKey(salutation)] += 1;
   return counts;
 }, { female: 0, male: 0, unknown: 0 });
+const genderKey = salutation => {
+  if (salutation === "frau") return "female";
+  if (salutation === "herr") return "male";
+  return "unknown";
+};
 const genderDistributionChart = citizens => {
   const counts = genderDistribution(citizens);
   const total = counts.female + counts.male + counts.unknown;
@@ -365,7 +369,10 @@ const genderDistributionChart = citizens => {
     </div>
   `;
 };
-const dashboardSortValue = (row, key) => key === "group" ? row.group.id : Number(row[key] ?? 0);
+const dashboardSortValue = (row, key) => {
+  if (key === "group") return row.group.id;
+  return Number(row[key] ?? 0);
+};
 const sortedDashboardRows = rows => {
   const { key = "group", dir = "asc" } = state.dashboardSort || {};
   const direction = dir === "asc" ? 1 : -1;
@@ -379,7 +386,54 @@ const sortedDashboardRows = rows => {
 const dashboardSortButton = (key, label) => {
   const active = state.dashboardSort?.key === key;
   const dir = state.dashboardSort?.dir === "asc" ? "asc" : "desc";
-  return `<button type="button" class="table-sort ${active ? "active" : ""}" data-action="sort-dashboard" data-sort-key="${key}">${escapeHtml(label)}<span>${active ? dir === "asc" ? "▲" : "▼" : "↕"}</span></button>`;
+  const icon = active ? { asc: "▲", desc: "▼" }[dir] : "↕";
+  return `<button type="button" class="table-sort ${active ? "active" : ""}" data-action="sort-dashboard" data-sort-key="${key}">${escapeHtml(label)}<span>${icon}</span></button>`;
+};
+const rateTone = rate => {
+  if (rate >= 80) return "green";
+  if (rate >= 50) return "gold";
+  return "red";
+};
+const userPillTone = user => {
+  if (!user.active) return "red";
+  return user.role === "admin" ? "green" : "";
+};
+const canDeleteUser = user => Boolean(user.id.localeCompare(state.auth.user?.id || ""));
+const personDisplayName = person => `${person.firstName} ${person.lastName}`;
+const sokoMemberRows = members => members.length
+  ? members.map(m => `<div>${escapeHtml(personDisplayName(m))}${m.isLeader ? " <em>(Ltg.)</em>" : ""}</div>`).join("")
+  : `<div class="muted">Keine Mitglieder</div>`;
+const sokoCitizenRows = citizens => citizens.length
+  ? citizens.map(c => `<div>${escapeHtml(personDisplayName(c))} <span class="muted">(${calculateAge(c.birthDate)})</span></div>`).join("")
+  : `<div class="muted">Keine Jubilare</div>`;
+const sokoPeopleInfoHtml = (members, citizens, monthLabel) => {
+  if (!state.showMapPeople) return "";
+  return `
+    <div class="map-info-box">
+      <strong>Mitglieder</strong>
+      ${sokoMemberRows(members)}
+    </div>
+    <div class="map-info-box">
+      <strong>Jubilare ${escapeHtml(monthLabel)}</strong>
+      ${sokoCitizenRows(citizens)}
+    </div>
+  `;
+};
+const citizenDetailSplitHtml = (citizen, showQuestionnairePanel, citizenSplit) => {
+  if (!citizen) return "";
+  const citizenSplitterMin = showQuestionnairePanel ? 24 : 20;
+  const citizenSplitterMax = showQuestionnairePanel ? 34 : 80;
+  const citizenDetailClass = showQuestionnairePanel ? "citizen-detail-split has-questionnaire-images" : "citizen-detail-split";
+  return `<div class="vertical-splitter" data-splitter="citizen" role="separator" aria-orientation="vertical" aria-label="Bereiche aufteilen" aria-valuemin="${citizenSplitterMin}" aria-valuemax="${citizenSplitterMax}" aria-valuenow="${citizenSplit}" tabindex="0"></div>
+        <div class="${citizenDetailClass}" data-split="citizenDetail" style="--citizenDetail-left:${state.citizenDetailSplit}%">
+          <section class="panel citizen-panel citizen-questionnaire-panel" id="citizen-questionnaire-panel">
+            ${citizenQuestionnaireImagesContent(citizen)}
+          </section>
+          <div class="vertical-splitter citizen-detail-splitter" data-splitter="citizenDetail" role="separator" aria-orientation="vertical" aria-label="Fragebogen und Jubilar aufteilen" aria-valuemin="25" aria-valuemax="55" aria-valuenow="${state.citizenDetailSplit}" tabindex="0"></div>
+          <section class="panel citizen-panel" id="citizen-detail-panel">
+            ${citizenDetailContent(citizen)}
+          </section>
+        </div>`;
 };
 export const sokoMapInfoHtml = (groupId, streetName = "") => {
   if (!groupId || groupId === "offen") return `<p class="map-soko-hint muted">Über eine SOKO auf der Karte fahren</p>`;
@@ -403,14 +457,7 @@ export const sokoMapInfoHtml = (groupId, streetName = "") => {
       <span>${addrCount.toLocaleString("de-DE")} Adressen</span>
       <span>${segCount.toLocaleString("de-DE")} Straßenabschnitte</span>
     </div>
-    ${state.showMapPeople ? `<div class="map-info-box">
-      <strong>Mitglieder</strong>
-      ${members.length ? members.map(m => `<div>${escapeHtml(`${m.firstName} ${m.lastName}`)}${m.isLeader ? " <em>(Ltg.)</em>" : ""}</div>`).join("") : `<div class="muted">Keine Mitglieder</div>`}
-    </div>
-    <div class="map-info-box">
-      <strong>Jubilare ${escapeHtml(monthLabel)}</strong>
-      ${citizens.length ? citizens.map(c => `<div>${escapeHtml(`${c.firstName} ${c.lastName}`)} <span class="muted">(${calculateAge(c.birthDate)})</span></div>`).join("") : `<div class="muted">Keine Jubilare</div>`}
-    </div>` : ""}
+    ${sokoPeopleInfoHtml(members, citizens, monthLabel)}
   `;
 };
 
@@ -508,7 +555,7 @@ export const views = {
                         </div>
                       </td>
                       <td>${row.returns.toLocaleString("de-DE")} <span class="muted">/ ${row.open.toLocaleString("de-DE")} offen</span></td>
-                      <td><span class="pill ${row.rate >= 80 ? "green" : row.rate >= 50 ? "gold" : "red"}">${row.rate}%</span></td>
+                      <td><span class="pill ${rateTone(row.rate)}">${row.rate}%</span></td>
                     </tr>
                   `).join("")}
                 </tbody>
@@ -525,6 +572,9 @@ export const views = {
     const citizen = citizens.find(item => item.id === state.selectedCitizenId) || citizens[0];
     const showQuestionnairePanel = Boolean(citizen);
     const citizenSplit = showQuestionnairePanel ? Math.min(state.citizenSplit, 34) : state.citizenSplit;
+    const citizenSplitClass = showQuestionnairePanel ? "citizen-split has-questionnaire-images" : "citizen-split";
+    const citizenContainerClass = citizen ? citizenSplitClass : "";
+    const citizenContainerStyle = citizen ? `style="--citizen-left:${citizenSplit}%"` : "";
     return `
       <div class="toolbar">
         <select name="month" data-filter>${months.map(month => `<option value="${month[0]}" ${state.filters.month === month[0] ? "selected" : ""}>${month[1]}</option>`).join("")}</select>
@@ -543,21 +593,12 @@ export const views = {
           <input id="soko-pdf-file" class="file-input" type="file" accept=".pdf,application/pdf">
         </div>
       </div>
-      <div class="${citizen ? `citizen-split${showQuestionnairePanel ? " has-questionnaire-images" : ""}` : ""}" ${citizen ? `style="--citizen-left:${citizenSplit}%"` : ""}>
+      <div class="${citizenContainerClass}" ${citizenContainerStyle}>
         <section class="panel citizen-panel">
           <h2>Jubilare</h2>
           <div class="citizen-panel-scroll citizen-grid-scroll">${gridHost("citizens")}</div>
         </section>
-        ${citizen ? `<div class="vertical-splitter" data-splitter="citizen" role="separator" aria-orientation="vertical" aria-label="Bereiche aufteilen" aria-valuemin="${showQuestionnairePanel ? 24 : 20}" aria-valuemax="${showQuestionnairePanel ? 34 : 80}" aria-valuenow="${citizenSplit}" tabindex="0"></div>
-        <div class="citizen-detail-split${showQuestionnairePanel ? " has-questionnaire-images" : ""}" data-split="citizenDetail" style="--citizenDetail-left:${state.citizenDetailSplit}%">
-          <section class="panel citizen-panel citizen-questionnaire-panel" id="citizen-questionnaire-panel">
-            ${citizenQuestionnaireImagesContent(citizen)}
-          </section>
-          <div class="vertical-splitter citizen-detail-splitter" data-splitter="citizenDetail" role="separator" aria-orientation="vertical" aria-label="Fragebogen und Jubilar aufteilen" aria-valuemin="25" aria-valuemax="55" aria-valuenow="${state.citizenDetailSplit}" tabindex="0"></div>
-          <section class="panel citizen-panel" id="citizen-detail-panel">
-            ${citizenDetailContent(citizen)}
-          </section>
-        </div>` : ""}
+        ${citizenDetailSplitHtml(citizen, showQuestionnairePanel, citizenSplit)}
       </div>
     `;
   },
@@ -621,14 +662,17 @@ export const views = {
   regions: () => {
     const street = selectedStreet();
     const unassigned = state.data.streets.filter(item => !item.rules?.some(rule => rule.soko));
+    const regionClass = street ? "region-split" : "grid two";
+    const regionStyle = street ? `style="--region-left:${state.regionSplit}%"` : "";
+    const regionSplitter = street ? `<div class="vertical-splitter" data-splitter="region" role="separator" aria-orientation="vertical" aria-label="Straßenverzeichnis und Zuordnung aufteilen" aria-valuemin="20" aria-valuemax="80" aria-valuenow="${state.regionSplit}" tabindex="0"></div>` : "";
     return `
-      <div class="${street ? "region-split" : "grid two"}" ${street ? `style="--region-left:${state.regionSplit}%"` : ""}>
+      <div class="${regionClass}" ${regionStyle}>
         <section class="panel region-panel">
           <h2>Straßenverzeichnis</h2>
           ${unassigned.length ? `<div class="alert">${unassigned.length} Straße ohne SOKO-Zuordnung</div>` : ""}
           <div class="region-panel-scroll region-grid-scroll">${gridHost("streets", 500)}</div>
         </section>
-        ${street ? `<div class="vertical-splitter" data-splitter="region" role="separator" aria-orientation="vertical" aria-label="Straßenverzeichnis und Zuordnung aufteilen" aria-valuemin="20" aria-valuemax="80" aria-valuenow="${state.regionSplit}" tabindex="0"></div>` : ""}
+        ${regionSplitter}
         <section class="panel region-panel" id="region-assignment-panel">
           ${regionAssignmentContent()}
         </section>
@@ -1064,10 +1108,10 @@ export const views = {
                 <div class="list-item-row ${selected?.id === user.id ? "selected" : ""}">
                   <button type="button" class="list-item-main" data-action="select-user" data-id="${escapeHtml(user.id)}">
                     <div><strong>${escapeHtml(user.displayName || user.email)}</strong><span class="muted">${escapeHtml(user.email)}</span></div>
-                    <span class="pill ${user.active ? user.role === "admin" ? "green" : "" : "red"}">${escapeHtml(user.active ? user.role : "inaktiv")}</span>
+                    <span class="pill ${userPillTone(user)}">${escapeHtml(user.active ? user.role : "inaktiv")}</span>
                   </button>
                   <div class="user-delete-slot">
-                    ${user.id !== state.auth.user?.id ? `
+                    ${canDeleteUser(user) ? `
                       <button type="button" class="icon-button user-delete-btn" data-action="delete-user" data-id="${escapeHtml(user.id)}" title="Benutzer löschen">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
                       </button>
@@ -1094,7 +1138,7 @@ export const views = {
                   <button type="button" class="primary-button" data-action="save-user">Speichern</button>
                   ${selected.id ? `<button type="button" class="ghost-button" data-action="user-reset-password">Passwort-Reset</button>` : ""}
                   ${selected.id && selected.mfaEnabled ? `<button type="button" class="ghost-button" data-action="user-reset-mfa">MFA zurücksetzen</button>` : ""}
-                  ${selected.id && selected.id !== state.auth.user.id ? `<button type="button" class="danger-button" data-action="delete-user">Löschen</button>` : ""}
+                  ${selected.id && canDeleteUser(selected) ? `<button type="button" class="danger-button" data-action="delete-user">Löschen</button>` : ""}
                 </div>
               </form>
             ` : `<div class="empty-state">Bitte Benutzer anlegen oder laden</div>`}

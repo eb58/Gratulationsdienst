@@ -69,7 +69,7 @@ const ruleHouseNumbers = (rule, siblingRules = []) => {
   return Array.from({ length: 220 }, (_, index) => index + 1)
     .filter(number => ruleMatchesHouseNo(rule, number) && !conflicts.some(other => ruleMatchesHouseNo(other, number)));
 };
-export const testHouseNo = (rule, rand = Math.random, siblingRules = []) => {
+export const testHouseNo = (rule, siblingRules = [], rand = Math.random) => {
   const candidates = ruleHouseNumbers(rule, siblingRules);
   return String(candidates.length ? candidates[Math.floor(rand() * candidates.length)] : numberFrom(rule.von) || numberFrom(rule.bis) || 1);
 };
@@ -80,12 +80,12 @@ export const testBirthDate = (index, month, age = mortalityWeightedTestAges(inde
   return `${year - age}-${useMonth}-${day}`;
 };
 export const monthAfterNext = (date = new Date()) => String(new Date(date.getFullYear(), date.getMonth() + 2, 1).getMonth() + 1).padStart(2, "0");
-export const testCsvRow = (index, name, assignment, month, rand = Math.random, age) => ({
+export const testCsvRow = (index, name, assignment, month, age, rand = Math.random) => ({
   Anrede: name.salutation,
   Vorname: name.firstName,
   Nachname: name.lastName,
   Strasse: assignment.street.name,
-  Hausnummer: testHouseNo(assignment.rule, rand, assignment.street.rules || []),
+  Hausnummer: testHouseNo(assignment.rule, assignment.street.rules || [], rand),
   PLZ: assignment.rule.plz || "13437",
   Ortsteil: assignment.rule.ortsteil || assignment.street.district || "",
   Geburtsdatum: testBirthDate(index, month, age),
@@ -113,7 +113,7 @@ export const seedCsvRows = (streets, rowCount, dateForIndex, rand = Math.random)
   const rows = assignments.map((assignment, index) => {
     const date = dateForIndex(index);
     const month = date instanceof Date ? String(date.getMonth() + 1).padStart(2, "0") : date;
-    const row = testCsvRow(index, names[index], assignment, month, rand, ages[index]);
+    const row = testCsvRow(index, names[index], assignment, month, ages[index], rand);
     return date instanceof Date ? { ...row, Geburtsdatum: `${date.getFullYear() - ages[index]}-${row.Geburtsdatum.slice(5)}` } : row;
   });
   return { assignments, rows };
@@ -130,7 +130,9 @@ export const rollingSimulationDate = (index, rowCount, day = 1, date = new Date(
 const pseudoBucket = (index, modulo, step) => (index * step) % modulo;
 export const questionnaireWish = index => {
   const bucket = pseudoBucket(index, 100, 37);
-  return bucket < 14 ? "keine" : bucket < 43 ? "Besuch erwünscht" : "per Post";
+  if (bucket < 14) return "keine";
+  if (bucket < 43) return "Besuch erwünscht";
+  return "per Post";
 };
 export const questionnaireWedding = index => {
   const bucket = pseudoBucket(index, 1000, 41);

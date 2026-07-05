@@ -39,13 +39,17 @@ const streetLookup = () => {
 };
 export const streetByName = name => streetLookup().get(normalize(name));
 export const houseNumberValue = value => Number.parseInt(String(value ?? "").match(/\d+/)?.[0] || "", 10);
+const ruleParityMatches = (rule, number) => {
+  if (rule.art === "G") return number % 2 === 0;
+  if (rule.art === "U") return number % 2 !== 0;
+  return true;
+};
 export const ruleMatchesHouseNo = (rule, houseNo) => {
   const number = houseNumberValue(houseNo);
   if (!Number.isFinite(number)) return !rule.von && !rule.bis;
   const from = rule.von ? houseNumberValue(rule.von) : -Infinity;
   const to = rule.bis ? houseNumberValue(rule.bis) : Infinity;
-  const parityMatches = rule.art === "G" ? number % 2 === 0 : rule.art === "U" ? number % 2 !== 0 : true;
-  return number >= from && number <= to && parityMatches;
+  return number >= from && number <= to && ruleParityMatches(rule, number);
 };
 export const editableStreetAssignment = citizen => {
   const street = streetNameVariants(citizen.street).map(streetByName).find(Boolean);

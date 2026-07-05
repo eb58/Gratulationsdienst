@@ -15,7 +15,8 @@ import { render, renderDialog } from './render.js';
 import { renderCitizenDetail } from './views.js';
 import { cancelDirtyFormLeave, confirmDirtyFormLeave } from './dirtyForms.js';
 
-const formValues = selector => Object.fromEntries(new FormData($(selector)).entries());
+const formEntryValue = value => typeof value === "string" ? value : value.name;
+const formValues = selector => Object.fromEntries([...new FormData($(selector)).entries()].map(([key, value]) => [key, formEntryValue(value)]));
 const TEMPLATE_BACKGROUND_MAX_BYTES = 1_500_000;
 const quittungSettingKeys = ["quittungBetrag", "quittungTelefon", "quittungKapitel", "quittungTitel"];
 const quittungSettingsFromForm = () => Object.fromEntries(quittungSettingKeys.map(key => [key, $(`[data-bind="${key}"]`)?.value ?? state[key]]));
@@ -25,7 +26,7 @@ const cleanupCitizenIds = months => state.data.citizens
   .map(citizen => citizen.id);
 const readFileAsDataUrl = file => new Promise((resolve, reject) => {
   const reader = new FileReader();
-  reader.addEventListener("load", () => resolve(String(reader.result || "")), { once: true });
+  reader.addEventListener("load", () => resolve(typeof reader.result === "string" ? reader.result : ""), { once: true });
   reader.addEventListener("error", () => reject(reader.error || new Error("Datei konnte nicht gelesen werden.")), { once: true });
   reader.readAsDataURL(file);
 });
@@ -39,8 +40,9 @@ const templateBackgroundSide = field => field === "backBackgroundImage" ? "Rück
 const templateFormValues = () => $("#template-form") ? { ...selectedTemplate(), ...formValues("#template-form") } : selectedTemplate();
 const saveTemplatePatch = patch => {
   const values = { ...templateFormValues(), ...patch, updatedAt: todayIso() };
-  state.data.templates = updateItem(state.data.templates, values.id, values);
-  state.selectedTemplateId = values.id;
+  const id = String(values.id);
+  state.data.templates = updateItem(state.data.templates, id, { ...values, id });
+  state.selectedTemplateId = id;
   saveData();
   render();
 };
@@ -217,11 +219,14 @@ const sokoPdfNotice = pages => {
 };
 
 const hasNoQuestionnaire = citizen => !citizen.sokoQuestionnaireImages?.length;
+const questionnaireCitizenPool = citizens => {
+  if (citizens.length) return citizens;
+  return filteredCitizens().filter(citizen => citizen?.id);
+};
 const sokoPdfSimulationCitizens = () => {
   const rows = currentCitizenGridRows();
   const citizens = rows.map(row => byId(state.data.citizens, row.id)).filter(Boolean);
-  const pool = citizens.length ? citizens : filteredCitizens().filter(citizen => citizen?.id);
-  return pool.filter(hasNoQuestionnaire);
+  return questionnaireCitizenPool(citizens).filter(hasNoQuestionnaire);
 };
 const sokoQuestionnaireImagePages = (resultPages, sourcePages) => resultPages
   .map((page, index) => {
@@ -238,11 +243,13 @@ const sokoQuestionnaireImagePages = (resultPages, sourcePages) => resultPages
     } : null;
   })
   .filter(Boolean);
+const parsedSokoQuestionnairePages = (parsedPages, generatedPages) => {
+  if (!generatedPages.length) return parsedPages;
+  return parsedPages.map((page, index) => ({ ...page, citizenId: generatedPages[index]?.citizenId || page.citizenId }));
+};
 const applySokoPdfImport = async (file, generatedPages = []) => {
   const parsed = await parseSokoQuestionnairePdf(file);
-  const pages = generatedPages.length
-    ? parsed.pages.map((page, index) => ({ ...page, citizenId: generatedPages[index]?.citizenId || page.citizenId }))
-    : parsed.pages;
+  const pages = parsedSokoQuestionnairePages(parsed.pages, generatedPages);
   const result = applySokoQuestionnaireResults(state.data.citizens, pages);
   const previousCitizens = state.data.citizens;
   const previousWeddingAnniversaries = state.data.weddingAnniversaries;

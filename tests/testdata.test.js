@@ -16,8 +16,12 @@ globalThis.sessionStorage = storage();
 globalThis.location = { protocol: 'file:', href: 'file:///test/index.html' };
 globalThis.window = globalThis;
 globalThis.ResizeObserver = class {
-  observe() {}
-  disconnect() {}
+  observe() {
+    // Test stub.
+  }
+  disconnect() {
+    // Test stub.
+  }
 };
 
 const {
@@ -88,11 +92,11 @@ describe('test assignments', () => {
 describe('testHouseNo', () => {
   it('picks a rule-conforming house number from the candidate range', () => {
     // ungerade 1..19 -> [1,3,5,7,9,11,13,15,17,19]
-    assert.equal(testHouseNo({ von: '1', bis: '19', art: 'U' }, () => 0), '1');
-    assert.equal(testHouseNo({ von: '1', bis: '19', art: 'U' }, () => 0.99), '19');
+    assert.equal(testHouseNo({ von: '1', bis: '19', art: 'U' }, [], () => 0), '1');
+    assert.equal(testHouseNo({ von: '1', bis: '19', art: 'U' }, [], () => 0.99), '19');
     // gerade 2..18
-    assert.equal(testHouseNo({ von: '2', bis: '19', art: 'G' }, () => 0), '2');
-    assert.equal(testHouseNo({ von: '2', bis: '19', art: 'G' }, () => 0.5), '10');
+    assert.equal(testHouseNo({ von: '2', bis: '19', art: 'G' }, [], () => 0), '2');
+    assert.equal(testHouseNo({ von: '2', bis: '19', art: 'G' }, [], () => 0.5), '10');
   });
 
   it('spreads house numbers for an open range instead of always returning 1', () => {
@@ -102,7 +106,7 @@ describe('testHouseNo', () => {
   });
 
   it('falls back to the rule bounds when no candidate matches', () => {
-    assert.equal(testHouseNo({ von: '500', bis: '500', art: 'F' }, () => 0), '500');
+    assert.equal(testHouseNo({ von: '500', bis: '500', art: 'F' }, [], () => 0), '500');
   });
 });
 
@@ -157,7 +161,7 @@ describe('mortalityWeightedTestAges', () => {
 describe('test CSV row and text', () => {
   it('maps a row with PLZ and district fallbacks', () => {
     const assignment = { street: streets[0], rule: streets[0].rules[0] };
-    const row = testCsvRow(0, { salutation: 'Frau', firstName: 'Anna', lastName: 'Berger' }, assignment, '06', () => 0);
+    const row = testCsvRow(0, { salutation: 'Frau', firstName: 'Anna', lastName: 'Berger' }, assignment, '06', undefined, () => 0);
 
     assert.equal(row.Hausnummer, '1');
     assert.equal(row.PLZ, '13437', 'leere Regel-PLZ fällt auf Standard zurück');

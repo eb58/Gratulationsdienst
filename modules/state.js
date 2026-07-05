@@ -65,9 +65,10 @@ const withoutTransientCitizenFields = citizen => {
   const { sokoQuestionnaireImages, ...persisted } = citizen || {};
   return persisted;
 };
+const persistentCitizens = citizens => Array.isArray(citizens) ? citizens.map(withoutTransientCitizenFields) : citizens;
 export const dataForPersistence = data => ({
   ...data,
-  citizens: Array.isArray(data?.citizens) ? data.citizens.map(withoutTransientCitizenFields) : data?.citizens
+  citizens: persistentCitizens(data?.citizens)
 });
 
 export const collectionVersionMap = items => Object.fromEntries((items || [])
@@ -81,7 +82,7 @@ const withoutVersion = item => {
 const sortKeys = value => {
   if (Array.isArray(value)) return value.map(sortKeys);
   if (!value || typeof value !== "object") return value;
-  return Object.fromEntries(Object.keys(value).sort().map(key => [key, sortKeys(value[key])]));
+  return Object.fromEntries(Object.keys(value).sort((a, b) => a.localeCompare(b)).map(key => [key, sortKeys(value[key])]));
 };
 const itemSignature = item => JSON.stringify(sortKeys(withoutVersion(item)));
 const itemsById = items => Object.fromEntries((items || []).filter(item => item?.id).map(item => [item.id, item]));
@@ -132,7 +133,7 @@ export const normalizeLoadedData = data => {
   const activeGroupIds = new Set(defaultData.sokoGroups.map(group => group.id));
   return {
     ...repaired,
-    citizens: Array.isArray(repaired?.citizens) ? repaired.citizens.map(withoutTransientCitizenFields) : repaired?.citizens,
+    citizens: persistentCitizens(repaired?.citizens),
     weddingAnniversaries: Array.isArray(repaired?.weddingAnniversaries) ? repaired.weddingAnniversaries : [],
     sokoGroups: mergeById(repaired?.sokoGroups, defaultData.sokoGroups, group => activeGroupIds.has(group.id)),
     sokoMembers: mergeById(repaired?.sokoMembers, defaultData.sokoMembers, member => activeGroupIds.has(member.groupId)),

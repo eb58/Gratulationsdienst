@@ -120,10 +120,11 @@ export const qrScale = (points, version) => version && points.length === 4
   : 0;
 
 const boxCenterMm = box => ({ x: box.left + box.size / 2, y: box.top + box.size / 2 });
+const qrList = qrs => Array.isArray(qrs) ? qrs : [qrs];
 // Erkannte QRs den erwarteten Boxen zuordnen: oben-rechts (großes x−y) vs. unten-links.
 const matchAnchors = (canvas, qrs) => {
   const scale = canvas.width / SOKO_PAGE_MM.width;
-  const valid = (Array.isArray(qrs) ? qrs : [qrs]).filter(qr => qr?.points?.length === 4).map(qr => ({ qr, px: centerOf(qr.points) }));
+  const valid = qrList(qrs).filter(qr => qr?.points?.length === 4).map(qr => ({ qr, px: centerOf(qr.points) }));
   if (valid.length >= 2) {
     const ranked = [...valid].sort((a, b) => (b.px.x - b.px.y) - (a.px.x - a.px.y));
     return SOKO_QR_BOXES.map((box, index) => ({ mm: boxCenterMm(box), px: ranked[index].px, qr: ranked[index].qr }));
