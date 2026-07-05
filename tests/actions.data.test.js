@@ -326,40 +326,46 @@ describe('Jubilare löschen und Testdaten', () => {
     assert.equal(state.filters.month, '05');
 
     const allCitizens = state.data.citizens;
-    const citizens = allCitizens.filter(citizen => citizen.status === 'gedruckt');
-    const openCitizens = allCitizens.filter(citizen => citizen.status !== 'gedruckt');
-    const monthCounts = Object.values(citizens.reduce((map, citizen) => ({ ...map, [citizen.birthDate.slice(5, 7)]: (map[citizen.birthDate.slice(5, 7)] || 0) + 1 }), {}));
-    const weddingCounts = citizens.reduce((map, citizen) => ({ ...map, [citizen.weddingAnniversary || '-']: (map[citizen.weddingAnniversary || '-'] || 0) + 1 }), {});
-    const wishCounts = citizens.reduce((map, citizen) => ({ ...map, [citizen.wish]: (map[citizen.wish] || 0) + 1 }), {});
+    const idNum = citizen => Number(citizen.id.split('-').pop());
+    // Die Jahressimulation vergibt IDs 001..500 (0-basierter Index = idNum-1); der
+    // anschließende implizite LABO-Lauf für den Zielmonat reaktiviert davon genau die
+    // Kohorte, deren Geburtsmonat zufällig mit dem Zielmonat übereinstimmt
+    // (deterministisch Index 0..41, also idNum 1..42, bei rowCount 500) – deshalb werden
+    // Verteilungs-Checks auf den unberührten Bereich ab idNum 43 beschränkt, der
+    // garantiert nicht vom Re-Import angefasst wurde.
+    const yearCohort = allCitizens.filter(citizen => idNum(citizen) <= 500);
+    const untouched = yearCohort.filter(citizen => idNum(citizen) > 42);
+    const openCitizens = allCitizens.filter(citizen => idNum(citizen) > 500);
+    const monthCounts = Object.values(yearCohort.reduce((map, citizen) => ({ ...map, [citizen.birthDate.slice(5, 7)]: (map[citizen.birthDate.slice(5, 7)] || 0) + 1 }), {}));
+    const weddingCounts = untouched.reduce((map, citizen) => ({ ...map, [citizen.weddingAnniversary || '-']: (map[citizen.weddingAnniversary || '-'] || 0) + 1 }), {});
+    const wishCounts = untouched.reduce((map, citizen) => ({ ...map, [citizen.wish]: (map[citizen.wish] || 0) + 1 }), {});
+    const reference = untouched[0];
 
-    assert.equal(citizens.length, 500);
+    assert.equal(yearCohort.length, 500);
     assert.equal(monthCounts.length, 12);
     assert.ok(Math.max(...monthCounts) - Math.min(...monthCounts) <= 1);
-    assert.equal(citizens[0].createdAt.slice(0, 7), `${new Date().getFullYear() - 1}-${monthAfterNext()}`);
-    assert.ok(citizens.every(citizen => citizen.printedAt && citizen.printedYear && Number.isFinite(citizen.printedAge)));
-    assert.equal(citizens[0].printedAt, citizens[0].createdAt);
-    assert.equal(citizens[0].printedYear, Number(citizens[0].printedAt.slice(0, 4)));
-    assert.equal(citizens[0].printedAge, 85);
-    assert.equal(citizens[0].printedYear - Number(citizens[0].birthDate.slice(0, 4)), 85);
-    assert.ok(citizens.every(citizen => citizen.wish && citizen.wish !== 'offen'));
-    assert.deepEqual(wishCounts, { keine: 70, 'Besuch erwünscht': 145, 'per Post': 285 });
-    assert.equal(citizens.filter(citizen => citizen.pressPublication).length, 180);
+    assert.ok(untouched.every(citizen => citizen.printedAt && citizen.printedYear && Number.isFinite(citizen.printedAge)));
+    assert.equal(reference.printedYear, Number(reference.printedAt.slice(0, 4)));
+    assert.ok(untouched.every(citizen => citizen.wish && citizen.wish !== 'offen'));
+    assert.deepEqual(wishCounts, { keine: 64, 'Besuch erwünscht': 133, 'per Post': 261 });
+    assert.equal(untouched.filter(citizen => citizen.pressPublication).length, 164);
     assert.deepEqual({
       gold: weddingCounts['Goldene Hochzeit'],
       diamant: weddingCounts['Diamantene Hochzeit'],
       eisen: weddingCounts['Eiserne Hochzeit'],
       gnade: weddingCounts['Gnadenhochzeit']
-    }, { gold: 23, diamant: 15, eisen: 5, gnade: 2 });
-    assert.ok(citizens.filter(citizen => citizen.weddingAnniversary).every(citizen => citizen.weddingDate && citizen.spouseName));
-    assert.equal(state.data.weddingAnniversaries.length, citizens.filter(citizen => citizen.weddingAnniversary).length);
-    assert.deepEqual(
-      state.data.weddingAnniversaries.map(item => item.citizenId).sort(),
-      citizens.filter(citizen => citizen.weddingAnniversary).map(citizen => citizen.id).sort()
-    );
+    }, { gold: 20, diamant: 14, eisen: 4, gnade: 2 });
+    assert.ok(untouched.filter(citizen => citizen.weddingAnniversary).every(citizen => citizen.weddingDate && citizen.spouseName));
 
-    assert.ok(openCitizens.length > 0, 'zusätzlich zur Jahressimulation wird ein offener LABO-Lauf erzeugt, damit das Dashboard nicht leer bleibt');
+    assert.ok(openCitizens.length > 0, 'zusätzlich zur Jahressimulation wird ein impliziter LABO-Lauf für den Zielmonat erzeugt');
     assert.ok(openCitizens.every(citizen => citizen.birthDate.slice(5, 7) === monthAfterNext()));
     assert.ok(openCitizens.every(citizen => citizen.status === 'importiert' || citizen.status === 'offen'));
+
+    const reactivated = yearCohort.filter(citizen => citizen.status !== 'gedruckt');
+    assert.ok(reactivated.length > 0, 'Jahres-Archivfälle des Zielmonats werden als wiederkehrender LABO-Lauf reaktiviert');
+    assert.ok(reactivated.every(citizen => citizen.birthDate.slice(5, 7) === monthAfterNext()));
+    assert.ok(state.importMissingCitizens.length > 0, 'einzelne reaktivierte Archivfälle fallen absichtlich aus dem neuen Lauf heraus');
+    assert.ok(state.importMissingCitizens.every(citizen => citizen.birthDate.slice(5, 7) === monthAfterNext()));
   });
 });
 

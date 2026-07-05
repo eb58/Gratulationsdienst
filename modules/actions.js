@@ -196,9 +196,9 @@ const importMappedRows = (mapped, { resetFilters = true } = {}) => {
   return result;
 };
 const importToast = message => toast(message, { anchor: ".soko-pdf-action-row, .import-action-row" });
-const seedCurrentLaboBatch = (groups, { allowFollowUp = true } = {}) => {
+const seedCurrentLaboBatch = groups => {
   const birthdayMonth = monthAfterNext();
-  const csv = (allowFollowUp && followUpSeedCsv(state.data.streets, state.data.citizens, null, birthdayMonth)) || seedCsv(state.data.streets, Math.max(50, groups.length), () => birthdayMonth);
+  const csv = followUpSeedCsv(state.data.streets, state.data.citizens, null, birthdayMonth) || seedCsv(state.data.streets, Math.max(50, groups.length), () => birthdayMonth);
   state.importText = csv;
   const rows = parseCsv(csv).map(mapImportRow);
   importMappedRows(rows, { resetFilters: false });
@@ -651,7 +651,7 @@ export const actions = {
     const patches = new Map(importedCitizensFromResult(result).map((citizen, index) => [citizen.id, questionnaireCitizenPatch(citizen, index, rowCount)]));
     state.data.citizens = state.data.citizens.map(citizen => patches.get(citizen.id) || citizen);
     syncWeddingAnniversaries([...patches.values()], "Simulation");
-    const openCount = seedCurrentLaboBatch(groupedTestAssignments(state.data.streets), { allowFollowUp: false });
+    const openCount = seedCurrentLaboBatch(groupedTestAssignments(state.data.streets));
     saveData();
     render();
     importToast(`Test-Datenbank zurückgesetzt: ${patches.size.toLocaleString("de-DE")} Jahres-Testdaten mit Fragebogen-Rückmeldungen und ${openCount.toLocaleString("de-DE")} offene LABO-Fälle für ${monthAfterNext()} simuliert.`);
