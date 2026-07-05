@@ -55,12 +55,14 @@ beforeEach(() => {
   state.data = {
     citizens: [citizen],
     weddingAnniversaries: [{
-      id: 'WA-G-1-1976-06-01',
+      id: 'WA-G-1-golden',
       citizenId: 'G-1',
       firstName: 'Erika',
       lastName: 'Mustermann',
+      // Hochzeitstag bewusst auf den 31.12. gelegt, damit das Goldene-Hochzeit-Jubiläum
+      // unabhängig vom Testlaufdatum innerhalb des Jahres noch in der Zukunft liegt.
       weddingAnniversary: 'Goldene Hochzeit',
-      weddingDate: '1976-06-01',
+      weddingDate: `${new Date().getFullYear() - 50}-12-31`,
       spouseName: 'Heinz',
       street: 'Teststraße',
       houseNo: '12',

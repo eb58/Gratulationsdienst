@@ -6,11 +6,15 @@ const idPart = value => clean(value).replace(/[^A-Za-z0-9-]+/g, "-").replace(/^-
 export const weddingAnniversaryId = citizen => `WA-${idPart(citizen?.id)}-${idPart(citizen?.weddingDate || citizen?.weddingAnniversary)}`;
 
 const ANNIVERSARY_LABELS = new Map([[50, "Goldene Hochzeit"], [60, "Diamantene Hochzeit"], [65, "Eiserne Hochzeit"], [70, "Gnadenhochzeit"]]);
-export const weddingAnniversaryLabel = (weddingDate, referenceDate) => {
-  const weddingYear = Number(clean(weddingDate).slice(0, 4));
-  const refYear = Number(clean(referenceDate).slice(0, 4));
-  if (!weddingYear || !refYear) return "";
-  return ANNIVERSARY_LABELS.get(refYear - weddingYear) || "";
+export const weddingAnniversaryLabel = (weddingDate, today = todayIso()) => {
+  const wedding = clean(weddingDate);
+  const weddingYear = Number(wedding.slice(0, 4));
+  const todayYear = Number(clean(today).slice(0, 4));
+  if (!weddingYear || !todayYear) return "";
+  const label = ANNIVERSARY_LABELS.get(todayYear - weddingYear);
+  if (!label) return "";
+  const milestoneDate = `${todayYear}${wedding.slice(4)}`;
+  return milestoneDate >= today ? label : "";
 };
 
 export const weddingAnniversaryFromCitizen = (citizen, source = "Fragebogen") => {

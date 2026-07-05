@@ -39,7 +39,7 @@ describe('wedding anniversaries', () => {
     assert.equal(entry.capturedAt, '2026-06-01');
   });
 
-  it('berechnet das Jubiläums-Label aus Hochzeitsdatum und Erfassungsdatum', () => {
+  it('berechnet das Jubiläums-Label aus dem Hochzeitsdatum, bezogen auf heute', () => {
     assert.equal(weddingAnniversaryLabel('1976-06-01', '2026-06-01'), 'Goldene Hochzeit');
     assert.equal(weddingAnniversaryLabel('1966-06-01', '2026-06-01'), 'Diamantene Hochzeit');
     assert.equal(weddingAnniversaryLabel('1961-06-01', '2026-06-01'), 'Eiserne Hochzeit');
@@ -47,6 +47,15 @@ describe('wedding anniversaries', () => {
     assert.equal(weddingAnniversaryLabel('1980-06-01', '2026-06-01'), '');
     assert.equal(weddingAnniversaryLabel('', '2026-06-01'), '');
     assert.equal(weddingAnniversaryLabel('1976-06-01', ''), '');
+  });
+
+  it('zeigt das Jubiläum nur, solange es im selben Jahr noch in der Zukunft liegt', () => {
+    // Goldene Hochzeit im Januar ist im September desselben Jahres bereits vorbei.
+    assert.equal(weddingAnniversaryLabel('1976-01-15', '2026-09-01'), '');
+    // Ein Jubiläum im Dezember steht im September desselben Jahres noch bevor.
+    assert.equal(weddingAnniversaryLabel('1976-12-01', '2026-09-01'), 'Goldene Hochzeit');
+    // Der Jubiläumstag selbst zählt noch als bevorstehend/aktuell.
+    assert.equal(weddingAnniversaryLabel('1976-09-01', '2026-09-01'), 'Goldene Hochzeit');
   });
 
   it('upserts one current wedding anniversary per citizen', () => {

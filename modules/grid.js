@@ -303,7 +303,7 @@ export const gridDefinitions = {
         id: item.id,
         citizenId: item.citizenId,
         name: `${item.lastName || ""}, ${item.firstName || ""}`.replace(/^, /, ""),
-        weddingAnniversary: weddingAnniversaryLabel(item.weddingDate, item.capturedAt),
+        weddingAnniversary: weddingAnniversaryLabel(item.weddingDate),
         weddingDate: item.weddingDate,
         spouseName: item.spouseName,
         address: `${item.street || ""} ${item.houseNo || ""}`.trim(),
