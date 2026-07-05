@@ -216,7 +216,7 @@ export const streetMapSvg = () => {
   const [minLon, minLat, maxLon, maxLat] = data.bbox;
   const tl = lonLatToWorld([minLon, maxLat], zoom);
   const br = lonLatToWorld([maxLon, minLat], zoom);
-  const width = 1120;
+  const width = 1520;
   const height = Math.round((br[1] - tl[1]) / (br[0] - tl[0]) * (width - 2 * padding) + 2 * padding);
   const viewport = mapViewport(data.bbox, width, height, padding, zoom);
   const project = coord => mapProject(coord, viewport);

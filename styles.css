@@ -2362,7 +2362,7 @@ tbody tr.selected {
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  max-width: 1372px;
+  max-width: 1772px;
 }
 
 .map-side-panel {
@@ -2532,7 +2532,7 @@ tbody tr.selected {
 
 .street-map {
   display: block;
-  width: 1120px;
+  width: 1520px;
   max-width: 100%;
   height: auto;
 }
