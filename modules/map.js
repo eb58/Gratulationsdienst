@@ -11,8 +11,8 @@ export const ensureMapData = () => mapDataPromise ||= Promise.all([
   loadScript(`${import.meta.env?.BASE_URL ?? "/"}data/reinickendorf-address-points.js`)
 ]);
 
-export const mapData = () => window.REINICKENDORF_STREET_GEOMETRIES || { bbox: [], segments: [] };
-export const addressPointData = () => window.REINICKENDORF_ADDRESS_POINTS || { addresses: [] };
+export const mapData = () => globalThis.REINICKENDORF_STREET_GEOMETRIES || { bbox: [], segments: [] };
+export const addressPointData = () => globalThis.REINICKENDORF_ADDRESS_POINTS || { addresses: [] };
 export const assignedAddressPoints = () => (addressPointData().addresses || []).filter(address => address.soko);
 export const addressGroupId = address => address.soko ? sokoGroupId(address.soko) : "offen";
 export const realAddressCandidates = () => assignedAddressPoints().filter(address => address.street && address.houseNumber && address.postalCode);
@@ -120,6 +120,26 @@ export const mapStreetPathsSvg = (segments, project) => mapStreetPathGroups(segm
     <path class="map-street-line" d="${d}" style="stroke:${escapeHtml(sokoColors[group.groupId] || sokoColors.offen)}" ${dash}></path>
   </g>`;
 }).join("");
+const median = values => values.sort((a, b) => a - b)[Math.floor(values.length / 2)];
+export const mapSokoLabelPositions = (segments, project) => {
+  const points = {};
+  segments.forEach(segment => segment.groupIds.forEach(groupId => {
+    if (groupId === "offen") return;
+    points[groupId] ||= [];
+    points[groupId].push(...segment.coords.map(project));
+  }));
+  return Object.entries(points).map(([groupId, groupPoints]) => {
+    const center = [median(groupPoints.map(([x]) => x)), median(groupPoints.map(([, y]) => y))];
+    const distance = ([x, y]) => (x - center[0]) ** 2 + (y - center[1]) ** 2;
+    const [x, y] = groupPoints.reduce((best, point) => distance(point) < distance(best) ? point : best);
+    return { groupId, x, y };
+  });
+};
+export const mapSokoLabelsSvg = (segments, project) => mapSokoLabelPositions(segments, project).map(({ groupId, x, y }) => `
+  <g class="map-soko-label" data-group-id="${escapeHtml(groupId)}" transform="translate(${x.toFixed(1)} ${y.toFixed(1)})">
+    <circle r="11" style="stroke:${escapeHtml(sokoColors[groupId] || sokoColors.offen)}"></circle>
+    <text dy="0.35em">${escapeHtml(groupId.replace(/\D/g, ""))}</text>
+  </g>`).join("");
 export const mapAddressPointGroups = () => {
   const groups = {};
   assignedAddressPoints().forEach(address => {
@@ -168,6 +188,7 @@ export const streetMapSvg = () => {
       <g class="map-tiles">${mapTileImages(data.bbox, viewport)}</g>
       <g class="map-streets">${mapStreetPathsSvg(segments, project)}</g>
       <g class="map-address-points">${mapAddressPointsSvg(project)}</g>
+      <g class="map-soko-labels">${mapSokoLabelsSvg(segments, project)}</g>
     </svg>
   `;
 };

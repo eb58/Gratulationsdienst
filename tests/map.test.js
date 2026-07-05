@@ -34,6 +34,8 @@ const {
   mapProject,
   mapSegmentCounts,
   mapSegmentGroupIds,
+  mapSokoLabelPositions,
+  mapSokoLabelsSvg,
   mapStreetByName,
   mapStreetPathGroups,
   mapViewport,
@@ -109,5 +111,18 @@ describe('map projection helpers', () => {
 
     assert.equal(groups.length, 3);
     assert.ok(groups.some(group => group.groupId === 'SOKO 03' && group.dash === '6'));
+  });
+
+  it('places SOKO labels on a street point near the median of their segments', () => {
+    const segments = [
+      { name: 'Musterstraße', groupIds: ['SOKO 01'], coords: [[0, 0], [2, 1], [100, 1]] },
+      { name: 'Musterweg', groupIds: ['SOKO 01'], coords: [[2, 3], [2, 5]] },
+      { name: 'Unbekannt', groupIds: ['offen'], coords: [[9, 9], [9, 9]] }
+    ];
+    assert.deepEqual(mapSokoLabelPositions(segments, ([x, y]) => [x, y]), [{ groupId: 'SOKO 01', x: 2, y: 1 }]);
+    const svg = mapSokoLabelsSvg(segments, ([x, y]) => [x, y]);
+    assert.match(svg, /data-group-id="SOKO 01"/);
+    assert.match(svg, /translate\(2\.0 1\.0\)/);
+    assert.match(svg, /<text dy="0.35em">01<\/text>/);
   });
 });

@@ -2587,6 +2587,23 @@ tbody tr.selected {
   stroke-width: 0.35;
 }
 
+.street-map .map-soko-label circle {
+  fill: rgba(255, 255, 255, 0.92);
+  stroke-width: 2.5;
+}
+
+.street-map .map-soko-label text {
+  font: 700 11px "Segoe UI", system-ui, sans-serif;
+  text-anchor: middle;
+  fill: #333;
+  pointer-events: none;
+}
+
+.street-map .map-soko-label:hover circle {
+  fill: #fff;
+  stroke-width: 3.5;
+}
+
 .map-attribution {
   margin: 10px 0 0;
   color: var(--muted);
