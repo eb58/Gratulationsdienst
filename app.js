@@ -356,22 +356,30 @@ document.addEventListener("mouseout", event => {
   info.innerHTML = sokoMapInfoHtml("");
 });
 
+let pendingMapHoverFrame = null;
+let latestMapHoverEvent = null;
 document.addEventListener("mousemove", event => {
-  const svg = event.target.closest(".street-map");
-  if (!svg) return;
-  const info = document.querySelector("#map-soko-info");
-  const ctm = info && svg.getScreenCTM();
-  if (!ctm) return;
-  const pt = svg.createSVGPoint();
-  pt.x = event.clientX;
-  pt.y = event.clientY;
-  const { x, y } = pt.matrixTransform(ctm.inverse());
-  const nearest = findNearestAddress(x, y, 16 / ctm.a);
-  const token = nearest ? `${nearest.groupId}|${nearest.label}` : "";
-  if (!nearest || info.dataset.hoverToken === token) return;
-  info.dataset.hoverToken = token;
-  info.dataset.groupId = nearest.groupId;
-  info.innerHTML = sokoMapInfoHtml(nearest.groupId, nearest.label);
+  if (!event.target.closest(".street-map")) return;
+  latestMapHoverEvent = event;
+  pendingMapHoverFrame ||= requestAnimationFrame(() => {
+    pendingMapHoverFrame = null;
+    const event = latestMapHoverEvent;
+    const svg = event.target.closest(".street-map");
+    if (!svg) return;
+    const info = document.querySelector("#map-soko-info");
+    const ctm = info && svg.getScreenCTM();
+    if (!ctm) return;
+    const pt = svg.createSVGPoint();
+    pt.x = event.clientX;
+    pt.y = event.clientY;
+    const { x, y } = pt.matrixTransform(ctm.inverse());
+    const nearest = findNearestAddress(x, y, 16 / ctm.a);
+    const token = nearest ? `${nearest.groupId}|${nearest.label}` : "";
+    if (!nearest || info.dataset.hoverToken === token) return;
+    info.dataset.hoverToken = token;
+    info.dataset.groupId = nearest.groupId;
+    info.innerHTML = sokoMapInfoHtml(nearest.groupId, nearest.label);
+  });
 });
 
 state.view = viewTitles[initialParams.get("view")]

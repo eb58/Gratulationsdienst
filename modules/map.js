@@ -188,21 +188,33 @@ export const mapAddressPointGroups = () => {
   });
   return groups;
 };
-let addressHitIndex = [];
+// Räumliches Grid statt Vollscan: bei ~41.000 Adresspunkten würde jede Mausbewegung sonst
+// eine lineare Distanzberechnung über alle Punkte auslösen.
+const HIT_CELL_SIZE = 24;
+const addressHitCellKey = (x, y) => `${Math.floor(x / HIT_CELL_SIZE)}:${Math.floor(y / HIT_CELL_SIZE)}`;
+let addressHitGrid = new Map();
+const addToHitGrid = point => {
+  const key = addressHitCellKey(point.x, point.y);
+  (addressHitGrid.get(key) || addressHitGrid.set(key, []).get(key)).push(point);
+};
 export const findNearestAddress = (x, y, maxDist) => {
   let best = null, bestDist = maxDist * maxDist;
-  addressHitIndex.forEach(point => {
-    const dist = (point.x - x) ** 2 + (point.y - y) ** 2;
-    if (dist < bestDist) { bestDist = dist; best = point; }
-  });
+  const range = Math.ceil(maxDist / HIT_CELL_SIZE);
+  const [cx, cy] = [Math.floor(x / HIT_CELL_SIZE), Math.floor(y / HIT_CELL_SIZE)];
+  for (let dx = -range; dx <= range; dx++) for (let dy = -range; dy <= range; dy++) {
+    addressHitGrid.get(`${cx + dx}:${cy + dy}`)?.forEach(point => {
+      const dist = (point.x - x) ** 2 + (point.y - y) ** 2;
+      if (dist < bestDist) { bestDist = dist; best = point; }
+    });
+  }
   return best;
 };
 export const mapAddressPointsSvg = project => {
-  addressHitIndex = [];
+  addressHitGrid = new Map();
   return Object.entries(mapAddressPointGroups()).map(([groupId, addresses]) => {
     const d = addresses.map(address => {
       const [x, y] = project([address.lon, address.lat]);
-      addressHitIndex.push({ x, y, groupId, label: `${address.street} ${address.houseNumber || ""}`.trim() });
+      addToHitGrid({ x, y, groupId, label: `${address.street} ${address.houseNumber || ""}`.trim() });
       return `M${(x - 1.3).toFixed(1)} ${(y - 1.3).toFixed(1)}h2.6v2.6h-2.6z`;
     }).join("");
     return `<path class="map-address-point-group" data-group-id="${escapeHtml(groupId)}" d="${d}" style="fill:${escapeHtml(sokoColors[groupId] || sokoColors.offen)}"></path>`;
