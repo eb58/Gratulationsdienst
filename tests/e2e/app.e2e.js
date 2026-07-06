@@ -24,14 +24,21 @@ const waitForServer = async (url, timeoutMs = 30000) => {
 };
 
 // Simuliert das PHP-Backend: nicht angemeldeter Status, erfolgreicher Login, leere Collections.
+let questionnairePageSeq = 0;
 const mockBackend = context => context.route('**/php-api/**', route => {
-  const path = new URL(route.request().url()).pathname.replace(/.*\/php-api/, '');
-  const json = body => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) });
+  const request = route.request();
+  const path = new URL(request.url()).pathname.replace(/.*\/php-api/, '');
+  const json = (body, status = 200) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
   if (path === '/auth/status') return json({ setupRequired: false, authenticated: false });
   if (path === '/auth/login') return json({ token: 'e2e-token', user: adminUser });
   if (path === '/auth/logout') return json({});
   if (path === '/settings/receipt') return json({});
-  return json([]); // citizens, sokoGroups, sokoMembers, streets, senders, templates
+  // Echo die gespeicherten Seiten zurueck (wie das echte Backend) -> saveQuestionnairePages() haengt sie sonst nie an den Buerger an.
+  if (path === '/questionnaire-pages' && request.method() === 'POST') {
+    const { pages = [] } = request.postDataJSON() || {};
+    return json(pages.map(page => ({ ...page, id: page.id || `QP-e2e-${++questionnairePageSeq}`, createdAt: page.createdAt || new Date().toISOString() })), 201);
+  }
+  return json([]); // citizens, sokoGroups, sokoMembers, streets, senders, templates, GET questionnaire-pages
 });
 
 let server, browser;
@@ -50,6 +57,11 @@ const login = async page => {
   await page.fill('#auth-login-form input[name="password"]', 'geheim');
   await page.click('[data-action="auth-login"]');
   await page.waitForSelector('.user-chip');
+};
+
+const rowSummaryTotal = async page => {
+  const text = await page.locator('.ag-paging-row-summary-panel').textContent();
+  return Number(text.match(/(\d+)\s*$/)?.[1]);
 };
 
 before(async () => {
@@ -124,6 +136,38 @@ describe('Gratulationsdienst E2E', () => {
       assert.equal(await page.locator('#page-title').textContent(), 'Stammdaten: Vorlagen');
     } finally { await context.close(); }
   });
+
+  it('filtert die SOKO-Mitgliederliste per Suche ohne Fokusverlust im Eingabefeld', async () => {
+    const { context, page } = await openApp();
+    try {
+      await login(page);
+      await page.evaluate(() => document.querySelectorAll('details.nav-section').forEach(section => { section.open = true; }));
+      await page.click('[data-nav="soko"]');
+      await page.waitForSelector('.view-soko .ag-paging-row-summary-panel', { timeout: 10000 });
+
+      const totalCount = await rowSummaryTotal(page);
+      assert.ok(totalCount > 1, 'Es werden keine SOKO-Testmitglieder als Datenbasis geladen');
+
+      const firstRowName = await page.locator('.ag-row[row-index="0"] [col-id="name"]').textContent();
+      const query = firstRowName.split(',')[0].trim();
+
+      const search = page.locator('.view-soko input[name="q"]');
+      await search.click();
+      await search.pressSequentially(query, { delay: 20 });
+
+      await page.waitForFunction(
+        total => Number(document.querySelector('.ag-paging-row-summary-panel')?.textContent.match(/(\d+)\s*$/)?.[1]) !== total,
+        totalCount,
+        { timeout: 5000 }
+      );
+
+      assert.equal(await search.inputValue(), query);
+      assert.equal(await search.evaluate(el => el === document.activeElement), true);
+
+      const filteredCount = await rowSummaryTotal(page);
+      assert.ok(filteredCount >= 1 && filteredCount < totalCount);
+    } finally { await context.close(); }
+  }, { timeout: 20000 });
 
   it('klappt die Desktop-Navigation auf eine Icon-Leiste ein', async () => {
     const { context, page } = await openApp();
