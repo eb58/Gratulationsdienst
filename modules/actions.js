@@ -253,6 +253,7 @@ const sokoPdfNotice = pages => {
 };
 
 const hasNoQuestionnaire = citizen => !citizen.sokoQuestionnaireImages?.length;
+const isImportedCitizen = citizen => citizen.status === "importiert";
 const questionnaireCitizenPool = citizens => {
   if (citizens.length) return citizens;
   return filteredCitizens().filter(citizen => citizen?.id);
@@ -260,7 +261,7 @@ const questionnaireCitizenPool = citizens => {
 const sokoPdfSimulationCitizens = () => {
   const rows = currentCitizenGridRows();
   const citizens = rows.map(row => byId(state.data.citizens, row.id)).filter(Boolean);
-  return questionnaireCitizenPool(citizens).filter(hasNoQuestionnaire);
+  return questionnaireCitizenPool(citizens).filter(hasNoQuestionnaire).filter(isImportedCitizen);
 };
 const sokoQuestionnaireImagePages = (resultPages, sourcePages) => resultPages
   .map((page, index) => {

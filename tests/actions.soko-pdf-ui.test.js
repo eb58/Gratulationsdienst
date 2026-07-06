@@ -27,6 +27,7 @@ globalThis.document = {
 
 let renderCitizenDetailCount = 0;
 let saveQuestionnairePagesImpl = async pages => pages;
+let simulationCitizens = null;
 
 mock.module('../modules/render.js', {
   namedExports: { render: () => {}, renderDialog: () => {}, applyPendingFocus: () => {} }
@@ -46,7 +47,12 @@ mock.module('../modules/sokoQuestionnairePdf.js', {
   namedExports: { parseSokoQuestionnairePdf: async () => ({ pages: [{ citizenId: 'G-1', image: 'data:image/png;base64,a' }] }) }
 });
 mock.module('../modules/sokoQuestionnaireSimulation.js', {
-  namedExports: { createSokoQuestionnaireSimulation: async () => ({ pages: [], file: null }) }
+  namedExports: {
+    createSokoQuestionnaireSimulation: async citizens => {
+      simulationCitizens = citizens;
+      return { pages: [], file: null };
+    }
+  }
 });
 mock.module('../modules/questionnairePages.js', {
   namedExports: {
@@ -99,6 +105,7 @@ const setVisibleCitizenRows = ids => {
 beforeEach(() => {
   renderCitizenDetailCount = 0;
   saveQuestionnairePagesImpl = async pages => pages;
+  simulationCitizens = null;
   state.data = {
     citizens: [citizen('G-1', 'Alpha'), citizen('G-2', 'Beta')],
     sokoGroups: [],
@@ -140,5 +147,34 @@ describe('SOKO-PDF UI refresh', () => {
 
     assert.deepEqual(state.data.citizens, previousCitizens);
     assert.equal(renderCitizenDetailCount, 0);
+  });
+});
+
+describe('SOKO-PDF-Simulation Auswahl', () => {
+  it('erzeugt Fragebögen nur für Jubilare mit Status "importiert"', async () => {
+    state.data.citizens = [
+      citizen('G-1', 'Alpha'),
+      { ...citizen('G-2', 'Beta'), status: 'offen' },
+      { ...citizen('G-3', 'Gamma'), status: 'geprüft' },
+      { ...citizen('G-4', 'Delta'), status: 'geladen' },
+      { ...citizen('G-5', 'Epsilon'), status: 'gedruckt' }
+    ];
+    setVisibleCitizenRows(['G-1', 'G-2', 'G-3', 'G-4', 'G-5']);
+
+    await actions['simulate-soko-pdf-import']();
+
+    assert.deepEqual(simulationCitizens.map(c => c.id), ['G-1']);
+  });
+
+  it('lässt Jubilare mit bereits vorhandenem Fragebogen aus', async () => {
+    state.data.citizens = [
+      citizen('G-1', 'Alpha'),
+      { ...citizen('G-2', 'Beta'), sokoQuestionnaireImages: [{ id: 'x' }] }
+    ];
+    setVisibleCitizenRows(['G-1', 'G-2']);
+
+    await actions['simulate-soko-pdf-import']();
+
+    assert.deepEqual(simulationCitizens.map(c => c.id), ['G-1']);
   });
 });
