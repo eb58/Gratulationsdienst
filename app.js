@@ -338,7 +338,7 @@ document.addEventListener("change", event => {
 globalThis.addEventListener("beforeunload", event => {
   if (!hasDirtyForm()) return;
   event.preventDefault();
-  event.returnValue = "";
+  event.returnValue = ""; // NOSONAR: manche Browser zeigen den Verlassen-Dialog nur mit gesetztem returnValue
 });
 
 globalThis.addEventListener("gd-auth-expired", () => render());

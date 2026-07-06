@@ -1,7 +1,7 @@
 import { normalize, escapeHtml, formatDate, safeStorageSetItem, birthdayMonth } from './utils.js';
 import { streetGroupDisplay, sokoColors } from './domain.js';
 import { state } from './state.js';
-import { filteredCitizens, groupForCitizen, selectedCitizen } from './assignment.js';
+import { filteredCitizens, groupForCitizen } from './assignment.js';
 import { SOKO_QUESTIONNAIRE_IMPORTED_STATUS } from './sokoQuestionnaire.js';
 import { render, renderDialog } from './render.js'; // Zyklus OK: render wird nur in Event-Callbacks aufgerufen
 import { renderCitizenDetail, renderRegionAssignment } from './views.js'; // Zyklus OK: lazy
@@ -13,7 +13,7 @@ import { weddingAnniversaryLabel } from './weddingAnniversaries.js';
 let agGridPromise = null;
 export const ensureAgGrid = () => agGridPromise ||= loadScript(`${import.meta.env?.BASE_URL ?? "/"}vendor/ag-grid-community.min.js`);
 
-export const gridTheme = () => window.agGrid?.themeQuartz?.withParams ? window.agGrid.themeQuartz.withParams({
+export const gridTheme = () => globalThis.agGrid?.themeQuartz?.withParams ? globalThis.agGrid.themeQuartz.withParams({
   accentColor: "#0f5d58",
   borderColor: "#d9d5ca",
   browserColorScheme: "light",

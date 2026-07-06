@@ -15,8 +15,8 @@ const listeners = {};
 const classList = () => {
   const classes = new Set();
   return {
-    add: value => classes.add(value),
-    remove: value => classes.delete(value),
+    add: (...values) => values.forEach(value => classes.add(value)),
+    remove: (...values) => values.forEach(value => classes.delete(value)),
     contains: value => classes.has(value),
     toggle: (value, force) => {
       const enabled = force ?? !classes.has(value);
@@ -72,16 +72,17 @@ const input = ({ value = '', type = 'text', dataset = {}, fieldHint = null } = {
     dataset,
     classList: classList(),
     closest: selector => {
-      if (selector === 'form') return null;
-      if (selector === '[data-filter]') return dataset.filter ? element : null;
-      if (selector === '[data-bind]') return dataset.bind ? element : null;
-      if (selector === "input[type='email']") return type === 'email' ? element : null;
-      if (selector === '[data-iban-field]') return 'ibanField' in dataset ? element : null;
-      if (selector === '[data-amount-field]') return 'amountField' in dataset ? element : null;
-      if (selector === '[data-postal-code-field]') return 'postalCodeField' in dataset ? element : null;
-      if (selector === '[data-digits-field]:not([data-postal-code-field])') return 'digitsField' in dataset && !('postalCodeField' in dataset) ? element : null;
       if (selector === '.field') return fieldHint ? fieldHost(fieldHint) : null;
-      return null;
+      const matches = {
+        '[data-filter]': Boolean(dataset.filter),
+        '[data-bind]': Boolean(dataset.bind),
+        "input[type='email']": type === 'email',
+        '[data-iban-field]': 'ibanField' in dataset,
+        '[data-amount-field]': 'amountField' in dataset,
+        '[data-postal-code-field]': 'postalCodeField' in dataset,
+        '[data-digits-field]:not([data-postal-code-field])': 'digitsField' in dataset && !('postalCodeField' in dataset)
+      };
+      return matches[selector] ? element : null;
     }
   };
   return element;
@@ -92,8 +93,8 @@ globalThis.sessionStorage = storage();
 globalThis.location = { protocol: 'file:', href: 'file:///test/index.html', search: '' };
 globalThis.window = globalThis;
 globalThis.ResizeObserver = class {
-  observe() {}
-  disconnect() {}
+  observe() { /* no-op im Test */ }
+  disconnect() { /* no-op im Test */ }
 };
 const elements = {
   '#page-title': domElement(),
@@ -129,8 +130,7 @@ beforeEach(() => {
   elements['#view'].focused = false;
   elements['#map-soko-info'].dataset = {};
   elements['#map-soko-info'].innerHTML = '';
-  document.body.classList.remove('nav-open');
-  document.body.classList.remove('sidebar-collapsed');
+  document.body.classList.remove('nav-open', 'sidebar-collapsed');
   localStorage.clear();
 });
 

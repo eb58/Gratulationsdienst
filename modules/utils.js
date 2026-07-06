@@ -57,7 +57,7 @@ export const isValidEmail = value => {
 };
 export const normalizeIban = value => String(value ?? "").replace(/\s/g, "").toUpperCase();
 export const formatIban = value => normalizeIban(value).match(/.{1,4}/g)?.join(" ") || "";
-export const ibanToNumeric = value => [...value].map(char => /[A-Z]/.test(char) ? String(char.charCodeAt(0) - 55) : char).join("");
+export const ibanToNumeric = value => [...value].map(char => /[A-Z]/.test(char) ? String(char.codePointAt(0) - 55) : char).join("");
 export const ibanMod97 = value => [...value].reduce((remainder, char) => Number(`${remainder}${char}`) % 97, 0);
 export const isValidIban = value => {
   const iban = normalizeIban(value);
@@ -83,7 +83,7 @@ export const formatDateDe = iso => {
   const [y, m, d] = iso.split("-");
   return `${d}.${m}.${y}`;
 };
-const mojibakeByte = char => char === "\u0192" ? 0x83 : char.charCodeAt(0) & 255;
+const mojibakeByte = char => char === "\u0192" ? 0x83 : char.codePointAt(0) & 255;
 const decodeMojibakeText = value => new TextDecoder().decode(Uint8Array.from([...value].map(mojibakeByte)));
 const repairMojibakeString = (value, remaining = 2) => {
   if (!remaining || !/[ÃÂ]/u.test(value)) return value;
@@ -98,7 +98,8 @@ export const repairStoredText = value => Array.isArray(value)
     : repairMojibakeText(value);
 export const updateItem = (items, id, patch) => items.map(item => item.id === id ? { ...item, ...patch } : item);
 export const nextId = (prefix, items) => {
-  const pattern = new RegExp(`^${prefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}-(\\d+)$`);
+  const escapedPrefix = prefix.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
+  const pattern = new RegExp(String.raw`^${escapedPrefix}-(\d+)$`);
   const highest = (items || []).reduce((max, item) => {
     const match = pattern.exec(String(item?.id ?? ""));
     return match ? Math.max(max, Number(match[1])) : max;

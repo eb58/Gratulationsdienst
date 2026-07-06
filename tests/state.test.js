@@ -32,8 +32,8 @@ globalThis.document = {
 };
 globalThis.requestAnimationFrame = callback => callback();
 globalThis.ResizeObserver = class {
-  observe() {}
-  disconnect() {}
+  observe() { /* no-op im Test */ }
+  disconnect() { /* no-op im Test */ }
 };
 globalThis.SOKO_STRASSENVERZEICHNIS = {
   'Teststraße': [{ plz: '13437', ortsteil: 'Tegel', soko: '01' }]
@@ -234,8 +234,8 @@ describe('backend and permission helpers', () => {
       templates: []
     };
     localStorage.setItem('gratulationsdienst.pending', JSON.stringify({ citizens: [{ id: 'G-1', firstName: 'Ada' }] }));
-    globalThis.fetch = (url, options = {}) => {
-      const path = String(url).replace(/.*\/php-api/, '');
+    globalThis.fetch = (/** @type {string} */ url, options = {}) => {
+      const path = url.replace(/.*\/php-api/, '');
       const body = options.body ? JSON.parse(options.body) : null;
       calls.push({ method: options.method || 'GET', path, body });
       return Promise.resolve({
@@ -272,8 +272,8 @@ describe('backend and permission helpers', () => {
       senders: [],
       templates: []
     };
-    globalThis.fetch = (url, options = {}) => {
-      const path = String(url).replace(/.*\/php-api/, '');
+    globalThis.fetch = (/** @type {string} */ url, options = {}) => {
+      const path = url.replace(/.*\/php-api/, '');
       const body = options.body ? JSON.parse(options.body) : null;
       calls.push({ method: options.method || 'GET', path });
       return Promise.resolve({ ok: true, json: async () => body.items.map(item => ({ ...item, _version: '1' })) });
@@ -300,8 +300,8 @@ describe('backend and permission helpers', () => {
     let resolveFirstPut;
     const firstPutPromise = new Promise(resolve => { resolveFirstPut = resolve; });
     const calls = [];
-    globalThis.fetch = (url, options = {}) => {
-      const path = String(url).replace(/.*\/php-api/, '');
+    globalThis.fetch = (/** @type {string} */ url, options = {}) => {
+      const path = url.replace(/.*\/php-api/, '');
       const body = options.body ? JSON.parse(options.body) : null;
       if (options.method === 'PUT' && path === '/citizens') {
         const callIndex = calls.push({ body }) - 1;
@@ -343,9 +343,9 @@ describe('backend and permission helpers', () => {
       senders: [],
       templates: []
     };
-    globalThis.fetch = (url, options = {}) => {
+    globalThis.fetch = (/** @type {string} */ url, options = {}) => {
       const method = options.method || 'GET';
-      const path = String(url).replace(/.*\/php-api/, '');
+      const path = url.replace(/.*\/php-api/, '');
       if (method === 'PUT' && path === '/citizens') {
         return Promise.resolve({ ok: false, status: 409, json: async () => ({ error: 'parallel', collection: 'citizens', id: 'G-1' }) });
       }
@@ -409,9 +409,9 @@ describe('backend and permission helpers', () => {
     };
     let resolveCitizens;
     const citizensPromise = new Promise(resolve => { resolveCitizens = resolve; });
-    globalThis.fetch = (url, options = {}) => {
+    globalThis.fetch = (/** @type {string} */ url, options = {}) => {
       const method = options.method || 'GET';
-      const path = String(url).replace(/.*\/php-api/, '');
+      const path = url.replace(/.*\/php-api/, '');
       if (method === 'GET' && path === '/citizens') return citizensPromise;
       if (method === 'GET' && path === '/settings/receipt') return Promise.resolve({ ok: true, json: async () => ({}) });
       if (method === 'POST' && path === '/citizens') {
