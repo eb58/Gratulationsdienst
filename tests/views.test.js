@@ -98,12 +98,12 @@ beforeEach(() => {
   state.data = {
     citizens: [citizen],
     weddingAnniversaries: [{
-      id: 'WA-G-1-1976-06-01',
+      id: 'WA-G-1-golden',
       citizenId: citizen.id,
       firstName: citizen.firstName,
       lastName: citizen.lastName,
       weddingAnniversary: 'Goldene Hochzeit',
-      weddingDate: '1976-06-01',
+      weddingDate: `${new Date().getFullYear() - 50}-06-01`,
       spouseName: 'Heinz',
       source: 'Fragebogen',
       capturedAt: '2026-06-01'
@@ -139,6 +139,7 @@ beforeEach(() => {
     templates: [template]
   };
   state.filters = { q: '', month: '06', groupId: 'alle', age: 'alle', status: 'alle', occasion: 'Geburtstag' };
+  state.showAllWeddingAnniversaries = true;
   state.quittungBetrag = '8,50';
   state.quittungTelefon = '030 123';
   state.quittungKapitel = '3930';
@@ -286,6 +287,7 @@ describe('main views', () => {
     assert.match(views.documents(), /Druckliste/);
     assert.match(views.weddingAnniversaries(), /data-grid="weddingAnniversaries"/);
     assert.match(views.weddingAnniversaries(), /<select name="month" data-filter>/);
+    assert.match(views.weddingAnniversaries(), /data-action="toggle-all-wedding-anniversaries"/);
     assert.doesNotMatch(views.weddingAnniversaries(), /<span>Anzahl<\/span>/);
     assert.doesNotMatch(views.weddingAnniversaries(), /<span>Gesamt<\/span>/);
     assert.match(views.map(), /id="map-month-select" name="month" data-filter/);
@@ -296,6 +298,29 @@ describe('main views', () => {
     state.importMissingCitizens = [{ id: 'G-missing', firstName: 'Eva', lastName: 'Fehlt', birthDate: '1936-04-06' }];
     assert.doesNotMatch(views.import(), /data-action="delete-missing-citizens"/);
     assert.doesNotMatch(views.import(), /Verschwundene endgültig löschen/);
+  });
+
+  it('zeigt bei Hochzeitsjubiläen standardmäßig nur echte Jubiläen, per Toggle auch alle Termine', () => {
+    const currentYear = new Date().getFullYear();
+    state.filters.month = 'alle';
+    state.data.weddingAnniversaries = [
+      { id: 'WA-golden', citizenId: 'G-1', firstName: 'Erika', lastName: 'Mustermann', weddingDate: `${currentYear - 50}-12-31` },
+      { id: 'WA-unrund', citizenId: 'G-2', firstName: 'Eva', lastName: 'Fehlt', weddingDate: `${currentYear - 42}-12-31` }
+    ];
+
+    state.showAllWeddingAnniversaries = false;
+    assert.match(views.weddingAnniversaries(), /data-grid="weddingAnniversaries"/);
+    assert.doesNotMatch(views.weddingAnniversaries(), /checked/);
+
+    state.showAllWeddingAnniversaries = true;
+    assert.match(views.weddingAnniversaries(), /checked/);
+
+    state.data.weddingAnniversaries = [{ id: 'WA-unrund', citizenId: 'G-2', firstName: 'Eva', lastName: 'Fehlt', weddingDate: `${currentYear - 42}-12-31` }];
+    state.showAllWeddingAnniversaries = false;
+    assert.match(views.weddingAnniversaries(), /Keine Hochzeitsjubiläen erfasst/);
+
+    state.showAllWeddingAnniversaries = true;
+    assert.match(views.weddingAnniversaries(), /data-grid="weddingAnniversaries"/);
   });
 
   it('renders receipt, profile and user administration states', () => {

@@ -1079,6 +1079,11 @@ body.is-resizing {
   min-width: 120px;
 }
 
+.toolbar input.toggle {
+  width: 40px !important;
+  min-width: 40px;
+}
+
 .toolbar-label {
   font-size: 13px;
   color: var(--muted);

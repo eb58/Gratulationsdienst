@@ -212,6 +212,7 @@ export const state = {
   generatedDocs: [],
   printBackground: true,
   showMapPeople: true,
+  showAllWeddingAnniversaries: false,
   dashboardSort: { key: "group", dir: "asc" },
   selectedUserId: "",
   focusTarget: "",

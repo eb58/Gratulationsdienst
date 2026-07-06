@@ -7,6 +7,7 @@ import { streetMapSvg, mapSegmentCounts, mapAddressPointGroups, mapDataLoaded, e
 import { documentBackPreview, documentPreview } from './documents.js';
 import { qrCodeSvg } from './qr.js';
 import { SOKO_QUESTIONNAIRE_IMPORTED_STATUS } from './sokoQuestionnaire.js';
+import { weddingAnniversaryLabel } from './weddingAnniversaries.js';
 import { render, applyPendingFocus } from './render.js'; // Zyklus OK: render wird nur in Callbacks aufgerufen
 import { rememberDirtyFormBaselines } from './dirtyForms.js';
 
@@ -884,7 +885,8 @@ export const views = {
 
   weddingAnniversaries: () => {
     const anniversaries = (state.data.weddingAnniversaries || [])
-      .filter(item => state.filters.month === "alle" || item.weddingDate?.slice(5, 7) === state.filters.month);
+      .filter(item => state.filters.month === "alle" || item.weddingDate?.slice(5, 7) === state.filters.month)
+      .filter(item => state.showAllWeddingAnniversaries || weddingAnniversaryLabel(item.weddingDate));
     return `
       <section class="panel wedding-anniversaries-panel">
         <h2>Hochzeitsjubiläen</h2>
@@ -893,6 +895,10 @@ export const views = {
           <select name="month" data-filter>
             ${months.map(([value, label]) => `<option value="${value}"${state.filters.month === value ? " selected" : ""}>${escapeHtml(label)}</option>`).join("")}
           </select>
+          <label class="toggle-label">
+            <input type="checkbox" class="toggle" data-action="toggle-all-wedding-anniversaries" ${state.showAllWeddingAnniversaries ? "checked" : ""}>
+            Alle Hochzeitstermine
+          </label>
         </div>
         <div class="wedding-anniversaries-content">
           ${anniversaries.length ? gridHost("weddingAnniversaries") : `<div class="empty-state">Keine Hochzeitsjubiläen erfasst</div>`}

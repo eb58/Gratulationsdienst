@@ -751,6 +751,10 @@ export const actions = {
     state.showMapPeople = Boolean(e.target.checked);
     render();
   },
+  "toggle-all-wedding-anniversaries": e => {
+    state.showAllWeddingAnniversaries = Boolean(e.target.checked);
+    render();
+  },
   "save-quittung-settings": () => {
     const settings = { ...quittungSettingsFromForm(), quittungBetrag: normalizeAmount(state.quittungBetrag) };
     saveQuittungSettings(settings)

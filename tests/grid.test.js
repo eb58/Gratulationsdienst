@@ -102,6 +102,7 @@ beforeEach(() => {
     templateName: 'Standard'
   }];
   state.filters = { q: '', month: 'alle', groupId: 'alle', age: 'alle', status: 'alle', occasion: 'Geburtstag' };
+  state.showAllWeddingAnniversaries = false;
   state.importMissingCitizens = [];
   state.selectedCitizenId = 'G-1';
   state.selectedMemberId = 'S-001';
@@ -179,6 +180,9 @@ describe('grid definitions', () => {
   });
 
   it('filtert Hochzeitsjubilaeen nach ausgewaehltem Monat', () => {
+    // Zeigt in diesem Test alle Termine an, damit die Monatsfilterung unabhaengig
+    // vom Testlaufdatum geprueft werden kann (siehe eigener Test fuer den Echte-Jubilaeen-Filter).
+    state.showAllWeddingAnniversaries = true;
     state.data.weddingAnniversaries = [
       { id: 'WA-1', citizenId: 'G-1', firstName: 'Erika', lastName: 'Juni', weddingDate: '1976-06-01', weddingAnniversary: 'Goldene Hochzeit' },
       { id: 'WA-2', citizenId: 'G-2', firstName: 'Eva', lastName: 'Juli', weddingDate: '1966-07-01', weddingAnniversary: 'Diamantene Hochzeit' }
@@ -189,6 +193,21 @@ describe('grid definitions', () => {
 
     state.filters.month = 'alle';
     assert.deepEqual(gridDefinitions.weddingAnniversaries().rowData.map(row => row.id), ['WA-1', 'WA-2']);
+  });
+
+  it('zeigt standardmaessig nur echte Jubilaeen, per Toggle auch alle Termine', () => {
+    const currentYear = new Date().getFullYear();
+    state.data.weddingAnniversaries = [
+      { id: 'WA-golden', citizenId: 'G-1', firstName: 'Erika', lastName: 'Mustermann', weddingDate: `${currentYear - 50}-12-31`, weddingAnniversary: 'Goldene Hochzeit' },
+      { id: 'WA-unrund', citizenId: 'G-2', firstName: 'Eva', lastName: 'Fehlt', weddingDate: `${currentYear - 42}-12-31`, weddingAnniversary: '' }
+    ];
+    state.filters.month = 'alle';
+    state.showAllWeddingAnniversaries = false;
+
+    assert.deepEqual(gridDefinitions.weddingAnniversaries().rowData.map(row => row.id), ['WA-golden']);
+
+    state.showAllWeddingAnniversaries = true;
+    assert.deepEqual(gridDefinitions.weddingAnniversaries().rowData.map(row => row.id), ['WA-golden', 'WA-unrund']);
   });
 
   it('renders SOKO and status cell badges', () => {
