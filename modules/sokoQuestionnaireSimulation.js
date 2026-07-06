@@ -11,10 +11,10 @@ import {
   sokoQuestionnaireCode
 } from './sokoQuestionnaire.js';
 
-const PX_PER_MM = 5;
+const PX_PER_MM = 11;
 const PDF_WIDTH_PT = 595.28;
 const PDF_HEIGHT_PT = 841.89;
-const JPEG_QUALITY = 0.74;
+const JPEG_QUALITY = 0.9;
 const wishKeys = ["wishPost", "wishVisit", "wishNone"];
 const weddingKeys = ["weddingGold", "weddingDiamond", "weddingIron", "weddingGrace"];
 const checkboxLabels = {
