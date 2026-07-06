@@ -14,13 +14,18 @@ const cleanAssets = () => ({
   buildStart() { rmSync('docker/src/gratulationsdienst/assets', { recursive: true, force: true }); }
 });
 
-const watchPublicData = () => ({
-  name: 'watch-public-data',
-  buildStart() {
-    if (this.meta.watchMode && !this._fsWatch) this._fsWatch = watch('public/data', (_event, file) => file && copyDataFile(file));
-  },
-  writeBundle() { readdirSync('public/data').forEach(copyDataFile); },
-});
+const watchPublicData = () => {
+  let fsWatcher;
+  return {
+    name: 'watch-public-data',
+    // this._fsWatch würde nicht reichen: Vite erzeugt bei jedem Rebuild im Watch-Modus einen neuen Plugin-Context,
+    // dadurch würde bei jeder Dateiänderung ein zusätzlicher fs.watch angehäuft, bis Handles/Watch-Mode kollabieren
+    buildStart() {
+      if (this.meta.watchMode && !fsWatcher) fsWatcher = watch('public/data', (_event, file) => file && copyDataFile(file));
+    },
+    writeBundle() { readdirSync('public/data').forEach(copyDataFile); },
+  };
+};
 
 export default defineConfig({
   base: '/gratulationsdienst/',
