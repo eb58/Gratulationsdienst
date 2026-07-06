@@ -300,7 +300,7 @@ function handleCollection(array $db, string $method, string $collection, ?string
 
     if ($method === 'PUT' && $id === null) {
         ['items' => $items, 'knownVersions' => $knownVersions] = collectionPayload(readJson(), $collection);
-        replaceCollection($db, $collection, $items, $knownVersions);
+        transaction($db, static fn () => replaceCollection($db, $collection, $items, $knownVersions));
         respond(readCollection($db, $collection));
     }
 
@@ -967,22 +967,20 @@ function readItem(array $db, string $collection, string $id): ?array
 
 function replaceCollection(array $db, string $collection, array $items, ?array $knownVersions = null): void
 {
-    transaction($db, static function () use ($db, $collection, $items, $knownVersions): void {
-        $config = collectionConfig($collection);
-        $incomingById = incomingItemsById($items, $collection);
-        $currentById = itemsById(readCollection($db, $collection));
-        assertCollectionVersionsAllowReplace($collection, $incomingById, $currentById, $knownVersions);
+    $config = collectionConfig($collection);
+    $incomingById = incomingItemsById($items, $collection);
+    $currentById = itemsById(readCollection($db, $collection));
+    assertCollectionVersionsAllowReplace($collection, $incomingById, $currentById, $knownVersions);
 
-        foreach ($currentById as $id => $currentItem) {
-            if (!array_key_exists($id, $incomingById)) deleteItem($db, $collection, $id);
-        }
+    foreach ($currentById as $id => $currentItem) {
+        if (!array_key_exists($id, $incomingById)) deleteItem($db, $collection, $id);
+    }
 
-        foreach ($incomingById as $id => $item) {
-            if (!array_key_exists($id, $currentById) || !itemsEqualForPersistence($item, $currentById[$id], $config)) {
-                upsertItem($db, $collection, $id, $item);
-            }
+    foreach ($incomingById as $id => $item) {
+        if (!array_key_exists($id, $currentById) || !itemsEqualForPersistence($item, $currentById[$id], $config)) {
+            upsertItem($db, $collection, $id, $item);
         }
-    });
+    }
 }
 
 function upsertItem(array $db, string $collection, string $id, array $item): void
