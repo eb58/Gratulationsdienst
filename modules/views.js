@@ -575,6 +575,7 @@ export const views = {
         <div class="file-action-row soko-pdf-action-row">
           <div class="file-picker import-file-picker soko-questionnaire-picker">
             <button type="button" class="primary-button test-action-button" data-action="simulate-soko-pdf-import">Simuliere Fragebögen laden</button>
+            <button type="button" class="ghost-button test-action-button" data-action="download-soko-pdf-simulation">Fragebögen-PDF herunterladen</button>
             <label class="soko-questionnaire-load" for="soko-pdf-file"><span>Fragebögen laden</span><em>Gescannte Fragebögen</em></label>
           </div>
           <input id="soko-pdf-file" class="file-input" type="file" accept=".pdf,application/pdf">

@@ -1,4 +1,4 @@
-import { $, todayIso, MONTH_KEY, isValidEmail, isValidIban, formatIban, updateItem, nextId, csvEscape, downloadText, toast, byId, normalizeEmail, normalizeAmount, normalizeDigits, isValidPostalCode, safeStorageSetItem } from './utils.js';
+import { $, todayIso, MONTH_KEY, isValidEmail, isValidIban, formatIban, updateItem, nextId, csvEscape, downloadText, downloadBlob, toast, byId, normalizeEmail, normalizeAmount, normalizeDigits, isValidPostalCode, safeStorageSetItem } from './utils.js';
 import { normalizeStreetRules, streetDistrictSummary, streetGroupSummary, normalizeStreetDistrict, defaultData } from './domain.js';
 import { state, saveData, saveCollectionData, saveQuittungSettings, apiRequest, setAuthSession, clearAuthSession, loadCollectionData, hasPendingBackendData } from './state.js';
 import { streetAssignment, filteredCitizens, documentCitizens, isPrintedCitizen, selectedTemplate, selectedSender, selectedMember, activeCitizens, groupForCitizen, isReceiptGroupReady, receiptCitizens, receiptCitizensForReadyGroups, duplicateKey } from './assignment.js';
@@ -263,6 +263,7 @@ const sokoPdfSimulationCitizens = () => {
   const citizens = rows.map(row => byId(state.data.citizens, row.id)).filter(Boolean);
   return questionnaireCitizenPool(citizens).filter(hasNoQuestionnaire).filter(isImportedCitizen);
 };
+const importedCitizensAwaitingQuestionnaire = () => state.data.citizens.filter(hasNoQuestionnaire).filter(isImportedCitizen);
 const sokoQuestionnaireImagePages = (resultPages, sourcePages) => resultPages
   .map((page, index) => {
     const source = sourcePages[index] || {};
@@ -281,6 +282,13 @@ const sokoQuestionnaireImagePages = (resultPages, sourcePages) => resultPages
 const parsedSokoQuestionnairePages = (parsedPages, generatedPages) => {
   if (!generatedPages.length) return parsedPages;
   return parsedPages.map((page, index) => ({ ...page, citizenId: generatedPages[index]?.citizenId || page.citizenId }));
+};
+const buildSokoPdfSimulation = async (citizens, emptyMessage) => {
+  if (!citizens.length) { importToast(emptyMessage); return null; }
+  importToast("SOKO-PDF wird erzeugt...");
+  const simulation = await createSokoQuestionnaireSimulation(citizens);
+  if (!simulation.pages.length) { importToast("Keine Fragebögen erzeugt."); return null; }
+  return simulation;
 };
 const applySokoPdfImport = async (file, generatedPages = []) => {
   const parsed = await parseSokoQuestionnairePdf(file);
@@ -830,12 +838,9 @@ export const actions = {
     }
   },
   "simulate-soko-pdf-import": async () => {
-    const citizens = sokoPdfSimulationCitizens();
-    if (!citizens.length) { importToast("Keine Jubilare in der aktuellen Auswahl."); return; }
     try {
-      importToast("SOKO-PDF wird erzeugt...");
-      const simulation = await createSokoQuestionnaireSimulation(citizens);
-      if (!simulation.pages.length) { importToast("Keine Fragebögen erzeugt."); return; }
+      const simulation = await buildSokoPdfSimulation(sokoPdfSimulationCitizens(), "Keine Jubilare in der aktuellen Auswahl.");
+      if (!simulation) return;
       importToast("SOKO-PDF wird ausgewertet...");
       const result = await applySokoPdfImport(simulation.file, simulation.pages);
       saveData();
@@ -843,6 +848,16 @@ export const actions = {
       importToast(`Simulation: ${sokoPdfNotice(result.pages)}`);
     } catch (error) {
       importToast(error.message || "SOKO-PDF-Simulation konnte nicht ausgeführt werden.");
+    }
+  },
+  "download-soko-pdf-simulation": async () => {
+    try {
+      const simulation = await buildSokoPdfSimulation(importedCitizensAwaitingQuestionnaire(), "Keine importierten Jubilare ohne Fragebogen vorhanden.");
+      if (!simulation) return;
+      downloadBlob(simulation.file, simulation.name);
+      importToast(`PDF mit ${simulation.pages.length} Fragebögen heruntergeladen.`);
+    } catch (error) {
+      importToast(error.message || "SOKO-PDF-Simulation konnte nicht erzeugt werden.");
     }
   },
   "select-generated": event => {

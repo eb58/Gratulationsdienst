@@ -109,15 +109,17 @@ export const nextId = (prefix, items) => {
 export const csvEscape = value => `"${String(value ?? "").replaceAll('"', '""')}"`;
 export const formatStreetAddress = item => [item.street, item.houseNo].filter(Boolean).join(" ");
 const UTF8_BOM = "﻿";
-export const downloadText = (name, content, type = "text/plain;charset=utf-8") => {
-  const needsBom = /csv/i.test(type) && !content.startsWith(UTF8_BOM); // BOM, damit Excel UTF-8 (Umlaute) korrekt liest
-  const blob = new Blob([needsBom ? `${UTF8_BOM}${content}` : content], { type });
+export const downloadBlob = (blob, name) => {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
   link.download = name;
   link.click();
   URL.revokeObjectURL(url);
+};
+export const downloadText = (name, content, type = "text/plain;charset=utf-8") => {
+  const needsBom = /csv/i.test(type) && !content.startsWith(UTF8_BOM); // BOM, damit Excel UTF-8 (Umlaute) korrekt liest
+  downloadBlob(new Blob([needsBom ? `${UTF8_BOM}${content}` : content], { type }), name);
 };
 let toastTimer = null;
 export const toast = (message, options = {}) => {
