@@ -261,7 +261,8 @@ export const parseSokoQuestionnairePdf = async file => {
   const task = pdfjs.getDocument({ data: new Uint8Array(arrayBuffer) });
   const pdf = await task.promise;
   try {
-    const pages = await Promise.all(pageNumbers(pdf).map(pageNumber => analyzePage(pdf, pageNumber)));
+    const pages = [];
+    for (const pageNumber of pageNumbers(pdf)) pages.push(await analyzePage(pdf, pageNumber));
     return { pages };
   } finally {
     pdf.destroy?.();
