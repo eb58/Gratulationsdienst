@@ -73,40 +73,42 @@ describe('buildImportResult', () => {
     assert.equal(result.newRows.length, 0);
   });
 
-  it('merges LABO fields into existing citizens, setzt Status auf importiert und setzt Besuchswunsch/Presseflag zurueck', () => {
+  it('ersetzt vorhandene Jubilare des Importmonats durch neue LABO-Datensaetze', () => {
     const existing = [row({ id: 'G-2026-001', street: 'Alte Straße', houseNo: '1', wish: 'per Post', status: 'geprüft', pressPublication: true })];
     const incoming = [row({ street: 'Musterstraße', houseNo: '99', postalCode: '13439' })];
     const result = buildImportResult(incoming, existing, assignTegel);
 
-    assert.equal(result.newRows.length, 0);
-    assert.equal(result.updates.length, 1);
-    assert.equal(result.updates[0].id, 'G-2026-001');
-    assert.equal(result.updates[0].street, 'Musterstraße');
-    assert.equal(result.updates[0].houseNo, '99');
-    assert.equal(result.updates[0].postalCode, '13439');
-    assert.equal(result.updates[0].wish, 'offen');
-    assert.equal(result.updates[0].pressPublication, false);
-    assert.equal(result.updates[0].status, 'importiert');
+    assert.equal(result.newRows.length, 1);
+    assert.equal(result.updates.length, 0);
+    assert.deepEqual(result.deleted.map(citizen => citizen.id), ['G-2026-001']);
+    assert.equal(result.newRows[0].id, 'G-2026-001');
+    assert.equal(result.newRows[0].street, 'Musterstraße');
+    assert.equal(result.newRows[0].houseNo, '99');
+    assert.equal(result.newRows[0].postalCode, '13439');
+    assert.equal(result.newRows[0].wish, 'offen');
+    assert.equal(result.newRows[0].pressPublication, undefined);
+    assert.equal(result.newRows[0].status, 'importiert');
     assert.equal(result.skipped, 0);
   });
 
-  it('setzt Status auf offen, wenn beim Re-Import keine SOKO-Zuordnung gefunden wird', () => {
+  it('setzt Status auf offen, wenn beim Import keine SOKO-Zuordnung gefunden wird', () => {
     const existing = [row({ id: 'G-2026-001', street: 'Alte Straße', status: 'geprüft' })];
     const result = buildImportResult([row({ street: 'Auswärtige Straße' })], existing, assignTegel);
 
-    assert.equal(result.updates[0].status, 'offen');
+    assert.equal(result.newRows[0].status, 'offen');
   });
 
-  it('resets printed citizens to imported when they return in a new LABO run', () => {
+  it('legt gedruckte Rueckkehrer als neuen offenen Monatsdatensatz an', () => {
     const existing = [row({ id: 'G-2026-001', status: 'gedruckt', street: 'Alte Straße', printedAt: '2025-06-01', printedAge: 90, printedYear: 2025 })];
     const result = buildImportResult([row({ street: 'Musterstraße' })], existing, assignTegel);
 
-    assert.equal(result.updates.length, 1);
-    assert.equal(result.updates[0].status, 'importiert');
-    assert.equal(result.updates[0].printedAt, '');
-    assert.equal(result.updates[0].printedAge, '');
-    assert.equal(result.updates[0].printedYear, '');
-    assert.equal(result.updates[0].street, 'Musterstraße');
+    assert.deepEqual(result.deleted.map(citizen => citizen.id), ['G-2026-001']);
+    assert.equal(result.newRows.length, 1);
+    assert.equal(result.newRows[0].status, 'importiert');
+    assert.equal(result.newRows[0].printedAt, undefined);
+    assert.equal(result.newRows[0].printedAge, undefined);
+    assert.equal(result.newRows[0].printedYear, undefined);
+    assert.equal(result.newRows[0].street, 'Musterstraße');
     assert.equal(result.skipped, 0);
   });
 
@@ -117,31 +119,16 @@ describe('buildImportResult', () => {
     assert.equal(result.skipped, 1);
   });
 
-  it('flags a moved-out citizen in notes when the new address has no SOKO match', () => {
-    const existing = [row({ id: 'G-2026-001', street: 'Musterstraße', notes: '' })];
-    const result = buildImportResult([row({ street: 'Auswärtige Straße', houseNo: '5' })], existing, assignTegel);
-
-    assert.equal(result.updates.length, 1);
-    assert.match(result.updates[0].notes, /Keine SOKO-Zuordnung bei Reimport/);
-  });
-
-  it('does not flag a move when the new address still has a SOKO match', () => {
-    const existing = [row({ id: 'G-2026-001', street: 'Alte Musterstraße', notes: '' })];
-    const result = buildImportResult([row({ street: 'Musterstraße' })], existing, assignTegel);
-
-    assert.equal(result.updates[0].notes, '');
-  });
-
   it('skips second occurrence of an existing citizen in the same batch', () => {
     const existing = [row({ id: 'G-2026-001' })];
     const result = buildImportResult([row(), row()], existing, assignTegel);
 
-    assert.equal(result.updates.length, 1);
-    assert.equal(result.newRows.length, 0);
+    assert.equal(result.updates.length, 0);
+    assert.equal(result.newRows.length, 1);
     assert.equal(result.skipped, 1);
   });
 
-  it('reports existing CSV import citizens missing from the imported months', () => {
+  it('meldet geloeschte Jubilare des Importmonats', () => {
     const existing = [
       row({ id: 'G-2026-001', source: 'CSV Import', firstName: 'Erika', birthDate: '1936-06-01' }),
       row({ id: 'G-2026-002', source: 'CSV Import', firstName: 'Eva', birthDate: '1936-06-02' }),
@@ -150,7 +137,9 @@ describe('buildImportResult', () => {
     ];
     const result = buildImportResult([row({ firstName: 'Erika', birthDate: '1936-06-01' })], existing, assignTegel);
 
-    assert.deepEqual(result.missing.map(citizen => citizen.id), ['G-2026-002']);
+    assert.deepEqual(result.deleted.map(citizen => citizen.id), ['G-2026-001', 'G-2026-002', 'G-2026-004']);
+    assert.deepEqual(result.retained.map(citizen => citizen.id), ['G-2026-003']);
+    assert.deepEqual(result.affectedMonths, ['06']);
   });
 
 });
@@ -168,8 +157,8 @@ describe('importNotice', () => {
     assert.equal(importNotice({ newRows: [1], updates: [1, 2], skipped: 3 }), '1 neue Datensätze importiert, 2 Bestände aktualisiert, 3 Dubletten übersprungen.');
   });
 
-  it('reports missing records', () => {
-    assert.equal(importNotice({ newRows: [], updates: [], skipped: 0, missing: [1, 2] }), '2 bisherige Datensätze im neuen Import nicht enthalten.');
+  it('reports deleted records', () => {
+    assert.equal(importNotice({ newRows: [1], updates: [], skipped: 0, deleted: [1, 2] }), '2 Monatsdatensätze gelöscht, 1 neue Datensätze importiert.');
   });
 
   it('reports no changes when all lists are empty', () => {

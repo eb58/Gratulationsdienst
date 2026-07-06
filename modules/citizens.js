@@ -2,16 +2,12 @@ import { normalize, nextId, todayIso, calculateAge } from './utils.js';
 import { duplicateKey } from './assignment.js';
 
 const LABO_FIELDS = ['salutation', 'street', 'houseNo', 'postalCode', 'district', 'phone', 'email'];
-const ADDRESS_FIELDS = ['street', 'houseNo', 'postalCode'];
-const todayDe = () => todayIso().split('-').reverse().join('.');
 const monthOf = value => String(value || "").slice(5, 7);
-const importMonths = mapped => new Set(mapped.flatMap(row => [monthOf(row.birthDate), monthOf(row.weddingDate)]).filter(Boolean));
-const missingFromImport = (remaining, months) => [...remaining.values()]
-  .filter(citizen => citizen.source === "CSV Import")
-  .filter(citizen => months.has(monthOf(citizen.birthDate)) || months.has(monthOf(citizen.weddingDate)));
+const importMonths = mapped => new Set(mapped.map(row => monthOf(row.birthDate)).filter(Boolean));
+const isImportableRow = row => row.firstName && row.lastName && row.birthDate && row.street;
 
 const mergeCitizen = (existing, incoming, hasGroup) => {
-  const merged = {
+  return {
     ...existing,
     ...Object.fromEntries(LABO_FIELDS.map(key => [key, incoming[key] ?? existing[key]])),
     status: hasGroup ? "importiert" : "offen",
@@ -22,23 +18,19 @@ const mergeCitizen = (existing, incoming, hasGroup) => {
     pressPublication: false,
     updatedAt: todayIso()
   };
-  const addressChanged = ADDRESS_FIELDS.some(f => incoming[f] && incoming[f] !== existing[f]);
-  if (addressChanged && !hasGroup) {
-    const note = `Keine SOKO-Zuordnung bei Reimport ${todayDe()}`;
-    merged.notes = merged.notes ? `${merged.notes}\n${note}` : note;
-  }
-  return merged;
 };
 
 export const buildImportResult = (mapped, existingCitizens, assignGroup) => {
-  const existingByKey = new Map(existingCitizens.map(c => [duplicateKey(c), c]));
-  const months = importMonths(mapped);
+  const validRows = mapped.filter(isImportableRow);
+  const months = importMonths(validRows);
+  const deleted = existingCitizens.filter(citizen => months.has(monthOf(citizen.birthDate)));
+  const retained = existingCitizens.filter(citizen => !months.has(monthOf(citizen.birthDate)));
+  const existingByKey = new Map(retained.map(c => [duplicateKey(c), c]));
   const seen = new Set();
   const newRows = [];
   const updates = [];
   let skipped = 0;
-  for (const row of mapped) {
-    if (!row.firstName || !row.lastName || !row.birthDate || !row.street) continue;
+  for (const row of validRows) {
     const key = duplicateKey(row);
     if (existingByKey.has(key)) {
       updates.push(mergeCitizen(existingByKey.get(key), row, assignGroup(row)));
@@ -49,14 +41,15 @@ export const buildImportResult = (mapped, existingCitizens, assignGroup) => {
     } else {
       seen.add(key);
       const group = assignGroup(row);
-      newRows.push({ ...row, id: nextId("G-2026", [...existingCitizens, ...newRows]), source: "CSV Import", createdAt: row.createdAt || todayIso(), updatedAt: todayIso(), status: group ? "importiert" : "offen" });
+      newRows.push({ ...row, id: nextId("G-2026", [...retained, ...updates, ...newRows]), source: "CSV Import", createdAt: row.createdAt || todayIso(), updatedAt: todayIso(), status: group ? "importiert" : "offen" });
     }
   }
-  return { newRows, updates, skipped, missing: missingFromImport(existingByKey, months) };
+  return { newRows, updates, skipped, deleted, retained, affectedMonths: [...months], missing: [] };
 };
 
-export const importNotice = ({ newRows, updates, skipped, missing = [] }) => {
+export const importNotice = ({ newRows, updates, skipped, deleted = [], missing = [] }) => {
   const parts = [];
+  if (deleted.length) parts.push(`${deleted.length} Monatsdatensätze gelöscht`);
   if (newRows.length) parts.push(`${newRows.length} neue Datensätze importiert`);
   if (updates.length) parts.push(`${updates.length} Bestände aktualisiert`);
   if (skipped) parts.push(`${skipped} Dubletten übersprungen`);

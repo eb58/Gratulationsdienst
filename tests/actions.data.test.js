@@ -288,27 +288,28 @@ describe('Jubilare löschen und Testdaten', () => {
     assert.equal(state.dialog, null);
   });
 
-  it('seed-citizens erzeugt Jubilare aus den SOKO-Zuordnungen', () => {
+  it('seed-citizens erzeugt Jubilare aus den SOKO-Zuordnungen', async () => {
     assert.equal(state.data.citizens.length, 0);
-    actions['seed-citizens']();
+    await actions['seed-citizens']();
     assert.ok(state.data.citizens.length >= 30);
     assert.deepEqual([...new Set(state.data.citizens.map(citizen => citizen.birthDate.slice(5, 7)))], [monthAfterNext()]);
   });
 
-  it('seed-citizens lässt die aktuelle Monatsauswahl unverändert', () => {
+  it('seed-citizens lässt die aktuelle Monatsauswahl unverändert', async () => {
     state.filters = { ...state.filters, month: '05' };
-    actions['seed-citizens']();
+    await actions['seed-citizens']();
     assert.equal(state.filters.month, '05');
   });
 
-  it('seed-citizens simuliert bei Bestand einen Folge-LABO-Lauf', () => {
-    actions['seed-citizens']();
+  it('seed-citizens simuliert bei Bestand einen ersetzenden Folge-LABO-Lauf', async () => {
+    await actions['seed-citizens']();
     const initialCount = state.data.citizens.length;
 
-    actions['seed-citizens']();
+    await actions['seed-citizens']();
 
     assert.equal(state.importText.trim().split('\n').length, initialCount + 1);
-    assert.ok(state.data.citizens.length > initialCount, 'neue LABO-Fälle werden ergänzt');
+    assert.equal(state.data.citizens.length, initialCount, 'der Monatsbestand wird ersetzt statt erweitert');
+    assert.equal(state.importMissingCitizens.length, 0);
   });
 
   it('reset-test-database loescht Bestand, laesst Monatsauswahl unveraendert und erzeugt 500 Jahresdaten mit realistischen Fragebogenwerten', async () => {
@@ -327,22 +328,20 @@ describe('Jubilare löschen und Testdaten', () => {
 
     const allCitizens = state.data.citizens;
     const idNum = citizen => Number(citizen.id.split('-').pop());
-    // Die Jahressimulation vergibt IDs 001..500 (0-basierter Index = idNum-1); der
-    // anschließende implizite LABO-Lauf für den Zielmonat reaktiviert davon genau die
-    // Kohorte, deren Geburtsmonat zufällig mit dem Zielmonat übereinstimmt
-    // (deterministisch Index 0..41, also idNum 1..42, bei rowCount 500) – deshalb werden
-    // Verteilungs-Checks auf den unberührten Bereich ab idNum 43 beschränkt, der
-    // garantiert nicht vom Re-Import angefasst wurde.
-    const yearCohort = allCitizens.filter(citizen => idNum(citizen) <= 500);
-    const untouched = yearCohort.filter(citizen => idNum(citizen) > 42);
+    // Die Jahressimulation vergibt zuerst IDs 001..500. Der anschließende implizite
+    // LABO-Lauf ersetzt den Zielmonat vollständig durch offene Importfälle; die
+    // Rückmeldungen der übrigen Monate bleiben als gedrucktes Archiv erhalten.
+    const archived = allCitizens.filter(citizen => citizen.status === 'gedruckt');
+    const untouched = archived;
     const openCitizens = allCitizens.filter(citizen => idNum(citizen) > 500);
-    const monthCounts = Object.values(yearCohort.reduce((map, citizen) => ({ ...map, [citizen.birthDate.slice(5, 7)]: (map[citizen.birthDate.slice(5, 7)] || 0) + 1 }), {}));
+    const monthCounts = Object.values(archived.reduce((map, citizen) => ({ ...map, [citizen.birthDate.slice(5, 7)]: (map[citizen.birthDate.slice(5, 7)] || 0) + 1 }), {}));
     const weddingCounts = untouched.reduce((map, citizen) => ({ ...map, [citizen.weddingAnniversary || '-']: (map[citizen.weddingAnniversary || '-'] || 0) + 1 }), {});
     const wishCounts = untouched.reduce((map, citizen) => ({ ...map, [citizen.wish]: (map[citizen.wish] || 0) + 1 }), {});
     const reference = untouched[0];
 
-    assert.equal(yearCohort.length, 500);
-    assert.equal(monthCounts.length, 12);
+    assert.equal(allCitizens.length, 500);
+    assert.equal(archived.length, 458);
+    assert.equal(monthCounts.length, 11);
     assert.ok(Math.max(...monthCounts) - Math.min(...monthCounts) <= 1);
     assert.ok(untouched.every(citizen => citizen.printedAt && citizen.printedYear && Number.isFinite(citizen.printedAge)));
     assert.equal(reference.printedYear, Number(reference.printedAt.slice(0, 4)));
@@ -361,11 +360,8 @@ describe('Jubilare löschen und Testdaten', () => {
     assert.ok(openCitizens.every(citizen => citizen.birthDate.slice(5, 7) === monthAfterNext()));
     assert.ok(openCitizens.every(citizen => citizen.status === 'importiert' || citizen.status === 'offen'));
 
-    const reactivated = yearCohort.filter(citizen => citizen.status !== 'gedruckt');
-    assert.ok(reactivated.length > 0, 'Jahres-Archivfälle des Zielmonats werden als wiederkehrender LABO-Lauf reaktiviert');
-    assert.ok(reactivated.every(citizen => citizen.birthDate.slice(5, 7) === monthAfterNext()));
-    assert.ok(state.importMissingCitizens.length > 0, 'einzelne reaktivierte Archivfälle fallen absichtlich aus dem neuen Lauf heraus');
-    assert.ok(state.importMissingCitizens.every(citizen => citizen.birthDate.slice(5, 7) === monthAfterNext()));
+    assert.equal(archived.some(citizen => citizen.birthDate.slice(5, 7) === monthAfterNext()), false);
+    assert.equal(state.importMissingCitizens.length, 0);
   });
 });
 
@@ -375,11 +371,11 @@ describe('Import-Lauf', () => {
     assert.equal(state.data.citizens.length, 0);
   });
 
-  it('run-import verarbeitet vorhandenen Importtext und stellt den Geburtsmonat der CSV als Filter ein', () => {
+  it('run-import verarbeitet vorhandenen Importtext und stellt den Geburtsmonat der CSV als Filter ein', async () => {
     state.filters = { q: 'unsichtbar', month: '01', groupId: 'SOKO 99', age: '100', status: 'geprüft', occasion: 'Geburtstag' };
     localStorage.setItem('gd_month_filter', '01');
     state.importText = 'Vorname;Nachname;Strasse;Hausnummer;PLZ;Geburtsdatum\nMax;Muster;Hauptstr;1;13407;5.4.1936';
-    actions['run-import']();
+    await actions['run-import']();
     assert.ok(state.data.citizens.length > 0);
     assert.deepEqual(
       { q: state.filters.q, month: state.filters.month, groupId: state.filters.groupId, age: state.filters.age, status: state.filters.status },
@@ -390,46 +386,49 @@ describe('Import-Lauf', () => {
     assert.equal(state.selectedCitizenId, state.data.citizens[0].id);
   });
 
-  it('run-import faellt bei gemischten Geburtsmonaten in der CSV auf "alle" zurueck', () => {
+  it('run-import faellt bei gemischten Geburtsmonaten in der CSV auf "alle" zurueck', async () => {
     state.importText = 'Vorname;Nachname;Strasse;Hausnummer;PLZ;Geburtsdatum\nMax;Muster;Hauptstr;1;13407;5.4.1936\nEva;Fehlt;Hauptstr;2;13407;6.6.1940';
-    actions['run-import']();
+    await actions['run-import']();
 
     assert.equal(state.filters.month, 'alle');
     assert.equal(localStorage.getItem('gd_month_filter'), 'alle');
   });
 
-  it('run-import merkt bisherige Jubilare, die im neuen Import fehlen', () => {
+  it('run-import ersetzt bisherige Jubilare des Importmonats', async () => {
     state.data.citizens = [
       { id: 'G-2026-001', source: 'CSV Import', firstName: 'Max', lastName: 'Muster', birthDate: '1936-04-05', street: 'Hauptstr', houseNo: '1', postalCode: '13407' },
       { id: 'G-2026-002', source: 'CSV Import', firstName: 'Eva', lastName: 'Fehlt', birthDate: '1936-04-06', street: 'Hauptstr', houseNo: '2', postalCode: '13407' }
     ];
     state.importText = 'Vorname;Nachname;Strasse;Hausnummer;PLZ;Geburtsdatum\nMax;Muster;Hauptstr;1;13407;5.4.1936';
 
-    actions['run-import']();
+    await actions['run-import']();
 
-    assert.deepEqual(state.importMissingCitizens.map(citizen => citizen.id), ['G-2026-002']);
+    assert.deepEqual(state.data.citizens.map(citizen => citizen.lastName), ['Muster']);
+    assert.equal(state.importMissingCitizens.length, 0);
   });
 
-  it('delete-missing-citizens fragt nach und entfernt die fehlenden Jubilare erst nach Bestaetigung', () => {
+  it('run-import bereinigt Hochzeitsjubilaeen des Importmonats nach importierten Personen', async () => {
     state.data.citizens = [
-      { id: 'G-2026-001', source: 'CSV Import', firstName: 'Max', lastName: 'Muster', birthDate: '1936-04-05', street: 'Hauptstr', houseNo: '1', postalCode: '13407' },
-      { id: 'G-2026-002', source: 'CSV Import', firstName: 'Eva', lastName: 'Fehlt', birthDate: '1936-04-06', street: 'Hauptstr', houseNo: '2', postalCode: '13407' }
+      { id: 'G-2026-010', source: 'CSV Import', firstName: 'Max', lastName: 'Muster', birthDate: '1936-04-05', street: 'Altstr', houseNo: '1', postalCode: '13407' },
+      { id: 'G-2026-011', source: 'CSV Import', firstName: 'Eva', lastName: 'Fehlt', birthDate: '1936-04-06', street: 'Altstr', houseNo: '2', postalCode: '13407' }
     ];
-    state.data.weddingAnniversaries = [{ id: 'WA-1', citizenId: 'G-2026-002', weddingAnniversary: 'Goldene Hochzeit' }];
-    state.selectedCitizenId = 'G-2026-002';
+    state.data.weddingAnniversaries = [
+      { id: 'WA-1', citizenId: 'G-2026-010', firstName: 'Max', lastName: 'Muster', birthDate: '1936-04-05', weddingDate: '1976-04-05', spouseName: 'Maria' },
+      { id: 'WA-2', citizenId: 'G-2026-011', firstName: 'Eva', lastName: 'Fehlt', birthDate: '1936-04-06', weddingDate: '1976-04-06', spouseName: 'Ernst' },
+      { id: 'WA-3', citizenId: 'G-2026-099', firstName: 'Juli', lastName: 'Bleibt', birthDate: '1936-07-06', weddingDate: '1976-07-06', spouseName: 'Jan' }
+    ];
+    state.selectedCitizenId = 'G-2026-011';
     state.importText = 'Vorname;Nachname;Strasse;Hausnummer;PLZ;Geburtsdatum\nMax;Muster;Hauptstr;1;13407;5.4.1936';
-    actions['run-import']();
 
-    actions['delete-missing-citizens']();
-    assert.equal(state.dialog?.confirmAction, 'confirm-delete-missing-citizens');
-    assert.equal(state.data.citizens.some(citizen => citizen.id === 'G-2026-002'), true, 'noch nicht geloescht vor Bestaetigung');
+    await actions['run-import']();
 
-    actions['confirm-delete-missing-citizens']();
-
-    assert.equal(state.data.citizens.some(citizen => citizen.id === 'G-2026-002'), false);
-    assert.equal(state.data.weddingAnniversaries.some(item => item.citizenId === 'G-2026-002'), false);
+    const imported = state.data.citizens[0];
+    assert.equal(imported.lastName, 'Muster');
+    assert.deepEqual(state.data.weddingAnniversaries.map(item => item.id), ['WA-1', 'WA-3']);
+    assert.equal(state.data.weddingAnniversaries[0].citizenId, imported.id);
+    assert.equal(state.data.weddingAnniversaries[0].street, 'Hauptstr');
     assert.deepEqual(state.importMissingCitizens, []);
-    assert.notEqual(state.selectedCitizenId, 'G-2026-002');
+    assert.notEqual(state.selectedCitizenId, 'G-2026-011');
     assert.equal(state.dialog, null);
   });
 });

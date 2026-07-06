@@ -326,33 +326,30 @@ export const gridDefinitions = {
     getRowClass: params => params.data.citizenId === state.selectedCitizenId ? "selected" : "",
     onRowClicked: params => { state.selectedCitizenId = params.data.citizenId; render(); }
   }),
-  imported: () => {
-    const missingIds = new Set((state.importMissingCitizens || []).map(citizen => citizen.id));
-    return {
-      ...baseGridOptions(),
-      rowData: state.data.citizens
-        .filter(citizen => citizen.source === "CSV Import")
-        .filter(citizen => missingIds.has(citizen.id) || state.filters.month === "alle" || birthdayMonth(citizen.birthDate) === state.filters.month)
-        .map(citizen => ({
+  imported: () => ({
+    ...baseGridOptions(),
+    rowData: state.data.citizens
+      .filter(citizen => citizen.source === "CSV Import")
+      .filter(citizen => state.filters.month === "alle" || birthdayMonth(citizen.birthDate) === state.filters.month)
+      .map(citizen => ({
         id: citizen.id,
         name: `${citizen.lastName}, ${citizen.firstName}`,
         birthday: citizen.birthDate,
         age: Number(new Date().getFullYear()) - Number(citizen.birthDate?.slice(0, 4)),
         address: `${citizen.street} ${citizen.houseNo}`,
         groupId: groupForCitizen(citizen)?.id || "offen",
-        status: missingIds.has(citizen.id) ? "verschwunden" : citizen.status
+        status: citizen.status
       })),
-      columnDefs: [
-        { headerName: "Name", field: "name", width: 230, minWidth: 170 },
-        { headerName: "Geburtstag", field: "birthday", width: 130, minWidth: 120, valueFormatter: params => formatDate(params.value) },
-        { headerName: "Alter", field: "age", width: 90, minWidth: 80, filter: "agNumberColumnFilter" },
-        { headerName: "Adresse", field: "address", width: 280, minWidth: 180 },
-        { headerName: "SOKO", field: "groupId", width: 115, minWidth: 105, cellRenderer: params => sokoBadgeCell(params.value) },
-        { headerName: "Status", field: "status", width: 135, minWidth: 115, cellRenderer: params => statusBadgeCell(params.value) }
-      ],
-      getRowId: params => params.data.id
-    };
-  }
+    columnDefs: [
+      { headerName: "Name", field: "name", width: 230, minWidth: 170 },
+      { headerName: "Geburtstag", field: "birthday", width: 130, minWidth: 120, valueFormatter: params => formatDate(params.value) },
+      { headerName: "Alter", field: "age", width: 90, minWidth: 80, filter: "agNumberColumnFilter" },
+      { headerName: "Adresse", field: "address", width: 280, minWidth: 180 },
+      { headerName: "SOKO", field: "groupId", width: 115, minWidth: 105, cellRenderer: params => sokoBadgeCell(params.value) },
+      { headerName: "Status", field: "status", width: 135, minWidth: 115, cellRenderer: params => statusBadgeCell(params.value) }
+    ],
+    getRowId: params => params.data.id
+  })
 };
 
 export const mountGrid = element => {

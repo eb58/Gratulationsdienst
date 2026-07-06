@@ -1,7 +1,7 @@
 import { $, todayIso, MONTH_KEY, isValidEmail, isValidIban, formatIban, updateItem, nextId, csvEscape, downloadText, toast, byId, normalizeEmail, normalizeAmount, normalizeDigits, isValidPostalCode, safeStorageSetItem } from './utils.js';
 import { normalizeStreetRules, streetDistrictSummary, streetGroupSummary, normalizeStreetDistrict, defaultData } from './domain.js';
 import { state, saveData, saveCollectionData, saveQuittungSettings, apiRequest, setAuthSession, clearAuthSession, loadCollectionData } from './state.js';
-import { streetAssignment, filteredCitizens, documentCitizens, isPrintedCitizen, selectedTemplate, selectedSender, selectedMember, activeCitizens, groupForCitizen, isReceiptGroupReady, receiptCitizens, receiptCitizensForReadyGroups } from './assignment.js';
+import { streetAssignment, filteredCitizens, documentCitizens, isPrintedCitizen, selectedTemplate, selectedSender, selectedMember, activeCitizens, groupForCitizen, isReceiptGroupReady, receiptCitizens, receiptCitizensForReadyGroups, duplicateKey } from './assignment.js';
 import { printCurrentRun, completePrintRun, renderSokoForm, renderSokoQuittung } from './documents.js';
 import { parseCsv, mapImportRow } from './import.js';
 import { buildImportResult, importNotice, citizenGridRow, nextMemberIdAfterDelete } from './citizens.js';
@@ -172,6 +172,29 @@ const syncWeddingAnniversaries = (citizens, source = "Fragebogen") => {
   state.data.weddingAnniversaries = upsertWeddingAnniversariesForCitizens(state.data.weddingAnniversaries || [], citizens, source);
 };
 const csvBirthMonths = mapped => new Set(mapped.map(row => String(row.birthDate || "").slice(5, 7)).filter(Boolean));
+const cleanedWeddingAnniversary = (item, citizen) => ({
+  ...item,
+  citizenId: citizen.id,
+  salutation: citizen.salutation || item.salutation || "",
+  firstName: citizen.firstName || item.firstName || "",
+  lastName: citizen.lastName || item.lastName || "",
+  birthDate: citizen.birthDate || item.birthDate || "",
+  street: citizen.street || item.street || "",
+  houseNo: citizen.houseNo || item.houseNo || "",
+  postalCode: citizen.postalCode || item.postalCode || "",
+  district: citizen.district || item.district || "",
+  updatedAt: todayIso()
+});
+const cleanWeddingAnniversariesAfterImport = result => {
+  const months = new Set(result.affectedMonths || []);
+  if (!months.size) return;
+  const importedByKey = new Map([...result.updates, ...result.newRows].map(citizen => [duplicateKey(citizen), citizen]));
+  state.data.weddingAnniversaries = (state.data.weddingAnniversaries || []).flatMap(item => {
+    if (!months.has(String(item.birthDate || "").slice(5, 7))) return [item];
+    const citizen = importedByKey.get(duplicateKey(item));
+    return citizen ? [cleanedWeddingAnniversary(item, citizen)] : [];
+  });
+};
 const resetCitizenReviewFilters = month => {
   state.filters = { ...state.filters, q: "", month, groupId: "alle", age: "alle", status: "alle" };
   safeStorageSetItem(localStorage, MONTH_KEY, month, "Monatsfilter");
@@ -184,8 +207,10 @@ const selectImportedCitizen = result => {
 const importMappedRows = (mapped, { resetFilters = true } = {}) => {
   const result = buildImportResult(mapped, state.data.citizens, row => streetAssignment(row)?.groupId);
   const updatesById = new Map(result.updates.map(c => [c.id, c]));
-  state.data.citizens = [...state.data.citizens.map(c => updatesById.get(c.id) ?? c), ...result.newRows];
-  state.importMissingCitizens = result.missing || [];
+  const deletedIds = result.deleted.map(citizen => citizen.id);
+  state.data.citizens = [...result.retained.map(c => updatesById.get(c.id) ?? c), ...result.newRows];
+  cleanWeddingAnniversariesAfterImport(result);
+  state.importMissingCitizens = [];
   const months = csvBirthMonths(mapped);
   if (resetFilters) resetCitizenReviewFilters(months.size === 1 ? [...months][0] : "alle");
   selectImportedCitizen(result);
@@ -193,6 +218,7 @@ const importMappedRows = (mapped, { resetFilters = true } = {}) => {
   render();
   const mixedMonthsWarning = resetFilters && months.size > 1 ? "Achtung: Die CSV enthält mehrere Geburtsmonate. " : "";
   importToast(mixedMonthsWarning + importNotice(result));
+  result.questionnaireCleanup = deleteQuestionnairePagesForCitizens(deletedIds);
   return result;
 };
 const importToast = message => toast(message, { anchor: ".soko-pdf-action-row, .import-action-row" });
@@ -201,8 +227,8 @@ const seedCurrentLaboBatch = groups => {
   const csv = followUpSeedCsv(state.data.streets, state.data.citizens, null, birthdayMonth) || seedCsv(state.data.streets, Math.max(50, groups.length), () => birthdayMonth);
   state.importText = csv;
   const rows = parseCsv(csv).map(mapImportRow);
-  importMappedRows(rows, { resetFilters: false });
-  return rows.length;
+  const result = importMappedRows(rows, { resetFilters: false });
+  return { rowCount: rows.length, cleanup: result.questionnaireCleanup };
 };
 const importedCitizensFromResult = result => {
   const ids = new Set([...result.updates, ...result.newRows].map(citizen => citizen.id));
@@ -651,16 +677,18 @@ export const actions = {
     const patches = new Map(importedCitizensFromResult(result).map((citizen, index) => [citizen.id, questionnaireCitizenPatch(citizen, index, rowCount)]));
     state.data.citizens = state.data.citizens.map(citizen => patches.get(citizen.id) || citizen);
     syncWeddingAnniversaries([...patches.values()], "Simulation");
-    const openCount = seedCurrentLaboBatch(groupedTestAssignments(state.data.streets));
+    const batch = seedCurrentLaboBatch(groupedTestAssignments(state.data.streets));
+    await batch.cleanup;
     saveData();
     render();
-    importToast(`Test-Datenbank zurückgesetzt: ${patches.size.toLocaleString("de-DE")} Jahres-Testdaten mit Fragebogen-Rückmeldungen und ${openCount.toLocaleString("de-DE")} offene LABO-Fälle für ${monthAfterNext()} simuliert.`);
+    importToast(`Test-Datenbank zurückgesetzt: ${patches.size.toLocaleString("de-DE")} Jahres-Testdaten mit Fragebogen-Rückmeldungen und ${batch.rowCount.toLocaleString("de-DE")} offene LABO-Fälle für ${monthAfterNext()} simuliert.`);
   },
-  "seed-citizens": () => {
+  "seed-citizens": async () => {
     if (state.auth.user?.role !== "admin") { toast("Nur Admins können Testdaten erzeugen."); return; }
     const groups = groupedTestAssignments(state.data.streets);
     if (!groups.length) { toast("Keine SOKO-Zuordnungen für Testdaten gefunden."); return; }
-    seedCurrentLaboBatch(groups);
+    const batch = seedCurrentLaboBatch(groups);
+    await batch.cleanup;
   },
   "reset-soko-members": () => {
     if (state.auth.user?.role !== "admin") { toast("Nur Admins können Testdaten zurücksetzen."); return; }
@@ -754,9 +782,10 @@ export const actions = {
     const forms = citizens.map(renderSokoForm).join("");
     openPrintWindow(forms, "SOKO-Fragebogen");
   },
-  "run-import": () => {
+  "run-import": async () => {
     if (!state.importText) { importToast("Bitte zuerst eine CSV-Datei laden."); return; }
-    importMappedRows(parseCsv(state.importText).map(mapImportRow));
+    const result = importMappedRows(parseCsv(state.importText).map(mapImportRow));
+    await result.questionnaireCleanup;
   },
   "delete-missing-citizens": () => {
     if (!state.importMissingCitizens?.length) return;

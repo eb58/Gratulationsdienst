@@ -956,9 +956,7 @@ export const views = {
   `,
 
   import: () => {
-    const missingCitizens = state.importMissingCitizens || [];
-    const missingIds = new Set(missingCitizens.map(citizen => citizen.id));
-    const importedCitizens = state.data.citizens.filter(citizen => citizen.source === "CSV Import" && (missingIds.has(citizen.id) || state.filters.month === "alle" || birthdayMonth(citizen.birthDate) === state.filters.month));
+    const importedCitizens = state.data.citizens.filter(citizen => citizen.source === "CSV Import" && (state.filters.month === "alle" || birthdayMonth(citizen.birthDate) === state.filters.month));
     return `
     <div class="stack import-view-stack">
       <section class="panel">
@@ -994,7 +992,6 @@ export const views = {
         </div>
         <div class="button-row" style="margin-top:12px">
           <button type="button" class="primary-button" data-action="soko-print">Drucke SOKO-Fragebögen</button>
-          ${missingCitizens.length ? `<button type="button" class="danger-button" data-action="delete-missing-citizens">Verschwundene endgültig löschen (${missingCitizens.length})</button>` : ""}
         </div>
       </section>
     </div>
