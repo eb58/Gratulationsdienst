@@ -362,7 +362,7 @@ export const mountGrid = element => {
   const gridKey = element.dataset.grid;
   const definition = gridDefinitions[gridKey]?.();
   if (!definition) return;
-  if (!window.agGrid?.createGrid) {
+  if (!globalThis.agGrid?.createGrid) {
     element.innerHTML = `<div class="empty-state">AG Grid wird geladen…</div>`;
     ensureAgGrid().then(() => render()).catch(() => {
       element.innerHTML = `<div class="empty-state">AG Grid konnte nicht geladen werden.</div>`;
@@ -390,8 +390,15 @@ export const mountGrid = element => {
   definition.onSortChanged = params => { onSortChanged?.(params); saveGridState(gridKey, params.api); };
   definition.onFilterChanged = params => { onFilterChanged?.(params); saveGridState(gridKey, params.api); };
   definition.onPaginationChanged = params => { onPaginationChanged?.(params); if (ready && params.newPageSize) saveGridState(gridKey, params.api); };
-  window.agGrid.createGrid(element, definition);
+  globalThis.agGrid.createGrid(element, definition);
 };
+// animateRows kurz aus: setGridOption("rowData", ...) waehrend einer laufenden Zeilen-Animation
+// hinterlaesst sonst verwaiste .ag-row-Knoten mit doppelten row-index-Werten im DOM.
+export const refreshGridRowData = () => Object.entries(state.gridApis).forEach(([gridKey, api]) => {
+  api.setGridOption("animateRows", false);
+  api.setGridOption("rowData", gridDefinitions[gridKey]().rowData);
+  api.setGridOption("animateRows", true);
+});
 export const mountGrids = () => {
   const hostKeys = new Set([...document.querySelectorAll("[data-grid]")].map(element => element.dataset.grid));
   Object.keys(state.gridApis).forEach(gridKey => {

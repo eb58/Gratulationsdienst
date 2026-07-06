@@ -3,6 +3,7 @@ import { MONTH_KEY, storeSplit, safeStorageSetItem, isValidEmail, normalizeIban,
 import { viewTitles, sokoMapInfoHtml } from './modules/views.js';
 import { findNearestAddress } from './modules/map.js';
 import { render, renderDialog } from './modules/render.js';
+import { refreshGridRowData } from './modules/grid.js';
 import { actions } from './modules/actions.js';
 import { hasDirtyForm, requestDirtyFormLeave, trackDirtyFormChange } from './modules/dirtyForms.js';
 import { runBusy } from './modules/busy.js';
@@ -227,8 +228,16 @@ document.addEventListener("click", event => {
   handleActionClick(action, event);
 });
 
+let searchRefreshTimer = null;
 document.addEventListener("input", event => {
   trackDirtyFormChange(event);
+  const search = event.target.closest('input[name="q"][data-filter]');
+  if (search) {
+    state.filters.q = search.value;
+    clearTimeout(searchRefreshTimer);
+    searchRefreshTimer = setTimeout(refreshGridRowData, 120);
+    return;
+  }
   const input = event.target.closest("[data-filter]");
   if (input) {
     updateFilter(input);
