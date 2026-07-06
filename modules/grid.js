@@ -162,16 +162,22 @@ const storedGridState = gridKey => {
   } catch { return gridStateFromParsed(null); }
 };
 const restoreGridState = (gridKey, api) => {
-  const gridState = storedGridState(gridKey);
-  const stateByColumn = new Map(gridState.columnState.map(item => [item.colId, item]));
-  gridState.sortState.forEach(({ colId, sort, sortIndex }) => {
-    const existing = stateByColumn.get(colId) || { colId };
-    stateByColumn.set(colId, { ...existing, sort, sortIndex });
-  });
-  const columnState = [...stateByColumn.values()];
-  if (columnState.length) api.applyColumnState?.({ state: columnState, applyOrder: true });
-  if (gridState.filterModel && Object.keys(gridState.filterModel).length) api.setFilterModel?.(gridState.filterModel);
-  if (Number.isFinite(gridState.paginationPageSize)) api.paginationSetPageSize?.(gridState.paginationPageSize);
+  try {
+    const gridState = storedGridState(gridKey);
+    const stateByColumn = new Map(gridState.columnState.map(item => [item.colId, item]));
+    gridState.sortState.forEach(({ colId, sort, sortIndex }) => {
+      const existing = stateByColumn.get(colId) || { colId };
+      stateByColumn.set(colId, { ...existing, sort, sortIndex });
+    });
+    const columnState = [...stateByColumn.values()];
+    if (columnState.length) api.applyColumnState?.({ state: columnState, applyOrder: true });
+    if (gridState.filterModel && Object.keys(gridState.filterModel).length) api.setFilterModel?.(gridState.filterModel);
+    if (Number.isFinite(gridState.paginationPageSize)) api.paginationSetPageSize?.(gridState.paginationPageSize);
+  } catch (error) {
+    localStorage.removeItem(gridStateStorageKey(gridKey));
+    localStorage.removeItem(legacyGridColumnStorageKey(gridKey));
+    console.warn(`Tabellenlayout ${gridKey} wurde zurückgesetzt.`, error);
+  }
 };
 const saveGridState = (gridKey, api) => {
   const columnState = normalizedColumnState(api.getColumnState?.());

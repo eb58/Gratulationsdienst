@@ -271,6 +271,33 @@ describe('mountGrid', () => {
     assert.equal(savedState.paginationPageSize, 100);
   });
 
+  it('setzt kaputten gespeicherten Grid-State zurueck, statt den Grid-Mount abzubrechen', () => {
+    const originalWarn = console.warn;
+    const warnings = [];
+    console.warn = (...args) => warnings.push(args);
+    const element = { dataset: { grid: 'citizens' }, innerHTML: '' };
+    const api = {
+      applyColumnState: () => { throw new Error('bad grid state'); },
+      getColumnState: () => [{ colId: 'name', width: 220 }],
+      getFilterModel: () => ({}),
+      paginationGetPageSize: () => 20
+    };
+    localStorage.setItem('gratulationsdienst.grid.citizens.state', JSON.stringify({
+      columnState: [{ colId: 'name', width: 180 }]
+    }));
+    window.agGrid = { createGrid: (_element, options) => options.onGridReady({ api }) };
+
+    try {
+      mountGrid(element);
+    } finally {
+      console.warn = originalWarn;
+    }
+
+    assert.equal(state.gridApis.citizens, api);
+    assert.equal(localStorage.getItem('gratulationsdienst.grid.citizens.state'), null);
+    assert.equal(warnings.length, 1);
+  });
+
   it('mounts every grid host found in the document', () => {
     const mounted = [];
     const elements = [{ dataset: { grid: 'citizens' } }, { dataset: { grid: 'members' } }];

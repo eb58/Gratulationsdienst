@@ -153,7 +153,8 @@ describe('SOKO-Mitglieder', () => {
   it('save-member normalisiert Felder und setzt den Gruppenleiter', () => {
     const member = state.data.sokoMembers[0];
     setForm('#member-form', {
-      id: member.id, firstName: 'Eva', lastName: 'Muster', groupId: member.groupId,
+      _memberTab: 'billing', id: member.id, salutation: member.salutation, firstName: 'Eva', lastName: 'Muster', groupId: member.groupId,
+      termFrom: member.termFrom, termTo: member.termTo,
       email: ' EVA@example.de ', postalCode: '134 37', bank: 'DE89 3704 0044 0532 0130 00',
       allowance: '35', billingAmount: '15', isLeader: 'true'
     });
@@ -163,14 +164,26 @@ describe('SOKO-Mitglieder', () => {
     assert.equal(saved.postalCode, '13437');
     assert.equal(saved.bank, 'DE89 3704 0044 0532 0130 00');
     assert.equal(saved.isLeader, true);
+    assert.equal(saved._memberTab, undefined);
     assert.equal(state.data.sokoGroups.find(g => g.id === member.groupId).leaderId, member.id);
   });
 
   it('save-member bricht bei ungültiger IBAN ab, ohne zu speichern', () => {
     const member = state.data.sokoMembers[0];
-    setForm('#member-form', { id: member.id, firstName: 'X', bank: 'DE00 0000', postalCode: '13437', email: '' });
+    setForm('#member-form', {
+      id: member.id, salutation: member.salutation, firstName: 'X', lastName: member.lastName,
+      groupId: member.groupId, termFrom: member.termFrom, termTo: member.termTo,
+      bank: 'DE00 0000', postalCode: '13437', email: ''
+    });
     actions['save-member']();
     assert.notEqual(state.data.sokoMembers.find(m => m.id === member.id).firstName, 'X');
+  });
+
+  it('save-member verlangt die Kern-Pflichtfelder', () => {
+    const member = state.data.sokoMembers[0];
+    setForm('#member-form', { id: member.id, salutation: '', firstName: '', lastName: '', groupId: '', termFrom: '', termTo: '', bank: '', postalCode: '', email: '' });
+    actions['save-member']();
+    assert.equal(state.data.sokoMembers.find(m => m.id === member.id).firstName, member.firstName);
   });
 
   it('delete-member öffnet Dialog, confirm-delete-member entfernt das Mitglied', () => {

@@ -16,7 +16,7 @@ import { renderCitizenDetail } from './views.js';
 import { cancelDirtyFormLeave, confirmDirtyFormLeave } from './dirtyForms.js';
 
 const formEntryValue = value => typeof value === "string" ? value : value.name;
-const formValues = selector => Object.fromEntries([...new FormData($(selector)).entries()].map(([key, value]) => [key, formEntryValue(value)]));
+const formValues = selector => Object.fromEntries([...new FormData($(selector)).entries()].filter(([key]) => !key.startsWith("_")).map(([key, value]) => [key, formEntryValue(value)]));
 const TEMPLATE_BACKGROUND_MAX_BYTES = 1_500_000;
 const quittungSettingKeys = ["quittungBetrag", "quittungTelefon", "quittungKapitel", "quittungTitel"];
 const quittungSettingsFromForm = () => Object.fromEntries(quittungSettingKeys.map(key => [key, $(`[data-bind="${key}"]`)?.value ?? state[key]]));
@@ -123,6 +123,10 @@ const validatePostalCodeFields = selector => {
   fields.forEach(input => input.classList.toggle("invalid", invalid.includes(input)));
   return !invalid.length;
 };
+const requiredMemberFields = [["salutation", "Anrede"], ["firstName", "Vorname"], ["lastName", "Nachname"], ["groupId", "SOKO"], ["termFrom", "Berufung von"], ["termTo", "Berufung bis"]];
+const missingRequiredFields = (values, fields) => fields.filter(([key]) => !String(values[key] ?? "").trim());
+const markRequiredFields = (selector, fields) => fields.forEach(([key]) => $(`${selector} [name="${key}"]`)?.classList.add("invalid"));
+const requiredFieldsNotice = fields => `Bitte Pflichtfelder ausfüllen: ${fields.map(([, label]) => label).join(", ")}.`;
 const currentCitizenGridRows = () => {
   const api = state.gridApis.citizens;
   if (!api?.forEachNodeAfterFilterAndSort) return filteredCitizens().map((citizen, index) => ({ id: citizen.id, rowIndex: index }));
@@ -476,6 +480,8 @@ export const actions = {
   },
   "save-member": () => {
     const values = formValues("#member-form");
+    const missing = missingRequiredFields(values, requiredMemberFields);
+    if (missing.length) { markRequiredFields("#member-form", missing); toast(requiredFieldsNotice(missing)); return; }
     if (!validateEmailFields("#member-form")) { toast("Bitte eine gültige E-Mail-Adresse eingeben."); return; }
     if (!validatePostalCodeFields("#member-form")) { toast("Bitte eine gültige PLZ mit 5 Ziffern eingeben."); return; }
     if (values.bank && !isValidIban(values.bank)) { $("#bank")?.classList.add("invalid"); toast("Bitte eine gültige IBAN eingeben."); return; }

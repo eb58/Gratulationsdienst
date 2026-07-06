@@ -596,7 +596,7 @@ export const views = {
         <input name="q" data-filter placeholder="Suche" value="${escapeHtml(state.filters.q)}">
         <select name="groupId" data-filter>${groupOptions().map(group => `<option value="${group[0]}" ${state.filters.groupId === group[0] ? "selected" : ""}>${group[1]}</option>`).join("")}</select>
         <button type="button" class="ghost-button" data-action="new-member">Neues Mitglied</button>
-        <button type="button" class="ghost-button" data-action="export-soko">XLSX/CSV Export</button>
+        <button type="button" class="ghost-button" data-action="export-soko">CSV Export</button>
         <button type="button" class="ghost-button danger-button" data-action="reset-soko-members">Testdaten zurücksetzen</button>
       </div>
       <div class="soko-split" style="--soko-left:${state.sokoSplit}%">
@@ -609,31 +609,55 @@ export const views = {
           <h2>Erfassungsmaske</h2>
           <div class="template-panel-scroll">
             ${member ? `
-              <form id="member-form" class="form-grid">
+              <form id="member-form" class="member-form">
                 <input type="hidden" name="id" value="${escapeHtml(member.id)}">
-                ${selectField("salutation", "Anrede", member.salutation, [["Frau", "Frau"], ["Herr", "Herr"]])}
-                ${field("firstName", "Vorname", member.firstName)}
-                ${field("lastName", "Nachname", member.lastName)}
-                ${field("birthDate", "Geburtsdatum", member.birthDate, "date")}
-                ${selectField("groupId", "SOKO", member.groupId, sokoSelectOptions())}
-                ${field("street", "Straße", member.street, "text", "full")}
-                ${postalCodeField("postalCode", "PLZ", member.postalCode)}
-                ${field("city", "Ort", member.city)}
-                ${field("phone", "Telefon", member.phone)}
-                ${field("mobile", "Handy", member.mobile)}
-                ${emailField("email", "E-Mail", member.email)}
-                ${ibanField("bank", "Bankverbindung / IBAN", member.bank, "full")}
-                ${field("accountHolder", "Kontoinhaber", member.accountHolder, "text", "full")}
-                ${field("allowance", "Aufwandspauschale", member.allowance, "text", "", 'inputmode="decimal" data-amount-field')}
-                ${field("billingAmount", "Abrechnungsbetrag", member.billingAmount, "text", "", 'inputmode="decimal" data-amount-field')}
-                ${field("termFrom", "Berufung von", member.termFrom, "date")}
-                ${field("termTo", "Berufung bis", member.termTo, "date")}
-                ${field("zpNr", "Zahlungspartner-Nummer", member.zpNr)}
-                ${field("kassenzeichen", "Kassenzeichen", member.kassenzeichen)}
-                ${field("misc", "Sonstiges", member.misc, "text", "full")}
-                ${textField("note", "Bemerkung", member.note, "full")}
-                ${selectField("isLeader", "Rolle", String(member.isLeader), [["false", "Mitglied"], ["true", "Leitung"]], "full")}
-                <div class="field full button-row">
+                <div class="member-tabs">
+                  <input id="member-tab-basic" class="member-tab-control" type="radio" name="_memberTab" checked>
+                  <input id="member-tab-contact" class="member-tab-control" type="radio" name="_memberTab">
+                  <input id="member-tab-billing" class="member-tab-control" type="radio" name="_memberTab">
+                  <input id="member-tab-notes" class="member-tab-control" type="radio" name="_memberTab">
+                  <div class="member-tab-list" role="tablist" aria-label="SOKO-Mitglied erfassen">
+                    <label class="member-tab" for="member-tab-basic" role="tab">Basis</label>
+                    <label class="member-tab" for="member-tab-contact" role="tab">Kontakt</label>
+                    <label class="member-tab" for="member-tab-billing" role="tab">Abrechnung</label>
+                    <label class="member-tab" for="member-tab-notes" role="tab">Notizen</label>
+                  </div>
+                  <section class="member-tab-panel member-tab-basic-panel form-grid" role="tabpanel">
+                    ${selectField("salutation", "Anrede", member.salutation, [["Frau", "Frau"], ["Herr", "Herr"]], "", "required")}
+                    ${field("firstName", "Vorname", member.firstName, "text", "", "required")}
+                    ${field("lastName", "Nachname", member.lastName, "text", "", "required")}
+                    ${field("birthDate", "Geburtsdatum", member.birthDate, "date")}
+                    ${selectField("groupId", "SOKO", member.groupId, sokoSelectOptions(), "full", "required")}
+                    <div class="member-term-row">
+                      ${field("termFrom", "Berufung von", member.termFrom, "date", "", "required")}
+                      ${field("termTo", "Berufung bis", member.termTo, "date", "", "required")}
+                    </div>
+                    ${selectField("isLeader", "Rolle", String(member.isLeader), [["false", "Mitglied"], ["true", "Leitung"]], "full")}
+                  </section>
+                  <section class="member-tab-panel member-tab-contact-panel form-grid" role="tabpanel">
+                    ${field("street", "Straße", member.street, "text", "full")}
+                    ${postalCodeField("postalCode", "PLZ", member.postalCode)}
+                    ${field("city", "Ort", member.city)}
+                    ${field("phone", "Telefon", member.phone)}
+                    ${field("mobile", "Mobiffunk", member.mobile)}
+                    ${emailField("email", "E-Mail", member.email)}
+                  </section>
+                  <section class="member-tab-panel member-tab-billing-panel form-grid" role="tabpanel">
+                    <div class="member-bank-row">
+                      ${ibanField("bank", "Bankverbindung / IBAN", member.bank)}
+                      ${field("accountHolder", "Kontoinhaber", member.accountHolder)}
+                    </div>
+                    ${field("allowance", "Aufwandspauschale", member.allowance, "text", "", 'inputmode="decimal" data-amount-field')}
+                    ${field("billingAmount", "Abrechnungsbetrag", member.billingAmount, "text", "", 'inputmode="decimal" data-amount-field')}
+                    ${field("zpNr", "Zahlungspartner-Nummer", member.zpNr)}
+                    ${field("kassenzeichen", "Kassenzeichen", member.kassenzeichen)}
+                  </section>
+                  <section class="member-tab-panel member-tab-notes-panel form-grid" role="tabpanel">
+                    ${field("misc", "Sonstiges", member.misc, "text", "full")}
+                    ${textField("note", "Bemerkung", member.note, "full")}
+                  </section>
+                </div>
+                <div class="field full button-row member-form-actions">
                   <button type="button" class="primary-button" data-action="save-member">Speichern</button>
                   <button type="button" class="ghost-button danger-button" data-action="delete-member">Löschen</button>
                 </div>

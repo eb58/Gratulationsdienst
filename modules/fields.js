@@ -53,10 +53,10 @@ export const ibanField = (name, label, value, extra = "") => {
     </div>
   `;
 };
-export const selectField = (name, label, value, options, extra = "") => `
+export const selectField = (name, label, value, options, extra = "", selectAttrs = "") => `
   <div class="field ${extra}">
     <label for="${name}">${label}</label>
-    <select id="${name}" name="${name}">
+    <select id="${name}" name="${name}" ${selectAttrs}>
       ${options.map(option => `<option value="${escapeHtml(option[0])}" ${String(option[0]) === String(value) ? "selected" : ""}>${escapeHtml(option[1])}</option>`).join("")}
     </select>
   </div>

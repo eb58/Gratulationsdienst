@@ -1095,6 +1095,96 @@ body.is-resizing {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.member-form,
+.member-tabs {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.member-tab-control {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.member-tab-list {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-soft);
+}
+
+.member-tab {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 13px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.member-tab:hover {
+  color: var(--ink);
+  background: #fff;
+}
+
+.member-tab-control:focus-visible ~ .member-tab-list {
+  outline: 2px solid color-mix(in srgb, var(--teal) 55%, white);
+  outline-offset: 2px;
+}
+
+.member-form-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, max-content));
+  justify-content: end;
+}
+
+.member-form-actions button {
+  min-height: 32px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+
+.member-tab-panel.form-grid {
+  display: none;
+}
+
+#member-tab-basic:checked ~ .member-tab-list [for="member-tab-basic"],
+#member-tab-contact:checked ~ .member-tab-list [for="member-tab-contact"],
+#member-tab-billing:checked ~ .member-tab-list [for="member-tab-billing"],
+#member-tab-notes:checked ~ .member-tab-list [for="member-tab-notes"] {
+  color: #fff;
+  border-color: var(--teal);
+  background: var(--teal);
+  box-shadow: 0 5px 12px rgba(15, 93, 88, 0.18);
+}
+
+#member-tab-basic:checked ~ .member-tab-basic-panel,
+#member-tab-contact:checked ~ .member-tab-contact-panel,
+#member-tab-billing:checked ~ .member-tab-billing-panel,
+#member-tab-notes:checked ~ .member-tab-notes-panel {
+  display: grid;
+}
+
+.member-term-row,
+.member-bank-row {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
 .field {
   display: grid;
   gap: 6px;
@@ -2926,6 +3016,8 @@ body.is-busy-visible .busy-indicator {
   .toolbar,
   .form-grid,
   .form-grid.three,
+  .member-term-row,
+  .member-bank-row,
   .file-action-row,
   .split-controls {
     grid-template-columns: 1fr;

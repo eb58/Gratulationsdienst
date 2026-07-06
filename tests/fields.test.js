@@ -52,6 +52,7 @@ describe('basic field renderers', () => {
 
   it('renders select and textarea fields', () => {
     assert.match(selectField('group', 'Gruppe', 'B', [['A', 'Alpha'], ['B', 'Beta']]), /value="B" selected/);
+    assert.match(selectField('group', 'Gruppe', 'B', [['B', 'Beta']], '', 'required'), /<select id="group" name="group" required>/);
     assert.match(textField('note', 'Notiz', '<x>'), /&lt;x&gt;/);
   });
 });
