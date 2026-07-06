@@ -566,7 +566,7 @@ function handleUsers(array $db, string $method, array $route, array $currentUser
         if (!$existing) respond(['error' => 'Benutzer nicht gefunden.'], 404);
         $email = normalizedEmail($data['email'] ?? $existing['email']);
         $role = (string)($data['role'] ?? $existing['role']);
-        $active = !empty($data['active']) ? 1 : 0;
+        $active = !empty($data['active'] ?? $existing['active']) ? 1 : 0;
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) respond(['error' => 'Gültige E-Mail-Adresse erforderlich.'], 422);
         if (!validRole($role)) respond(['error' => 'Unbekannte Rolle.'], 422);
         if ($id === $currentUser['id'] && ($role !== 'admin' || !$active)) respond(['error' => 'Der eigene Admin-Zugang darf nicht entzogen werden.'], 422);
