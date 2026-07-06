@@ -72,22 +72,24 @@ export const deleteQuestionnairePagesForCitizens = citizenIds => {
   });
 };
 
+const saveQuestionnairePage = page => apiRequest("/questionnaire-pages", {
+  method: "POST",
+  body: JSON.stringify({ pages: [page] })
+})
+  .then(saved => (Array.isArray(saved) ? saved : [])[0])
+  .catch(error => {
+    console.warn("Fragebogen-Scans konnten nicht in der Datenbank gespeichert werden.", error);
+    throw Object.assign(new Error("Fragebogen-Scans konnten nicht in der Datenbank gespeichert werden."), { cause: error });
+  });
+
 export const saveQuestionnairePages = pages => {
   const payload = pagesWithImages(pages);
   if (!payload.length) return Promise.resolve([]);
   if (!hasBackend()) return Promise.resolve(attachPages(payload));
-  return apiRequest("/questionnaire-pages", {
-    method: "POST",
-    body: JSON.stringify({ pages: payload })
-  })
-    .then(saved => {
-      const records = Array.isArray(saved) ? saved : [];
-      records.forEach(page => loadedCitizenIds.add(page.citizenId));
-      attachPages(records);
-      return records;
-    })
-    .catch(error => {
-      console.warn("Fragebogen-Scans konnten nicht in der Datenbank gespeichert werden.", error);
-      throw Object.assign(new Error("Fragebogen-Scans konnten nicht in der Datenbank gespeichert werden."), { cause: error });
-    });
+  return payload.reduce((chain, page) => chain.then(async records => {
+    const record = await saveQuestionnairePage(page);
+    loadedCitizenIds.add(record.citizenId);
+    attachPages([record]);
+    return [...records, record];
+  }), Promise.resolve([]));
 };

@@ -17,6 +17,8 @@ const LOGIN_RATE_LIMIT_MAX = 10;
 // verifiziert wird, damit die Antwortzeit keine Konten verraet (User-Enumeration).
 const LOGIN_DUMMY_HASH = '$2y$10$LMkJZ/MwWMBzkrchox2mzOoW4AXQQTkViWY9JE7NjBJRgeIKpFkrq';
 const MFA_VERIFY_MAX_ATTEMPTS = 5;
+const QUESTIONNAIRE_IMAGE_MAX_BYTES = 8_000_000;
+const QUESTIONNAIRE_IMAGE_ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 // Aufbewahrung muss das größte Fenster abdecken, sonst unterläuft das Aufräumen längere Limits.
 const RATE_LIMIT_RETENTION_SECONDS = PASSWORD_RESET_RATE_LIMIT_SECONDS;
 const MFA_ISSUER = 'Gratulationsdienst Reinickendorf';
@@ -768,8 +770,16 @@ function questionnaireImageFromDataUrl(string $image): array
     if (!preg_match('/^data:([^;,]+);base64,(.+)$/s', trim($image), $match)) {
         throw new ApiError(422, 'Fragebogen-Bild muss ein Data-URL sein.');
     }
-    $data = base64_decode(str_replace(["\r", "\n"], '', $match[2]), true);
+    if (!in_array($match[1], QUESTIONNAIRE_IMAGE_ALLOWED_MIME_TYPES, true)) {
+        throw new ApiError(422, 'Fragebogen-Bild hat einen nicht erlaubten Dateityp.');
+    }
+    $base64 = str_replace(["\r", "\n"], '', $match[2]);
+    if (strlen($base64) > QUESTIONNAIRE_IMAGE_MAX_BYTES * 4 / 3) {
+        throw new ApiError(413, 'Fragebogen-Bild ist zu groß.');
+    }
+    $data = base64_decode($base64, true);
     if ($data === false || $data === '') throw new ApiError(422, 'Fragebogen-Bild ist ungültig.');
+    if (strlen($data) > QUESTIONNAIRE_IMAGE_MAX_BYTES) throw new ApiError(413, 'Fragebogen-Bild ist zu groß.');
     return [$match[1], $data];
 }
 
