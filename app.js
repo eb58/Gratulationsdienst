@@ -332,6 +332,8 @@ globalThis.addEventListener("beforeunload", event => {
   event.returnValue = "";
 });
 
+globalThis.addEventListener("gd-auth-expired", () => render());
+
 document.addEventListener("mouseover", event => {
   const mapGroup = event.target.closest("[data-group-id]");
   if (!mapGroup) return;

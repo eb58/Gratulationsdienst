@@ -55,6 +55,7 @@ const {
   loadCollectionData,
   saveData,
   saveQuittungSettings,
+  setAuthSession,
   state,
   usesLocalDataStorage,
   writableCollections
@@ -64,6 +65,7 @@ beforeEach(() => {
   globalThis.location.protocol = 'file:';
   state.auth.user = { role: 'admin' };
   state.auth.token = '';
+  state.auth.message = '';
   state.collectionVersions = {};
   state.collectionBaselines = {};
   state.localChangeVersion = 0;
@@ -179,6 +181,35 @@ describe('backend and permission helpers', () => {
     assert.equal(loadData().citizens.some(citizen => citizen.id === 'G-old'), false);
   });
 
+  it('sichert Web-Änderungen ohne Token als Pending-Kopie und meldet die abgelaufene Anmeldung', async () => {
+    globalThis.location.protocol = 'http:';
+    state.auth.token = '';
+    state.auth.user = null;
+    state.data = {
+      citizens: [{ id: 'G-pending', firstName: 'Lokal' }],
+      sokoGroups: [], sokoMembers: [], streets: [], senders: [], templates: []
+    };
+    const realWarn = console.warn;
+    console.warn = () => {};
+    try {
+      await saveData();
+    } finally {
+      console.warn = realWarn;
+    }
+
+    assert.match(localStorage.getItem('gratulationsdienst.pending'), /G-pending/);
+    assert.match(state.auth.message, /Anmeldung abgelaufen/);
+  });
+
+  it('übernimmt Pending-Daten nach erneutem Login in den State', () => {
+    globalThis.location.protocol = 'http:';
+    localStorage.setItem('gratulationsdienst.pending', JSON.stringify({ citizens: [{ id: 'G-pending', firstName: 'Gerettet' }] }));
+
+    setAuthSession({ token: 'token', user: { role: 'admin' } });
+
+    assert.equal(state.data.citizens.some(citizen => citizen.id === 'G-pending' && citizen.firstName === 'Gerettet'), true);
+  });
+
   it('builds version maps for backend optimistic locking', () => {
     assert.deepEqual(collectionVersionMap([
       { id: 'G-1', _version: 3 },
@@ -202,6 +233,7 @@ describe('backend and permission helpers', () => {
       senders: [],
       templates: []
     };
+    localStorage.setItem('gratulationsdienst.pending', JSON.stringify({ citizens: [{ id: 'G-1', firstName: 'Ada' }] }));
     globalThis.fetch = (url, options = {}) => {
       const path = String(url).replace(/.*\/php-api/, '');
       const body = options.body ? JSON.parse(options.body) : null;
@@ -222,6 +254,7 @@ describe('backend and permission helpers', () => {
     assert.equal(state.data.citizens[0]._version, '4');
     assert.deepEqual(state.collectionVersions.citizens, { 'G-1': '4' });
     assert.deepEqual(state.collectionBaselines.citizens['G-1'], { id: 'G-1', firstName: 'Ada' });
+    assert.equal(localStorage.getItem('gratulationsdienst.pending'), null);
   });
 
   it('speichert viele neue Jubilare (z.B. aus Testdaten-Erzeugung) in einem Request statt vieler Einzelaufrufe', async () => {
@@ -336,6 +369,30 @@ describe('backend and permission helpers', () => {
     assert.equal(isConflictError({ status: 409 }), true);
     assert.equal(state.data.citizens[0].firstName, 'Remote');
     assert.deepEqual(state.collectionVersions.citizens, { 'G-1': '2' });
+  });
+
+  it('sichert lokale Änderungen, wenn der Backend-Save mit 401 abläuft', async () => {
+    globalThis.location.protocol = 'http:';
+    state.auth.token = 'token';
+    state.auth.user = { role: 'admin' };
+    state.collectionVersions = { citizens: { 'G-1': '1' } };
+    state.collectionBaselines = { citizens: { 'G-1': { id: 'G-1', firstName: 'Alt' } } };
+    state.data = {
+      citizens: [{ id: 'G-1', firstName: 'Neu', _version: '1' }],
+      sokoGroups: [], sokoMembers: [], streets: [], senders: [], templates: []
+    };
+    globalThis.fetch = () => Promise.resolve({ ok: false, status: 401, json: async () => ({ error: 'abgelaufen' }) });
+    const realWarn = console.warn;
+    console.warn = () => {};
+    try {
+      await saveData();
+    } finally {
+      console.warn = realWarn;
+    }
+
+    assert.equal(state.auth.token, '');
+    assert.match(state.auth.message, /Anmeldung abgelaufen/);
+    assert.match(localStorage.getItem('gratulationsdienst.pending'), /Neu/);
   });
 
   it('does not let a stale backend load overwrite local imports', async () => {

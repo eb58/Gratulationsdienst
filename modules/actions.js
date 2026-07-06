@@ -1,6 +1,6 @@
 import { $, todayIso, MONTH_KEY, isValidEmail, isValidIban, formatIban, updateItem, nextId, csvEscape, downloadText, toast, byId, normalizeEmail, normalizeAmount, normalizeDigits, isValidPostalCode, safeStorageSetItem } from './utils.js';
 import { normalizeStreetRules, streetDistrictSummary, streetGroupSummary, normalizeStreetDistrict, defaultData } from './domain.js';
-import { state, saveData, saveCollectionData, saveQuittungSettings, apiRequest, setAuthSession, clearAuthSession, loadCollectionData } from './state.js';
+import { state, saveData, saveCollectionData, saveQuittungSettings, apiRequest, setAuthSession, clearAuthSession, loadCollectionData, hasPendingBackendData } from './state.js';
 import { streetAssignment, filteredCitizens, documentCitizens, isPrintedCitizen, selectedTemplate, selectedSender, selectedMember, activeCitizens, groupForCitizen, isReceiptGroupReady, receiptCitizens, receiptCitizensForReadyGroups, duplicateKey } from './assignment.js';
 import { printCurrentRun, completePrintRun, renderSokoForm, renderSokoQuittung } from './documents.js';
 import { parseCsv, mapImportRow } from './import.js';
@@ -49,7 +49,7 @@ const authDone = session => {
   // Die werden nach dem Login zuerst nachgespeichert, sonst würde loadCollectionData sie verwerfen.
   // Baselines existieren nur, wenn in diesem Tab bereits Server-Daten geladen wurden; bei einem
   // Konflikt lädt handleSaveError ohnehin den Server-Stand.
-  const pushPending = Object.keys(state.collectionBaselines || {}).length > 0 ? saveCollectionData(state.data) : Promise.resolve();
+  const pushPending = Object.keys(state.collectionBaselines || {}).length > 0 || hasPendingBackendData() ? saveCollectionData(state.data) : Promise.resolve();
   pushPending.then(() => loadCollectionData());
 };
 const authFail = error => {

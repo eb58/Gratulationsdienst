@@ -1,4 +1,5 @@
 export const STORAGE_KEY = "gratulationsdienst";
+export const PENDING_STORAGE_KEY = "gratulationsdienst.pending";
 export const MONTH_KEY = "gd_month_filter";
 export const QUITTUNG_MONTH_KEY = "gd_quittung_month";
 export const QUITTUNG_SETTINGS_KEY = "gd_quittung_settings";

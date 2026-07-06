@@ -1,4 +1,4 @@
-import { STORAGE_KEY, MONTH_KEY, QUITTUNG_MONTH_KEY, QUITTUNG_SETTINGS_KEY, MAP_MONTH_KEY, API_BASE, storedSplit, repairStoredText, toast, normalize, safeStorageSetItem } from './utils.js';
+import { STORAGE_KEY, PENDING_STORAGE_KEY, MONTH_KEY, QUITTUNG_MONTH_KEY, QUITTUNG_SETTINGS_KEY, MAP_MONTH_KEY, API_BASE, storedSplit, repairStoredText, toast, normalize, safeStorageSetItem } from './utils.js';
 import { defaultData, buildStreetData } from './domain.js';
 import { render } from './render.js'; // Zyklus OK: render wird nur in Callbacks aufgerufen
 
@@ -143,6 +143,20 @@ export const normalizeLoadedData = data => {
 };
 
 const localDataStorageEnabled = () => location.protocol === "file:";
+const sessionExpiredMessage = "Anmeldung abgelaufen – Änderungen wurden NICHT gespeichert. Bitte neu anmelden, danach werden sie nachgespeichert.";
+const pendingBackendData = () => {
+  try { return normalizeLoadedData(JSON.parse(localStorage.getItem(PENDING_STORAGE_KEY)) || null); }
+  catch { return null; }
+};
+const storePendingBackendData = data => {
+  if (location.protocol === "file:") return false;
+  return safeStorageSetItem(localStorage, PENDING_STORAGE_KEY, JSON.stringify(dataForPersistence(data)), "Ungespeicherte Änderungen");
+};
+const clearPendingBackendData = () => localStorage.removeItem(PENDING_STORAGE_KEY);
+const notifyAuthExpired = () => {
+  try { globalThis.dispatchEvent?.(new Event("gd-auth-expired")); } catch { /* ignore */ }
+};
+export const hasPendingBackendData = () => !!localStorage.getItem(PENDING_STORAGE_KEY);
 
 export const loadData = () => {
   if (!localDataStorageEnabled()) return normalizeLoadedData(structuredClone(defaultData));
@@ -228,12 +242,13 @@ export const setAuthSession = session => {
   state.auth.mfaTicket = "";
   state.auth.resetToken = "";
   state.auth.mfaSetup = null;
+  if (state.auth.token && hasPendingBackendData()) state.data = pendingBackendData() || state.data;
   if (state.auth.token) safeStorageSetItem(sessionStorage, AUTH_TOKEN_KEY, state.auth.token, "Authentifizierungs-Token");
   else clearStoredAuthToken();
 };
-export const clearAuthSession = () => {
+export const clearAuthSession = (message = "") => {
   clearStoredAuthToken();
-  state.auth = { ...state.auth, ready: true, token: "", user: null, mfaTicket: "", users: [], mfaSetup: null };
+  state.auth = { ...state.auth, ready: true, mode: "login", token: "", user: null, mfaTicket: "", users: [], mfaSetup: null, message };
 };
 export const apiRequest = (path, options = {}) => {
   const headers = { "Content-Type": "application/json", ...options.headers };
@@ -241,7 +256,7 @@ export const apiRequest = (path, options = {}) => {
   return fetch(`${API_BASE}${path}`, { ...options, headers }).then(async response => {
     const payload = await response.json().catch(() => ({}));
     if (response.ok) return payload;
-    if (response.status === 401 && !path.startsWith("/auth")) clearAuthSession();
+    if (response.status === 401 && !path.startsWith("/auth")) { clearAuthSession(sessionExpiredMessage); notifyAuthExpired(); }
     throw Object.assign(new Error(payload.error || `API ${response.status}`), { status: response.status, payload });
   });
 };
@@ -291,9 +306,14 @@ const handleSaveError = error => {
     toast("Daten wurden parallel geändert. Der aktuelle Stand wird neu geladen; bitte die Änderung erneut prüfen.");
     return loadCollectionData({ force: true });
   }
+  if (error?.status === 401) {
+    storePendingBackendData(state.data);
+    state.auth.message = sessionExpiredMessage;
+    notifyAuthExpired();
+  }
   console.warn("Datenbank-Speicherung nicht verfügbar.", error);
   toast(error?.status === 401
-    ? "Anmeldung abgelaufen – Änderungen wurden NICHT gespeichert. Bitte neu anmelden, danach werden sie nachgespeichert."
+    ? sessionExpiredMessage
     : "Speichern fehlgeschlagen – Änderungen sind nur lokal vorhanden.");
   return null;
 };
@@ -301,7 +321,7 @@ const handleSaveError = error => {
 const persistBackendCollections = async data => {
   const persisted = dataForPersistence(data);
   const changedCollections = writableCollections().filter(collection => collectionOperations(collection, persisted[collection] || []).length > 0);
-  if (!changedCollections.length) return {};
+  if (!changedCollections.length) { clearPendingBackendData(); return {}; }
   const results = await Promise.allSettled(changedCollections.map(collection => saveBackendCollection(collection, persisted[collection] || [])));
   results
     .filter(result => result.status === "fulfilled")
@@ -316,13 +336,18 @@ const persistBackendCollections = async data => {
     });
   const rejected = results.find(result => result.status === "rejected");
   if (rejected) throw rejected.reason;
+  clearPendingBackendData();
   return Object.fromEntries(results.map(result => result.value));
 };
 
 let saveQueue = Promise.resolve();
 
 export const saveCollectionData = data => {
-  if (location.protocol === "file:" || !state.auth.token) return Promise.resolve();
+  if (location.protocol === "file:") return Promise.resolve();
+  if (!state.auth.token) {
+    storePendingBackendData(state.data);
+    return Promise.resolve(handleSaveError({ status: 401, message: sessionExpiredMessage }));
+  }
   saveQueue = saveQueue
     .catch(() => null)
     .then(() => persistBackendCollections(state.data))
