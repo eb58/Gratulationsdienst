@@ -1,38 +1,11 @@
 import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+import { parseCsv } from "../modules/import.js";
 
 // Migration der Bürger-/Jubilar-Daten aus dem Alt-CSV (Semikolon-getrennt, Quotes, deutsche Dezimalreste wie "1,00").
 // Aufruf: node scripts/import-citizens.js <input.csv> [output.json]
 // Ausgabe ist ein camelCase-Array passend zur API-Collection citizens (PUT /citizens).
-
-// CSV-Zeile mit quoted fields zerlegen (Trennzeichen nur außerhalb von Anführungszeichen)
-export const splitCsvLine = line => {
-  const cells = [];
-  let current = "";
-  let inQuotes = false;
-  for (let i = 0; i < line.length; i++) {
-    const char = line[i];
-    if (char === '"') {
-      if (inQuotes && line[i + 1] === '"') { current += '"'; i++; }
-      else inQuotes = !inQuotes;
-    } else if (char === ";" && !inQuotes) {
-      cells.push(current);
-      current = "";
-    } else current += char;
-  }
-  cells.push(current);
-  return cells.map(cell => cell.trim());
-};
-
-export const parseCsv = text => {
-  const lines = text.replace(/^﻿/, "").trim().split(/\r?\n/).filter(Boolean);
-  const headers = splitCsvLine(lines[0]);
-  return lines.slice(1).map(line => {
-    const cells = splitCsvLine(line);
-    return Object.fromEntries(headers.map((header, index) => [header, cells[index] ?? ""]));
-  });
-};
 
 // Entfernt deutsche Dezimalreste ("480,00" -> "480", "1,00" -> "1")
 export const cleanNumber = value => String(value ?? "").trim().replace(/[.,]\d{1,2}$/, "");
@@ -77,14 +50,15 @@ export const normalizeDistrict = value => {
 
 export const wishFromFlags = row =>
   isTruthy(row["glück nein"]) ? "keine"
-  : isTruthy(row["glück soko"]) ? "Besuch erwünscht"
-  : isTruthy(row["glück post"]) ? "per Post"
-  : "offen";
+    : isTruthy(row["glück soko"]) ? "Besuch erwünscht"
+      : isTruthy(row["glück post"]) ? "per Post"
+        : "offen";
 
 export const movedInfo = row => {
   const target = [row["verzogen nach plz"], row["verzogen nach ort"], [row["verzogen nach str"], row["verzogen nach nr"]].filter(Boolean).join(" ")].filter(Boolean).join(", ");
   return target ? `Verzogen nach ${target}` : (isTruthy(row["verzogen nach ort"]) ? "Verzogen" : "");
 };
+
 export const deceasedInfo = row => {
   const date = parseDate(row["verstorben am"]);
   return isTruthy(row["verstorben"]) || date ? (date ? `Verstorben am ${date}` : "Verstorben") : "";
@@ -155,7 +129,7 @@ const runImport = () => {
   console.log(`${citizens.length} Bürger migriert -> ${outputFile}`);
   if (deceased) console.log(`Hinweis: ${deceased} verstorben (wish="keine", Detail in notes).`);
   if (moved) console.log(`Hinweis: ${moved} verzogen (wish="keine", Detail in notes).`);
-  console.log('Nicht übernommene Spalten: monat, gebtag, Geburtsmonat, Alter_zusatz, Ort (immer Berlin), soko (per Straßenverzeichnis ableitbar), kartentext (Glückwunschtext global je Druck-Lauf), präs, glück, nummer, zahllistenzusatz, arbeitslistenzusatz_soko/_bezirk, anfragegedruckt.');
+  console.log("Nicht übernommene Spalten: monat, gebtag, Geburtsmonat, Alter_zusatz, Ort (immer Berlin), soko (per Straßenverzeichnis ableitbar), kartentext (Glückwunschtext global je Druck-Lauf), präs, glück, nummer, zahllistenzusatz, arbeitslistenzusatz_soko/_bezirk, anfragegedruckt.");
 };
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) runImport();

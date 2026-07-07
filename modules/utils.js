@@ -85,8 +85,9 @@ export const formatDateDe = iso => {
 };
 const mojibakeByte = char => char === "\u0192" ? 0x83 : char.codePointAt(0) & 255;
 const decodeMojibakeText = value => new TextDecoder().decode(Uint8Array.from([...value].map(mojibakeByte)));
+const MOJIBAKE_MARKER_RE = /[\u00C3\u00C2]/u;
 const repairMojibakeString = (value, remaining = 2) => {
-  if (!remaining || !/[ÃÂ]/u.test(value)) return value;
+  if (!remaining || !MOJIBAKE_MARKER_RE.test(value)) return value;
   const repaired = decodeMojibakeText(value);
   return repaired === value ? value : repairMojibakeString(repaired, remaining - 1);
 };
@@ -108,7 +109,7 @@ export const nextId = (prefix, items) => {
 };
 export const csvEscape = value => `"${String(value ?? "").replaceAll('"', '""')}"`;
 export const formatStreetAddress = item => [item.street, item.houseNo].filter(Boolean).join(" ");
-const UTF8_BOM = "﻿";
+const UTF8_BOM = "\uFEFF";
 export const downloadBlob = (blob, name) => {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");

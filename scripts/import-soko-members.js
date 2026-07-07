@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { parseCsv } from "../modules/import.js";
 
 // Migration der SOKO-Mitglieder aus dem Alt-CSV (Semikolon-getrennt, Quotes, deutsche Dezimalreste wie "13349,00").
 // Aufruf: node scripts/import-soko-members.js <input.csv> [output.json]
@@ -11,34 +12,6 @@ if (!inputFile) {
   console.error("Aufruf: node scripts/import-soko-members.js <input.csv> [output.json]");
   process.exit(1);
 }
-
-// CSV-Zeile mit quoted fields zerlegen (Trennzeichen nur außerhalb von Anführungszeichen)
-const splitCsvLine = line => {
-  const cells = [];
-  let current = "";
-  let inQuotes = false;
-  for (let i = 0; i < line.length; i++) {
-    const char = line[i];
-    if (char === '"') {
-      if (inQuotes && line[i + 1] === '"') { current += '"'; i++; }
-      else inQuotes = !inQuotes;
-    } else if (char === ";" && !inQuotes) {
-      cells.push(current);
-      current = "";
-    } else current += char;
-  }
-  cells.push(current);
-  return cells.map(cell => cell.trim());
-};
-
-const parseCsv = text => {
-  const lines = text.replace(/^﻿/, "").trim().split(/\r?\n/).filter(Boolean);
-  const headers = splitCsvLine(lines[0]);
-  return lines.slice(1).map(line => {
-    const cells = splitCsvLine(line);
-    return Object.fromEntries(headers.map((header, index) => [header, cells[index] ?? ""]));
-  });
-};
 
 // Entfernt deutsche Dezimalreste ("13349,00" -> "13349", "1,00" -> "1")
 const cleanNumber = value => String(value ?? "").trim().replace(/[.,]\d{1,2}$/, "");

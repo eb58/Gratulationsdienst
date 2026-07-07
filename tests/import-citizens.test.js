@@ -1,34 +1,23 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
+import { parseCsv } from '../modules/import.js';
 import {
-  splitCsvLine, parseCsv, cleanNumber, isTruthy, parseDate, normalizeSalutation,
+  cleanNumber, isTruthy, parseDate, normalizeSalutation,
   splitName, splitStreet, normalizeDistrict, wishFromFlags, movedInfo, deceasedInfo,
   buildNotes, mapRow
 } from '../scripts/import-citizens.js';
 
-describe('splitCsvLine', () => {
-  it('trennt an Semikolon und trimmt', () => {
-    assert.deepEqual(splitCsvLine('Müller, Max; Musterstr. 1 ; 13407'), ['Müller, Max', 'Musterstr. 1', '13407']);
-  });
-
-  it('ignoriert Semikolon innerhalb von Anführungszeichen', () => {
-    assert.deepEqual(splitCsvLine('"Müller; Max";13407'), ['Müller; Max', '13407']);
-  });
-
-  it('entfernt Quotes und behandelt doppelte Quotes als Literal', () => {
-    assert.deepEqual(splitCsvLine('"Haus ""Sonne""";x'), ['Haus "Sonne"', 'x']);
-  });
-
-  it('liefert leere Zelle für fehlenden Wert am Ende', () => {
-    assert.deepEqual(splitCsvLine('a;'), ['a', '']);
-  });
-});
-
 describe('parseCsv', () => {
-  it('mappt Zeilen über Header und entfernt BOM', () => {
-    assert.deepEqual(parseCsv('﻿Name;plz\nMüller, Max;13407\nMeier, Eva;13409'), [
+  it('mappt Zeilen über Header, entfernt BOM und ignoriert Leerzeilen', () => {
+    assert.deepEqual(parseCsv('\uFEFFName;plz\nMüller, Max;13407\n\nMeier, Eva;13409'), [
       { Name: 'Müller, Max', plz: '13407' },
       { Name: 'Meier, Eva', plz: '13409' }
+    ]);
+  });
+
+  it('unterstützt Anführungszeichen und Semikolons in Feldern', () => {
+    assert.deepEqual(parseCsv('Vorname;Notiz\nErika;"Haus; Eingang ""B"""'), [
+      { Vorname: 'Erika', Notiz: 'Haus; Eingang "B"' }
     ]);
   });
 
