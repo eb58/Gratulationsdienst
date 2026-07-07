@@ -10,16 +10,18 @@
 - Keep it simple, stupid -> KISS-Prinzip
 - use globalThis not window
 - bevorzuge ' gegenüber " in Stringliteralen
+- nur auf Anforderung committen
+- testbaren Code schreiben - und natürlich die Tests dazu anlegen
 
 ## Projektwissen
 
 - Die App ist ein lokales JS/PHP-Projekt mit Frontend in `modules/`, Tests in `tests/` und Backend in `php-api/`.
-- `docs/projektkontext.md` ist die erste Arbeitsgrundlage fuer Codex.
+- `docs/projektkontext.md` ist die erste Arbeitsgrundlage fuer Code-Agents.
 - `docs/lastenheft-kurz.md` ist die komprimierte fachliche Lesefassung.
 - `Lastenheft.pdf` im Repo-Root ist die fachliche Referenz und bei Anforderungen zuerst zu beachten.
 - Import- und Dokumentenlauf-Aenderungen immer zusammen mit den zugehoerigen Tests anfassen.
 - Bei Schemaaenderungen (neue `ensureColumn`/`ensureIndex`-Zeile in `initSchema`) die Konstante `SCHEMA_VERSION` in `php-api/index.php` erhoehen, sonst laeuft die Migration nach dem Deployment nicht.
-- Wenn ein Verhalten dauerhaft fuer Codex relevant ist, gehoert es hier hinein, nicht nur in den Prompt.
+- Wenn ein Verhalten dauerhaft fuer Code-Agents relevant ist, gehoert es hier hinein, nicht nur in den Prompt.
 
 ## Pruefen
 
