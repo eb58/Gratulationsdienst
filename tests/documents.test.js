@@ -244,6 +244,17 @@ describe('SOKO print artifacts', () => {
     assert.equal((html.match(/height:8mm/g) || []).length, 12);
   });
 
+  it('splits receipts over 12 citizens into multiple pages with a correct sum per page', () => {
+    const citizens = Array.from({ length: 13 }, (_, i) => ({ ...citizen, id: `G-${i}`, firstName: `Person${i}` }));
+
+    const html = renderSokoQuittung(citizens, 'SOKO 01', '8,50', '030', '06', '3930', '68154');
+
+    assert.equal((html.match(/height:8mm/g) || []).length, 24);
+    assert.equal((html.match(/Gesamtbetrag Euro/g) || []).length, 2);
+    assert.equal((html.match(/102,00 €/g) || []).length, 2);
+    assert.equal((html.match(/>8,50 €/g) || []).length, 15);
+  });
+
   it('renders SOKO questionnaire forms with assignment, date and contact data', () => {
     const html = renderSokoForm({ ...citizen, phone: '030 999' }, 4);
 

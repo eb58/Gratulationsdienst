@@ -256,19 +256,28 @@ export const printCurrentRun = () => {
   }, { once: true });
 };
 
+const SOKO_QUITTUNG_ROW_COUNT = 12;
+
 export const renderSokoQuittung = (citizens, groupId = "", betragProPerson = "8,50", telefon = "90294 4055", monat = "", kapitel = "3930", titel = "68154") => {
+  const chunks = [];
+  for (let i = 0; i < citizens.length; i += SOKO_QUITTUNG_ROW_COUNT) chunks.push(citizens.slice(i, i + SOKO_QUITTUNG_ROW_COUNT));
+  return (chunks.length ? chunks : [[]])
+    .map(chunk => renderSokoQuittungPage(chunk, groupId, betragProPerson, telefon, monat, kapitel, titel))
+    .join("");
+};
+
+const renderSokoQuittungPage = (citizens, groupId, betragProPerson, telefon, monat, kapitel, titel) => {
   const today = formatDateDe(todayIso());
   const month = monat === "alle" ? "" : monat || todayIso().slice(5, 7);
   const leader = state.data.sokoMembers.find(m => m.isLeader && m.groupId === groupId);
   const leaderAddr = [leader?.street, [leader?.postalCode, leader?.city].filter(Boolean).join(" ")].filter(Boolean).join(", ");
   const leaderLine = leader ? `${escapeHtml(leader.salutation)} ${escapeHtml(leader.firstName)} ${escapeHtml(leader.lastName)}, ${escapeHtml(leaderAddr)}` : "";
   const sokoLabel = groupId ? `Soko ${escapeHtml(groupId.replace(/^SOKO\s+/i, ""))}` : "Soko";
-  const ROW_COUNT = 12;
   const b = "border:1px solid #333";
   const td = (style, content = "") => `<td style="${b};${style}">${content}</td>`;
   const betragNum = Number.parseFloat(betragProPerson.replace(",", ".")) || 0;
   const summe = (citizens.length * betragNum).toFixed(2).replace(".", ",");
-  const rows = Array.from({ length: ROW_COUNT }, (_, i) => {
+  const rows = Array.from({ length: SOKO_QUITTUNG_ROW_COUNT }, (_, i) => {
     const c = citizens[i];
     const age = c ? calculateAge(c.birthDate) : "";
     const name = c ? `${escapeHtml(c.lastName)}, ${escapeHtml(c.firstName)}, ${escapeHtml(c.street)} ${escapeHtml(c.houseNo)}, ${escapeHtml(c.postalCode)} Berlin` : "&nbsp;";
