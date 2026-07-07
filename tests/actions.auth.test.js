@@ -1,7 +1,9 @@
 // Unit-Tests der Auth-/MFA-Actions aus actions.js.
 // Strategie: render.js wird per Module-Mock zum No-Op (entkoppelt vom DOM-Render),
 // state.js bleibt echt (echte State-Mutationen prüfbar), apiRequest läuft über gestubbtes fetch.
-// location="file:" neutralisiert loadCollectionData/saveData (kein echtes Netzwerk dort).
+// authDone() stößt nach dem Login im Hintergrund loadCollectionData()/saveCollectionData() an;
+// deshalb werden alle fetch-Aufrufe gesammelt und per requestTo(path) gezielt gesucht statt
+// sich auf "der letzte Request" zu verlassen.
 // Braucht: node --test --experimental-test-module-mocks (siehe npm-Skript "test").
 import assert from 'node:assert/strict';
 import { beforeEach, describe, it, mock } from 'node:test';
@@ -41,9 +43,10 @@ globalThis.document = {
 let nextResponse = null;
 const respondOk = payload => { nextResponse = { ok: true, status: 200, json: async () => payload }; };
 const respondError = (status, payload) => { nextResponse = { ok: false, status, json: async () => payload }; };
-let lastRequest = null;
+let requests = [];
+const requestTo = path => requests.find(request => request.url.endsWith(path));
 globalThis.fetch = (url, options) => {
-  lastRequest = { url, options, body: options?.body ? JSON.parse(options.body) : null };
+  requests.push({ url, options, body: options?.body ? JSON.parse(options.body) : null });
   return Promise.resolve(nextResponse);
 };
 
@@ -58,7 +61,7 @@ const { state } = await import('../modules/state.js');
 beforeEach(() => {
   for (const key of Object.keys(forms)) delete forms[key];
   nextResponse = null;
-  lastRequest = null;
+  requests = [];
   sessionStorage.clear();
   state.auth = {
     ready: true, setupRequired: false, mode: 'login', token: '', user: null,
@@ -91,8 +94,8 @@ describe('auth-login', () => {
 
     await actions['auth-login']();
 
-    assert.equal(lastRequest.url.endsWith('/auth/login'), true);
-    assert.deepEqual(lastRequest.body, { email: 'admin@local', password: 'geheim' });
+    assert.equal(requestTo('/auth/login')?.url.endsWith('/auth/login'), true);
+    assert.deepEqual(requestTo('/auth/login')?.body, { email: 'admin@local', password: 'geheim' });
     assert.equal(state.auth.token, 'tok-123');
     assert.deepEqual(state.auth.user, { id: 'u1', role: 'admin' });
     assert.equal(sessionStorage.getItem('gd_auth_token'), 'tok-123');
@@ -130,8 +133,8 @@ describe('auth-mfa-login', () => {
 
     await actions['auth-mfa-login']();
 
-    assert.equal(lastRequest.url.endsWith('/auth/mfa/verify'), true);
-    assert.deepEqual(lastRequest.body, { ticket: 'ticket-9', code: '123456' });
+    assert.equal(requestTo('/auth/mfa/verify')?.url.endsWith('/auth/mfa/verify'), true);
+    assert.deepEqual(requestTo('/auth/mfa/verify')?.body, { ticket: 'ticket-9', code: '123456' });
     assert.equal(state.auth.token, 'tok-mfa');
     assert.equal(state.auth.mfaTicket, ''); // von setAuthSession zurückgesetzt
   });
@@ -144,7 +147,7 @@ describe('auth-setup', () => {
 
     await actions['auth-setup']();
 
-    assert.equal(lastRequest.url.endsWith('/auth/setup'), true);
+    assert.equal(requestTo('/auth/setup')?.url.endsWith('/auth/setup'), true);
     assert.equal(state.auth.token, 'tok-setup');
     assert.equal(state.auth.setupRequired, false);
   });
@@ -210,7 +213,7 @@ describe('MFA-Verwaltung', () => {
 
     await actions['mfa-setup']();
 
-    assert.equal(lastRequest.url.endsWith('/auth/mfa/setup'), true);
+    assert.equal(requestTo('/auth/mfa/setup')?.url.endsWith('/auth/mfa/setup'), true);
     assert.deepEqual(state.auth.mfaSetup, { secret: 'S', otpauthUrl: 'otpauth://x' });
   });
 

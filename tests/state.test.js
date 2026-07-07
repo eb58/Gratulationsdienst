@@ -57,12 +57,10 @@ const {
   saveQuittungSettings,
   setAuthSession,
   state,
-  usesLocalDataStorage,
   writableCollections
 } = stateModule;
 
 beforeEach(() => {
-  globalThis.location.protocol = 'file:';
   state.auth.user = { role: 'admin' };
   state.auth.token = '';
   state.auth.message = '';
@@ -158,25 +156,18 @@ describe('backend and permission helpers', () => {
     assert.equal(writableCollections().includes('sokoMembers'), true);
   });
 
-  it('uses browser data storage only in file mode', async () => {
-    assert.equal(usesLocalDataStorage(), true);
-    state.data = { ...state.data, citizens: [{ id: 'G-local', firstName: 'Lokal' }] };
-    saveData();
-    assert.match(localStorage.getItem('gratulationsdienst'), /G-local/);
-
-    globalThis.location.protocol = 'http:';
+  it('clears legacy browser-only data instead of persisting the full dataset there', async () => {
     globalThis.fetch = () => Promise.resolve({ ok: true, json: async () => [] });
     state.auth.token = 'token';
     localStorage.setItem('gratulationsdienst', JSON.stringify({ citizens: [{ id: 'G-old' }] }));
+
     await saveData();
 
-    assert.equal(usesLocalDataStorage(), false);
     assert.equal(localStorage.getItem('gratulationsdienst'), null);
   });
 
-  it('ignores stale browser data in backend mode', () => {
+  it('ignores stale legacy browser data when loading', () => {
     localStorage.setItem('gratulationsdienst', JSON.stringify({ citizens: [{ id: 'G-old' }] }));
-    globalThis.location.protocol = 'http:';
 
     assert.equal(loadData().citizens.some(citizen => citizen.id === 'G-old'), false);
   });
@@ -433,7 +424,7 @@ describe('backend and permission helpers', () => {
 });
 
 describe('receipt settings', () => {
-  it('normalizes and stores receipt settings in file mode', async () => {
+  it('normalizes and stores receipt settings locally when there is no auth token', async () => {
     const saved = await saveQuittungSettings({ quittungBetrag: '9,50' });
     assert.deepEqual(saved, {
       quittungBetrag: '9,50',

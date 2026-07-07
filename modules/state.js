@@ -142,30 +142,19 @@ export const normalizeLoadedData = data => {
   };
 };
 
-const localDataStorageEnabled = () => location.protocol === "file:";
 const sessionExpiredMessage = "Anmeldung abgelaufen – Änderungen wurden NICHT gespeichert. Bitte neu anmelden, danach werden sie nachgespeichert.";
 const pendingBackendData = () => {
   try { return normalizeLoadedData(JSON.parse(localStorage.getItem(PENDING_STORAGE_KEY)) || null); }
   catch { return null; }
 };
-const storePendingBackendData = data => {
-  if (location.protocol === "file:") return false;
-  return safeStorageSetItem(localStorage, PENDING_STORAGE_KEY, JSON.stringify(dataForPersistence(data)), "Ungespeicherte Änderungen");
-};
+const storePendingBackendData = data => safeStorageSetItem(localStorage, PENDING_STORAGE_KEY, JSON.stringify(dataForPersistence(data)), "Ungespeicherte Änderungen");
 const clearPendingBackendData = () => localStorage.removeItem(PENDING_STORAGE_KEY);
 const notifyAuthExpired = () => {
   try { globalThis.dispatchEvent?.(new Event("gd-auth-expired")); } catch { /* ignore */ }
 };
 export const hasPendingBackendData = () => !!localStorage.getItem(PENDING_STORAGE_KEY);
 
-export const loadData = () => {
-  if (!localDataStorageEnabled()) return normalizeLoadedData(structuredClone(defaultData));
-  try {
-    return normalizeLoadedData(JSON.parse(localStorage.getItem(STORAGE_KEY)) || structuredClone(defaultData));
-  } catch {
-    return normalizeLoadedData(structuredClone(defaultData));
-  }
-};
+export const loadData = () => normalizeLoadedData(structuredClone(defaultData));
 
 const quittungSettings = storedQuittungSettings();
 const storedSelectedMonth = () => localStorage.getItem(MONTH_KEY)
@@ -177,11 +166,11 @@ export const state = {
   view: "dashboard",
   data: loadData(),
   auth: {
-    ready: location.protocol === "file:",
+    ready: false,
     setupRequired: false,
     mode: "login",
     token: storedAuthToken(),
-    user: location.protocol === "file:" ? { id: "demo", email: "demo@local", displayName: "Demo", role: "admin", mfaEnabled: false, active: true } : null,
+    user: null,
     mfaTicket: "",
     resetToken: "",
     users: [],
@@ -230,7 +219,6 @@ export const persistedCollections = apiCollections;
 export const hasBackendData = data => data && persistedCollections.some(key => Array.isArray(data[key]) && data[key].length);
 export const isAdmin = () => state.auth.user?.role === "admin";
 export const canAccessView = view => !adminViews.includes(view) || isAdmin();
-export const usesLocalDataStorage = localDataStorageEnabled;
 export const writableCollections = () => isAdmin()
   ? apiCollections
   : apiCollections.filter(collection => !adminCollections.includes(collection));
@@ -261,27 +249,24 @@ export const apiRequest = (path, options = {}) => {
     throw Object.assign(new Error(payload.error || `API ${response.status}`), { status: response.status, payload });
   });
 };
-export const loadAuthStatus = () => {
-  if (location.protocol === "file:") return Promise.resolve(state.auth);
-  return apiRequest("/auth/status")
-    .then(status => {
-      state.auth.ready = true;
-      state.auth.setupRequired = !!status.setupRequired;
-      state.auth.user = status.authenticated ? status.user : null;
-      state.auth.mode = status.setupRequired ? "setup" : "login";
-      if (!status.authenticated) {
-        state.auth.token = "";
-        clearStoredAuthToken();
-      }
-      return state.auth;
-    })
-    .catch(error => {
-      state.auth.ready = true;
-      state.auth.user = null;
-      console.warn("Anmeldestatus nicht verfügbar.", error);
-      return state.auth;
-    });
-};
+export const loadAuthStatus = () => apiRequest("/auth/status")
+  .then(status => {
+    state.auth.ready = true;
+    state.auth.setupRequired = !!status.setupRequired;
+    state.auth.user = status.authenticated ? status.user : null;
+    state.auth.mode = status.setupRequired ? "setup" : "login";
+    if (!status.authenticated) {
+      state.auth.token = "";
+      clearStoredAuthToken();
+    }
+    return state.auth;
+  })
+  .catch(error => {
+    state.auth.ready = true;
+    state.auth.user = null;
+    console.warn("Anmeldestatus nicht verfügbar.", error);
+    return state.auth;
+  });
 export const loadBackendCollection = collection => apiRequest(`/${collection}`).then(items => [collection, items]);
 export const saveBackendCollection = (collection, items) => apiRequest(`/${collection}`, {
   method: "PUT",
@@ -289,13 +274,13 @@ export const saveBackendCollection = (collection, items) => apiRequest(`/${colle
 }).then(savedItems => [collection, savedItems]);
 export const saveQuittungSettings = settings => {
   const normalized = normalizeQuittungSettings(settings);
-  if (location.protocol === "file:" || !state.auth.token) return Promise.resolve(applyQuittungSettings(normalized));
+  if (!state.auth.token) return Promise.resolve(applyQuittungSettings(normalized));
   return apiRequest("/settings/receipt", {
     method: "PUT",
     body: JSON.stringify(normalized)
   }).then(applyQuittungSettings);
 };
-export const loadBackendQuittungSettings = () => location.protocol === "file:" || !state.auth.user || !state.auth.token
+export const loadBackendQuittungSettings = () => !state.auth.user || !state.auth.token
   ? Promise.resolve(null)
   : apiRequest("/settings/receipt").then(applyQuittungSettings);
 
@@ -344,7 +329,6 @@ const persistBackendCollections = async data => {
 let saveQueue = Promise.resolve();
 
 export const saveCollectionData = data => {
-  if (location.protocol === "file:") return Promise.resolve();
   if (!state.auth.token) {
     storePendingBackendData(state.data);
     return Promise.resolve(handleSaveError({ status: 401, message: sessionExpiredMessage }));
@@ -358,13 +342,11 @@ export const saveCollectionData = data => {
 
 export const saveData = () => {
   state.localChangeVersion += 1;
-  if (usesLocalDataStorage()) safeStorageSetItem(localStorage, STORAGE_KEY, JSON.stringify(dataForPersistence(state.data)), "Daten");
-  else localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(STORAGE_KEY);
   return saveCollectionData(state.data);
 };
 
 export const loadCollectionData = ({ force = false } = {}) => {
-  if (location.protocol === "file:") return Promise.resolve();
   if (!state.auth.user || !state.auth.token) return Promise.resolve();
   const loadChangeVersion = state.localChangeVersion;
   return Promise.all([

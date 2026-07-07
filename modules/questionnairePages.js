@@ -1,7 +1,7 @@
 import { state, apiRequest } from './state.js';
 
 const loadedCitizenIds = new Set();
-const hasBackend = () => location.protocol !== "file:" && Boolean(state.auth.token);
+const hasBackend = () => Boolean(state.auth.token);
 const normalizedPage = page => ({
   id: page.id || "",
   citizenId: page.citizenId || "",

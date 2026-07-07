@@ -617,7 +617,7 @@ describe('Dokumente und Quittung', () => {
     assert.deepEqual(state.generatedDocs, []);
   });
 
-  it('save-quittung-settings speichert im Datei-Modus und normalisiert den Betrag', async () => {
+  it('save-quittung-settings speichert lokal ohne Auth-Token und normalisiert den Betrag', async () => {
     state.quittungBetrag = '9,9x';
     actions['save-quittung-settings']();
     await new Promise(resolve => setTimeout(resolve, 0));
