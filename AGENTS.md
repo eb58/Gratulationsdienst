@@ -9,6 +9,7 @@
 - Textdateien in UTF-8 halten; keine ungepruefte Umcodierung und kein mojibake in neuem Text.
 - Keep it simple, stupid -> KISS-Prinzip
 - use globalThis not window
+- bevorzuge ' gegenüber " in Stringliteralen
 
 ## Projektwissen
 
