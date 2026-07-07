@@ -886,15 +886,15 @@ export const views = {
 
   weddingAnniversaries: () => {
     const anniversaries = (state.data.weddingAnniversaries || [])
-      .filter(item => state.filters.month === "alle" || item.weddingDate?.slice(5, 7) === state.filters.month)
+      .filter(item => state.filters.weddingMonth === "alle" || item.weddingDate?.slice(5, 7) === state.filters.weddingMonth)
       .filter(item => state.showAllWeddingAnniversaries || weddingAnniversaryLabel(item.weddingDate));
     return `
       <section class="panel wedding-anniversaries-panel">
         <h2>Hochzeitsjubiläen</h2>
         <div class="toolbar">
           <label>Für Monat</label>
-          <select name="month" data-filter>
-            ${months.map(([value, label]) => `<option value="${value}"${state.filters.month === value ? " selected" : ""}>${escapeHtml(label)}</option>`).join("")}
+          <select name="weddingMonth" data-filter>
+            ${months.map(([value, label]) => `<option value="${value}"${state.filters.weddingMonth === value ? " selected" : ""}>${escapeHtml(label)}</option>`).join("")}
           </select>
           <label class="toggle-label">
             <input type="checkbox" class="toggle" data-action="toggle-all-wedding-anniversaries" ${state.showAllWeddingAnniversaries ? "checked" : ""}>

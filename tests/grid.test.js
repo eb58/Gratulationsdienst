@@ -101,7 +101,7 @@ beforeEach(() => {
     wish: 'Besuch erwünscht',
     templateName: 'Standard'
   }];
-  state.filters = { q: '', month: 'alle', groupId: 'alle', age: 'alle', status: 'alle', occasion: 'Geburtstag' };
+  state.filters = { q: '', month: 'alle', weddingMonth: 'alle', groupId: 'alle', age: 'alle', status: 'alle', occasion: 'Geburtstag' };
   state.showAllWeddingAnniversaries = false;
   state.importMissingCitizens = [];
   state.selectedCitizenId = 'G-1';
@@ -187,11 +187,11 @@ describe('grid definitions', () => {
       { id: 'WA-1', citizenId: 'G-1', firstName: 'Erika', lastName: 'Juni', weddingDate: '1976-06-01', weddingAnniversary: 'Goldene Hochzeit' },
       { id: 'WA-2', citizenId: 'G-2', firstName: 'Eva', lastName: 'Juli', weddingDate: '1966-07-01', weddingAnniversary: 'Diamantene Hochzeit' }
     ];
-    state.filters.month = '06';
+    state.filters.weddingMonth = '06';
 
     assert.deepEqual(gridDefinitions.weddingAnniversaries().rowData.map(row => row.id), ['WA-1']);
 
-    state.filters.month = 'alle';
+    state.filters.weddingMonth = 'alle';
     assert.deepEqual(gridDefinitions.weddingAnniversaries().rowData.map(row => row.id), ['WA-1', 'WA-2']);
   });
 
@@ -201,7 +201,7 @@ describe('grid definitions', () => {
       { id: 'WA-golden', citizenId: 'G-1', firstName: 'Erika', lastName: 'Mustermann', weddingDate: `${currentYear - 50}-12-31`, weddingAnniversary: 'Goldene Hochzeit' },
       { id: 'WA-unrund', citizenId: 'G-2', firstName: 'Eva', lastName: 'Fehlt', weddingDate: `${currentYear - 42}-12-31`, weddingAnniversary: '' }
     ];
-    state.filters.month = 'alle';
+    state.filters.weddingMonth = 'alle';
     state.showAllWeddingAnniversaries = false;
 
     assert.deepEqual(gridDefinitions.weddingAnniversaries().rowData.map(row => row.id), ['WA-golden']);

@@ -176,7 +176,7 @@ export const state = {
     users: [],
     mfaSetup: null
   },
-  filters: { q: "", month: storedSelectedMonth(), groupId: "alle", age: "alle", status: "alle", occasion: "Geburtstag" },
+  filters: { q: "", month: storedSelectedMonth(), weddingMonth: "alle", groupId: "alle", age: "alle", status: "alle", occasion: "Geburtstag" },
   selectedCitizenId: "",
   selectedMemberId: "",
   selectedStreetId: "STR-001",

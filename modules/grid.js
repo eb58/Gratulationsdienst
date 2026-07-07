@@ -304,7 +304,7 @@ export const gridDefinitions = {
   weddingAnniversaries: () => ({
     ...baseGridOptions(),
     rowData: (state.data.weddingAnniversaries || [])
-      .filter(item => state.filters.month === "alle" || item.weddingDate?.slice(5, 7) === state.filters.month)
+      .filter(item => state.filters.weddingMonth === "alle" || item.weddingDate?.slice(5, 7) === state.filters.weddingMonth)
       .filter(item => state.showAllWeddingAnniversaries || weddingAnniversaryLabel(item.weddingDate))
       .map(item => ({
         id: item.id,

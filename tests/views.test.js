@@ -138,7 +138,7 @@ beforeEach(() => {
     senders: [sender],
     templates: [template]
   };
-  state.filters = { q: '', month: '06', groupId: 'alle', age: 'alle', status: 'alle', occasion: 'Geburtstag' };
+  state.filters = { q: '', month: '06', weddingMonth: 'alle', groupId: 'alle', age: 'alle', status: 'alle', occasion: 'Geburtstag' };
   state.showAllWeddingAnniversaries = true;
   state.quittungBetrag = '8,50';
   state.quittungTelefon = '030 123';
@@ -286,7 +286,7 @@ describe('main views', () => {
     assert.match(views.templates(), /template-form/);
     assert.match(views.documents(), /Druckliste/);
     assert.match(views.weddingAnniversaries(), /data-grid="weddingAnniversaries"/);
-    assert.match(views.weddingAnniversaries(), /<select name="month" data-filter>/);
+    assert.match(views.weddingAnniversaries(), /<select name="weddingMonth" data-filter>/);
     assert.match(views.weddingAnniversaries(), /data-action="toggle-all-wedding-anniversaries"/);
     assert.doesNotMatch(views.weddingAnniversaries(), /<span>Anzahl<\/span>/);
     assert.doesNotMatch(views.weddingAnniversaries(), /<span>Gesamt<\/span>/);
@@ -302,7 +302,7 @@ describe('main views', () => {
 
   it('zeigt bei Hochzeitsjubiläen standardmäßig nur echte Jubiläen, per Toggle auch alle Termine', () => {
     const currentYear = new Date().getFullYear();
-    state.filters.month = 'alle';
+    state.filters.weddingMonth = 'alle';
     state.data.weddingAnniversaries = [
       { id: 'WA-golden', citizenId: 'G-1', firstName: 'Erika', lastName: 'Mustermann', weddingDate: `${currentYear - 50}-12-31` },
       { id: 'WA-unrund', citizenId: 'G-2', firstName: 'Eva', lastName: 'Fehlt', weddingDate: `${currentYear - 42}-12-31` }
