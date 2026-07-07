@@ -1,15 +1,15 @@
+// Migration der SOKO-Mitglieder aus dem Alt-CSV (Semikolon-getrennt, Quotes, deutsche Dezimalreste wie "13349,00").
+// Aufruf: node scripts/migrate-soko-members.js <input.csv> [output.json]
+// Ausgabe ist ein camelCase-Array passend zur API-Collection sokoMembers (PUT /sokoMembers).
+
 import fs from "node:fs";
 import path from "node:path";
 import { parseCsv } from "../modules/import.js";
 
-// Migration der SOKO-Mitglieder aus dem Alt-CSV (Semikolon-getrennt, Quotes, deutsche Dezimalreste wie "13349,00").
-// Aufruf: node scripts/import-soko-members.js <input.csv> [output.json]
-// Ausgabe ist ein camelCase-Array passend zur API-Collection sokoMembers (PUT /sokoMembers).
-
 const inputFile = process.argv[2];
 const outputFile = process.argv[3] || "data/soko-members.json";
 if (!inputFile) {
-  console.error("Aufruf: node scripts/import-soko-members.js <input.csv> [output.json]");
+  console.error("Aufruf: node scripts/migrate-soko-members.js <input.csv> [output.json]");
   process.exit(1);
 }
 

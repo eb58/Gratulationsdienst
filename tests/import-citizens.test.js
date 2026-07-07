@@ -5,7 +5,7 @@ import {
   cleanNumber, isTruthy, parseDate, normalizeSalutation,
   splitName, splitStreet, normalizeDistrict, wishFromFlags, movedInfo, deceasedInfo,
   buildNotes, mapRow
-} from '../scripts/import-citizens.js';
+} from '../scripts/migrate-citizens.js';
 
 describe('parseCsv', () => {
   it('mappt Zeilen über Header, entfernt BOM und ignoriert Leerzeilen', () => {

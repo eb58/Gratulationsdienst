@@ -4,7 +4,7 @@ import { pathToFileURL } from "node:url";
 import { parseCsv } from "../modules/import.js";
 
 // Migration der Bürger-/Jubilar-Daten aus dem Alt-CSV (Semikolon-getrennt, Quotes, deutsche Dezimalreste wie "1,00").
-// Aufruf: node scripts/import-citizens.js <input.csv> [output.json]
+// Aufruf: node scripts/migrate-citizens.js <input.csv> [output.json]
 // Ausgabe ist ein camelCase-Array passend zur API-Collection citizens (PUT /citizens).
 
 // Entfernt deutsche Dezimalreste ("480,00" -> "480", "1,00" -> "1")
@@ -114,7 +114,7 @@ const runImport = () => {
   const inputFile = process.argv[2];
   const outputFile = process.argv[3] || "data/citizens.json";
   if (!inputFile) {
-    console.error("Aufruf: node scripts/import-citizens.js <input.csv> [output.json]");
+    console.error("Aufruf: node scripts/migrate-citizens.js <input.csv> [output.json]");
     process.exit(1);
   }
 

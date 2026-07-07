@@ -1,3 +1,5 @@
+// !!! Dieses Skript wird nicht mehr gebraucht. Ist nur von Interesse für die Dokumentation !!!
+//
 // Importiert Adressen fuer Reinickendorf aus der OpenStreetMap-Overpass-API.
 // Aufruf: node scripts/osm-import-osm-addresses.js [output.js]
 // Standard-Ausgabe: data/osm-reinickendorf-address-points.js

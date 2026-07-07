@@ -8,8 +8,8 @@ als JSON-Datei schreiben — **kein** direkter DB-Zugriff):
 
 | Skript | Quelle | Ausgabe | Collection |
 | --- | --- | --- | --- |
-| `scripts/import-citizens.js` | Bürger-/Jubilar-Export | `data/citizens.json` | `citizens` |
-| `scripts/import-soko-members.js` | SOKO-Mitglieder-Export | `data/soko-members.json` | `sokoMembers` |
+| `scripts/migrate-citizens.js` | Bürger-/Jubilar-Export | `data/citizens.json` | `citizens` |
+| `scripts/migrate-soko-members.js` | SOKO-Mitglieder-Export | `data/soko-members.json` | `sokoMembers` |
 
 Der Rest dieses Dokuments beschreibt den Bürger-Import; SOKO-Mitglieder laufen
 analog (nur andere Collection und ggf. Admin-Rechte, siehe unten).
@@ -17,7 +17,7 @@ analog (nur andere Collection und ggf. Admin-Rechte, siehe unten).
 ## 1. JSON erzeugen
 
 ```bash
-node scripts/import-citizens.js deine-altdaten.csv data/citizens.json
+node scripts/migrate-citizens.js deine-altdaten.csv data/citizens.json
 ```
 
 Das Skript meldet am Ende u. a. die Zahl der Verstorbenen/Verzogenen und listet
