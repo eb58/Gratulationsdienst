@@ -56,7 +56,7 @@ export const editableStreetAssignment = citizen => {
   if (!street?.rules?.length) return street || null;
   const plz = String(citizen.postalCode || "").trim();
   const rules = street.rules.filter(rule => (!plz || !rule.plz || rule.plz === plz) && ruleMatchesHouseNo(rule, citizen.houseNo));
-  const rule = rules[0] || street.rules.find(item => ruleMatchesHouseNo(item, citizen.houseNo)) || street.rules[0];
+  const rule = rules[0] || street.rules.find(item => ruleMatchesHouseNo(item, citizen.houseNo));
   return rule ? { ...street, district: rule.ortsteil || street.district, groupId: sokoGroupId(rule.soko), rule } : street;
 };
 export const preciseStreetAssignment = citizen => {

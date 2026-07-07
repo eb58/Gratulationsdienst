@@ -149,6 +149,13 @@ describe('street assignment helpers', () => {
     assert.equal(editableStreetAssignment(baseCitizen({ houseNo: '13' }))?.groupId, 'SOKO 02');
   });
 
+  it('leaves streets without a matching house-number rule ungrouped instead of guessing the first rule', () => {
+    const assignment = editableStreetAssignment(baseCitizen({ houseNo: '200' }));
+
+    assert.equal(!!assignment?.groupId, false);
+    assert.equal(!!streetAssignment(baseCitizen({ houseNo: '200' }))?.groupId, false);
+  });
+
   it('uses precise assignment from findeSoko when editable data has no group', () => {
     state.data.streets = [];
     globalThis.findeSoko = () => ({ strasse: 'Neue Straße', ortsteil: 'Tegel', soko: '02' });
