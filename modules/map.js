@@ -8,7 +8,7 @@ export const mapDataLoaded = () => Boolean(globalThis.REINICKENDORF_STREET_GEOME
 let mapDataPromise = null;
 export const ensureMapData = () => mapDataPromise ||= Promise.all([
   loadScript(`${import.meta.env?.BASE_URL ?? "/"}data/reinickendorf-street-geometries.js`),
-  loadScript(`${import.meta.env?.BASE_URL ?? "/"}data/reinickendorf-address-points.js`)
+  loadScript(`${import.meta.env?.BASE_URL ?? "/"}data/osm-reinickendorf-address-points.js`)
 ]);
 
 export const mapData = () => globalThis.REINICKENDORF_STREET_GEOMETRIES || { bbox: [], segments: [] };
