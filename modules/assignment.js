@@ -16,7 +16,7 @@ export const duplicateKey = citizen => [
 const stripParens = value => String(value ?? "").replace(/\s*\([^)]*\)/g, " ").trim();
 export const normalizeStreetName = value => stripParens(value)
   .toLowerCase()
-  .replace(/ß/g, "ss")
+  .replaceAll('ß', "ss")
   .replace(/strasse(?=\s|$)/g, "str")
   .replace(/str\.?(?=\s|$)/g, "str")
   .replace(/[.,;:]+/g, " ")
@@ -30,9 +30,7 @@ const streetLookup = () => {
   streetLookupCache = new Map();
   state.data.streets.forEach(street => {
     const nameKey = normalizeStreetName(street.name);
-    const strippedKey = normalizeStreetName(stripParens(street.name));
     if (!streetLookupCache.has(nameKey)) streetLookupCache.set(nameKey, street);
-    if (!streetLookupCache.has(strippedKey)) streetLookupCache.set(strippedKey, street);
   });
   return streetLookupCache;
 };
