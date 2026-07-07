@@ -35,6 +35,7 @@ const {
   isPrintedCitizen,
   isReceiptGroupReady,
   leaderForGroup,
+  normalizeStreetName,
   preciseStreetAssignment,
   receiptCitizens,
   receiptCitizensForReadyGroups,
@@ -136,6 +137,16 @@ describe('street assignment helpers', () => {
   it('finds streets by exact name or by name without parenthesized suffix', () => {
     assert.equal(streetByName('Musterstraße')?.id, 'STR-1');
     assert.equal(streetByName('Nebenstraße')?.id, 'STR-2');
+    assert.equal(streetByName('  Musterstr.  ')?.id, 'STR-1');
+    assert.equal(streetByName('Musterstrasse')?.id, 'STR-1');
+    assert.equal(streetByName('Muster Str')?.id, undefined);
+  });
+
+  it('normalisiert Straßennamen auf einen stabilen Vergleichsschluessel', () => {
+    assert.equal(normalizeStreetName('  Musterstraße  '), 'musterstr');
+    assert.equal(normalizeStreetName('Musterstrasse'), 'musterstr');
+    assert.equal(normalizeStreetName('Musterstr.'), 'musterstr');
+    assert.equal(normalizeStreetName('Nebenstraße (privat)'), 'nebenstr');
   });
 
   it('assigns editable streets by postal code, house number and parity', () => {
@@ -158,7 +169,11 @@ describe('street assignment helpers', () => {
 
   it('uses precise assignment from findeSoko when editable data has no group', () => {
     state.data.streets = [];
-    globalThis.findeSoko = () => ({ strasse: 'Neue Straße', ortsteil: 'Tegel', soko: '02' });
+    const calls = [];
+    globalThis.findeSoko = (street, houseNo, postalCode) => {
+      calls.push({ street, houseNo, postalCode });
+      return { strasse: 'Neue Straße', ortsteil: 'Tegel', soko: '02' };
+    };
 
     assert.deepEqual(preciseStreetAssignment(baseCitizen({ street: 'Neue Straße' })), {
       name: 'Neue Straße',
@@ -166,6 +181,7 @@ describe('street assignment helpers', () => {
       groupId: 'SOKO 02'
     });
     assert.equal(streetAssignment(baseCitizen({ street: 'Neue Straße' }))?.groupId, 'SOKO 02');
+    assert.deepEqual(calls.map(call => call.street), ['Neue Straße', 'Neue Straße']);
   });
 
   it('finds groups and leaders from assigned citizens', () => {

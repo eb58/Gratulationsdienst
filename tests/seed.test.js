@@ -51,6 +51,13 @@ before(() => {
 });
 
 describe('seed-citizens integration (echtes Strassenverzeichnis)', () => {
+  it('findet echte SOKO-Strassen ueber normalisierte Schreibweisen', () => {
+    const expected = globalThis.findeSoko('Kleine Brüderstraße', '1', '13503');
+
+    assert.deepEqual(globalThis.findeSoko('Kleine Brüderstrasse', '1', '13503'), expected);
+    assert.deepEqual(globalThis.findeSoko('Kleine Brüderstr.', '1', '13503'), expected);
+  });
+
   it('erzeugt nur Adressen, die im Strassenverzeichnis vorhanden und aufloesbar sind', () => {
     const { csvRows } = seed();
     const directory = globalThis.SOKO_STRASSENVERZEICHNIS;

@@ -13,16 +13,15 @@ export const duplicateKey = citizen => [
   citizen.birthDate
 ].map(normalize).join("|");
 
-export const streetNameVariants = value => {
-  const name = String(value ?? "").trim();
-  return [...new Set([
-    name,
-    name.replace(/straße/giu, "str."),
-    name.replace(/strasse/giu, "str."),
-    name.replace(/str\./giu, "straße")
-  ].filter(Boolean))];
-};
-const stripParens = s => s.replace(/\s*\([^)]*\)/g, "").trim();
+const stripParens = value => String(value ?? "").replace(/\s*\([^)]*\)/g, " ").trim();
+export const normalizeStreetName = value => stripParens(value)
+  .toLowerCase()
+  .replace(/ß/g, "ss")
+  .replace(/strasse(?=\s|$)/g, "str")
+  .replace(/str\.?(?=\s|$)/g, "str")
+  .replace(/[.,;:]+/g, " ")
+  .replace(/\s+/g, " ")
+  .trim();
 let streetLookupSource = null;
 let streetLookupCache = new Map();
 const streetLookup = () => {
@@ -30,14 +29,14 @@ const streetLookup = () => {
   streetLookupSource = state.data.streets;
   streetLookupCache = new Map();
   state.data.streets.forEach(street => {
-    const nameKey = normalize(street.name);
-    const strippedKey = normalize(stripParens(street.name));
+    const nameKey = normalizeStreetName(street.name);
+    const strippedKey = normalizeStreetName(stripParens(street.name));
     if (!streetLookupCache.has(nameKey)) streetLookupCache.set(nameKey, street);
     if (!streetLookupCache.has(strippedKey)) streetLookupCache.set(strippedKey, street);
   });
   return streetLookupCache;
 };
-export const streetByName = name => streetLookup().get(normalize(name));
+export const streetByName = name => streetLookup().get(normalizeStreetName(name));
 export const houseNumberValue = value => Number.parseInt(String(value ?? "").match(/\d+/)?.[0] || "", 10);
 const ruleParityMatches = (rule, number) => {
   if (rule.art === "G") return number % 2 === 0;
@@ -52,7 +51,7 @@ export const ruleMatchesHouseNo = (rule, houseNo) => {
   return number >= from && number <= to && ruleParityMatches(rule, number);
 };
 export const editableStreetAssignment = citizen => {
-  const street = streetNameVariants(citizen.street).map(streetByName).find(Boolean);
+  const street = streetByName(citizen.street);
   if (!street?.rules?.length) return street || null;
   const plz = String(citizen.postalCode || "").trim();
   const rules = street.rules.filter(rule => (!plz || !rule.plz || rule.plz === plz) && ruleMatchesHouseNo(rule, citizen.houseNo));
@@ -60,13 +59,13 @@ export const editableStreetAssignment = citizen => {
   return rule ? { ...street, district: rule.ortsteil || street.district, groupId: sokoGroupId(rule.soko), rule } : street;
 };
 export const preciseStreetAssignment = citizen => {
-  const assignment = streetNameVariants(citizen.street).map(street => {
+  const assignment = (() => {
     try {
-      return window.findeSoko?.(street, citizen.houseNo, citizen.postalCode);
+      return window.findeSoko?.(citizen.street, citizen.houseNo, citizen.postalCode);
     } catch {
       return null;
     }
-  }).find(Boolean);
+  })();
   return assignment ? {
     name: assignment.strasse,
     district: assignment.ortsteil,

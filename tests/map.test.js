@@ -84,6 +84,8 @@ describe('map address helpers', () => {
 describe('map street helpers', () => {
   it('finds streets by variant names and resolves segment groups', () => {
     assert.equal(mapStreetByName('Nebenstraße')?.name, 'Nebenstraße (privat)');
+    assert.equal(mapStreetByName('Nebenstrasse')?.name, 'Nebenstraße (privat)');
+    assert.equal(mapStreetByName('Nebenstr.')?.name, 'Nebenstraße (privat)');
     assert.deepEqual(mapSegmentGroupIds({ name: 'Nebenstr.' }), ['SOKO 02', 'SOKO 03']);
     assert.deepEqual(mapSegmentGroupIds({ name: 'Unbekannt' }), ['offen']);
   });
@@ -96,13 +98,13 @@ describe('map street helpers', () => {
     state.data.streets = [{ name: 'Ringstraße', rules: [{ soko: '01' }, { soko: '02' }] }];
     globalThis.REINICKENDORF_ADDRESS_POINTS = {
       addresses: [
-        { street: 'Ringstraße', houseNumber: '1', postalCode: '13437', soko: '01', lon: 0, lat: 0 },
-        { street: 'Ringstraße', houseNumber: '99', postalCode: '13437', soko: '02', lon: 10, lat: 10 }
+        { street: 'Ringstrasse', houseNumber: '1', postalCode: '13437', soko: '01', lon: 0, lat: 0 },
+        { street: 'Ringstr.', houseNumber: '99', postalCode: '13437', soko: '02', lon: 10, lat: 10 }
       ]
     };
     const addressIndex = mapStreetAddressPoints();
     assert.deepEqual(mapSegmentGroupIds({ name: 'Ringstraße', coords: [[0.1, 0.1]] }, undefined, addressIndex), ['SOKO 01']);
-    assert.deepEqual(mapSegmentGroupIds({ name: 'Ringstraße', coords: [[9.9, 9.9]] }, undefined, addressIndex), ['SOKO 02']);
+    assert.deepEqual(mapSegmentGroupIds({ name: 'Ringstrasse', coords: [[9.9, 9.9]] }, undefined, addressIndex), ['SOKO 02']);
   });
 
   it('keeps every SOKO stacked when no address points exist for the street', () => {

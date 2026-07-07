@@ -1,7 +1,7 @@
-import { normalize, escapeHtml } from './utils.js';
+import { escapeHtml } from './utils.js';
 import { sokoGroupId, sokoColors } from './domain.js';
 import { state } from './state.js';
-import { streetNameVariants } from './assignment.js';
+import { normalizeStreetName } from './assignment.js';
 import { loadScript } from './scriptLoader.js';
 
 export const mapDataLoaded = () => Boolean(globalThis.REINICKENDORF_STREET_GEOMETRIES && globalThis.REINICKENDORF_ADDRESS_POINTS);
@@ -18,7 +18,7 @@ export const addressGroupId = address => address.soko ? sokoGroupId(address.soko
 export const realAddressCandidates = () => assignedAddressPoints().filter(address => address.street && address.houseNumber && address.postalCode);
 
 export const mapStreetLookup = () => state.data.streets.reduce((lookup, street) => {
-  streetNameVariants(street.name).forEach(name => { lookup[normalize(name)] = street; });
+  lookup[normalizeStreetName(street.name)] = street;
   return lookup;
 }, {});
 const tokenBoundary = /[\s/(),-]/;
@@ -29,17 +29,15 @@ const tokenIncludes = (haystack, needle) => {
     && (index + needle.length === haystack.length || tokenBoundary.test(haystack[index + needle.length]));
 };
 export const mapStreetByName = (name, lookup = mapStreetLookup()) => {
-  const variants = streetNameVariants(name);
-  return variants.map(variant => lookup[normalize(variant)]).find(Boolean)
-    || state.data.streets.find(street => variants.some(variant => tokenIncludes(normalize(street.name), normalize(variant)) || tokenIncludes(normalize(variant), normalize(street.name))));
+  const key = normalizeStreetName(name);
+  return lookup[key]
+    || state.data.streets.find(street => tokenIncludes(normalizeStreetName(street.name), key) || tokenIncludes(key, normalizeStreetName(street.name)));
 };
 export const mapStreetAddressPoints = () => (addressPointData().addresses || []).reduce((index, address) => {
   if (!address.soko || !Number.isFinite(address.lon) || !Number.isFinite(address.lat)) return index;
-  streetNameVariants(address.street).forEach(name => {
-    const key = normalize(name);
-    index[key] ||= [];
-    index[key].push(address);
-  });
+  const key = normalizeStreetName(address.street);
+  index[key] ||= [];
+  index[key].push(address);
   return index;
 }, {});
 const squaredDistance = (lon, lat, address) => (address.lon - lon) ** 2 + (address.lat - lat) ** 2;
@@ -50,7 +48,7 @@ const nearestAddressSoko = (coords, candidates) => coords.reduce((best, [lon, la
 export const mapNamedSegmentPoints = (segments = mapData().segments || [], lookup = mapStreetLookup()) => segments.reduce((index, segment) => {
   if (segment.matchSource === 'nearby') return index;
   const street = mapStreetByName(segment.name, lookup);
-  const key = normalize(street?.name || segment.name);
+  const key = normalizeStreetName(street?.name || segment.name);
   index[key] ||= [];
   index[key].push(...segment.coords);
   return index;
@@ -60,7 +58,7 @@ const NEARBY_TRUST_DEGREES_SQUARED = 0.0015 ** 2;
 // Strassennamen zugeordnet ("nearby"). Ohne einen echten, tatsaechlich in der Umgebung liegenden
 // Abschnitt derselben Strasse ist diese Zuordnung nicht vertrauenswuerdig genug zum Einfaerben.
 const nearbyGuessIsTrustworthy = (segment, street, namedPoints) => {
-  const points = namedPoints[normalize(street?.name || segment.name)];
+  const points = namedPoints[normalizeStreetName(street?.name || segment.name)];
   return Boolean(points?.length) && segment.coords.some(([lon, lat]) =>
     points.some(([nlon, nlat]) => (nlon - lon) ** 2 + (nlat - lat) ** 2 < NEARBY_TRUST_DEGREES_SQUARED));
 };
@@ -70,7 +68,7 @@ export const mapSegmentGroupIds = (segment, lookup = mapStreetLookup(), addressI
   const groups = [...new Set((street?.rules || []).map(rule => rule.soko).filter(Boolean))]
     .sort((a, b) => Number(a) - Number(b));
   if (groups.length > 1 && street?.name) {
-    const candidates = streetNameVariants(street.name).map(variant => addressIndex[normalize(variant)]).find(Boolean);
+    const candidates = addressIndex[normalizeStreetName(street.name)];
     const nearestSoko = candidates?.length && nearestAddressSoko(segment.coords, candidates);
     if (nearestSoko && groups.includes(nearestSoko)) return [sokoGroupId(nearestSoko)];
   }
