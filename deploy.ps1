@@ -10,7 +10,8 @@ npm run build
 if ($LASTEXITCODE -ne 0) { Write-Host "Build fehlgeschlagen." -ForegroundColor Red; exit 1 }
 
 Write-Host "Lade Frontend hoch..." -ForegroundColor Cyan
-scp -r -P $port $sshOpt "$buildDir\*" "${user}@${server}:${webroot}/gratulationsdienst/"
+# .htaccess extra hochladen: der *-Glob von scp erfasst Dotfiles im Wurzelverzeichnis nicht
+scp -r -P $port $sshOpt "$buildDir\*" "$buildDir\.htaccess" "${user}@${server}:${webroot}/gratulationsdienst/"
 
 Write-Host "Lade PHP-API hoch..." -ForegroundColor Cyan
 scp -P $port $sshOpt php-api/index.php php-api/schema.mysql.sql php-api/.htaccess "${user}@${server}:${webroot}/gratulationsdienst/php-api/"

@@ -5,7 +5,7 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends openssl \
     && rm -rf /var/lib/apt/lists/* \
     && docker-php-ext-install mysqli pdo pdo_mysql \
-    && a2enmod rewrite ssl \
+    && a2enmod rewrite ssl headers \
     && sed -ri 's/AllowOverride None/AllowOverride All/g' /etc/apache2/apache2.conf
 
 COPY docker/apache-http.conf /etc/apache2/sites-available/000-default.conf

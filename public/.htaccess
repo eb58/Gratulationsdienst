@@ -1,0 +1,10 @@
+<IfModule mod_headers.c>
+    # index.html referenziert gehashte Assets und darf nie stale aus dem Cache kommen
+    <FilesMatch "^index\.html$">
+        Header set Cache-Control "no-cache"
+    </FilesMatch>
+    # Vite-Assets tragen einen Content-Hash im Namen -> unter gleichem Namen ändert sich der Inhalt nie
+    <FilesMatch "-[A-Za-z0-9_-]{8,}\.(js|mjs|css)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+</IfModule>

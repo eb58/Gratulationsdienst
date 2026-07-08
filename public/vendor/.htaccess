@@ -1,0 +1,4 @@
+# Bei Bibliotheks-Updates die Datei umbenennen (z. B. Version im Namen), sonst greift der Cache bis zu 30 Tage
+<IfModule mod_headers.c>
+    Header set Cache-Control "public, max-age=2592000"
+</IfModule>
