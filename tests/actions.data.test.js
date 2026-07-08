@@ -718,6 +718,53 @@ describe('Jubilare pruefen (Backend)', () => {
     assert.equal(state.collectionVersions.weddingAnniversaries['WA-G-1-1976-06-01'], undefined);
     state.auth.token = '';
   });
+
+  it('save-citizen schreibt kein Hochzeitsjubilaeum, wenn Hochzeitstag oder Ehepartner fehlt', async () => {
+    state.data.citizens = [{
+      id: 'G-1',
+      salutation: 'Frau',
+      firstName: 'Erika',
+      lastName: 'Muster',
+      street: 'Teststrasse',
+      houseNo: '1',
+      postalCode: '13437',
+      district: 'Tegel',
+      birthDate: '1936-06-01',
+      wish: 'offen',
+      status: 'geladen',
+      source: 'CSV Import',
+      updatedAt: '2026-06-01'
+    }];
+    state.auth.token = 'token';
+    route('PUT /citizens/G-1', { ...state.data.citizens[0], updatedAt: '2026-06-01', _version: '4' });
+    setForm('#citizen-form', {
+      id: 'G-1',
+      salutation: 'Frau',
+      firstName: 'Erika',
+      lastName: 'Muster',
+      street: 'Teststrasse',
+      houseNo: '1',
+      postalCode: '13437',
+      district: 'Tegel',
+      birthDate: '1936-06-01',
+      phone: '',
+      email: '',
+      wish: 'Besuch erwünscht',
+      notes: '',
+      source: 'CSV Import',
+      pressPublication: 'on',
+      weddingAnniversary: 'Goldene Hochzeit',
+      weddingDate: '',
+      spouseName: 'Heinz'
+    });
+
+    await actions['save-citizen']();
+
+    assert.equal(calls.some(call => call.method === 'PUT' && call.path.startsWith('/weddingAnniversaries/')), false);
+    assert.equal(calls.some(call => call.method === 'DELETE' && call.path.startsWith('/weddingAnniversaries/')), false);
+    assert.equal(state.data.weddingAnniversaries.length, 0);
+    state.auth.token = '';
+  });
 });
 
 describe('Stammdaten pruefen (Backend)', () => {

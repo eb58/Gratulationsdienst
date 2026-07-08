@@ -18,7 +18,7 @@ export const weddingAnniversaryLabel = (weddingDate, today = todayIso()) => {
 };
 
 export const weddingAnniversaryFromCitizen = (citizen, source = "Fragebogen") => {
-  if (!clean(citizen?.weddingAnniversary)) return null;
+  if (!clean(citizen?.weddingDate) || !clean(citizen?.spouseName)) return null;
   const now = todayIso();
   return {
     id: weddingAnniversaryId(citizen),

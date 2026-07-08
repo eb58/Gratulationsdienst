@@ -39,6 +39,11 @@ describe('wedding anniversaries', () => {
     assert.equal(entry.capturedAt, '2026-06-01');
   });
 
+  it('skips entries without wedding date or spouse name', () => {
+    assert.equal(weddingAnniversaryFromCitizen({ ...citizen, weddingDate: '', spouseName: 'Heinz' }), null);
+    assert.equal(weddingAnniversaryFromCitizen({ ...citizen, weddingDate: '1976-06-01', spouseName: '' }), null);
+  });
+
   it('berechnet das Jubiläums-Label aus dem Hochzeitsdatum, bezogen auf heute', () => {
     assert.equal(weddingAnniversaryLabel('1976-06-01', '2026-06-01'), 'Goldene Hochzeit');
     assert.equal(weddingAnniversaryLabel('1966-06-01', '2026-06-01'), 'Diamantene Hochzeit');
