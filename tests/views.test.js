@@ -303,6 +303,8 @@ describe('main views', () => {
     assert.match(views.map(), /id="map-month-select" name="month" data-filter/);
     assert.match(views.map(), /data-action="toggle-map-people"/);
     assert.match(views.import(), /soko-print/);
+    assert.match(views.import(), /data-action="download-labo-seed"/);
+    assert.match(views.import(), /LABO-Daten herunterladen/);
     assert.match(views.import(), /<select name="month" data-filter>/);
     assert.doesNotMatch(views.import(), /Alte Jubilare löschen/);
     state.importMissingCitizens = [{ id: 'G-missing', firstName: 'Eva', lastName: 'Fehlt', birthDate: '1936-04-06' }];

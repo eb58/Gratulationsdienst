@@ -4,7 +4,7 @@ import { state, saveData, saveCollectionData, saveQuittungSettings, apiRequest, 
 import { streetAssignment, filteredCitizens, documentCitizens, isPrintedCitizen, selectedTemplate, selectedSender, selectedMember, activeCitizens, groupForCitizen, isReceiptGroupReady, receiptCitizens, receiptCitizensForReadyGroups, duplicateKey } from './assignment.js';
 import { printCurrentRun, completePrintRun, renderSokoForm, renderSokoQuittung } from './documents.js';
 import { parseCsv, mapImportRow } from './import.js';
-import { buildImportResult, importNotice, citizenGridRow, nextMemberIdAfterDelete } from './citizens.js';
+import { buildImportResult, importMonths, importNotice, citizenGridRow, monthOf, nextMemberIdAfterDelete } from './citizens.js';
 import { parseSokoQuestionnairePdf } from './sokoQuestionnairePdf.js';
 import { applySokoQuestionnaireResults } from './sokoQuestionnaire.js';
 import { createSokoQuestionnaireSimulation } from './sokoQuestionnaireSimulation.js';
@@ -232,7 +232,6 @@ const refreshSokoPdfImportUi = result => {
 const syncWeddingAnniversaries = (citizens, source = "Fragebogen") => {
   state.data.weddingAnniversaries = upsertWeddingAnniversariesForCitizens(state.data.weddingAnniversaries || [], citizens, source);
 };
-const csvBirthMonths = mapped => new Set(mapped.map(row => String(row.birthDate || "").slice(5, 7)).filter(Boolean));
 const cleanedWeddingAnniversary = (item, citizen) => ({
   ...item,
   citizenId: citizen.id,
@@ -265,31 +264,55 @@ const selectImportedCitizen = result => {
   const visible = filteredCitizens();
   state.selectedCitizenId = (visible.find(citizen => importedIds.has(citizen.id)) || visible[0])?.id || "";
 };
-const importMappedRows = (mapped, { resetFilters = true } = {}) => {
+const saveImportStep = async () => {
+  const hadAuthToken = Boolean(state.auth.token);
+  const saved = await saveData();
+  return !hadAuthToken || Boolean(saved);
+};
+const deleteCurrentImportMonthCitizens = async months => {
+  if (!months.size) return [];
+  const deleted = state.data.citizens.filter(citizen => months.has(monthOf(citizen.birthDate)));
+  if (!deleted.length) return [];
+  state.data.citizens = state.data.citizens.filter(citizen => !months.has(monthOf(citizen.birthDate)));
+  if (!await saveImportStep()) return null;
+  if (state.auth.token) await deleteQuestionnairePagesForCitizens(deleted.map(citizen => citizen.id));
+  return deleted;
+};
+const importMappedRows = async (mapped, { resetFilters = true, allowMultipleMonths = false } = {}) => {
+  const months = importMonths(mapped);
+  if (!allowMultipleMonths && months.size > 1) {
+    importToast("Import abgebrochen: Eine CSV-Importdatei darf nur einen Geburtsmonat enthalten.");
+    return { newRows: [], updates: [], skipped: 0, deleted: [], retained: state.data.citizens, affectedMonths: [...months], missing: [], aborted: true };
+  }
+  const deletedBeforeImport = await deleteCurrentImportMonthCitizens(months);
+  if (!deletedBeforeImport) {
+    render();
+    importToast("Import abgebrochen: Die bisherigen Monatsdaten konnten nicht gelöscht werden.");
+    return { newRows: [], updates: [], skipped: 0, deleted: [], retained: state.data.citizens, affectedMonths: [...months], missing: [], aborted: true };
+  }
   const result = buildImportResult(mapped, state.data.citizens, row => streetAssignment(row)?.groupId);
+  result.deleted = [...deletedBeforeImport, ...result.deleted];
   const updatesById = new Map(result.updates.map(c => [c.id, c]));
-  const deletedIds = result.deleted.map(citizen => citizen.id);
   state.data.citizens = [...result.retained.map(c => updatesById.get(c.id) ?? c), ...result.newRows];
   cleanWeddingAnniversariesAfterImport(result);
   state.importMissingCitizens = [];
-  const months = csvBirthMonths(mapped);
   if (resetFilters) resetCitizenReviewFilters(months.size === 1 ? [...months][0] : "alle");
   selectImportedCitizen(result);
-  saveData();
   render();
   const mixedMonthsWarning = resetFilters && months.size > 1 ? "Achtung: Die CSV enthält mehrere Geburtsmonate. " : "";
-  importToast(mixedMonthsWarning + importNotice(result));
-  result.questionnaireCleanup = deleteQuestionnairePagesForCitizens(deletedIds);
+  if (await saveImportStep()) importToast(mixedMonthsWarning + importNotice(result));
   return result;
 };
 const importToast = message => toast(message, { anchor: ".soko-pdf-action-row, .import-action-row" });
-const seedCurrentLaboBatch = groups => {
+const buildLaboSeedCsv = groups => {
   const birthdayMonth = monthAfterNext();
-  const csv = followUpSeedCsv(state.data.streets, state.data.citizens, null, birthdayMonth) || seedCsv(state.data.streets, Math.max(50, groups.length), () => birthdayMonth);
+  return followUpSeedCsv(state.data.streets, state.data.citizens, null, birthdayMonth) || seedCsv(state.data.streets, Math.max(50, groups.length), () => birthdayMonth);
+};
+const seedCurrentLaboBatch = groups => {
+  const csv = buildLaboSeedCsv(groups);
   state.importText = csv;
   const rows = parseCsv(csv).map(mapImportRow);
-  const result = importMappedRows(rows, { resetFilters: false });
-  return { rowCount: rows.length, cleanup: result.questionnaireCleanup };
+  return importMappedRows(rows, { resetFilters: false }).then(result => ({ rowCount: rows.length, result }));
 };
 const importedCitizensFromResult = result => {
   const ids = new Set([...result.updates, ...result.newRows].map(citizen => citizen.id));
@@ -847,12 +870,11 @@ export const actions = {
     const rowCount = 500;
     const csv = seedCsv(state.data.streets, rowCount, index => rollingSimulationDate(index, rowCount));
     state.importText = csv;
-    const result = importMappedRows(parseCsv(csv).map(mapImportRow), { resetFilters: false });
+    const result = await importMappedRows(parseCsv(csv).map(mapImportRow), { resetFilters: false, allowMultipleMonths: true });
     const patches = new Map(importedCitizensFromResult(result).map((citizen, index) => [citizen.id, questionnaireCitizenPatch(citizen, index, rowCount)]));
     state.data.citizens = state.data.citizens.map(citizen => patches.get(citizen.id) || citizen);
     syncWeddingAnniversaries([...patches.values()], "Simulation");
-    const batch = seedCurrentLaboBatch(groupedTestAssignments(state.data.streets));
-    await batch.cleanup;
+    const batch = await seedCurrentLaboBatch(groupedTestAssignments(state.data.streets));
     saveData();
     render();
     importToast(`Test-Datenbank zurückgesetzt: ${patches.size.toLocaleString("de-DE")} Jahres-Testdaten mit Fragebogen-Rückmeldungen und ${batch.rowCount.toLocaleString("de-DE")} offene LABO-Fälle für ${monthAfterNext()} simuliert.`);
@@ -861,8 +883,14 @@ export const actions = {
     if (state.auth.user?.role !== "admin") { toast("Nur Admins können Testdaten erzeugen."); return; }
     const groups = groupedTestAssignments(state.data.streets);
     if (!groups.length) { toast("Keine SOKO-Zuordnungen für Testdaten gefunden."); return; }
-    const batch = seedCurrentLaboBatch(groups);
-    await batch.cleanup;
+    await seedCurrentLaboBatch(groups);
+  },
+  "download-labo-seed": () => {
+    if (state.auth.user?.role !== "admin") { toast("Nur Admins können Testdaten erzeugen."); return; }
+    const groups = groupedTestAssignments(state.data.streets);
+    if (!groups.length) { toast("Keine SOKO-Zuordnungen für Testdaten gefunden."); return; }
+    downloadText(`labo-import-${monthAfterNext()}.csv`, buildLaboSeedCsv(groups), "text/csv;charset=utf-8");
+    importToast("LABO-Daten wurden heruntergeladen.");
   },
   "reset-soko-members": () => {
     if (state.auth.user?.role !== "admin") { toast("Nur Admins können Testdaten zurücksetzen."); return; }
@@ -968,8 +996,7 @@ export const actions = {
   },
   "run-import": async () => {
     if (!state.importText) { importToast("Bitte zuerst eine CSV-Datei laden."); return; }
-    const result = importMappedRows(parseCsv(state.importText).map(mapImportRow));
-    await result.questionnaireCleanup;
+    await importMappedRows(parseCsv(state.importText).map(mapImportRow));
   },
   "delete-missing-citizens": () => {
     if (!state.importMissingCitizens?.length) return;

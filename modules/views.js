@@ -1075,6 +1075,7 @@ export const views = {
                 <span>Nur Testzwecke</span>
                 <strong>${state.data.citizens.length.toLocaleString("de-DE")} Jubilare</strong>
               </div>
+              <button type="button" class="ghost-button test-action-button" data-action="download-labo-seed">LABO-Daten herunterladen</button>
               <button type="button" class="ghost-button test-action-button" data-action="seed-citizens">LABO-Import simulieren</button>
               <button type="button" class="danger-button test-action-button" data-action="reset-test-database">Reset Test-Datenbank</button>
             </div>

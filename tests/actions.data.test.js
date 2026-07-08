@@ -56,12 +56,17 @@ globalThis.document = {
 // fetch-Router: Antworten je "METHOD /pfad" registrierbar; protokolliert die Aufrufe.
 const routes = new Map();
 let calls = [];
-const route = (key, payload, { ok = true, status = 200 } = {}) => routes.set(key, { ok, status, json: async () => payload });
+const route = (key, payload, { ok = true, status = 200 } = {}) => routes.set(key, { ok, status, payload });
 globalThis.fetch = (url, options = {}) => {
   const method = options.method || 'GET';
   const path = url.replace(/.*\/php-api/, '');
-  calls.push({ method, path, body: options.body ? JSON.parse(options.body) : null, headers: options.headers || null });
-  const res = routes.get(`${method} ${path}`) || { ok: true, status: 200, json: async () => ({}) };
+  const body = options.body ? JSON.parse(options.body) : null;
+  const request = { method, path, body, headers: options.headers || null };
+  calls.push(request);
+  const routeResponse = routes.get(`${method} ${path}`);
+  const res = routeResponse
+    ? { ...routeResponse, json: async () => typeof routeResponse.payload === 'function' ? routeResponse.payload(request) : routeResponse.payload }
+    : { ok: true, status: 200, json: async () => ({}) };
   return Promise.resolve(res);
 };
 
@@ -328,6 +333,19 @@ describe('Jubilare löschen und Testdaten', () => {
     assert.equal(state.importMissingCitizens.length, 0);
   });
 
+  it('download-labo-seed lädt die simulierten LABO-Daten als CSV herunter', async () => {
+    const beforeCitizens = structuredClone(state.data.citizens);
+    const beforeImportText = state.importText;
+
+    await actions['download-labo-seed']();
+
+    const csv = lastBlobParts[0];
+    assert.equal(csv.codePointAt(0), 0xFEFF);
+    assert.match(csv, /"Anrede";"Vorname";"Nachname";"Strasse";"Hausnummer";"PLZ";"Ortsteil";"Geburtsdatum";"Telefon";"Email"/);
+    assert.deepEqual(state.data.citizens, beforeCitizens);
+    assert.equal(state.importText, beforeImportText);
+  });
+
   it('reset-test-database loescht Bestand, laesst Monatsauswahl unveraendert und erzeugt 500 Jahresdaten mit realistischen Fragebogenwerten', async () => {
     state.data.citizens = [{ id: 'G-old' }];
     state.data.weddingAnniversaries = [{ id: 'WA-G-old', citizenId: 'G-old' }];
@@ -402,12 +420,74 @@ describe('Import-Lauf', () => {
     assert.equal(state.selectedCitizenId, state.data.citizens[0].id);
   });
 
-  it('run-import faellt bei gemischten Geburtsmonaten in der CSV auf "alle" zurueck', async () => {
+  it('run-import bricht bei gemischten Geburtsmonaten in der CSV ab', async () => {
+    state.filters = { ...state.filters, month: '01' };
+    localStorage.setItem('gd_month_filter', '01');
     state.importText = 'Vorname;Nachname;Strasse;Hausnummer;PLZ;Geburtsdatum\nMax;Muster;Hauptstr;1;13407;5.4.1936\nEva;Fehlt;Hauptstr;2;13407;6.6.1940';
     await actions['run-import']();
 
-    assert.equal(state.filters.month, 'alle');
-    assert.equal(localStorage.getItem('gd_month_filter'), 'alle');
+    assert.equal(state.data.citizens.length, 0);
+    assert.equal(state.filters.month, '01');
+    assert.equal(localStorage.getItem('gd_month_filter'), '01');
+    assert.equal(calls.length, 0);
+  });
+
+  it('run-import löscht Monats-Citizens und Fragebogen-Scans vor dem Laden der CSV-Citizens', async () => {
+    state.auth.token = 'token';
+    state.auth.user = { id: 'u-1', role: 'user' };
+    state.data.citizens = [
+      { id: 'G-1', salutation: 'Frau', firstName: 'Erika', lastName: 'Muster', street: 'Hauptstr', houseNo: '1', postalCode: '13407', district: 'Tegel', birthDate: '1936-04-05', source: 'CSV Import', status: 'geladen' },
+      { id: 'G-2', salutation: 'Frau', firstName: 'Eva', lastName: 'Fehlt', street: 'Hauptstr', houseNo: '2', postalCode: '13407', district: 'Tegel', birthDate: '1936-04-06', source: 'CSV Import', status: 'geladen' },
+      { id: 'G-3', salutation: 'Frau', firstName: 'Juli', lastName: 'Bleibt', street: 'Hauptstr', houseNo: '3', postalCode: '13407', district: 'Tegel', birthDate: '1936-07-06', source: 'CSV Import', status: 'geladen' }
+    ];
+    state.data.weddingAnniversaries = [];
+    state.data.streets = defaultData.streets;
+    state.collectionVersions.citizens = { 'G-1': '1', 'G-2': '1', 'G-3': '1' };
+    state.collectionBaselines.citizens = {
+      'G-1': { ...state.data.citizens[0], firstName: 'Alt' },
+      'G-2': { ...state.data.citizens[1] },
+      'G-3': { ...state.data.citizens[2] }
+    };
+    state.importText = 'Anrede;Vorname;Nachname;Strasse;Hausnummer;PLZ;Ortsteil;Geburtsdatum\nFrau;Erika;Muster;Hauptstr;1;13407;Tegel;5.4.1936';
+    route('PUT /citizens', request => request.body.items.map((item, index) => ({ ...item, _version: `2-${index}` })));
+    route('DELETE /questionnaire-pages', { ok: true });
+
+    await actions['run-import']();
+
+    const citizenPutIndexes = calls.map((call, index) => ({ call, index })).filter(entry => entry.call.method === 'PUT' && entry.call.path === '/citizens');
+    const cleanupDeleteIndex = calls.findIndex(call => call.method === 'DELETE' && call.path === '/questionnaire-pages');
+    assert.equal(citizenPutIndexes.length, 2);
+    assert.ok(cleanupDeleteIndex > citizenPutIndexes[0].index);
+    assert.ok(cleanupDeleteIndex < citizenPutIndexes[1].index);
+    assert.deepEqual(citizenPutIndexes[0].call.body.items.map(citizen => citizen.id), ['G-3']);
+    assert.deepEqual(calls[cleanupDeleteIndex].body.citizenIds.sort(), ['G-1', 'G-2']);
+    assert.deepEqual(citizenPutIndexes[1].call.body.items.map(citizen => citizen.lastName), ['Bleibt', 'Muster']);
+    state.auth.token = '';
+  });
+
+  it('run-import räumt Fragebogen-Scans nicht auf, wenn der Citizen-Save scheitert', async () => {
+    state.auth.token = 'token';
+    state.auth.user = { id: 'u-1', role: 'user' };
+    state.data.citizens = [
+      { id: 'G-1', salutation: 'Frau', firstName: 'Erika', lastName: 'Muster', street: 'Hauptstr', houseNo: '1', postalCode: '13407', district: 'Tegel', birthDate: '1936-04-05', source: 'CSV Import', status: 'geladen' },
+      { id: 'G-2', salutation: 'Frau', firstName: 'Eva', lastName: 'Fehlt', street: 'Hauptstr', houseNo: '2', postalCode: '13407', district: 'Tegel', birthDate: '1936-04-06', source: 'CSV Import', status: 'geladen' }
+    ];
+    state.data.weddingAnniversaries = [];
+    state.data.streets = defaultData.streets;
+    state.collectionVersions.citizens = { 'G-1': '1', 'G-2': '1' };
+    state.collectionBaselines.citizens = {
+      'G-1': { ...state.data.citizens[0], firstName: 'Alt' },
+      'G-2': { ...state.data.citizens[1] }
+    };
+    state.importText = 'Anrede;Vorname;Nachname;Strasse;Hausnummer;PLZ;Ortsteil;Geburtsdatum\nFrau;Erika;Muster;Hauptstr;1;13407;Tegel;5.4.1936';
+    route('PUT /citizens', { error: 'conflict' }, { ok: false, status: 409 });
+    route('DELETE /questionnaire-pages', { ok: true });
+
+    await actions['run-import']();
+
+    assert.ok(calls.some(call => call.method === 'PUT' && call.path === '/citizens'));
+    assert.equal(calls.some(call => call.method === 'DELETE' && call.path === '/questionnaire-pages'), false);
+    state.auth.token = '';
   });
 
   it('run-import ersetzt bisherige Jubilare des Importmonats', async () => {

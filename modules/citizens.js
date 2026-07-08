@@ -2,9 +2,9 @@ import { normalize, nextId, todayIso, calculateAge } from './utils.js';
 import { duplicateKey } from './assignment.js';
 
 const LABO_FIELDS = ['salutation', 'street', 'houseNo', 'postalCode', 'district', 'phone', 'email'];
-const monthOf = value => String(value || "").slice(5, 7);
-const importMonths = mapped => new Set(mapped.map(row => monthOf(row.birthDate)).filter(Boolean));
+export const monthOf = value => String(value || "").slice(5, 7);
 const isImportableRow = row => row.firstName && row.lastName && row.birthDate && row.street;
+export const importMonths = mapped => new Set(mapped.filter(isImportableRow).map(row => monthOf(row.birthDate)).filter(Boolean));
 
 const mergeCitizen = (existing, incoming, hasGroup) => {
   return {
@@ -22,7 +22,7 @@ const mergeCitizen = (existing, incoming, hasGroup) => {
 
 export const buildImportResult = (mapped, existingCitizens, assignGroup) => {
   const validRows = mapped.filter(isImportableRow);
-  const months = importMonths(validRows);
+  const months = importMonths(mapped);
   const deleted = existingCitizens.filter(citizen => months.has(monthOf(citizen.birthDate)));
   const retained = existingCitizens.filter(citizen => !months.has(monthOf(citizen.birthDate)));
   const existingByKey = new Map(retained.map(c => [duplicateKey(c), c]));
