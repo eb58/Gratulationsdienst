@@ -1,6 +1,6 @@
 import { $, todayIso, MONTH_KEY, isValidEmail, isValidIban, formatIban, updateItem, nextId, csvEscape, downloadText, downloadBlob, toast, byId, normalizeEmail, normalizeAmount, normalizeDigits, isValidPostalCode, safeStorageSetItem } from './utils.js';
 import { normalizeStreetRules, streetDistrictSummary, streetGroupSummary, normalizeStreetDistrict, defaultData } from './domain.js';
-import { state, saveData, saveCollectionData, saveQuittungSettings, apiRequest, setAuthSession, clearAuthSession, loadCollectionData, hasPendingBackendData } from './state.js';
+import { state, saveData, saveCollectionData, saveQuittungSettings, apiRequest, setAuthSession, clearAuthSession, loadCollectionData, hasPendingBackendData, syncSavedCollectionItem, removeSavedCollectionItem } from './state.js';
 import { streetAssignment, filteredCitizens, documentCitizens, isPrintedCitizen, selectedTemplate, selectedSender, selectedMember, activeCitizens, groupForCitizen, isReceiptGroupReady, receiptCitizens, receiptCitizensForReadyGroups, duplicateKey } from './assignment.js';
 import { printCurrentRun, completePrintRun, renderSokoForm, renderSokoQuittung } from './documents.js';
 import { parseCsv, mapImportRow } from './import.js';
@@ -9,7 +9,7 @@ import { parseSokoQuestionnairePdf } from './sokoQuestionnairePdf.js';
 import { applySokoQuestionnaireResults } from './sokoQuestionnaire.js';
 import { createSokoQuestionnaireSimulation } from './sokoQuestionnaireSimulation.js';
 import { saveQuestionnairePages, deleteAllQuestionnairePages, deleteQuestionnairePagesForCitizens } from './questionnairePages.js';
-import { upsertWeddingAnniversaryForCitizen, upsertWeddingAnniversariesForCitizens } from './weddingAnniversaries.js';
+import { upsertWeddingAnniversaryForCitizen, upsertWeddingAnniversariesForCitizens, weddingAnniversaryFromCitizen } from './weddingAnniversaries.js';
 import { followUpSeedCsv, groupedTestAssignments, monthAfterNext, questionnaireCitizenPatch, rollingSimulationDate, seedCsv } from './testdata.js';
 import { render, renderDialog } from './render.js';
 import { renderCitizenDetail } from './views.js';
@@ -450,7 +450,7 @@ export const actions = {
     state.selectedCitizenId = event.target.closest("[data-id]").dataset.id;
     render();
   },
-  "save-citizen": () => {
+  "save-citizen": async () => {
     const values = formValues("#citizen-form");
     if (!values.wish || values.wish === "offen") { toast("Bitte eine Glückwunsch-Option auswählen."); return; }
     if (!validateEmailFields("#citizen-form")) { toast("Bitte eine gültige E-Mail-Adresse eingeben."); return; }
@@ -458,21 +458,44 @@ export const actions = {
     const currentRows = currentCitizenGridRows();
     const currentIds = currentRows.map(row => row.id);
     const currentIndex = currentIds.indexOf(values.id);
-    const status = isPrintedCitizen(byId(state.data.citizens, values.id)) ? "gedruckt" : "geprüft";
+    const currentCitizen = byId(state.data.citizens, values.id);
+    const previousWeddingAnniversary = (state.data.weddingAnniversaries || []).find(item => item.citizenId === values.id) || null;
+    const status = isPrintedCitizen(currentCitizen) ? "gedruckt" : "geprüft";
     const updatedCitizen = { ...values, postalCode: normalizeDigits(values.postalCode), updatedAt: todayIso(), status };
     state.data.citizens = updateItem(state.data.citizens, values.id, updatedCitizen);
     state.data.weddingAnniversaries = upsertWeddingAnniversaryForCitizen(state.data.weddingAnniversaries || [], updatedCitizen);
     const nextCitizenId = currentIds[currentIndex + 1] || "";
     const reachedEnd = !nextCitizenId || currentIndex < 0;
     state.selectedCitizenId = nextCitizenId || values.id;
-    saveData();
-    const gridUpdated = updateCitizenGridRow(byId(state.data.citizens, values.id));
-    if (gridUpdated) {
-      renderCitizenDetail();
-      const nextRow = currentRows.find(row => row.id === state.selectedCitizenId);
-      showCitizenGridRow(nextRow);
-    } else render();
-    toast(reachedEnd ? "Jubilar gespeichert. Ende der Liste erreicht." : "Jubilar gespeichert.");
+    try {
+      if (!state.auth.token) {
+        await saveData();
+      } else {
+        const savedCitizen = await apiRequest(`/citizens/${values.id}`, { method: "PUT", body: JSON.stringify(updatedCitizen) });
+        syncSavedCollectionItem("citizens", savedCitizen);
+        const weddingAnniversary = weddingAnniversaryFromCitizen(updatedCitizen);
+        if (weddingAnniversary) {
+          const savedWeddingAnniversary = await apiRequest(`/weddingAnniversaries/${weddingAnniversary.id}`, { method: "PUT", body: JSON.stringify(weddingAnniversary) });
+          syncSavedCollectionItem("weddingAnniversaries", savedWeddingAnniversary);
+        } else if (previousWeddingAnniversary) {
+          await apiRequest(`/weddingAnniversaries/${previousWeddingAnniversary.id}`, { method: "DELETE" });
+          removeSavedCollectionItem("weddingAnniversaries", previousWeddingAnniversary.id);
+        }
+      }
+      const gridUpdated = updateCitizenGridRow(byId(state.data.citizens, values.id));
+      if (gridUpdated) {
+        renderCitizenDetail();
+        const nextRow = currentRows.find(row => row.id === state.selectedCitizenId);
+        showCitizenGridRow(nextRow);
+      } else render();
+      toast(reachedEnd ? "Jubilar gespeichert. Ende der Liste erreicht." : "Jubilar gespeichert.");
+    } catch (error) {
+      if (error?.status === 401) {
+        await saveData();
+        return;
+      }
+      toast(error.message);
+    }
   },
   "select-member": event => {
     state.selectedMemberId = event.target.closest("[data-id]").dataset.id;

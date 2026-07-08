@@ -500,6 +500,74 @@ describe('Jubilare pruefen', () => {
   });
 });
 
+describe('Jubilare pruefen (Backend)', () => {
+  it('save-citizen schreibt im Backend nur den betroffenen Jubilar und das passende Hochzeitsjubilaeum', async () => {
+    state.data.citizens = [{
+      id: 'G-1',
+      salutation: 'Frau',
+      firstName: 'Erika',
+      lastName: 'Muster',
+      street: 'Teststrasse',
+      houseNo: '1',
+      postalCode: '13437',
+      district: 'Tegel',
+      birthDate: '1936-06-01',
+      wish: 'offen',
+      status: 'geladen',
+      source: 'CSV Import',
+      updatedAt: '2026-06-01'
+    }];
+    state.auth.token = 'token';
+    route('PUT /citizens/G-1', { ...state.data.citizens[0], updatedAt: '2026-06-01', _version: '4' });
+    route('PUT /weddingAnniversaries/WA-G-1-1976-06-01', {
+      id: 'WA-G-1-1976-06-01',
+      citizenId: 'G-1',
+      salutation: 'Frau',
+      firstName: 'Erika',
+      lastName: 'Muster',
+      birthDate: '1936-06-01',
+      street: 'Teststrasse',
+      houseNo: '1',
+      postalCode: '13437',
+      district: 'Tegel',
+      weddingDate: '1976-06-01',
+      spouseName: 'Heinz',
+      source: 'Fragebogen',
+      capturedAt: '2026-06-01',
+      updatedAt: '2026-06-01',
+      _version: '2'
+    });
+    setForm('#citizen-form', {
+      id: 'G-1',
+      salutation: 'Frau',
+      firstName: 'Erika',
+      lastName: 'Muster',
+      street: 'Teststrasse',
+      houseNo: '1',
+      postalCode: '13437',
+      district: 'Tegel',
+      birthDate: '1936-06-01',
+      phone: '',
+      email: '',
+      wish: 'Besuch erwÃ¼nscht',
+      notes: '',
+      source: 'CSV Import',
+      pressPublication: 'on',
+      weddingAnniversary: 'Goldene Hochzeit',
+      weddingDate: '1976-06-01',
+      spouseName: 'Heinz'
+    });
+
+    await actions['save-citizen']();
+
+    assert.equal(calls.some(call => call.method === 'PUT' && call.path === '/citizens'), false);
+    assert.equal(calls.some(call => call.method === 'PUT' && call.path === '/citizens/G-1'), true);
+    assert.equal(state.collectionVersions.citizens['G-1'], '4');
+    assert.equal(state.collectionVersions.weddingAnniversaries['WA-G-1-1976-06-01'], '2');
+    state.auth.token = '';
+  });
+});
+
 describe('Benutzerverwaltung (apiRequest)', () => {
   it('load-users lädt die Liste und wählt den ersten Benutzer', async () => {
     route('GET /users', [{ id: 'u1', email: 'a@x' }, { id: 'u2', email: 'b@x' }]);

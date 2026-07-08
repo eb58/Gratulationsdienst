@@ -79,6 +79,10 @@ const withoutVersion = item => {
   const { _version, ...persisted } = item || {};
   return persisted;
 };
+const removeKey = (object, key) => {
+  const { [key]: _removed, ...rest } = object || {};
+  return rest;
+};
 const sortKeys = value => {
   if (Array.isArray(value)) return value.map(sortKeys);
   if (!value || typeof value !== "object") return value;
@@ -103,6 +107,20 @@ const withKnownVersion = (collection, item) => {
   const knownVersions = state.collectionVersions[collection] || {};
   const version = item?._version || knownVersions[item?.id] || "";
   return version ? { ...item, _version: version } : item;
+};
+
+export const syncSavedCollectionItem = (collection, item) => {
+  if (!item?.id || !Array.isArray(state.data[collection])) return;
+  state.data[collection] = state.data[collection].map(current => current.id === item.id ? item : current);
+  state.collectionVersions[collection] = { ...(state.collectionVersions[collection] || {}), [item.id]: String(item._version || state.collectionVersions[collection]?.[item.id] || "") };
+  state.collectionBaselines[collection] = { ...(state.collectionBaselines[collection] || {}), [item.id]: withoutVersion(item) };
+};
+
+export const removeSavedCollectionItem = (collection, id) => {
+  if (!id || !Array.isArray(state.data[collection])) return;
+  state.data[collection] = state.data[collection].filter(item => item.id !== id);
+  state.collectionVersions[collection] = removeKey(state.collectionVersions[collection], id);
+  state.collectionBaselines[collection] = removeKey(state.collectionBaselines[collection], id);
 };
 
 const collectionOperations = (collection, items) => {
