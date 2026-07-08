@@ -35,6 +35,8 @@ const {
   authView,
   citizenDetailContent,
   regionAssignmentContent,
+  mapHoverInfoHtml,
+  refreshMapInfoCache,
   sokoMapInfoHtml,
   views
 } = viewModule;
@@ -244,6 +246,14 @@ describe('view partials', () => {
     assert.doesNotMatch(hiddenHtml, /Lea Leitung/);
     assert.doesNotMatch(hiddenHtml, /Erika Mustermann/);
     assert.match(hiddenHtml, /1 Adressen/);
+  });
+
+  it('precomputes map hover data once per render context', () => {
+    const cache = refreshMapInfoCache();
+
+    assert.equal(cache.addrCounts['SOKO 01'], 1);
+    assert.equal(cache.segCounts['SOKO 01'], 1);
+    assert.match(mapHoverInfoHtml('SOKO 01', 'Teststraße'), /Lea Leitung/);
   });
 });
 

@@ -1,6 +1,6 @@
 import { canAccessView, isAdmin, state, loadAuthStatus, loadCollectionData } from './modules/state.js';
 import { MONTH_KEY, storeSplit, safeStorageSetItem, isValidEmail, normalizeIban, isValidIban, normalizeAmount, normalizeDigits, isValidPostalCode } from './modules/utils.js';
-import { viewTitles, sokoMapInfoHtml } from './modules/views.js';
+import { viewTitles, mapHoverInfoHtml, sokoMapInfoHtml } from './modules/views.js';
 import { findNearestAddress } from './modules/map.js';
 import { render, renderDialog } from './modules/render.js';
 import { refreshGridRowData } from './modules/grid.js';
@@ -66,7 +66,17 @@ const guardedActionIds = {
   "select-template": id => id !== state.selectedTemplateId,
   "select-user": id => id !== state.selectedUserId
 };
-const guardedActions = new Set(["new-member", "delete-member", "new-template", "new-user", "load-users", "user-reset-password", "user-reset-mfa", "delete-user", "delete-template", "auth-logout"]);
+const guardedActions = new Set(["new-member",
+  "delete-member",
+  "new-template",
+  "new-user",
+  "load-users",
+  "user-reset-password",
+  "user-reset-mfa",
+  "delete-user",
+  "delete-template",
+  "auth-logout"
+]);
 const busyActions = new Set([
   "auth-login",
   "auth-mfa-login",
@@ -350,7 +360,7 @@ document.addEventListener("mouseover", event => {
   if (!info) return;
   info.dataset.groupId = mapGroup.dataset.groupId;
   info.dataset.hoverToken = "";
-  info.innerHTML = sokoMapInfoHtml(mapGroup.dataset.groupId, mapGroup.dataset.streetName || "");
+  info.innerHTML = mapHoverInfoHtml(mapGroup.dataset.groupId, mapGroup.dataset.streetName || "");
 });
 
 document.addEventListener("mouseout", event => {
@@ -387,7 +397,7 @@ document.addEventListener("mousemove", event => {
     if (!nearest || info.dataset.hoverToken === token) return;
     info.dataset.hoverToken = token;
     info.dataset.groupId = nearest.groupId;
-    info.innerHTML = sokoMapInfoHtml(nearest.groupId, nearest.label);
+    info.innerHTML = mapHoverInfoHtml(nearest.groupId, nearest.label);
   });
 });
 

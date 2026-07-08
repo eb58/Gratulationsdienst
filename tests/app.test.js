@@ -120,6 +120,8 @@ globalThis.requestAnimationFrame = callback => callback();
 
 await import('../app.js');
 const { state } = await import('../modules/state.js');
+const { refreshMapInfoCache } = await import('../modules/views.js');
+const { mapAddressPointsSvg } = await import('../modules/map.js');
 
 beforeEach(() => {
   state.quittungBetrag = '';
@@ -420,10 +422,39 @@ describe('app map hover handlers', () => {
     listeners.mouseover({ target });
 
     assert.equal(elements['#map-soko-info'].dataset.groupId, 'offen');
-    assert.match(elements['#map-soko-info'].innerHTML, /Über eine SOKO/);
+    assert.match(elements['#map-soko-info'].innerHTML, /&Uuml;ber eine SOKO/);
 
     listeners.mouseout({ target, relatedTarget: null });
 
     assert.equal(elements['#map-soko-info'].dataset.groupId, '');
+  });
+
+  it('shows house numbers on the street hover path', () => {
+    state.data = {
+      ...state.data,
+      sokoGroups: [{ id: 'SOKO 01', region: 'Tegel - Teststraße' }],
+      sokoMembers: []
+    };
+    globalThis.REINICKENDORF_ADDRESS_POINTS = {
+      addresses: [{ street: 'Teststraße', houseNumber: '12', postalCode: '13437', soko: '01', lon: 13, lat: 52 }]
+    };
+    mapAddressPointsSvg(([lon, lat]) => [lon, lat]);
+    refreshMapInfoCache();
+
+    const svg = {
+      closest: selector => selector === '.street-map' ? svg : null,
+      getScreenCTM: () => ({ a: 1, inverse: () => ({}) }),
+      createSVGPoint: () => ({
+        x: 0,
+        y: 0,
+        matrixTransform() { return { x: this.x, y: this.y }; }
+      })
+    };
+    const target = eventTarget({ closest: { '.street-map': svg } });
+
+    listeners.mousemove({ target, clientX: 13, clientY: 52 });
+
+    assert.equal(elements['#map-soko-info'].dataset.groupId, 'SOKO 01');
+    assert.match(elements['#map-soko-info'].innerHTML, /12/);
   });
 });

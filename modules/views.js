@@ -396,6 +396,71 @@ const sokoPeopleInfoHtml = (members, citizens, monthLabel) => {
     </div>
   `;
 };
+let mapInfoCache = null;
+const buildMapInfoCache = () => {
+  const addrCounts = Object.fromEntries(Object.entries(mapAddressPointGroups()).map(([groupId, addresses]) => [groupId, addresses.length]));
+  const segCounts = mapSegmentCounts();
+  if (!state.showMapPeople) return { addrCounts, segCounts, membersByGroup: {}, citizensByGroup: {}, monthLabel: "" };
+  const membersByGroup = state.data.sokoMembers.reduce((groups, member) => {
+    if (!member.groupId) return groups;
+    (groups[member.groupId] ||= []).push(member);
+    return groups;
+  }, {});
+  Object.values(membersByGroup).forEach(members => members.sort((a, b) => b.isLeader - a.isLeader));
+  const citizensByGroup = activeCitizens().reduce((groups, citizen) => {
+    if (state.filters.month !== "alle" && citizen.birthDate?.slice(5, 7) !== state.filters.month) return groups;
+    const groupId = groupForCitizen(citizen)?.id;
+    if (!groupId) return groups;
+    (groups[groupId] ||= []).push(citizen);
+    return groups;
+  }, {});
+  const monthLabel = months.find(([v]) => v === state.filters.month)?.[1] || state.filters.month;
+  return { addrCounts, segCounts, membersByGroup, citizensByGroup, monthLabel };
+};
+export const refreshMapInfoCache = () => mapInfoCache = buildMapInfoCache();
+const mapInfoCacheForHover = () => mapInfoCache || refreshMapInfoCache();
+export const mapHoverInfoHtml = (groupId, streetName = "") => {
+  if (!groupId || groupId === "offen") return `<p class="map-soko-hint muted">&Uuml;ber eine SOKO auf der Karte fahren</p>`;
+  if (!groupId || groupId === "offen") return `<p class="map-soko-hint muted">Ãœber eine SOKO auf der Karte fahren</p>`;
+  const cache = mapInfoCacheForHover();
+  const group = state.data.sokoGroups.find(g => g.id === groupId);
+  const members = cache.membersByGroup[groupId] || [];
+  const citizens = cache.citizensByGroup[groupId] || [];
+  const monthLabel = cache.monthLabel;
+  const addrCount = cache.addrCounts[groupId] || 0;
+  const segCount = cache.segCounts[groupId] || 0;
+  const color = sokoColors[groupId] || sokoColors.offen;
+  return `
+    <div class="map-info-header">
+      <span class="map-info-swatch" style="background:${escapeHtml(color)}"></span>
+      <div>
+        <h3>${escapeHtml(groupId)}</h3>
+        ${group?.region ? `<div class="muted" style="font-size:13px">${escapeHtml(group.region.split(" - ")[0])}</div>` : ""}
+      </div>
+    </div>
+    ${streetName ? `<div class="map-info-street">${escapeHtml(streetName)}</div>` : ""}
+    <div class="map-info-stats">
+      <span>${addrCount.toLocaleString("de-DE")} Adressen</span>
+      <span>${segCount.toLocaleString("de-DE")} Stra&szlig;enabschnitte</span>
+    </div>
+    ${sokoPeopleInfoHtml(members, citizens, monthLabel)}
+  `;
+  return `
+    <div class="map-info-header">
+      <span class="map-info-swatch" style="background:${escapeHtml(color)}"></span>
+      <div>
+        <h3>${escapeHtml(groupId)}</h3>
+        ${group?.region ? `<div class="muted" style="font-size:13px">${escapeHtml(group.region.split(" - ")[0])}</div>` : ""}
+      </div>
+    </div>
+    ${streetName ? `<div class="map-info-street">${escapeHtml(streetName)}</div>` : ""}
+    <div class="map-info-stats">
+      <span>${addrCount.toLocaleString("de-DE")} Adressen</span>
+      <span>${segCount.toLocaleString("de-DE")} Straßenabschnitte</span>
+    </div>
+    ${sokoPeopleInfoHtml(members, citizens, monthLabel)}
+  `;
+};
 const citizenDetailSplitHtml = (citizen, showQuestionnairePanel, citizenSplit) => {
   if (!citizen) return "";
   const citizenSplitterMin = showQuestionnairePanel ? 24 : 20;
@@ -697,6 +762,7 @@ export const views = {
       ensureMapData().then(() => { if (state.view === "map") render(); });
       return `<div class="panel map-main-panel"><div class="empty-state">Kartendaten werden geladen…</div></div>`;
     }
+    refreshMapInfoCache();
     const segCounts = mapSegmentCounts();
     const addrCounts = Object.fromEntries(Object.entries(mapAddressPointGroups()).map(([g, a]) => [g, a.length]));
     return `
