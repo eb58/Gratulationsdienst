@@ -313,6 +313,29 @@ describe('main views', () => {
     assert.doesNotMatch(views.import(), /Verschwundene endgültig löschen/);
   });
 
+  it('renders age-specific template fields up to 110 and keeps saved extra ages', () => {
+    state.data.templates = [{ ...template, ageTexts: { 112: 'Sondertext 112' } }];
+
+    const html = views.templates();
+
+    assert.match(html, /data-age="85"/);
+    assert.match(html, /data-age="110"/);
+    assert.doesNotMatch(html, /data-age="120"/);
+    assert.match(html, /data-age="112"/);
+    assert.match(html, /Sondertext 112/);
+    assert.match(html, /<summary>85\. Geburtstag<\/summary>/);
+    assert.match(html, /85 Jahre sind ein beeindruckender Lebensweg/);
+  });
+
+  it('restores the saved open state for age sections', () => {
+    localStorage.setItem('gd_template_age_texts_open', JSON.stringify({ 90: false, 91: true }));
+
+    const html = views.templates();
+
+    assert.match(html, /<details class="template-age-text">[\s\S]*<summary>90\. Geburtstag<\/summary>/);
+    assert.match(html, /<details class="template-age-text" open>[\s\S]*<summary>91\. Geburtstag<\/summary>/);
+  });
+
   it('zeigt bei Hochzeitsjubiläen standardmäßig nur echte Jubiläen, per Toggle auch alle Termine', () => {
     const currentYear = new Date().getFullYear();
     state.filters.weddingMonth = 'alle';

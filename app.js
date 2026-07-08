@@ -7,6 +7,7 @@ import { refreshGridRowData } from './modules/grid.js';
 import { actions } from './modules/actions.js';
 import { hasDirtyForm, requestDirtyFormLeave, trackDirtyFormChange } from './modules/dirtyForms.js';
 import { runBusy } from './modules/busy.js';
+import { storeTemplateAgeTextOpen } from './modules/templates.js';
 
 globalThis.GRATULATIONSDIENST_VERSION = typeof __APP_VERSION__ === "undefined" ? "dev" : __APP_VERSION__;
 
@@ -198,6 +199,13 @@ const handleSidebarToggleClick = sidebarToggle => {
   setSidebarCollapsed(!document.body.classList.contains("sidebar-collapsed"));
   return true;
 };
+const handleTemplateAgeTextToggle = details => {
+  if (!details) return false;
+  const age = Number.parseInt(details.querySelector("[data-template-age-text]")?.dataset.age || "", 10);
+  if (!Number.isFinite(age)) return false;
+  storeTemplateAgeTextOpen(age, details.open);
+  return true;
+};
 const handleNavClick = nav => {
   if (!nav) return false;
   if (!state.auth.user) return true;
@@ -237,6 +245,11 @@ document.addEventListener("click", event => {
   if (handleNavClick(nav)) return;
   handleActionClick(action, event);
 });
+
+document.addEventListener("toggle", event => {
+  const details = event.target.closest(".template-age-text");
+  if (handleTemplateAgeTextToggle(details)) return;
+}, true);
 
 let searchRefreshTimer = null;
 document.addEventListener("input", event => {

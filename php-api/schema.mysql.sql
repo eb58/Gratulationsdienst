@@ -133,6 +133,7 @@ CREATE TABLE IF NOT EXISTS gd_templates (
     sender_id VARCHAR(32) NOT NULL DEFAULT '',
     subject VARCHAR(255) NOT NULL DEFAULT '',
     body TEXT NULL,
+    age_texts JSON NULL,
     background_image LONGTEXT NULL,
     back_background_image LONGTEXT NULL,
     updated_at_date DATE NULL,

@@ -2447,6 +2447,28 @@ tbody tr.selected {
   font-weight: 700;
 }
 
+.template-age-text-list {
+  display: grid;
+  gap: 8px;
+}
+
+.template-age-text {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: var(--panel);
+}
+
+.template-age-text summary {
+  cursor: pointer;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.template-age-text textarea {
+  min-height: 120px;
+}
+
 .split-controls {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);

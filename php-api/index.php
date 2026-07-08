@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 // Bei jeder Schema-Aenderung (neue ensureColumn/ensureIndex-Zeile in initSchema) erhoehen,
 // damit die Migration nach dem Deployment einmal laeuft; danach ueberspringt sie jeder Request.
-const SCHEMA_VERSION = '5';
+const SCHEMA_VERSION = '6';
 const COLLECTIONS = ['citizens', 'weddingAnniversaries', 'sokoGroups', 'sokoMembers', 'streets', 'senders', 'templates'];
 const ADMIN_COLLECTIONS = ['sokoGroups', 'sokoMembers', 'streets', 'senders', 'templates'];
 const SESSION_TTL_SECONDS = 28800;
@@ -196,6 +196,7 @@ function collectionConfig(string $collection): array
                 'senderId' => ['sender_id', 'string'],
                 'subject' => ['subject', 'string'],
                 'body' => ['body', 'string'],
+                'ageTexts' => ['age_texts', 'json'],
                 'backgroundImage' => ['background_image', 'string'],
                 'backBackgroundImage' => ['back_background_image', 'string'],
                 'updatedAt' => ['updated_at_date', 'date'],
@@ -681,6 +682,7 @@ function initSchema(array $db): void
     ensureColumn($db, 'gd_streets', 'area', "ALTER TABLE gd_streets ADD COLUMN area VARCHAR(120) NOT NULL DEFAULT '' AFTER rules");
     ensureColumn($db, 'gd_streets', 'group_id', "ALTER TABLE gd_streets ADD COLUMN group_id VARCHAR(32) NOT NULL DEFAULT '' AFTER area");
     ensureIndex($db, 'gd_streets', 'idx_gd_streets_group', 'ALTER TABLE gd_streets ADD INDEX idx_gd_streets_group (group_id)');
+    ensureColumn($db, 'gd_templates', 'age_texts', 'ALTER TABLE gd_templates ADD COLUMN age_texts JSON NULL AFTER body');
     ensureColumn($db, 'gd_templates', 'background_image', 'ALTER TABLE gd_templates ADD COLUMN background_image LONGTEXT NULL AFTER body');
     ensureColumn($db, 'gd_templates', 'back_background_image', 'ALTER TABLE gd_templates ADD COLUMN back_background_image LONGTEXT NULL AFTER background_image');
     ensureColumn($db, 'gd_soko_members', 'account_holder', "ALTER TABLE gd_soko_members ADD COLUMN account_holder VARCHAR(180) NOT NULL DEFAULT '' AFTER bank");

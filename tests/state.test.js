@@ -102,10 +102,24 @@ describe('template normalization', () => {
     assert.equal(normalized.backgroundImage, '');
   });
 
+  it('normalizes template texts by age', () => {
+    const normalized = normalizeTemplate({ id: 'custom', name: 'Custom', ageTexts: { 90: 'Text 90', 91: ' ', x: 'ungueltig' } });
+
+    assert.deepEqual(normalized.ageTexts, { 90: 'Text 90' });
+  });
+
+  it('fills birthday templates without saved age texts', () => {
+    const normalized = normalizeTemplate({ id: 'custom', name: 'Custom', occasion: 'Geburtstag' });
+
+    assert.match(normalized.ageTexts[85], /85 Jahre/);
+    assert.match(normalized.ageTexts[110], /110 Jahre/);
+  });
+
   it('keeps default templates and appends custom templates', () => {
     const normalized = normalizeTemplates([{ id: 'custom', name: 'Eigene Vorlage' }]);
     assert.ok(normalized.some(template => template.id === 'T-001'));
     assert.ok(normalized.some(template => template.id === 'custom' && template.format === 'DIN A4 Brief'));
+    assert.match(normalized.find(template => template.id === 'T-001').ageTexts[85], /85 Jahre/);
   });
 });
 

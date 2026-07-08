@@ -10,6 +10,7 @@ import { SOKO_QUESTIONNAIRE_IMPORTED_STATUS } from './sokoQuestionnaire.js';
 import { weddingAnniversaryLabel } from './weddingAnniversaries.js';
 import { render, applyPendingFocus } from './render.js'; // Zyklus OK: render wird nur in Callbacks aufgerufen
 import { rememberDirtyFormBaselines } from './dirtyForms.js';
+import { templateAgeTextOpen, templateAgeTextsForView, templateTextAges } from './templates.js';
 
 export const viewTitles = {
   dashboard: "Dashboard",
@@ -59,6 +60,23 @@ const documentPreviewStack = (template, citizen, sender) => {
           ${backPreview}
         </div>
       ` : ""}
+    </div>
+  `;
+};
+
+const templateAgeTextFields = template => {
+  const ageTexts = templateAgeTextsForView(template);
+  return `
+    <div class="field full template-age-texts">
+      <label>Texte je Alter</label>
+      <div class="template-age-text-list">
+        ${templateTextAges(template).map(age => `
+          <details class="template-age-text"${templateAgeTextOpen(age) ? ' open' : ''}>
+            <summary>${age}. Geburtstag</summary>
+            <textarea name="_ageText_${age}" data-template-age-text data-age="${age}" placeholder="Leer = Standardtext">${escapeHtml(ageTexts[age] || '')}</textarea>
+          </details>
+        `).join("")}
+      </div>
     </div>
   `;
 };
@@ -891,6 +909,7 @@ export const views = {
                 </div>
               </div>
               ${textField("body", "Text", template.body, "full")}
+              ${templateAgeTextFields(template)}
               <div class="field full">
                 <button type="button" class="primary-button" data-action="save-template">Vorlage speichern</button>
               </div>

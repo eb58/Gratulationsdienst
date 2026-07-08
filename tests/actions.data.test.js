@@ -24,7 +24,8 @@ const setForm = (selector, entries, extra = {}) => {
     _entries: Object.entries(entries),
     querySelectorAll: sel => sel === "input[type='email']" ? (extra.emailInputs || [])
       : sel === '[data-postal-code-field]' ? (extra.postalInputs || [])
-      : sel === '[data-rule-row]' ? (extra.ruleRows || []) : []
+      : sel === '[data-rule-row]' ? (extra.ruleRows || [])
+      : sel === '[data-template-age-text]' ? (extra.ageTextFields || []) : []
   };
 };
 const setField = (selector, value) => { nodes[selector] = { value }; };
@@ -234,6 +235,8 @@ describe('Absender und Vorlagen', () => {
     await actions['new-template']();
     assert.equal(state.data.templates.length, before + 1);
     assert.equal(state.selectedTemplateId, state.data.templates.at(-1).id);
+    assert.equal(Object.keys(state.data.templates.at(-1).ageTexts || {}).length, 22);
+    assert.match(state.data.templates.at(-1).ageTexts[85], /85 Jahre/);
   });
 
   it('save-template aktualisiert updatedAt der ausgewählten Vorlage', async () => {
@@ -241,6 +244,56 @@ describe('Absender und Vorlagen', () => {
     delete nodes['#template-form'];
     await actions['save-template']();
     assert.equal(state.data.templates[0].updatedAt.length, 10);
+  });
+
+  it('save-template übernimmt gepflegte Texte je Alter', async () => {
+    const template = state.data.templates[0];
+    setForm('#template-form', {
+      id: template.id,
+      name: template.name,
+      occasion: template.occasion,
+      format: template.format,
+      senderId: template.senderId,
+      subject: template.subject,
+      body: template.body
+    }, {
+      ageTextFields: [
+        fieldInput('Text für 90', { age: '90' }),
+        fieldInput('   ', { age: '91' }),
+        fieldInput('Text für 102', { age: '102' })
+      ]
+    });
+
+    await actions['save-template']();
+
+    assert.deepEqual(state.data.templates[0].ageTexts, { 90: 'Text für 90', 102: 'Text für 102' });
+  });
+
+  it('insert-token fügt Platzhalter in den fokussierten Alterstext ein', () => {
+    const textarea = {
+      tagName: 'TEXTAREA',
+      value: 'Hallo ',
+      selectionStart: 6,
+      selectionEnd: 6,
+      focus() { this.focused = true; },
+      setSelectionRange(start, end) {
+        this.selectionStart = start;
+        this.selectionEnd = end;
+      }
+    };
+    const form = { contains: node => node === textarea };
+    globalThis.document.activeElement = textarea;
+
+    actions['insert-token']({
+      target: {
+        dataset: { token: '{{alter}}' },
+        closest: selector => selector === '#template-form' ? form : null
+      }
+    });
+
+    assert.equal(textarea.value, 'Hallo {{alter}}');
+    assert.equal(textarea.focused, true);
+    assert.equal(textarea.selectionStart, 15);
   });
 
   it('delete-template → confirm entfernt die Vorlage (nicht die letzte)', async () => {

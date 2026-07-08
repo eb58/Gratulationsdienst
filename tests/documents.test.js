@@ -124,6 +124,19 @@ describe('template rendering', () => {
     assert.match(rendered.body, /Bezirksamt/);
   });
 
+  it('uses age-specific template text with fallback to the default body', () => {
+    const template = {
+      subject: 'Glückwunsch {{alter}}',
+      body: 'Standard {{alter}}',
+      ageTexts: {
+        90: 'Spezialtext {{alter}} {{nachname}}'
+      }
+    };
+
+    assert.equal(renderTemplate(template, citizen, sender).body, 'Spezialtext 90 Mustermann');
+    assert.equal(renderTemplate(template, { ...citizen, birthDate: '1941-06-01' }, sender).body, 'Standard 85');
+  });
+
   it('trims background image values', () => {
     assert.equal(templateBackgroundImage({ backgroundImage: ' data:image/png;base64,abc ' }), 'data:image/png;base64,abc');
     assert.equal(templateBackBackgroundImage({ backBackgroundImage: ' back ' }), 'back');

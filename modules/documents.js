@@ -2,6 +2,7 @@ import { escapeHtml, normalize, byId, todayIso, calculateAge, formatDate, format
 import { state, saveData } from './state.js';
 import { groupForCitizen, selectedCitizen, selectedTemplate, selectedSender } from './assignment.js';
 import { render } from './render.js'; // Zyklus OK: render wird nur in Callbacks aufgerufen
+import { templateBodyForAge } from './templates.js';
 import { qrCodeSvg } from './qr.js';
 import { SOKO_CHECKBOXES, SOKO_CHECKBOX_SIZE_MM, SOKO_QR_BOX, SOKO_QR_BOX2, sokoQuestionnaireCode } from './sokoQuestionnaire.js';
 
@@ -19,6 +20,7 @@ const documentSize = value => {
 
 export const renderTemplate = (template = selectedTemplate(), citizen = selectedCitizen(), sender = selectedSender()) => {
   const group = groupForCitizen(citizen);
+  const age = calculateAge(citizen.birthDate);
   const replacements = {
     anrede: letterSalutation(citizen.salutation),
     vorname: citizen.firstName,
@@ -27,12 +29,12 @@ export const renderTemplate = (template = selectedTemplate(), citizen = selected
     plz: citizen.postalCode,
     ortsteil: citizen.district,
     geburtstag: formatDate(new Date(Number(todayIso().slice(0, 4)), new Date(citizen.birthDate).getMonth(), new Date(citizen.birthDate).getDate())),
-    alter: calculateAge(citizen.birthDate),
+    alter: age,
     soko: group?.id || "offen",
     absender: sender.name
   };
-  const replace = text => Object.entries(replacements).reduce((result, [key, value]) => result.replaceAll(`{{${key}}}`, value), text);
-  return { subject: replace(template.subject), body: replace(template.body), group };
+  const replace = text => Object.entries(replacements).reduce((result, [key, value]) => result.replaceAll(`{{${key}}}`, value), String(text ?? ''));
+  return { subject: replace(template.subject), body: replace(templateBodyForAge(template, age)), group };
 };
 
 export const documentFormat = template => {

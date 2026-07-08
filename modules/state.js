@@ -1,6 +1,7 @@
 import { STORAGE_KEY, PENDING_STORAGE_KEY, MONTH_KEY, QUITTUNG_MONTH_KEY, QUITTUNG_SETTINGS_KEY, MAP_MONTH_KEY, API_BASE, storedSplit, repairStoredText, toast, normalize, safeStorageSetItem } from './utils.js';
 import { defaultData, buildStreetData } from './domain.js';
 import { render } from './render.js'; // Zyklus OK: render wird nur in Callbacks aufgerufen
+import { templateAgeTextsForTemplate } from './templates.js';
 
 const AUTH_TOKEN_KEY = "gd_auth_token";
 const storedAuthToken = () => {
@@ -47,6 +48,7 @@ export const normalizeTemplate = template => {
     ...fallback,
     ...template,
     format: template.format || fallback.format || "DIN A4 Brief",
+    ageTexts: templateAgeTextsForTemplate({ ...fallback, ...template }),
     backgroundImage: template.backgroundImage || fallback.backgroundImage || "",
     backBackgroundImage: template.backBackgroundImage || fallback.backBackgroundImage || ""
   };

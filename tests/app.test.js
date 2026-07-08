@@ -216,6 +216,23 @@ describe('app click handler', () => {
     assert.equal(toggle.getAttribute('aria-expanded'), 'true');
   });
 
+  it('speichert den Aufklappzustand der Alterstexte', () => {
+    const details = {
+      open: false,
+      querySelector: selector => selector === '[data-template-age-text]' ? { dataset: { age: '90' } } : null,
+      closest: selector => selector === '.template-age-text' ? details : null
+    };
+
+    listeners.toggle({ target: details });
+
+    assert.equal(localStorage.getItem('gd_template_age_texts_open'), '{"90":false}');
+
+    details.open = true;
+    listeners.toggle({ target: details });
+
+    assert.equal(localStorage.getItem('gd_template_age_texts_open'), '{"90":true}');
+  });
+
   it('changes views through nav clicks and closes nav when already active', () => {
     const nav = { dataset: { nav: 'import' } };
     const target = eventTarget({ closest: { '[data-nav]': nav } });

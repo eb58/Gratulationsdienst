@@ -14,6 +14,7 @@ import { followUpSeedCsv, groupedTestAssignments, monthAfterNext, questionnaireC
 import { render, renderDialog } from './render.js';
 import { renderCitizenDetail } from './views.js';
 import { cancelDirtyFormLeave, confirmDirtyFormLeave } from './dirtyForms.js';
+import { buildBirthdayAgeTexts, normalizeTemplateAgeTexts } from './templates.js';
 
 const formEntryValue = value => typeof value === "string" ? value : value.name;
 const formValues = selector => Object.fromEntries([...new FormData($(selector)).entries()].filter(([key]) => !key.startsWith("_")).map(([key, value]) => [key, formEntryValue(value)]));
@@ -33,7 +34,13 @@ const templateBackgroundField = event => {
   return templateBackgroundFields.has(field) ? field : "backgroundImage";
 };
 const templateBackgroundSide = field => field === "backBackgroundImage" ? "Rückseite" : "Vorderseite";
-const templateFormValues = () => $("#template-form") ? { ...selectedTemplate(), ...formValues("#template-form") } : selectedTemplate();
+const templateAgeTextsFromForm = () => {
+  const form = $("#template-form");
+  if (!form) return selectedTemplate().ageTexts || {};
+  const values = Object.fromEntries([...form.querySelectorAll("[data-template-age-text]")].map(field => [field.dataset.age, field.value]));
+  return normalizeTemplateAgeTexts(values);
+};
+const templateFormValues = () => $("#template-form") ? { ...selectedTemplate(), ...formValues("#template-form"), ageTexts: templateAgeTextsFromForm() } : selectedTemplate();
 const collectionItemVersion = (collection, id) => state.collectionVersions[collection]?.[id] || "";
 const collectionItemPayload = (collection, item) => {
   const version = item?._version || collectionItemVersion(collection, item?.id);
@@ -736,7 +743,10 @@ export const actions = {
     }
   },
   "insert-token": event => {
-    const textarea = $("#body");
+    const form = event.target.closest?.("#template-form");
+    const active = globalThis.document?.activeElement;
+    const textarea = active?.tagName === "TEXTAREA" && form?.contains(active) ? active : $("#body");
+    if (!textarea) return;
     const token = event.target.dataset.token;
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
@@ -750,7 +760,7 @@ export const actions = {
   },
   "new-template": async () => {
     const id = nextId("T", state.data.templates);
-    const template = { id, name: "Neue Vorlage", occasion: "Geburtstag", format: "DIN A4 Brief", senderId: selectedSender().id, subject: "Herzliche Glückwünsche zum {{alter}}. Geburtstag", body: "{{anrede}} {{nachname}},\n\nzu Ihrem {{alter}}. Geburtstag gratulieren wir Ihnen sehr herzlich.\n\nMit freundlichen Grüßen\n{{absender}}", updatedAt: todayIso() };
+    const template = { id, name: "Neue Vorlage", occasion: "Geburtstag", format: "DIN A4 Brief", senderId: selectedSender().id, subject: "Herzliche Glückwünsche zum {{alter}}. Geburtstag", body: "{{anrede}} {{nachname}},\n\nzu Ihrem {{alter}}. Geburtstag gratulieren wir Ihnen sehr herzlich.\n\nMit freundlichen Grüßen\n{{absender}}", ageTexts: buildBirthdayAgeTexts("wir"), updatedAt: todayIso() };
     state.data.templates = [...state.data.templates, { ...template, backgroundImage: "", backBackgroundImage: "" }];
     state.selectedTemplateId = id;
     try {
