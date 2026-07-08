@@ -209,7 +209,7 @@ export const citizenDetailContent = citizen => `
         ${postalCodeField("postalCode", "PLZ", citizen.postalCode)}
         ${field("district", "Ortsteil", citizen.district)}
         ${field("phone", "Telefon", citizen.phone)}
-        ${emailField("email", "E-Mail", citizen.email)}
+        ${emailField("email", "E-Mail", citizen.email, "", true)}
       </div>
     </section>
   </form>

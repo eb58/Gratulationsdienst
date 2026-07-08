@@ -22,12 +22,12 @@ export const field = (name, label, value, type = "text", extra = "", inputAttrs 
     </div>
   `;
 };
-export const emailField = (name, label, value, extra = "") => {
+export const emailField = (name, label, value, extra = "", noPlaceholder = false) => {
   const valid = isValidEmail(value);
   return `
     <div class="field ${extra}">
       <label for="${name}">${label}</label>
-      <input id="${name}" name="${name}" class="${valid ? "" : "invalid"}" type="email" value="${escapeHtml(value)}" placeholder="name@example.de" autocomplete="email">
+      <input id="${name}" name="${name}" class="${valid ? "" : "invalid"}" type="email" value="${escapeHtml(value)}" ${noPlaceholder ? "" : 'placeholder="name@example.de"'} autocomplete="email">
       <small class="field-hint error">${emailHint(value)}</small>
     </div>
   `;
