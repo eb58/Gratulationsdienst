@@ -34,13 +34,54 @@ const templateBackgroundField = event => {
 };
 const templateBackgroundSide = field => field === "backBackgroundImage" ? "Rückseite" : "Vorderseite";
 const templateFormValues = () => $("#template-form") ? { ...selectedTemplate(), ...formValues("#template-form") } : selectedTemplate();
-const saveTemplatePatch = patch => {
+const collectionItemVersion = (collection, id) => state.collectionVersions[collection]?.[id] || "";
+const collectionItemPayload = (collection, item) => {
+  const version = item?._version || collectionItemVersion(collection, item?.id);
+  return version ? { ...item, _version: version } : item;
+};
+const createCollectionItem = async (collection, item) => {
+  const savedItem = await apiRequest(`/${collection}`, { method: "POST", body: JSON.stringify(collectionItemPayload(collection, item)) });
+  syncSavedCollectionItem(collection, savedItem);
+  return savedItem;
+};
+const saveCollectionItem = async (collection, item) => {
+  const savedItem = await apiRequest(`/${collection}/${item.id}`, { method: "PUT", body: JSON.stringify(collectionItemPayload(collection, item)) });
+  syncSavedCollectionItem(collection, savedItem);
+  return savedItem;
+};
+const deleteCollectionItem = async (collection, id) => {
+  const version = collectionItemVersion(collection, id);
+  await apiRequest(`/${collection}/${id}`, { method: "DELETE", headers: version ? { "If-Match": version } : {} });
+  removeSavedCollectionItem(collection, id);
+};
+const handleSingleSaveError = async error => {
+  if (error?.status === 401) {
+    await saveData();
+    return true;
+  }
+  if (error?.status === 409) {
+    toast("Daten wurden parallel geändert. Der aktuelle Stand wird neu geladen; bitte die Änderung erneut prüfen.");
+    await loadCollectionData({ force: true });
+    return true;
+  }
+  return false;
+};
+const saveTemplatePatch = async patch => {
   const values = { ...templateFormValues(), ...patch, updatedAt: todayIso() };
   const id = String(values.id);
-  state.data.templates = updateItem(state.data.templates, id, { ...values, id });
+  const template = { ...values, id };
+  state.data.templates = updateItem(state.data.templates, id, template);
   state.selectedTemplateId = id;
-  saveData();
-  render();
+  try {
+    if (!state.auth.token) await saveData();
+    else await saveCollectionItem("templates", template);
+    render();
+    return true;
+  } catch (error) {
+    if (await handleSingleSaveError(error)) return false;
+    toast(error.message);
+    return false;
+  }
 };
 const authDone = session => {
   setAuthSession(session);
@@ -460,8 +501,10 @@ export const actions = {
     const currentIndex = currentIds.indexOf(values.id);
     const currentCitizen = byId(state.data.citizens, values.id);
     const previousWeddingAnniversary = (state.data.weddingAnniversaries || []).find(item => item.citizenId === values.id) || null;
+    const citizenVersion = currentCitizen?._version || state.collectionVersions.citizens?.[values.id] || "";
+    const weddingAnniversaryVersion = previousWeddingAnniversary?._version || state.collectionVersions.weddingAnniversaries?.[previousWeddingAnniversary?.id || ""] || "";
     const status = isPrintedCitizen(currentCitizen) ? "gedruckt" : "geprüft";
-    const updatedCitizen = { ...values, postalCode: normalizeDigits(values.postalCode), updatedAt: todayIso(), status };
+    const updatedCitizen = { ...values, postalCode: normalizeDigits(values.postalCode), updatedAt: todayIso(), status, ...(citizenVersion ? { _version: citizenVersion } : {}) };
     state.data.citizens = updateItem(state.data.citizens, values.id, updatedCitizen);
     state.data.weddingAnniversaries = upsertWeddingAnniversaryForCitizen(state.data.weddingAnniversaries || [], updatedCitizen);
     const nextCitizenId = currentIds[currentIndex + 1] || "";
@@ -475,7 +518,8 @@ export const actions = {
         syncSavedCollectionItem("citizens", savedCitizen);
         const weddingAnniversary = weddingAnniversaryFromCitizen(updatedCitizen);
         if (weddingAnniversary) {
-          const savedWeddingAnniversary = await apiRequest(`/weddingAnniversaries/${weddingAnniversary.id}`, { method: "PUT", body: JSON.stringify(weddingAnniversary) });
+          const weddingAnniversaryPayload = { ...weddingAnniversary, ...(weddingAnniversaryVersion ? { _version: weddingAnniversaryVersion } : {}) };
+          const savedWeddingAnniversary = await apiRequest(`/weddingAnniversaries/${weddingAnniversary.id}`, { method: "PUT", body: JSON.stringify(weddingAnniversaryPayload) });
           syncSavedCollectionItem("weddingAnniversaries", savedWeddingAnniversary);
         } else if (previousWeddingAnniversary) {
           await apiRequest(`/weddingAnniversaries/${previousWeddingAnniversary.id}`, { method: "DELETE" });
@@ -490,10 +534,7 @@ export const actions = {
       } else render();
       toast(reachedEnd ? "Jubilar gespeichert. Ende der Liste erreicht." : "Jubilar gespeichert.");
     } catch (error) {
-      if (error?.status === 401) {
-        await saveData();
-        return;
-      }
+      if (await handleSingleSaveError(error)) return;
       toast(error.message);
     }
   },
@@ -501,16 +542,25 @@ export const actions = {
     state.selectedMemberId = event.target.closest("[data-id]").dataset.id;
     render();
   },
-  "new-member": () => {
+  "new-member": async () => {
     const id = nextId("S", state.data.sokoMembers);
     const member = { id, salutation: "Frau", firstName: "", lastName: "", birthDate: "", groupId: state.data.sokoGroups[0].id, street: "", postalCode: "", city: "", phone: "", mobile: "", email: "", bank: "", accountHolder: "", allowance: "35,00", termFrom: todayIso(), termTo: "2028-12-31", billingAmount: "15,00", zpNr: "", kassenzeichen: "", misc: "", note: "", isLeader: false };
     state.data.sokoMembers = [...state.data.sokoMembers, member];
     state.selectedMemberId = id;
-    saveData();
-    render();
-    toast("Neues SOKO-Mitglied angelegt.");
+    try {
+      if (!state.auth.token) {
+        await saveData();
+      } else {
+        await createCollectionItem("sokoMembers", member);
+      }
+      render();
+      toast("Neues SOKO-Mitglied angelegt.");
+    } catch (error) {
+      if (await handleSingleSaveError(error)) return;
+      toast(error.message);
+    }
   },
-  "save-member": () => {
+  "save-member": async () => {
     const values = formValues("#member-form");
     const missing = missingRequiredFields(values, requiredMemberFields);
     if (missing.length) { markRequiredFields("#member-form", missing); toast(requiredFieldsNotice(missing)); return; }
@@ -518,11 +568,23 @@ export const actions = {
     if (!validatePostalCodeFields("#member-form")) { toast("Bitte eine gültige PLZ mit 5 Ziffern eingeben."); return; }
     if (values.bank && !isValidIban(values.bank)) { $("#bank")?.classList.add("invalid"); toast("Bitte eine gültige IBAN eingeben."); return; }
     const patch = { ...values, postalCode: normalizeDigits(values.postalCode), email: normalizeEmail(values.email), bank: formatIban(values.bank), allowance: normalizeAmount(values.allowance), billingAmount: normalizeAmount(values.billingAmount), isLeader: values.isLeader === "true" };
+    const currentGroup = patch.isLeader ? byId(state.data.sokoGroups, patch.groupId) : null;
+    const updatedGroup = currentGroup ? { ...currentGroup, leaderId: values.id } : null;
     state.data.sokoMembers = updateItem(state.data.sokoMembers, values.id, patch);
-    state.data.sokoGroups = state.data.sokoGroups.map(group => patch.isLeader && group.id === patch.groupId ? { ...group, leaderId: values.id } : group);
-    saveData();
-    render();
-    toast("SOKO-Daten gespeichert.");
+    if (updatedGroup) state.data.sokoGroups = updateItem(state.data.sokoGroups, updatedGroup.id, updatedGroup);
+    try {
+      if (!state.auth.token) {
+        await saveData();
+      } else {
+        await saveCollectionItem("sokoMembers", patch);
+        if (updatedGroup) await saveCollectionItem("sokoGroups", updatedGroup);
+      }
+      render();
+      toast("SOKO-Daten gespeichert.");
+    } catch (error) {
+      if (await handleSingleSaveError(error)) return;
+      toast(error.message);
+    }
   },
   "delete-member": () => {
     const member = selectedMember();
@@ -532,17 +594,28 @@ export const actions = {
     state.focusTarget = ".dialog-box [data-autofocus]";
     render();
   },
-  "confirm-delete-member": () => {
+  "confirm-delete-member": async () => {
     const memberId = state.dialog?.memberId;
     if (!memberId) return;
+    const affectedGroups = state.data.sokoGroups.filter(group => group.leaderId === memberId);
     state.selectedMemberId = nextMemberIdAfterDelete(state.data.sokoMembers, memberId, state.filters);
     state.data.sokoMembers = state.data.sokoMembers.filter(member => member.id !== memberId);
     state.data.sokoGroups = state.data.sokoGroups.map(group => group.leaderId === memberId ? { ...group, leaderId: "" } : group);
     state.dialog = null;
     state.focusTarget = "#view";
-    saveData();
-    render();
-    toast("SOKO-Mitglied gelöscht.");
+    try {
+      if (!state.auth.token) {
+        await saveData();
+      } else {
+        await deleteCollectionItem("sokoMembers", memberId);
+        for (const group of affectedGroups) await saveCollectionItem("sokoGroups", { ...group, leaderId: "" });
+      }
+      render();
+      toast("SOKO-Mitglied gelöscht.");
+    } catch (error) {
+      if (await handleSingleSaveError(error)) return;
+      toast(error.message);
+    }
   },
   "export-soko": () => {
     const header = ["id", "anrede", "vorname", "nachname", "soko", "email", "telefon", "leitung"];
@@ -553,45 +626,69 @@ export const actions = {
     state.selectedStreetId = event.target.closest("[data-id]").dataset.id;
     render();
   },
-  "save-street": () => {
+  "save-street": async () => {
     const { patch } = streetPatchFromForm("#street-form");
     if (!validatePostalCodeFields("#street-form")) { toast("Bitte eine gültige PLZ mit 5 Ziffern eingeben."); return; }
     if (!patch.rules.length) { toast("Bitte mindestens einen Zuständigkeitsabschnitt erfassen."); return; }
     state.data.streets = updateItem(state.data.streets, patch.id, patch);
-    saveData();
-    render();
-    toast("Zuständigkeit gespeichert.");
+    try {
+      if (!state.auth.token) await saveData();
+      else await saveCollectionItem("streets", patch);
+      render();
+      toast("Zuständigkeit gespeichert.");
+    } catch (error) {
+      if (await handleSingleSaveError(error)) return;
+      toast(error.message);
+    }
   },
-  "add-street-rule": () => {
+  "add-street-rule": async () => {
     const { patch } = streetPatchFromForm("#street-form");
     const template = patch.rules.at(-1) || {};
     const nextRule = { ...template, id: `custom-${Date.now()}`, von: "", bis: "" };
     state.data.streets = updateItem(state.data.streets, patch.id, { ...patch, rules: [...patch.rules, nextRule] });
-    saveData();
-    render();
+    try {
+      if (!state.auth.token) await saveData();
+      else await saveCollectionItem("streets", byId(state.data.streets, patch.id));
+      render();
+    } catch (error) {
+      if (await handleSingleSaveError(error)) return;
+      toast(error.message);
+    }
   },
-  "delete-street-rule": event => {
+  "delete-street-rule": async event => {
     const { patch } = streetPatchFromForm("#street-form");
     const ruleId = event.target.closest("[data-rule-id]")?.dataset.ruleId;
     const rules = patch.rules.filter(rule => rule.id !== ruleId);
     if (!rules.length) { toast("Mindestens ein Abschnitt muss erhalten bleiben."); return; }
     const nextPatch = { ...patch, district: streetDistrictSummary(rules), groupId: streetGroupSummary(rules), rules };
     state.data.streets = updateItem(state.data.streets, patch.id, nextPatch);
-    saveData();
-    render();
+    try {
+      if (!state.auth.token) await saveData();
+      else await saveCollectionItem("streets", nextPatch);
+      render();
+    } catch (error) {
+      if (await handleSingleSaveError(error)) return;
+      toast(error.message);
+    }
   },
   "select-sender": event => {
     state.selectedSenderId = event.target.closest("[data-id]").dataset.id;
     render();
   },
-  "save-sender": () => {
+  "save-sender": async () => {
     const values = formValues("#sender-form");
     if (!validateEmailFields("#sender-form")) { toast("Bitte eine gültige E-Mail-Adresse eingeben."); return; }
     state.data.senders = updateItem(state.data.senders, values.id, values);
     state.selectedSenderId = values.id;
-    saveData();
-    render();
-    toast("Absenderprofil gespeichert.");
+    try {
+      if (!state.auth.token) await saveData();
+      else await saveCollectionItem("senders", values);
+      render();
+      toast("Absenderprofil gespeichert.");
+    } catch (error) {
+      if (await handleSingleSaveError(error)) return;
+      toast(error.message);
+    }
   },
   "insert-token": event => {
     const textarea = $("#body");
@@ -606,18 +703,26 @@ export const actions = {
     state.selectedTemplateId = event.target.closest("[data-id]").dataset.id;
     render();
   },
-  "new-template": () => {
+  "new-template": async () => {
     const id = nextId("T", state.data.templates);
     const template = { id, name: "Neue Vorlage", occasion: "Geburtstag", format: "DIN A4 Brief", senderId: selectedSender().id, subject: "Herzliche Glückwünsche zum {{alter}}. Geburtstag", body: "{{anrede}} {{nachname}},\n\nzu Ihrem {{alter}}. Geburtstag gratulieren wir Ihnen sehr herzlich.\n\nMit freundlichen Grüßen\n{{absender}}", updatedAt: todayIso() };
     state.data.templates = [...state.data.templates, { ...template, backgroundImage: "", backBackgroundImage: "" }];
     state.selectedTemplateId = id;
-    saveData();
-    render();
-    toast("Neue Vorlage angelegt.");
+    try {
+      if (!state.auth.token) {
+        await saveData();
+      } else {
+        await createCollectionItem("templates", template);
+      }
+      render();
+      toast("Neue Vorlage angelegt.");
+    } catch (error) {
+      if (await handleSingleSaveError(error)) return;
+      toast(error.message);
+    }
   },
-  "save-template": () => {
-    saveTemplatePatch({});
-    toast("Vorlage gespeichert.");
+  "save-template": async () => {
+    if (await saveTemplatePatch({})) toast("Vorlage gespeichert.");
   },
   "upload-template-background": event => {
     const file = event.target.files?.[0];
@@ -636,8 +741,9 @@ export const actions = {
     }
     readFileAsDataUrl(file)
       .then(backgroundImage => {
-        saveTemplatePatch({ [field]: backgroundImage });
-        toast(`Hintergrundbild ${side} gespeichert.`);
+        saveTemplatePatch({ [field]: backgroundImage }).then(saved => {
+          if (saved) toast(`Hintergrundbild ${side} gespeichert.`);
+        });
       })
       .catch(() => toast("Hintergrundbild konnte nicht gelesen werden."));
   },
@@ -648,14 +754,13 @@ export const actions = {
     state.focusTarget = ".dialog-box [data-autofocus]";
     render();
   },
-  "confirm-remove-template-background": () => {
+  "confirm-remove-template-background": async () => {
     const field = state.dialog?.backgroundField;
     if (!field) return;
     const side = templateBackgroundSide(field);
     state.dialog = null;
     state.focusTarget = "#view";
-    saveTemplatePatch({ [field]: "" });
-    toast(`Hintergrundbild ${side} entfernt.`);
+    if (await saveTemplatePatch({ [field]: "" })) toast(`Hintergrundbild ${side} entfernt.`);
   },
   "delete-template": event => {
     const id = event?.target?.closest("[data-id]")?.dataset.id;
@@ -680,16 +785,25 @@ export const actions = {
     render();
   },
   "confirm-complete-print": () => { state.dialog = null; state.focusTarget = "#view"; completePrintRun(); },
-  "confirm-delete-template": () => {
+  "confirm-delete-template": async () => {
     const templateId = state.dialog?.templateId;
     if (!templateId) return;
     state.data.templates = state.data.templates.filter(item => item.id !== templateId);
     state.selectedTemplateId = state.data.templates[0].id;
     state.dialog = null;
     state.focusTarget = "#view";
-    saveData();
-    render();
-    toast("Vorlage gelöscht.");
+    try {
+      if (!state.auth.token) {
+        await saveData();
+      } else {
+        await deleteCollectionItem("templates", templateId);
+      }
+      render();
+      toast("Vorlage gelöscht.");
+    } catch (error) {
+      if (await handleSingleSaveError(error)) return;
+      toast(error.message);
+    }
   },
   "reset-test-database": () => {
     if (state.auth.user?.role !== "admin") { toast("Nur Admins können Testdaten zurücksetzen."); return; }
@@ -768,14 +882,20 @@ export const actions = {
     render();
     toast(state.generatedDocs.length ? `${state.generatedDocs.length} Dokumente erzeugt.` : "Keine geprüften Jubilare in der aktuellen Auswahl.");
   },
-  "reset-selected-for-reprint": () => {
+  "reset-selected-for-reprint": async () => {
     const citizen = byId(state.data.citizens, state.selectedCitizenId);
     if (!citizen || !isPrintedCitizen(citizen)) { toast("Bitte einen bereits gedruckten Jubilar auswählen."); return; }
     state.data.citizens = updateItem(state.data.citizens, citizen.id, { ...citizen, status: "geprüft", updatedAt: todayIso() });
     state.generatedDocs = [];
-    saveData();
-    render();
-    toast("Jubilar für den Nachdruck auf geprüft gesetzt.");
+    try {
+      if (!state.auth.token) await saveData();
+      else await saveCollectionItem("citizens", byId(state.data.citizens, citizen.id));
+      render();
+      toast("Jubilar für den Nachdruck auf geprüft gesetzt.");
+    } catch (error) {
+      if (await handleSingleSaveError(error)) return;
+      toast(error.message);
+    }
   },
   "print-docs": printCurrentRun,
   "toggle-print-background": e => { state.printBackground = e.target.checked; },

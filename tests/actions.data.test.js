@@ -60,7 +60,7 @@ const route = (key, payload, { ok = true, status = 200 } = {}) => routes.set(key
 globalThis.fetch = (url, options = {}) => {
   const method = options.method || 'GET';
   const path = url.replace(/.*\/php-api/, '');
-  calls.push({ method, path, body: options.body ? JSON.parse(options.body) : null });
+  calls.push({ method, path, body: options.body ? JSON.parse(options.body) : null, headers: options.headers || null });
   const res = routes.get(`${method} ${path}`) || { ok: true, status: 200, json: async () => ({}) };
   return Promise.resolve(res);
 };
@@ -77,7 +77,7 @@ const { actions } = await import('../modules/actions.js');
 const { state } = await import('../modules/state.js');
 const { defaultData } = await import('../modules/domain.js');
 const { monthAfterNext } = await import('../modules/testdata.js');
-const { normalizeAmount } = await import('../modules/utils.js');
+const { normalizeAmount, nextId } = await import('../modules/utils.js');
 const { filteredCitizens } = await import('../modules/assignment.js');
 
 const idEvent = id => ({ target: { closest: () => ({ dataset: { id } }) } });
@@ -101,9 +101,12 @@ beforeEach(() => {
   state.generatedDocs = [];
   state.printBackground = true;
   state.showMapPeople = true;
+  state.collectionVersions = { citizens: {}, weddingAnniversaries: {}, sokoGroups: {}, sokoMembers: {}, streets: {}, senders: {}, templates: {} };
+  state.collectionBaselines = { citizens: {}, weddingAnniversaries: {}, sokoGroups: {}, sokoMembers: {}, streets: {}, senders: {}, templates: {} };
   state.filters = { q: '', month: 'alle', groupId: 'alle', age: 'alle', status: 'alle', occasion: 'Geburtstag' };
   state.gridApis = {};
   state.auth.user = { id: 'demo', email: 'demo@local', role: 'admin' };
+  state.auth.token = '';
   state.auth.users = [];
 });
 
@@ -143,14 +146,14 @@ describe('Auswahl- und Sortier-Actions', () => {
 });
 
 describe('SOKO-Mitglieder', () => {
-  it('new-member hängt ein Mitglied an und wählt es aus', () => {
+  it('new-member hängt ein Mitglied an und wählt es aus', async () => {
     const before = state.data.sokoMembers.length;
-    actions['new-member']();
+    await actions['new-member']();
     assert.equal(state.data.sokoMembers.length, before + 1);
     assert.equal(state.selectedMemberId, state.data.sokoMembers.at(-1).id);
   });
 
-  it('save-member normalisiert Felder und setzt den Gruppenleiter', () => {
+  it('save-member normalisiert Felder und setzt den Gruppenleiter', async () => {
     const member = state.data.sokoMembers[0];
     setForm('#member-form', {
       _memberTab: 'billing', id: member.id, salutation: member.salutation, firstName: 'Eva', lastName: 'Muster', groupId: member.groupId,
@@ -158,7 +161,7 @@ describe('SOKO-Mitglieder', () => {
       email: ' EVA@example.de ', postalCode: '134 37', bank: 'DE89 3704 0044 0532 0130 00',
       allowance: '35', billingAmount: '15', isLeader: 'true'
     });
-    actions['save-member']();
+    await actions['save-member']();
     const saved = state.data.sokoMembers.find(m => m.id === member.id);
     assert.equal(saved.email, 'EVA@example.de'); // normalizeEmail trimmt nur
     assert.equal(saved.postalCode, '13437');
@@ -168,30 +171,30 @@ describe('SOKO-Mitglieder', () => {
     assert.equal(state.data.sokoGroups.find(g => g.id === member.groupId).leaderId, member.id);
   });
 
-  it('save-member bricht bei ungültiger IBAN ab, ohne zu speichern', () => {
+  it('save-member bricht bei ungültiger IBAN ab, ohne zu speichern', async () => {
     const member = state.data.sokoMembers[0];
     setForm('#member-form', {
       id: member.id, salutation: member.salutation, firstName: 'X', lastName: member.lastName,
       groupId: member.groupId, termFrom: member.termFrom, termTo: member.termTo,
       bank: 'DE00 0000', postalCode: '13437', email: ''
     });
-    actions['save-member']();
+    await actions['save-member']();
     assert.notEqual(state.data.sokoMembers.find(m => m.id === member.id).firstName, 'X');
   });
 
-  it('save-member verlangt die Kern-Pflichtfelder', () => {
+  it('save-member verlangt die Kern-Pflichtfelder', async () => {
     const member = state.data.sokoMembers[0];
     setForm('#member-form', { id: member.id, salutation: '', firstName: '', lastName: '', groupId: '', termFrom: '', termTo: '', bank: '', postalCode: '', email: '' });
-    actions['save-member']();
+    await actions['save-member']();
     assert.equal(state.data.sokoMembers.find(m => m.id === member.id).firstName, member.firstName);
   });
 
-  it('delete-member öffnet Dialog, confirm-delete-member entfernt das Mitglied', () => {
+  it('delete-member öffnet Dialog, confirm-delete-member entfernt das Mitglied', async () => {
     const member = state.data.sokoMembers[0];
     actions['delete-member']();
     assert.equal(state.dialog.type, 'delete-member');
     assert.equal(state.dialog.memberId, member.id);
-    actions['confirm-delete-member']();
+    await actions['confirm-delete-member']();
     assert.equal(state.data.sokoMembers.some(m => m.id === member.id), false);
     assert.equal(state.dialog, null);
   });
@@ -214,32 +217,32 @@ describe('SOKO-Mitglieder', () => {
 });
 
 describe('Absender und Vorlagen', () => {
-  it('save-sender speichert das Profil', () => {
+  it('save-sender speichert das Profil', async () => {
     const sender = state.data.senders[0];
     setForm('#sender-form', { id: sender.id, role: 'Neue Rolle' }, { emailInputs: [] });
-    actions['save-sender']();
+    await actions['save-sender']();
     assert.equal(state.data.senders.find(s => s.id === sender.id).role, 'Neue Rolle');
   });
 
-  it('new-template legt eine Vorlage an und wählt sie aus', () => {
+  it('new-template legt eine Vorlage an und wählt sie aus', async () => {
     const before = state.data.templates.length;
-    actions['new-template']();
+    await actions['new-template']();
     assert.equal(state.data.templates.length, before + 1);
     assert.equal(state.selectedTemplateId, state.data.templates.at(-1).id);
   });
 
-  it('save-template aktualisiert updatedAt der ausgewählten Vorlage', () => {
+  it('save-template aktualisiert updatedAt der ausgewählten Vorlage', async () => {
     setField('#template-form', undefined); // -> templateFormValues nutzt selectedTemplate()
     delete nodes['#template-form'];
-    actions['save-template']();
+    await actions['save-template']();
     assert.equal(state.data.templates[0].updatedAt.length, 10);
   });
 
-  it('delete-template → confirm entfernt die Vorlage (nicht die letzte)', () => {
+  it('delete-template → confirm entfernt die Vorlage (nicht die letzte)', async () => {
     const target = state.data.templates[1];
     actions['delete-template'](idEvent(target.id));
     assert.equal(state.dialog.type, 'delete-template');
-    actions['confirm-delete-template']();
+    await actions['confirm-delete-template']();
     assert.equal(state.data.templates.some(t => t.id === target.id), false);
   });
 
@@ -249,11 +252,11 @@ describe('Absender und Vorlagen', () => {
     assert.equal(state.dialog, null);
   });
 
-  it('remove-template-background → confirm leert das Hintergrundbild', () => {
+  it('remove-template-background → confirm leert das Hintergrundbild', async () => {
     state.data.templates[0].backgroundImage = 'data:image/png;base64,xxx';
     actions['remove-template-background']({ target: { dataset: { backgroundField: 'backgroundImage' }, closest: () => null } });
     assert.equal(state.dialog.type, 'remove-template-background');
-    actions['confirm-remove-template-background']();
+    await actions['confirm-remove-template-background']();
     assert.equal(state.data.templates[0].backgroundImage, '');
   });
 });
@@ -263,32 +266,32 @@ describe('Straßen-Zuständigkeit', () => {
     { id: street.id, name: street.name },
     { ruleRows: rules.map(ruleRow), postalInputs: [] });
 
-  it('save-street speichert Regeln aus dem Formular', () => {
+  it('save-street speichert Regeln aus dem Formular', async () => {
     const street = state.data.streets[0];
     streetForm(street, [{ ruleId: 'r1', plz: '13407', ortsteil: 'Reinickendorf', von: '1', bis: '40', art: 'F', soko: '1' }]);
-    actions['save-street']();
+    await actions['save-street']();
     assert.equal(state.data.streets.find(s => s.id === street.id).rules.length, 1);
   });
 
-  it('save-street bricht ohne Regel ab', () => {
+  it('save-street bricht ohne Regel ab', async () => {
     const street = state.data.streets[0];
     streetForm(street, []);
     const before = JSON.stringify(state.data.streets.find(s => s.id === street.id));
-    actions['save-street']();
+    await actions['save-street']();
     assert.equal(JSON.stringify(state.data.streets.find(s => s.id === street.id)), before);
   });
 
-  it('add-street-rule fügt einen weiteren Abschnitt hinzu', () => {
+  it('add-street-rule fügt einen weiteren Abschnitt hinzu', async () => {
     const street = state.data.streets[0];
     streetForm(street, [{ ruleId: 'r1', plz: '13407', soko: '1', art: 'F' }]);
-    actions['add-street-rule']();
+    await actions['add-street-rule']();
     assert.equal(state.data.streets.find(s => s.id === street.id).rules.length, 2);
   });
 
-  it('delete-street-rule verhindert das Löschen des letzten Abschnitts', () => {
+  it('delete-street-rule verhindert das Löschen des letzten Abschnitts', async () => {
     const street = state.data.streets[0];
     streetForm(street, [{ ruleId: 'r1', plz: '13407', soko: '1', art: 'F' }]);
-    actions['delete-street-rule']({ target: { closest: () => ({ dataset: { ruleId: 'r1' } }) } });
+    await actions['delete-street-rule']({ target: { closest: () => ({ dataset: { ruleId: 'r1' } }) } });
     // letzte Regel bleibt erhalten -> keine leere Regelliste gespeichert
     assert.ok(state.data.streets.find(s => s.id === street.id).rules.length >= 1);
   });
@@ -447,7 +450,7 @@ describe('Import-Lauf', () => {
 });
 
 describe('Jubilare pruefen', () => {
-  it('save-citizen speichert erfasste Hochzeitsjubilaeen in einer eigenen Collection', () => {
+  it('save-citizen speichert erfasste Hochzeitsjubilaeen in einer eigenen Collection', async () => {
     state.data.citizens = [{
       id: 'G-1',
       salutation: 'Frau',
@@ -484,7 +487,7 @@ describe('Jubilare pruefen', () => {
       spouseName: 'Heinz'
     });
 
-    actions['save-citizen']();
+    await actions['save-citizen']();
 
     assert.equal(state.data.weddingAnniversaries.length, 1);
     assert.deepEqual({
@@ -564,6 +567,109 @@ describe('Jubilare pruefen (Backend)', () => {
     assert.equal(calls.some(call => call.method === 'PUT' && call.path === '/citizens/G-1'), true);
     assert.equal(state.collectionVersions.citizens['G-1'], '4');
     assert.equal(state.collectionVersions.weddingAnniversaries['WA-G-1-1976-06-01'], '2');
+    state.auth.token = '';
+  });
+});
+
+describe('Stammdaten pruefen (Backend)', () => {
+  it('new-member schreibt nur das neue Mitglied per POST', async () => {
+    const id = nextId('S', state.data.sokoMembers);
+    const member = { id, salutation: 'Frau', firstName: '', lastName: '', birthDate: '', groupId: state.data.sokoGroups[0].id, street: '', postalCode: '', city: '', phone: '', mobile: '', email: '', bank: '', accountHolder: '', allowance: '35,00', termFrom: '2026-07-08', termTo: '2028-12-31', billingAmount: '15,00', zpNr: '', kassenzeichen: '', misc: '', note: '', isLeader: false };
+    state.auth.token = 'token';
+    route('POST /sokoMembers', { ...member, _version: '1' });
+
+    await actions['new-member']();
+
+    assert.equal(calls.some(call => call.method === 'PUT' && call.path === '/sokoMembers'), false);
+    assert.equal(calls.some(call => call.method === 'POST' && call.path === '/sokoMembers'), true);
+    assert.equal(state.collectionVersions.sokoMembers[id], '1');
+    state.auth.token = '';
+  });
+
+  it('save-member schreibt Mitglied und Leitergruppe einzeln', async () => {
+    const member = state.data.sokoMembers[0];
+    state.auth.token = 'token';
+    state.collectionVersions.sokoMembers[member.id] = '3';
+    state.collectionVersions.sokoGroups[member.groupId] = '1';
+    route(`PUT /sokoMembers/${member.id}`, { ...member, firstName: 'Eva', postalCode: '13437', email: 'EVA@example.de', bank: 'DE89 3704 0044 0532 0130 00', allowance: '35,00', billingAmount: '15,00', isLeader: true, _version: '4' });
+    route(`PUT /sokoGroups/${member.groupId}`, { ...state.data.sokoGroups.find(group => group.id === member.groupId), leaderId: member.id, _version: '2' });
+    setForm('#member-form', {
+      _memberTab: 'billing', id: member.id, salutation: member.salutation, firstName: 'Eva', lastName: 'Muster', groupId: member.groupId,
+      termFrom: member.termFrom, termTo: member.termTo,
+      email: ' EVA@example.de ', postalCode: '134 37', bank: 'DE89 3704 0044 0532 0130 00',
+      allowance: '35', billingAmount: '15', isLeader: 'true'
+    });
+
+    await actions['save-member']();
+
+    assert.equal(calls.some(call => call.method === 'PUT' && call.path === '/sokoMembers'), false);
+    assert.equal(calls.some(call => call.method === 'PUT' && call.path === '/sokoGroups'), false);
+    assert.equal(calls.find(call => call.method === 'PUT' && call.path === `/sokoMembers/${member.id}`)?.body._version, '3');
+    assert.equal(calls.find(call => call.method === 'PUT' && call.path === `/sokoGroups/${member.groupId}`)?.body._version, '1');
+    assert.equal(state.collectionVersions.sokoMembers[member.id], '4');
+    assert.equal(state.collectionVersions.sokoGroups[member.groupId], '2');
+    state.auth.token = '';
+  });
+
+  it('save-street schreibt die Zuständigkeit einzeln', async () => {
+    const street = state.data.streets[0];
+    state.auth.token = 'token';
+    state.collectionVersions.streets[street.id] = '4';
+    route(`PUT /streets/${street.id}`, { ...street, rules: [{ id: 'r1', plz: '13407', ortsteil: 'Reinickendorf', von: '1', bis: '40', art: 'F', soko: '1' }], _version: '5' });
+    setForm('#street-form', { id: street.id, name: street.name }, { ruleRows: [ruleRow({ ruleId: 'r1', plz: '13407', ortsteil: 'Reinickendorf', von: '1', bis: '40', art: 'F', soko: '1' })], postalInputs: [] });
+
+    await actions['save-street']();
+
+    assert.equal(calls.some(call => call.method === 'PUT' && call.path === '/streets'), false);
+    assert.equal(calls.find(call => call.method === 'PUT' && call.path === `/streets/${street.id}`)?.body._version, '4');
+    assert.equal(state.collectionVersions.streets[street.id], '5');
+    state.auth.token = '';
+  });
+
+  it('save-sender schreibt das Profil einzeln', async () => {
+    const sender = state.data.senders[0];
+    state.auth.token = 'token';
+    state.collectionVersions.senders[sender.id] = '2';
+    route(`PUT /senders/${sender.id}`, { ...sender, role: 'Neue Rolle', _version: '3' });
+    setForm('#sender-form', { id: sender.id, role: 'Neue Rolle' }, { emailInputs: [] });
+
+    await actions['save-sender']();
+
+    assert.equal(calls.some(call => call.method === 'PUT' && call.path === '/senders'), false);
+    assert.equal(calls.find(call => call.method === 'PUT' && call.path === `/senders/${sender.id}`)?.body._version, '2');
+    assert.equal(state.collectionVersions.senders[sender.id], '3');
+    state.auth.token = '';
+  });
+
+  it('save-template schreibt die Vorlage einzeln', async () => {
+    const template = state.data.templates[0];
+    state.auth.token = 'token';
+    state.collectionVersions.templates[template.id] = '5';
+    route(`PUT /templates/${template.id}`, { ...template, updatedAt: '2026-07-08', _version: '6' });
+    setField('#template-form', undefined);
+    delete nodes['#template-form'];
+
+    await actions['save-template']();
+
+    assert.equal(calls.some(call => call.method === 'PUT' && call.path === '/templates'), false);
+    assert.equal(calls.find(call => call.method === 'PUT' && call.path === `/templates/${template.id}`)?.body._version, '5');
+    assert.equal(state.collectionVersions.templates[template.id], '6');
+    state.auth.token = '';
+  });
+
+  it('confirm-delete-template löscht nur die ausgewählte Vorlage', async () => {
+    const template = state.data.templates[1];
+    state.auth.token = 'token';
+    state.collectionVersions.templates[template.id] = '6';
+    route(`DELETE /templates/${template.id}`, { deleted: true });
+    actions['delete-template'](idEvent(template.id));
+
+    await actions['confirm-delete-template']();
+
+    assert.equal(calls.some(call => call.method === 'PUT' && call.path === '/templates'), false);
+    assert.equal(calls.some(call => call.method === 'DELETE' && call.path === `/templates/${template.id}`), true);
+    assert.equal(calls.find(call => call.method === 'DELETE' && call.path === `/templates/${template.id}`)?.headers?.['If-Match'], '6');
+    assert.equal(state.data.templates.some(item => item.id === template.id), false);
     state.auth.token = '';
   });
 });
@@ -661,7 +767,7 @@ describe('Dokumente und Quittung', () => {
     assert.deepEqual(state.generatedDocs.map(doc => doc.wish), ['per Post']);
   });
 
-  it('reset-selected-for-reprint setzt gedruckte Jubilare wieder auf geprüft', () => {
+  it('reset-selected-for-reprint setzt gedruckte Jubilare wieder auf geprüft', async () => {
     state.data.citizens = [{
       id: 'G-1',
       firstName: 'Erika',
@@ -677,7 +783,7 @@ describe('Dokumente und Quittung', () => {
     state.selectedCitizenId = 'G-1';
     state.generatedDocs = [{ citizenId: 'G-1' }];
 
-    actions['reset-selected-for-reprint']();
+    await actions['reset-selected-for-reprint']();
 
     const citizen = state.data.citizens[0];
     assert.equal(citizen.status, 'geprüft');

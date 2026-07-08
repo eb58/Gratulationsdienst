@@ -111,7 +111,10 @@ const withKnownVersion = (collection, item) => {
 
 export const syncSavedCollectionItem = (collection, item) => {
   if (!item?.id || !Array.isArray(state.data[collection])) return;
-  state.data[collection] = state.data[collection].map(current => current.id === item.id ? item : current);
+  const exists = state.data[collection].some(current => current.id === item.id);
+  state.data[collection] = exists
+    ? state.data[collection].map(current => current.id === item.id ? item : current)
+    : [...state.data[collection], item];
   state.collectionVersions[collection] = { ...(state.collectionVersions[collection] || {}), [item.id]: String(item._version || state.collectionVersions[collection]?.[item.id] || "") };
   state.collectionBaselines[collection] = { ...(state.collectionBaselines[collection] || {}), [item.id]: withoutVersion(item) };
 };
