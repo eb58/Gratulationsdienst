@@ -15,12 +15,22 @@ globalThis.localStorage = storage();
 globalThis.sessionStorage = storage();
 globalThis.location = { protocol: 'file:', href: 'file:///test/index.html', search: '' };
 globalThis.window = globalThis;
-globalThis.ResizeObserver = class {
-  observe() {}
-  disconnect() {}
-};
 globalThis.requestAnimationFrame = cb => cb();
 globalThis.document = { querySelectorAll: () => [] };
+
+let resizeObservers = [];
+globalThis.ResizeObserver = class {
+  constructor(callback) {
+    this.callback = callback;
+    resizeObservers.push(this);
+  }
+
+  observe(element) {
+    this.element = element;
+  }
+
+  disconnect() {}
+};
 
 const grid = await import('../modules/grid.js');
 const { state } = await import('../modules/state.js');
@@ -51,6 +61,7 @@ const citizen = {
 
 beforeEach(() => {
   localStorage.clear();
+  resizeObservers = [];
   delete window.agGrid;
   state.data = {
     citizens: [citizen],
@@ -357,5 +368,21 @@ describe('mountGrid', () => {
     assert.deepEqual(destroyCalls, ['members', 'citizens']);
     assert.ok(!('members' in state.gridApis));
     assert.ok('citizens' in state.gridApis);
+  });
+
+  it('triggert bei Resize ein Layout-Update fuer den Grid-Host', () => {
+    const element = { dataset: { grid: 'weddingAnniversaries' }, innerHTML: '' };
+    const calls = [];
+    const api = {
+      doLayout: () => calls.push('doLayout')
+    };
+    let definition;
+    window.agGrid = { createGrid: (_element, options) => { definition = options; } };
+
+    mountGrid(element);
+    definition.onGridReady({ api });
+    resizeObservers[0].callback([{ target: element }]);
+
+    assert.deepEqual(calls, ['doLayout', 'doLayout']);
   });
 });

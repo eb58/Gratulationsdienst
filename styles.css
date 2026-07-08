@@ -3072,7 +3072,8 @@ body.is-busy-visible .busy-indicator {
   .region-grid-scroll .ag-grid-host,
   .citizen-grid-scroll .ag-grid-host,
   .soko-grid-scroll .ag-grid-host,
-  .import-log-content .ag-grid-host {
+  .import-log-content .ag-grid-host,
+  .wedding-anniversaries-content .ag-grid-host {
     /* flex: 1 (Desktop) würde die feste Höhe im auto-hohen mobilen Layout aushebeln:
        flex-basis 0 gewinnt über height, der Host wird indefinit und AG Grids height:100% kollabiert */
     flex: none;

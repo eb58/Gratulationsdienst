@@ -12,6 +12,12 @@ import { weddingAnniversaryLabel } from './weddingAnniversaries.js';
 
 let agGridPromise = null;
 export const ensureAgGrid = () => agGridPromise ||= loadScript(`${import.meta.env?.BASE_URL ?? "/"}vendor/ag-grid-community.min.js`);
+const gridResizeObservers = new Map();
+const disconnectGridResizeObserver = gridKey => {
+  gridResizeObservers.get(gridKey)?.disconnect?.();
+  gridResizeObservers.delete(gridKey);
+};
+const scheduleGridLayout = gridKey => requestAnimationFrame(() => state.gridApis[gridKey]?.doLayout?.());
 
 export const gridTheme = () => globalThis.agGrid?.themeQuartz?.withParams ? globalThis.agGrid.themeQuartz.withParams({
   accentColor: "#0f5d58",
@@ -370,6 +376,7 @@ export const mountGrid = element => {
     });
     return;
   }
+  disconnectGridResizeObserver(gridKey);
   state.gridApis[gridKey]?.destroy?.();
   const storedPageSize = storedGridState(gridKey).paginationPageSize;
   if (Number.isFinite(storedPageSize)) definition.paginationPageSize = storedPageSize;
@@ -379,6 +386,7 @@ export const mountGrid = element => {
     onGridReady?.(params);
     state.gridApis[gridKey] = params.api;
     restoreGridState(gridKey, params.api);
+    scheduleGridLayout(gridKey);
     requestAnimationFrame(() => { ready = true; });
   };
   const onColumnResized = definition.onColumnResized;
@@ -391,6 +399,11 @@ export const mountGrid = element => {
   definition.onSortChanged = params => { onSortChanged?.(params); saveGridState(gridKey, params.api); };
   definition.onFilterChanged = params => { onFilterChanged?.(params); saveGridState(gridKey, params.api); };
   definition.onPaginationChanged = params => { onPaginationChanged?.(params); if (ready && params.newPageSize) saveGridState(gridKey, params.api); };
+  if (globalThis.ResizeObserver) {
+    const observer = new ResizeObserver(() => scheduleGridLayout(gridKey));
+    gridResizeObservers.set(gridKey, observer);
+    observer.observe(element);
+  }
   globalThis.agGrid.createGrid(element, definition);
 };
 // animateRows kurz aus: setGridOption("rowData", ...) waehrend einer laufenden Zeilen-Animation
@@ -404,6 +417,7 @@ export const mountGrids = () => {
   const hostKeys = new Set([...document.querySelectorAll("[data-grid]")].map(element => element.dataset.grid));
   Object.keys(state.gridApis).forEach(gridKey => {
     if (hostKeys.has(gridKey)) return;
+    disconnectGridResizeObserver(gridKey);
     state.gridApis[gridKey]?.destroy?.();
     delete state.gridApis[gridKey];
   });

@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { beforeEach, describe, it } from 'node:test';
 
 const storage = () => {
@@ -333,6 +334,13 @@ describe('main views', () => {
 
     state.showAllWeddingAnniversaries = true;
     assert.match(views.weddingAnniversaries(), /data-grid="weddingAnniversaries"/);
+  });
+
+  it('gibt für Hochzeitsjubiläen im schmalen Layout eine feste Grid-Höhe vor', () => {
+    const styles = readFileSync(new URL('../styles.css', import.meta.url), 'utf8');
+
+    assert.match(styles, /\.region-grid-scroll \.ag-grid-host,\n  \.citizen-grid-scroll \.ag-grid-host,\n  \.soko-grid-scroll \.ag-grid-host,\n  \.import-log-content \.ag-grid-host,\n  \.wedding-anniversaries-content \.ag-grid-host/);
+    assert.match(styles, /\.wedding-anniversaries-content \.ag-grid-host,[\s\S]*height: 430px !important;/);
   });
 
   it('renders receipt, profile and user administration states', () => {
