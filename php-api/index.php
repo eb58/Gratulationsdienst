@@ -44,22 +44,24 @@ class ApiError extends RuntimeException
     }
 }
 
-header('Content-Type: application/json; charset=utf-8');
+if (!defined('API_TEST_MODE') || !API_TEST_MODE) {
+    header('Content-Type: application/json; charset=utf-8');
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(204);
-    exit;
-}
+    if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+        http_response_code(204);
+        exit;
+    }
 
-try {
-    $db = db();
-    ensureSchema($db);
-    dispatch($db);
-} catch (ApiError $error) {
-    respond($error->response(), $error->status);
-} catch (Throwable $error) {
-    error_log(sprintf('Gratulationsdienst-API: %s in %s:%d', $error->getMessage(), $error->getFile(), $error->getLine()));
-    respond(['error' => 'Interner Serverfehler.'], 500);
+    try {
+        $db = db();
+        ensureSchema($db);
+        dispatch($db);
+    } catch (ApiError $error) {
+        respond($error->response(), $error->status);
+    } catch (Throwable $error) {
+        error_log(sprintf('Gratulationsdienst-API: %s in %s:%d', $error->getMessage(), $error->getFile(), $error->getLine()));
+        respond(['error' => 'Interner Serverfehler.'], 500);
+    }
 }
 
 function collectionConfig(string $collection): array
@@ -943,9 +945,10 @@ function throwConflict(string $collection, string $id, string $currentVersion): 
 
 function itemsEqualForPersistence(array $incoming, array $current, array $config): bool
 {
+    assertValidDateFields($incoming, $config);
     foreach ($config['columns'] as $apiField => [, $type]) {
         if ($type === 'createdAt' && !array_key_exists($apiField, $incoming)) continue;
-        if (valueForDb($incoming[$apiField] ?? null, $type) !== valueForDb($current[$apiField] ?? null, $type)) {
+        if (valueForPersistence($incoming[$apiField] ?? null, $type) !== valueForPersistence($current[$apiField] ?? null, $type)) {
             return false;
         }
     }
@@ -979,6 +982,7 @@ function replaceCollection(array $db, string $collection, array $items, ?array $
 {
     $config = collectionConfig($collection);
     $incomingById = incomingItemsById($items, $collection);
+    foreach ($incomingById as $item) assertValidDateFields($item, $config);
     $currentById = itemsById(readCollection($db, $collection));
     assertCollectionVersionsAllowReplace($collection, $incomingById, $currentById, $knownVersions);
 
@@ -997,9 +1001,10 @@ function upsertItem(array $db, string $collection, string $id, array $item): voi
 {
     $config = collectionConfig($collection);
     $item['id'] = $id;
+    assertValidDateFields($item, $config);
     $columns = $config['columns'];
     $dbColumns = array_map(static fn ($column) => $column[0], $columns);
-    $values = array_map(static fn ($apiField) => valueForDb($item[$apiField] ?? null, $columns[$apiField][1]), array_keys($columns));
+    $values = array_map(static fn ($apiField) => valueForDb($item[$apiField] ?? null, $columns[$apiField][1], $apiField), array_keys($columns));
 
     if ($db['driver'] === 'mysqli' || $db['driver'] === 'mysql') {
         $placeholders = implode(', ', array_fill(0, count($dbColumns), '?'));
@@ -1036,7 +1041,17 @@ function rowToItem(array $row, array $config): array
     return $item;
 }
 
-function valueForDb(mixed $value, string $type): mixed
+function valueForDb(mixed $value, string $type, ?string $field = null): mixed
+{
+    if ($type === 'bool') return $value ? 1 : 0;
+    if ($type === 'json') return json_encode($value ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+    if ($type === 'createdAt') return trim((string)($value ?? '')) ?: date('Y-m-d H:i:s');
+    if ($type === 'date') return normalizeDateValue($value, $field ?? 'Datum');
+    if ($type === 'int') return trim((string)($value ?? '')) === '' ? null : (int)$value;
+    return (string)($value ?? '');
+}
+
+function valueForPersistence(mixed $value, string $type): mixed
 {
     if ($type === 'bool') return $value ? 1 : 0;
     if ($type === 'json') return json_encode($value ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
@@ -1044,6 +1059,30 @@ function valueForDb(mixed $value, string $type): mixed
     if ($type === 'date') return trim((string)($value ?? '')) ?: null;
     if ($type === 'int') return trim((string)($value ?? '')) === '' ? null : (int)$value;
     return (string)($value ?? '');
+}
+
+function assertValidDateFields(array $item, array $config): void
+{
+    foreach ($config['columns'] as $apiField => [, $type]) {
+        if ($type !== 'date') continue;
+        normalizeDateValue($item[$apiField] ?? null, $apiField);
+    }
+}
+
+function normalizeDateValue(mixed $value, string $field): ?string
+{
+    $date = trim((string)($value ?? ''));
+    if ($date === '') return null;
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+        throw new ApiError(422, "{$field} muss ein Datum im Format YYYY-MM-DD sein.");
+    }
+
+    [$year, $month, $day] = array_map('intval', explode('-', $date));
+    if (!checkdate($month, $day, $year)) {
+        throw new ApiError(422, "{$field} muss ein gültiges Datum im Format YYYY-MM-DD sein.");
+    }
+
+    return $date;
 }
 
 function valueFromDb(mixed $value, string $type): mixed
