@@ -611,6 +611,29 @@ describe('Stammdaten pruefen (Backend)', () => {
     state.auth.token = '';
   });
 
+  it('save-member lädt bei Konflikt nur Mitglied und Leitergruppe neu, nicht alle Citizens', async () => {
+    const member = state.data.sokoMembers[0];
+    state.auth.token = 'token';
+    state.collectionVersions.sokoMembers[member.id] = '3';
+    state.collectionVersions.sokoGroups[member.groupId] = '1';
+    route(`PUT /sokoMembers/${member.id}`, { error: 'conflict' }, { ok: false, status: 409 });
+    route(`GET /sokoMembers/${member.id}`, { ...member, firstName: 'Eva', _version: '4' });
+    route(`GET /sokoGroups/${member.groupId}`, { ...state.data.sokoGroups.find(group => group.id === member.groupId), leaderId: member.id, _version: '2' });
+    setForm('#member-form', {
+      _memberTab: 'billing', id: member.id, salutation: member.salutation, firstName: 'Eva', lastName: 'Muster', groupId: member.groupId,
+      termFrom: member.termFrom, termTo: member.termTo,
+      email: member.email, postalCode: member.postalCode, bank: member.bank,
+      allowance: member.allowance, billingAmount: member.billingAmount, isLeader: 'true'
+    });
+
+    await actions['save-member']();
+
+    assert.equal(calls.some(call => call.method === 'GET' && call.path === '/citizens'), false);
+    assert.equal(calls.some(call => call.method === 'GET' && call.path === `/sokoMembers/${member.id}`), true);
+    assert.equal(calls.some(call => call.method === 'GET' && call.path === `/sokoGroups/${member.groupId}`), true);
+    state.auth.token = '';
+  });
+
   it('save-street schreibt die Zuständigkeit einzeln', async () => {
     const street = state.data.streets[0];
     state.auth.token = 'token';

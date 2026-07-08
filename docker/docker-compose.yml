@@ -16,16 +16,16 @@ services:
     depends_on:
       - db
 
-  # 2. MySQL Datenbank-Server
+  # 2. MariaDB Datenbank-Server
   db:
-    image: mysql:8.0
-    container_name: mysql_db
+    image: mariadb:11
+    container_name: mariadb_db
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: test123456!!
-      MYSQL_DATABASE: gratulationsdienst
-      MYSQL_USER: eb
-      MYSQL_PASSWORD: test123456!!
+      MARIADB_ROOT_PASSWORD: test123456!!
+      MARIADB_DATABASE: gratulationsdienst
+      MARIADB_USER: eb
+      MARIADB_PASSWORD: test123456!!
     ports:
       - "3306:3306"
     volumes:

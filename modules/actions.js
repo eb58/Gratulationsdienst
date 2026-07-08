@@ -54,14 +54,30 @@ const deleteCollectionItem = async (collection, id) => {
   await apiRequest(`/${collection}/${id}`, { method: "DELETE", headers: version ? { "If-Match": version } : {} });
   removeSavedCollectionItem(collection, id);
 };
-const handleSingleSaveError = async error => {
+const reloadCollectionEntries = async entries => {
+  const results = await Promise.all((entries || []).map(async ({ collection, id }) => {
+    try {
+      return { collection, id, item: await apiRequest(`/${collection}/${id}`) };
+    } catch (error) {
+      if (error?.status === 404) return { collection, id, removed: true };
+      throw error;
+    }
+  }));
+  results.forEach(result => {
+    if (result.removed) removeSavedCollectionItem(result.collection, result.id);
+    else syncSavedCollectionItem(result.collection, result.item);
+  });
+  render();
+};
+const handleSingleSaveError = async (error, reloadEntries = []) => {
   if (error?.status === 401) {
     await saveData();
     return true;
   }
   if (error?.status === 409) {
     toast("Daten wurden parallel geändert. Der aktuelle Stand wird neu geladen; bitte die Änderung erneut prüfen.");
-    await loadCollectionData({ force: true });
+    if (reloadEntries.length) await reloadCollectionEntries(reloadEntries);
+    else await loadCollectionData({ force: true });
     return true;
   }
   return false;
@@ -78,7 +94,7 @@ const saveTemplatePatch = async patch => {
     render();
     return true;
   } catch (error) {
-    if (await handleSingleSaveError(error)) return false;
+    if (await handleSingleSaveError(error, [{ collection: "templates", id }])) return false;
     toast(error.message);
     return false;
   }
@@ -534,7 +550,11 @@ export const actions = {
       } else render();
       toast(reachedEnd ? "Jubilar gespeichert. Ende der Liste erreicht." : "Jubilar gespeichert.");
     } catch (error) {
-      if (await handleSingleSaveError(error)) return;
+      const reloadEntries = [{ collection: "citizens", id: values.id }];
+      const weddingAnniversary = weddingAnniversaryFromCitizen(updatedCitizen);
+      if (weddingAnniversary) reloadEntries.push({ collection: "weddingAnniversaries", id: weddingAnniversary.id });
+      else if (previousWeddingAnniversary) reloadEntries.push({ collection: "weddingAnniversaries", id: previousWeddingAnniversary.id });
+      if (await handleSingleSaveError(error, reloadEntries)) return;
       toast(error.message);
     }
   },
@@ -556,7 +576,7 @@ export const actions = {
       render();
       toast("Neues SOKO-Mitglied angelegt.");
     } catch (error) {
-      if (await handleSingleSaveError(error)) return;
+      if (await handleSingleSaveError(error, [{ collection: "sokoMembers", id }])) return;
       toast(error.message);
     }
   },
@@ -582,7 +602,9 @@ export const actions = {
       render();
       toast("SOKO-Daten gespeichert.");
     } catch (error) {
-      if (await handleSingleSaveError(error)) return;
+      const reloadEntries = [{ collection: "sokoMembers", id: values.id }];
+      if (updatedGroup) reloadEntries.push({ collection: "sokoGroups", id: updatedGroup.id });
+      if (await handleSingleSaveError(error, reloadEntries)) return;
       toast(error.message);
     }
   },
@@ -613,7 +635,8 @@ export const actions = {
       render();
       toast("SOKO-Mitglied gelöscht.");
     } catch (error) {
-      if (await handleSingleSaveError(error)) return;
+      const reloadEntries = [{ collection: "sokoMembers", id: memberId }, ...affectedGroups.map(group => ({ collection: "sokoGroups", id: group.id }))];
+      if (await handleSingleSaveError(error, reloadEntries)) return;
       toast(error.message);
     }
   },
@@ -637,7 +660,7 @@ export const actions = {
       render();
       toast("Zuständigkeit gespeichert.");
     } catch (error) {
-      if (await handleSingleSaveError(error)) return;
+      if (await handleSingleSaveError(error, [{ collection: "streets", id: patch.id }])) return;
       toast(error.message);
     }
   },
@@ -651,7 +674,7 @@ export const actions = {
       else await saveCollectionItem("streets", byId(state.data.streets, patch.id));
       render();
     } catch (error) {
-      if (await handleSingleSaveError(error)) return;
+      if (await handleSingleSaveError(error, [{ collection: "streets", id: patch.id }])) return;
       toast(error.message);
     }
   },
@@ -667,7 +690,7 @@ export const actions = {
       else await saveCollectionItem("streets", nextPatch);
       render();
     } catch (error) {
-      if (await handleSingleSaveError(error)) return;
+      if (await handleSingleSaveError(error, [{ collection: "streets", id: nextPatch.id }])) return;
       toast(error.message);
     }
   },
@@ -686,7 +709,7 @@ export const actions = {
       render();
       toast("Absenderprofil gespeichert.");
     } catch (error) {
-      if (await handleSingleSaveError(error)) return;
+      if (await handleSingleSaveError(error, [{ collection: "senders", id: values.id }])) return;
       toast(error.message);
     }
   },
@@ -717,7 +740,7 @@ export const actions = {
       render();
       toast("Neue Vorlage angelegt.");
     } catch (error) {
-      if (await handleSingleSaveError(error)) return;
+      if (await handleSingleSaveError(error, [{ collection: "templates", id }])) return;
       toast(error.message);
     }
   },
@@ -801,7 +824,7 @@ export const actions = {
       render();
       toast("Vorlage gelöscht.");
     } catch (error) {
-      if (await handleSingleSaveError(error)) return;
+      if (await handleSingleSaveError(error, [{ collection: "templates", id: templateId }])) return;
       toast(error.message);
     }
   },
@@ -893,7 +916,7 @@ export const actions = {
       render();
       toast("Jubilar für den Nachdruck auf geprüft gesetzt.");
     } catch (error) {
-      if (await handleSingleSaveError(error)) return;
+      if (await handleSingleSaveError(error, [{ collection: "citizens", id: citizen.id }])) return;
       toast(error.message);
     }
   },
