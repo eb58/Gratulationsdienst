@@ -7,7 +7,7 @@ import { loadScript } from './scriptLoader.js';
 export const mapDataLoaded = () => Boolean(globalThis.REINICKENDORF_STREET_GEOMETRIES && globalThis.REINICKENDORF_ADDRESS_POINTS);
 let mapDataPromise = null;
 export const ensureMapData = () => mapDataPromise ||= Promise.all([
-  loadScript(`${import.meta.env?.BASE_URL ?? "/"}data/reinickendorf-street-geometries.js`),
+  loadScript(`${import.meta.env?.BASE_URL ?? "/"}data/osm-reinickendorf-street-geometries.js`),
   loadScript(`${import.meta.env?.BASE_URL ?? "/"}data/osm-reinickendorf-address-points.js`)
 ]);
 
