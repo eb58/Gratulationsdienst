@@ -112,6 +112,11 @@ export const mapProject = (coord, viewport) => {
     viewport.yOffset + (world[1] - viewport.topLeft[1]) * viewport.scale
   ];
 };
+// Fester Kartenausschnitt und -zoom (siehe streetMapSvg) -> feste, kleine Kachelmenge, die per
+// scripts/fetch-map-tiles.js einmalig lokal abgelegt wird statt live von tile.openstreetmap.org
+// zu laden (Live-Hotlinking verstoesst gegen die OSM Tile Usage Policy und ist dadurch anfaellig
+// fuer Ausfaelle/Sperren).
+const tileUrl = (zoom, tileX, tileY) => `${import.meta.env?.BASE_URL ?? "/"}data/tiles/${zoom}/${tileX}/${tileY}.png`;
 export const mapTileImages = (bbox, viewport) => {
   const [minLon, minLat, maxLon, maxLat] = bbox;
   const minWorld = lonLatToWorld([minLon, maxLat], viewport.zoom);
@@ -126,7 +131,7 @@ export const mapTileImages = (bbox, viewport) => {
       const x = viewport.xOffset + (tileX * 256 - viewport.topLeft[0]) * viewport.scale;
       const y = viewport.yOffset + (tileY * 256 - viewport.topLeft[1]) * viewport.scale;
       const size = 256 * viewport.scale;
-      return `<image class="map-tile" href="https://tile.openstreetmap.org/${viewport.zoom}/${tileX}/${tileY}.png" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${size.toFixed(1)}" height="${size.toFixed(1)}"></image>`;
+      return `<image class="map-tile" href="${tileUrl(viewport.zoom, tileX, tileY)}" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${size.toFixed(1)}" height="${size.toFixed(1)}"></image>`;
     })
   ).join("");
 };
@@ -222,7 +227,7 @@ export const streetMapSvg = () => {
   const data = mapData();
   if (!data.bbox.length) return `<div class="empty-state">Keine Kartendaten geladen</div>`;
   const padding = 28;
-  const zoom = 13;
+  const zoom = 14;
   const [minLon, minLat, maxLon, maxLat] = data.bbox;
   const tl = lonLatToWorld([minLon, maxLat], zoom);
   const br = lonLatToWorld([maxLon, minLat], zoom);

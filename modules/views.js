@@ -786,7 +786,10 @@ export const views = {
     return `
       <div class="panel map-main-panel">
         <div class="map-shell-wrapper">
-          <div class="map-shell">${streetMapSvg()}</div>
+          <div class="map-shell-column">
+            <div class="map-shell">${streetMapSvg()}</div>
+            <p class="map-attribution">Kartendaten © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>-Mitwirkende</p>
+          </div>
           <aside class="map-side-panel">
             <div class="map-month-row">
               <label for="map-month-select">Monat</label>

@@ -2638,9 +2638,14 @@ tbody tr.selected {
   font-size: 11px;
 }
 
-.map-shell {
+.map-shell-column {
+  display: flex;
+  flex-direction: column;
   flex: 1;
   min-width: 0;
+}
+
+.map-shell {
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 8px;
