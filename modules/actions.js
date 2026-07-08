@@ -538,8 +538,7 @@ export const actions = {
           const savedWeddingAnniversary = await apiRequest(`/weddingAnniversaries/${weddingAnniversary.id}`, { method: "PUT", body: JSON.stringify(weddingAnniversaryPayload) });
           syncSavedCollectionItem("weddingAnniversaries", savedWeddingAnniversary);
         } else if (previousWeddingAnniversary) {
-          await apiRequest(`/weddingAnniversaries/${previousWeddingAnniversary.id}`, { method: "DELETE" });
-          removeSavedCollectionItem("weddingAnniversaries", previousWeddingAnniversary.id);
+          await deleteCollectionItem("weddingAnniversaries", previousWeddingAnniversary.id);
         }
       }
       const gridUpdated = updateCitizenGridRow(byId(state.data.citizens, values.id));
