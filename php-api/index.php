@@ -617,7 +617,7 @@ function db(): array
     $connectTimeout = max(1, (int)($config['connect_timeout'] ?? 5));
 
     if (str_starts_with($dsn, 'mysql:') && !extension_loaded('pdo_mysql')) {
-        if (!extension_loaded('mysqli')) throw new RuntimeException('PHP braucht die Erweiterung pdo_mysql oder mysqli für die MySQL-Verbindung.');
+        if (!extension_loaded('mysqli')) throw new RuntimeException('PHP braucht die Erweiterung pdo_mysql oder mysqli für die MariaDB-Verbindung.');
         mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
         $parts = parseDsn($dsn);
         $mysqli = mysqli_init();

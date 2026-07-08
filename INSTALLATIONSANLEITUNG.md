@@ -9,18 +9,18 @@ Diese Anleitung beschreibt die Einrichtung des Gratulationsdienstes für die lok
 - Node.js mit npm
 - PHP 8.1 oder neuer
 - PHP-Erweiterung `pdo_mysql` oder `mysqli`
-- MySQL 5.7 oder MySQL 8.x
+- MariaDB 11.x oder neuer
 
 ### Docker-Betrieb
 
 - Docker Desktop mit Docker Compose
 - Node.js mit npm zum Erstellen des Frontends
-- freie lokale Ports 80, 3306 und 8080
+- freie lokale Ports 80, 443, 3306 und 8080
 
 ### Produktivbetrieb
 
 - Apache-Webserver mit `mod_rewrite` und PHP 8.1 oder neuer
-- MySQL 5.7 oder MySQL 8.x
+- MariaDB 11.x oder neuer
 - TLS-Zertifikat für den Betrieb über HTTPS
 - optional: funktionierender E-Mail-Versand über PHP `mail()` für Passwort-Reset-Nachrichten
 
@@ -36,7 +36,7 @@ npm install
 
 ## 3. Installation mit Docker
 
-Mit Docker laufen Apache/PHP, MySQL und phpMyAdmin in getrennten Containern. PHP und MySQL müssen dafür nicht zusätzlich auf dem Rechner installiert werden.
+Mit Docker laufen Apache/PHP, MariaDB und phpMyAdmin in getrennten Containern. PHP und MariaDB müssen dafür nicht zusätzlich auf dem Rechner installiert werden. Für HTTPS nutzt der Apache-Container das Verzeichnis `docker/certs/`; beim ersten Start erzeugt er dort automatisch ein selbstsigniertes Zertifikat, falls noch kein echtes Zertifikatspaar vorhanden ist.
 
 Die Docker-Dateien liegen im Verzeichnis `docker/`. Alle folgenden Befehle werden im Wurzelverzeichnis des Projekts ausgeführt.
 
@@ -77,13 +77,13 @@ return [
     'password' => 'test123456!!',
     'connect_timeout' => 5,
     'options' => [],
-    'app_url' => 'http://localhost/gratulationsdienst/',
+    'app_url' => 'https://localhost/gratulationsdienst/',
     'mail_from' => 'noreply@example.test',
     'mail_from_name' => 'Gratulationsdienst Reinickendorf',
 ];
 ```
 
-Der Hostname muss innerhalb von Docker `db` lauten, nicht `localhost`. Benutzer, Passwort und Datenbankname müssen mit den Werten in `docker/docker-compose.yml` übereinstimmen. Für einen dauerhaften oder öffentlich erreichbaren Betrieb sind die Beispielpasswörter vor dem ersten Start zu ändern.
+Der Hostname muss innerhalb von Docker `db` lauten, nicht `localhost`. Benutzer, Passwort und Datenbankname müssen mit den Werten in `docker/docker-compose.yml` übereinstimmen. Für einen dauerhaften oder öffentlich erreichbaren Betrieb sind die Beispielpasswörter vor dem ersten Start zu ändern. Wenn du statt `localhost` eine Domain oder IP nutzt, muss `app_url` auf genau diese HTTPS-Adresse zeigen.
 
 ### 3.4 Container bauen und starten
 
@@ -95,9 +95,11 @@ Alle Dienste im Hintergrund starten:
 docker compose -f docker/docker-compose.yml up -d --build
 ```
 
-Die Option `--build` baut über den `build:`-Block in `docker/docker-compose.yml` das Image für den Dienst `web` aus `docker/Dockerfile`. Das Dockerfile erweitert das Standard-Image `php:8.2-apache` um die für diese Anwendung nötigen Bausteine: die MySQL-Treiber `pdo_mysql`/`mysqli` für die Datenbankverbindung sowie `mod_rewrite` und `AllowOverride All`, damit die `.htaccess` der API greift. Die Dienste `db` und `phpmyadmin` nutzen dagegen fertige Images von Docker Hub und werden nicht lokal gebaut. Das Dockerfile wird nie direkt aufgerufen, sondern immer über `docker compose`.
+Die Option `--build` baut über den `build:`-Block in `docker/docker-compose.yml` das Image für den Dienst `web` aus `docker/Dockerfile`. Das Dockerfile erweitert das Standard-Image `php:8.2-apache` um die für diese Anwendung nötigen Bausteine: die MariaDB-kompatiblen Treiber `pdo_mysql`/`mysqli` für die Datenbankverbindung sowie `mod_rewrite`, `ssl` und `AllowOverride All`, damit die `.htaccess` der API greift und Apache direkt HTTPS sprechen kann. Die Dienste `db` und `phpmyadmin` nutzen dagegen fertige Images von Docker Hub und werden nicht lokal gebaut. Das Dockerfile wird nie direkt aufgerufen, sondern immer über `docker compose`.
 
-Beim ersten Start werden die Images heruntergeladen, das PHP-Image gebaut und die MySQL-Datenbank initialisiert. Das kann einige Minuten dauern. Den Status zeigt:
+Der Apache-Container erwartet die Zertifikate im Verzeichnis `docker/certs/`. Für lokale Tests reicht das automatisch erzeugte selbstsignierte Paar; für produktive Systeme kannst du dort echte Zertifikate ablegen. Die Konfigurationsdateien `docker/apache-http.conf`, `docker/apache-https.conf` und der Entry-Point `docker/apache-entrypoint.sh` steuern Redirect, SSL-Vhost und die Zertifikatserzeugung.
+
+Beim ersten Start werden die Images heruntergeladen, das PHP-Image gebaut und die MariaDB-Datenbank initialisiert. Das kann einige Minuten dauern. Den Status zeigt:
 
 ```powershell
 docker compose -f docker/docker-compose.yml ps
@@ -110,13 +112,13 @@ Die Dienste `web`, `db` und `phpmyadmin` sollten den Status `Up` beziehungsweise
 Im Browser diesen Endpunkt öffnen:
 
 ```text
-http://localhost/gratulationsdienst/php-api/index.php/health
+https://localhost/gratulationsdienst/php-api/index.php/health
 ```
 
 Alternativ in PowerShell:
 
 ```powershell
-Invoke-RestMethod http://localhost/gratulationsdienst/php-api/index.php/health
+curl.exe -k https://localhost/gratulationsdienst/php-api/index.php/health
 ```
 
 Eine erfolgreiche Antwort enthält:
@@ -132,18 +134,20 @@ Beim ersten Health-Aufruf legt die API das benötigte Datenbankschema automatisc
 Die Anwendung ist erreichbar unter:
 
 ```text
-http://localhost/gratulationsdienst/
+https://localhost/gratulationsdienst/
 ```
 
 Bei einer leeren Datenbank erscheint die Ersteinrichtung. Dort das erste Administratorkonto anlegen. Das Passwort muss mindestens zehn Zeichen lang sein.
 
-phpMyAdmin ist erreichbar unter:
+Beim lokalen Docker-Start ist das Zertifikat selbstsigniert. Der Browser zeigt deshalb bei der App eine Sicherheitswarnung an. Das ist für `https://localhost/...` erwartbar und bedeutet nicht, dass die Verbindung unverschlüsselt wäre.
+
+phpMyAdmin ist im lokalen Docker-Stack weiterhin nur über HTTP erreichbar:
 
 ```text
 http://localhost:8080/
 ```
 
-Für die Anmeldung die MySQL-Daten aus `docker/docker-compose.yml` verwenden, standardmäßig Benutzer `eb` und Passwort `test123456!!`.
+Für die Anmeldung die MariaDB-Zugangsdaten aus `docker/docker-compose.yml` verwenden, standardmäßig Benutzer `eb` und Passwort `test123456!!`.
 
 ### 3.7 Container verwalten
 
@@ -177,19 +181,20 @@ Nach einer Änderung am Frontend erneut `npm run build` ausführen. Änderungen 
 docker compose -f docker/docker-compose.yml up -d --build
 ```
 
-Die Datenbank liegt im Docker-Volume `db_data`. Der Befehl `docker compose -f docker/docker-compose.yml down -v` löscht dieses Volume und damit sämtliche Anwendungsdaten; er sollte nur für eine bewusst gewünschte vollständige Neuinstallation verwendet werden.
+Die Datenbank liegt im Docker-Volume `mariadb_data`. Der Befehl `docker compose -f docker/docker-compose.yml down -v` löscht dieses Volume und damit sämtliche Anwendungsdaten; er sollte nur für eine bewusst gewünschte vollständige Neuinstallation verwendet werden.
 
 ### 3.8 Häufige Docker-Probleme
 
-- **Port 80 ist belegt:** Einen anderen Webserver wie XAMPP/IIS stoppen oder in `docker/docker-compose.yml` beispielsweise `8081:80` eintragen. Die Anwendung ist dann unter `http://localhost:8081/gratulationsdienst/` erreichbar.
+- **Port 80 oder 443 ist belegt:** Einen anderen Webserver wie XAMPP/IIS stoppen oder in `docker/docker-compose.yml` beispielsweise `8081:80` und `8443:443` eintragen. Die Anwendung ist dann unter `https://localhost:8443/gratulationsdienst/` erreichbar.
 - **Health-Test liefert 404:** Prüfen, ob `../php-api` im Dienst `web` nach `/var/www/html/gratulationsdienst/php-api` eingebunden ist.
 - **Health-Test liefert 500:** Mit `docker compose -f docker/docker-compose.yml logs web` das Apache/PHP-Protokoll und mit `docker compose -f docker/docker-compose.yml logs db` den Datenbankstart prüfen.
 - **Datenbankverbindung schlägt fehl:** In `php-api/config.php` muss der Datenbankhost `db` sein. Zugangsdaten müssen mit `docker/docker-compose.yml` übereinstimmen.
+- **Browser meldet "Nicht sicher":** Im lokalen Docker-Setup ist das selbstsignierte Zertifikat aktiv. Für den Produktivbetrieb echte Zertifikate in `docker/certs/` ablegen oder einen Reverse Proxy mit gültigem TLS-Zertifikat davor schalten.
 - **Altes Frontend wird angezeigt:** `npm run build` erneut ausführen und die Browserseite ohne Cache neu laden.
 
 ## 4. Datenbank ohne Docker einrichten
 
-Als MySQL-Administrator eine Datenbank und einen eigenen Benutzer anlegen:
+Als Datenbank-Administrator eine Datenbank und einen eigenen Benutzer anlegen:
 
 ```sql
 CREATE DATABASE gratulationsdienst
@@ -273,63 +278,39 @@ Beim ersten Öffnen der Anwendung erscheint die Ersteinrichtung. Dort wird das e
 
 ## 8. Installation auf einem Produktivserver
 
-### 8.1 Backend kopieren
+### 8.1 Docker-Produktivbetrieb
 
-Den Ordner `php-api/` unterhalb des Webroots bereitstellen, zum Beispiel:
+Für den produktiven Betrieb mit Docker das Repository auf dem Server bereitstellen, zum Beispiel unter `/opt/gratulationsdienst`, und dort die Compose-Datei verwenden:
 
-```text
-/var/www/html/gratulationsdienst/php-api/
+```powershell
+docker compose -f docker/docker-compose.yml up -d --build
 ```
 
-Die produktive `config.php` wie in Abschnitt 5 anlegen. Dabei insbesondere folgende Werte ändern:
+Der Apache-Container stellt die Anwendung direkt über HTTPS bereit. Beim ersten Start erzeugt er automatisch ein selbstsigniertes Zertifikat, falls unter `docker/certs/` noch kein echtes Zertifikatspaar liegt. Für den realen Produktivbetrieb sollten dort gültige Zertifikate abgelegt werden.
+
+Die produktive `php-api/config.php` wie im Docker-Abschnitt anlegen. Dabei insbesondere folgende Werte ändern:
 
 ```php
 'app_url' => 'https://example.org/gratulationsdienst/',
 'mail_from' => 'noreply@example.org',
 ```
 
-Für das API-Verzeichnis muss Apache `.htaccess` auswerten dürfen:
+Frontend und API sollten unter derselben HTTPS-Domain und demselben Anwendungspfad liegen. In der Docker-Variante bleibt der Standardwert `/php-api` bestehen. Falls die Anwendung unter einem anderen Pfad läuft, muss `VITE_API_BASE` entsprechend angepasst werden.
 
-```apache
-<Directory /var/www/html/gratulationsdienst/php-api>
-    AllowOverride All
-    Require all granted
-</Directory>
-```
+### 8.2 Zertifikate und Pfade
 
-Auf Debian/Ubuntu lässt sich `mod_rewrite` so aktivieren:
+Der Apache-Container erwartet seine Zertifikate im Verzeichnis `docker/certs/` mit den Namen `fullchain.pem` und `privkey.pem`. Die Dateien werden beim lokalen Docker-Start automatisch angelegt, können für den Serverbetrieb aber durch echte Zertifikate ersetzt werden.
 
-```bash
-sudo a2enmod rewrite
-sudo systemctl restart apache2
-```
-
-### 8.2 Frontend konfigurieren und bauen
-
-Wenn Frontend und API unter derselben Domain und demselben Anwendungspfad liegen, kann der Standardwert `/php-api` verwendet werden. Bei einem abweichenden API-Pfad eine Datei `.env.production` anlegen:
-
-```text
-VITE_API_BASE=/gratulationsdienst/php-api
-```
-
-Anschließend den Build erstellen:
-
-```powershell
-npm install
-npm run build
-```
-
-Das aktuelle `vite.config.js` schreibt den Build nach `docker/src/gratulationsdienst/`. Für ein klassisches Deployment kann `build.outDir` stattdessen auf ein separates Verzeichnis wie `dist` gesetzt werden. Danach den Inhalt dieses Verzeichnisses nach `/var/www/html/gratulationsdienst/` kopieren; der Ordner `php-api/` bleibt dabei erhalten.
-
-Das mitgelieferte Skript `deploy.ps1` ist auf den derzeit hinterlegten Server und dessen lokale Verzeichnisstruktur zugeschnitten. Es ist kein allgemeines Installationsskript und muss vor einer Verwendung geprüft und angepasst werden.
+Das Frontend wird wie im lokalen Docker-Workflow gebaut und nach `docker/src/gratulationsdienst/` abgelegt. Der Container bindet dieses Verzeichnis direkt als Webroot ein.
 
 ### 8.3 Produktionsbetrieb absichern
 
 - Anwendung ausschließlich über HTTPS bereitstellen.
+- `app_url` auf die echte HTTPS-Adresse setzen.
 - Datenbankzugang nur für den notwendigen Host freigeben.
 - `php-api/config.php` außerhalb öffentlicher Downloads halten und restriktive Dateirechte setzen.
 - Frontend und API unter derselben Domain betreiben; die API sendet keine CORS-Freigaben. Nur bei einem bewussten Cross-Origin-Setup eine auf die konkrete Herkunft beschränkte Freigabe in `php-api/index.php` ergänzen (nie `*`).
-- Regelmäßige Sicherungen der MySQL-Datenbank einrichten.
+- Regelmäßige Sicherungen der MariaDB-Datenbank einrichten.
 - E-Mail-Versand testen, falls Benutzer den Passwort-Reset verwenden sollen.
 
 ## 9. Aktualisierung

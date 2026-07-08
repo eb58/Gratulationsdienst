@@ -10,9 +10,11 @@ services:
     restart: always
     ports:
       - "80:80"
+      - "443:443"
     volumes:
       - ./src:/var/www/html
       - ../php-api:/var/www/html/gratulationsdienst/php-api
+      - ./certs:/etc/apache2/ssl
     depends_on:
       - db
 

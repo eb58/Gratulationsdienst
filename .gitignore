@@ -4,3 +4,4 @@ dist-check/
 .vite/
 .claude
 docker/src
+docker/certs/*
