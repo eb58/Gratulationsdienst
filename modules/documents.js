@@ -209,7 +209,7 @@ export const completePrintRun = () => {
     ? { ...citizen, status: "gedruckt", printedAt: todayIso(), printedAge: calculateAge(citizen.birthDate), printedYear: Number(todayIso().slice(0, 4)), updatedAt: todayIso() }
     : citizen);
   state.generatedDocs = [];
-  state.selectedCitizenId = state.data.citizens.find(c => c.status !== "gedruckt")?.id || "";
+  state.selectedCitizenId = state.data.citizens.find(c => c.status !== "gedruckt" && !c.archived && c.status !== 'archiviert')?.id || "";
   saveData();
   render();
   toast(`${printedIds.size} Jubilare als gedruckt vermerkt.`);

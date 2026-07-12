@@ -178,6 +178,7 @@ export const buildStreetData = () => Object.entries(globalThis.SOKO_STRASSENVERZ
 
 export const defaultData = {
   citizens: [],
+  questionnaireCases: [],
   weddingAnniversaries: [],
   sokoGroups: buildSokoGroups(),
   sokoMembers: buildSokoMembers(),

@@ -84,7 +84,7 @@ const { state } = await import('../modules/state.js');
 const { defaultData } = await import('../modules/domain.js');
 const { monthAfterNext } = await import('../modules/testdata.js');
 const { normalizeAmount, nextId } = await import('../modules/utils.js');
-const { filteredCitizens } = await import('../modules/assignment.js');
+const { activeCitizens, filteredCitizens } = await import('../modules/assignment.js');
 
 const idEvent = id => ({ target: { closest: () => ({ dataset: { id } }) } });
 beforeEach(() => {
@@ -375,15 +375,17 @@ describe('Jubilare löschen und Testdaten', () => {
     assert.equal(state.filters.month, '05');
   });
 
-  it('seed-citizens simuliert bei Bestand einen ersetzenden Folge-LABO-Lauf', async () => {
+  it('seed-citizens simuliert einen Folge-LABO-Lauf mit archivierten Fehlstellen', async () => {
     await actions['seed-citizens']();
     const initialCount = state.data.citizens.length;
 
     await actions['seed-citizens']();
 
     assert.equal(state.importText.trim().split('\n').length, initialCount + 1);
-    assert.equal(state.data.citizens.length, initialCount, 'der Monatsbestand wird ersetzt statt erweitert');
-    assert.equal(state.importMissingCitizens.length, 0);
+    assert.equal(activeCitizens().length, initialCount, 'der aktive Monatsbestand bleibt gleich groß');
+    assert.equal(state.data.citizens.length, initialCount + state.importMissingCitizens.length, 'fehlende Personen bleiben archiviert erhalten');
+    assert.ok(state.importMissingCitizens.length > 0);
+    assert.ok(state.importMissingCitizens.every(missing => state.data.citizens.find(citizen => citizen.id === missing.id)?.archived));
   });
 
   it('download-labo-seed lädt die simulierten LABO-Daten als CSV herunter', async () => {
@@ -415,19 +417,21 @@ describe('Jubilare löschen und Testdaten', () => {
 
     const allCitizens = state.data.citizens;
     const idNum = citizen => Number(citizen.id.split('-').pop());
-    // Die Jahressimulation vergibt zuerst IDs 001..500. Der anschließende implizite
-    // LABO-Lauf ersetzt den Zielmonat vollständig durch offene Importfälle; die
-    // Rückmeldungen der übrigen Monate bleiben als gedrucktes Archiv erhalten.
-    const archived = allCitizens.filter(citizen => citizen.status === 'gedruckt');
-    const untouched = archived;
+    // Der Folge-LABO-Lauf aktualisiert bekannte Personen unter ihrer stabilen ID,
+    // archiviert Fehlstellen und ergänzt neue Personen, ohne die Historie zu löschen.
+    const printed = allCitizens.filter(citizen => citizen.status === 'gedruckt' && !citizen.archived);
+    const missing = allCitizens.filter(citizen => citizen.archived);
+    const untouched = printed;
+    const currentRun = activeCitizens();
     const openCitizens = allCitizens.filter(citizen => idNum(citizen) > 500);
-    const monthCounts = Object.values(archived.reduce((map, citizen) => ({ ...map, [citizen.birthDate.slice(5, 7)]: (map[citizen.birthDate.slice(5, 7)] || 0) + 1 }), {}));
-    const weddingCounts = untouched.reduce((map, citizen) => ({ ...map, [citizen.weddingAnniversary || '-']: (map[citizen.weddingAnniversary || '-'] || 0) + 1 }), {});
-    const wishCounts = untouched.reduce((map, citizen) => ({ ...map, [citizen.wish]: (map[citizen.wish] || 0) + 1 }), {});
+    const monthCounts = Object.values(printed.reduce((map, citizen) => ({ ...map, [citizen.birthDate.slice(5, 7)]: (map[citizen.birthDate.slice(5, 7)] || 0) + 1 }), {}));
+    const weddingCounts = printed.reduce((map, citizen) => ({ ...map, [citizen.weddingAnniversary || '-']: (map[citizen.weddingAnniversary || '-'] || 0) + 1 }), {});
+    const wishCounts = printed.reduce((map, citizen) => ({ ...map, [citizen.wish]: (map[citizen.wish] || 0) + 1 }), {});
     const reference = untouched[0];
 
-    assert.equal(allCitizens.length, 500);
-    assert.equal(archived.length, 458);
+    assert.equal(allCitizens.length, 500 + missing.length);
+    assert.equal(printed.length, 458);
+    assert.ok(missing.length > 0);
     assert.equal(monthCounts.length, 11);
     assert.ok(Math.max(...monthCounts) - Math.min(...monthCounts) <= 1);
     assert.ok(untouched.every(citizen => citizen.printedAt && citizen.printedYear && Number.isFinite(citizen.printedAge)));
@@ -446,9 +450,10 @@ describe('Jubilare löschen und Testdaten', () => {
     assert.ok(openCitizens.length > 0, 'zusätzlich zur Jahressimulation wird ein impliziter LABO-Lauf für den Zielmonat erzeugt');
     assert.ok(openCitizens.every(citizen => citizen.birthDate.slice(5, 7) === monthAfterNext()));
     assert.ok(openCitizens.every(citizen => citizen.status === 'importiert' || citizen.status === 'offen'));
+    assert.ok(currentRun.every(citizen => citizen.birthDate.slice(5, 7) === monthAfterNext()));
 
-    assert.equal(archived.some(citizen => citizen.birthDate.slice(5, 7) === monthAfterNext()), false);
-    assert.equal(state.importMissingCitizens.length, 0);
+    assert.equal(printed.some(citizen => citizen.birthDate.slice(5, 7) === monthAfterNext()), false);
+    assert.deepEqual(state.importMissingCitizens.map(citizen => citizen.id).sort(), missing.map(citizen => citizen.id).sort());
   });
 });
 
@@ -485,11 +490,11 @@ describe('Import-Lauf', () => {
     assert.equal(calls.length, 0);
   });
 
-  it('run-import löscht Monats-Citizens und Fragebogen-Scans vor dem Laden der CSV-Citizens', async () => {
+  it('run-import trennt die alte Rückmeldung vom neuen Lauf, ohne Scans zu löschen', async () => {
     state.auth.token = 'token';
     state.auth.user = { id: 'u-1', role: 'user' };
     state.data.citizens = [
-      { id: 'G-1', salutation: 'Frau', firstName: 'Erika', lastName: 'Muster', street: 'Hauptstr', houseNo: '1', postalCode: '13407', district: 'Tegel', birthDate: '1936-04-05', source: 'CSV Import', status: 'geladen' },
+      { id: 'G-1', salutation: 'Frau', firstName: 'Erika', lastName: 'Muster', street: 'Altstr', houseNo: '1', postalCode: '13407', district: 'Tegel', birthDate: '1936-04-05', source: 'CSV Import', status: 'geprüft', wish: 'Besuch erwünscht', pressPublication: true },
       { id: 'G-2', salutation: 'Frau', firstName: 'Eva', lastName: 'Fehlt', street: 'Hauptstr', houseNo: '2', postalCode: '13407', district: 'Tegel', birthDate: '1936-04-06', source: 'CSV Import', status: 'geladen' },
       { id: 'G-3', salutation: 'Frau', firstName: 'Juli', lastName: 'Bleibt', street: 'Hauptstr', houseNo: '3', postalCode: '13407', district: 'Tegel', birthDate: '1936-07-06', source: 'CSV Import', status: 'geladen' }
     ];
@@ -503,22 +508,26 @@ describe('Import-Lauf', () => {
     };
     state.importText = 'Anrede;Vorname;Nachname;Strasse;Hausnummer;PLZ;Ortsteil;Geburtsdatum\nFrau;Erika;Muster;Hauptstr;1;13407;Tegel;5.4.1936';
     route('PUT /citizens', request => request.body.items.map((item, index) => ({ ...item, _version: `2-${index}` })));
-    route('DELETE /questionnaire-pages', { ok: true });
+    route('PUT /questionnaireCases', request => request.body.items.map((item, index) => ({ ...item, _version: `2-${index}` })));
 
     await actions['run-import']();
 
-    const citizenPutIndexes = calls.map((call, index) => ({ call, index })).filter(entry => entry.call.method === 'PUT' && entry.call.path === '/citizens');
-    const cleanupDeleteIndex = calls.findIndex(call => call.method === 'DELETE' && call.path === '/questionnaire-pages');
-    assert.equal(citizenPutIndexes.length, 2);
-    assert.ok(cleanupDeleteIndex > citizenPutIndexes[0].index);
-    assert.ok(cleanupDeleteIndex < citizenPutIndexes[1].index);
-    assert.deepEqual(citizenPutIndexes[0].call.body.items.map(citizen => citizen.id), ['G-3']);
-    assert.deepEqual(calls[cleanupDeleteIndex].body.citizenIds.sort(), ['G-1', 'G-2']);
-    assert.deepEqual(citizenPutIndexes[1].call.body.items.map(citizen => citizen.lastName), ['Bleibt', 'Muster']);
+    const citizenPuts = calls.filter(call => call.method === 'PUT' && call.path === '/citizens');
+    const imported = state.data.citizens.find(citizen => citizen.id === 'G-1');
+    assert.equal(citizenPuts.length, 1);
+    assert.equal(calls.some(call => call.method === 'DELETE' && call.path === '/questionnaire-pages'), false);
+    assert.deepEqual(citizenPuts[0].body.items.map(citizen => citizen.id), ['G-1', 'G-2', 'G-3']);
+    assert.equal(imported.street, 'Hauptstr');
+    assert.equal(imported.wish, 'offen');
+    assert.equal(imported.pressPublication, false);
+    assert.equal(imported.status, 'offen');
+    assert.deepEqual(state.data.questionnaireCases.map(item => item.wish), ['Besuch erwünscht', 'offen']);
+    assert.deepEqual(state.data.questionnaireCases.map(item => item.cycle), ['2026-04', '2027-04']);
+    assert.deepEqual(state.importMissingCitizens.map(citizen => citizen.id), ['G-2']);
     state.auth.token = '';
   });
 
-  it('run-import räumt Fragebogen-Scans nicht auf, wenn der Citizen-Save scheitert', async () => {
+  it('run-import räumt Fragebogen-Scans auch bei einem Citizen-Konflikt nicht auf', async () => {
     state.auth.token = 'token';
     state.auth.user = { id: 'u-1', role: 'user' };
     state.data.citizens = [
@@ -534,7 +543,6 @@ describe('Import-Lauf', () => {
     };
     state.importText = 'Anrede;Vorname;Nachname;Strasse;Hausnummer;PLZ;Ortsteil;Geburtsdatum\nFrau;Erika;Muster;Hauptstr;1;13407;Tegel;5.4.1936';
     route('PUT /citizens', { error: 'conflict' }, { ok: false, status: 409 });
-    route('DELETE /questionnaire-pages', { ok: true });
 
     await actions['run-import']();
 
@@ -543,7 +551,7 @@ describe('Import-Lauf', () => {
     state.auth.token = '';
   });
 
-  it('run-import ersetzt bisherige Jubilare des Importmonats', async () => {
+  it('run-import behält im Folgelauf fehlende Jubilare zur manuellen Prüfung', async () => {
     state.data.citizens = [
       { id: 'G-2026-001', source: 'CSV Import', firstName: 'Max', lastName: 'Muster', birthDate: '1936-04-05', street: 'Hauptstr', houseNo: '1', postalCode: '13407' },
       { id: 'G-2026-002', source: 'CSV Import', firstName: 'Eva', lastName: 'Fehlt', birthDate: '1936-04-06', street: 'Hauptstr', houseNo: '2', postalCode: '13407' }
@@ -552,11 +560,12 @@ describe('Import-Lauf', () => {
 
     await actions['run-import']();
 
-    assert.deepEqual(state.data.citizens.map(citizen => citizen.lastName), ['Muster']);
-    assert.equal(state.importMissingCitizens.length, 0);
+    assert.deepEqual(state.data.citizens.map(citizen => citizen.lastName), ['Muster', 'Fehlt']);
+    assert.equal(state.data.citizens[1].archived, true);
+    assert.deepEqual(state.importMissingCitizens.map(citizen => citizen.id), ['G-2026-002']);
   });
 
-  it('run-import bereinigt Hochzeitsjubilaeen des Importmonats nach importierten Personen', async () => {
+  it('run-import aktualisiert Hochzeitsjubilaeen ohne alte Historieneinträge zu löschen', async () => {
     state.data.citizens = [
       { id: 'G-2026-010', source: 'CSV Import', firstName: 'Max', lastName: 'Muster', birthDate: '1936-04-05', street: 'Altstr', houseNo: '1', postalCode: '13407' },
       { id: 'G-2026-011', source: 'CSV Import', firstName: 'Eva', lastName: 'Fehlt', birthDate: '1936-04-06', street: 'Altstr', houseNo: '2', postalCode: '13407' }
@@ -573,10 +582,10 @@ describe('Import-Lauf', () => {
 
     const imported = state.data.citizens[0];
     assert.equal(imported.lastName, 'Muster');
-    assert.deepEqual(state.data.weddingAnniversaries.map(item => item.id), ['WA-1', 'WA-3']);
+    assert.deepEqual(state.data.weddingAnniversaries.map(item => item.id), ['WA-1', 'WA-2', 'WA-3']);
     assert.equal(state.data.weddingAnniversaries[0].citizenId, imported.id);
     assert.equal(state.data.weddingAnniversaries[0].street, 'Hauptstr');
-    assert.deepEqual(state.importMissingCitizens, []);
+    assert.deepEqual(state.importMissingCitizens.map(citizen => citizen.id), ['G-2026-011']);
     assert.notEqual(state.selectedCitizenId, 'G-2026-011');
     assert.equal(state.dialog, null);
   });

@@ -5,6 +5,7 @@ const hasBackend = () => Boolean(state.auth.token);
 const normalizedPage = page => ({
   id: page.id || "",
   citizenId: page.citizenId || "",
+  importId: page.importId || "",
   image: page.image || "",
   marks: page.marks || {},
   source: page.source || "pdf",

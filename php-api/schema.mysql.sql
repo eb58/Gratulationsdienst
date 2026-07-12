@@ -76,6 +76,8 @@ CREATE TABLE IF NOT EXISTS gd_citizens (
     wedding_anniversary VARCHAR(80) NOT NULL DEFAULT '',
     wedding_date DATE NULL,
     spouse_name VARCHAR(180) NOT NULL DEFAULT '',
+    archived TINYINT(1) NOT NULL DEFAULT 0,
+    questionnaire_cycle VARCHAR(7) NOT NULL DEFAULT '',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     row_version BIGINT UNSIGNED NOT NULL DEFAULT 1,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -84,6 +86,26 @@ CREATE TABLE IF NOT EXISTS gd_citizens (
     INDEX idx_gd_citizens_street (street),
     INDEX idx_gd_citizens_status (status),
     INDEX idx_gd_citizens_printed (printed_year, printed_age)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS gd_questionnaire_cases (
+    id VARCHAR(80) NOT NULL PRIMARY KEY,
+    citizen_id VARCHAR(32) NOT NULL,
+    cycle VARCHAR(7) NOT NULL,
+    wish VARCHAR(160) NOT NULL DEFAULT 'offen',
+    press_publication TINYINT(1) NOT NULL DEFAULT 0,
+    wedding_anniversary VARCHAR(80) NOT NULL DEFAULT '',
+    wedding_date DATE NULL,
+    spouse_name VARCHAR(180) NOT NULL DEFAULT '',
+    notes TEXT NULL,
+    source VARCHAR(80) NOT NULL DEFAULT '',
+    captured_at_date DATE NULL,
+    updated_at_date DATE NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    row_version BIGINT UNSIGNED NOT NULL DEFAULT 1,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE INDEX idx_gd_questionnaire_cases_citizen_cycle (citizen_id, cycle),
+    INDEX idx_gd_questionnaire_cases_cycle (cycle)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS gd_wedding_anniversaries (

@@ -1,4 +1,5 @@
 import { todayIso } from './utils.js';
+import { questionnaireCaseId } from './questionnaireCases.js';
 
 export const SOKO_QR_PREFIX = "GD-SOKO:";
 export const SOKO_PAGE_MM = { width: 210, height: 297 };
@@ -37,6 +38,7 @@ const sameText = (a, b) => comparable(a) === comparable(b);
 
 export const sokoQuestionnaireCode = citizen => [
   `${SOKO_QR_PREFIX}${String(citizen?.id || "").trim()}`,
+  `qc=${encodePart(questionnaireCaseId(citizen?.id, citizen?.questionnaireCycle))}`,
   `fn=${encodePart(citizen?.firstName)}`,
   `ln=${encodePart(citizen?.lastName)}`,
   `bd=${encodePart(citizen?.birthDate)}`,
@@ -60,6 +62,7 @@ export const sokoQuestionnaireDataFromCode = value => {
   }));
   return {
     id,
+    questionnaireCaseId: parts.qc || '',
     firstName: parts.fn || "",
     lastName: parts.ln || "",
     birthDate: parts.bd || "",
@@ -116,6 +119,11 @@ export const sokoQuestionnaireManualFields = result =>
 
 export const applySokoQuestionnaireResult = (citizen, result) => {
   if (!citizen) return { ok: false, error: "Jubilar wurde nicht gefunden." };
+  const scannedCaseId = result?.qrData?.questionnaireCaseId || result?.importId || '';
+  const currentCaseId = questionnaireCaseId(citizen.id, citizen.questionnaireCycle);
+  if (scannedCaseId && currentCaseId && scannedCaseId !== currentCaseId) {
+    return { ok: false, applied: false, error: 'Fragebogen gehört zu einem früheren Gratulationslauf.', citizen };
+  }
   const { patch, errors } = sokoQuestionnairePatchFromMarks(result?.marks || {});
   if (errors.length) return { ok: false, applied: false, error: errors.join(" "), citizen };
   const manualFields = sokoQuestionnaireManualFields(result);

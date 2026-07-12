@@ -4,12 +4,13 @@ import { state, saveData, saveCollectionData, saveQuittungSettings, apiRequest, 
 import { streetAssignment, filteredCitizens, documentCitizens, isPrintedCitizen, selectedTemplate, selectedSender, selectedMember, activeCitizens, groupForCitizen, isReceiptGroupReady, receiptCitizens, receiptCitizensForReadyGroups, duplicateKey } from './assignment.js';
 import { printCurrentRun, completePrintRun, renderSokoForm, renderSokoQuittung } from './documents.js';
 import { parseCsv, mapImportRow } from './import.js';
-import { buildImportResult, importMonths, importNotice, citizenGridRow, monthOf, nextMemberIdAfterDelete } from './citizens.js';
+import { buildImportResult, importMonths, importNotice, citizenGridRow, nextMemberIdAfterDelete } from './citizens.js';
 import { parseSokoQuestionnairePdf } from './sokoQuestionnairePdf.js';
 import { applySokoQuestionnaireResults } from './sokoQuestionnaire.js';
 import { createSokoQuestionnaireSimulation } from './sokoQuestionnaireSimulation.js';
 import { saveQuestionnairePages, deleteAllQuestionnairePages, deleteQuestionnairePagesForCitizens } from './questionnairePages.js';
 import { upsertWeddingAnniversaryForCitizen, upsertWeddingAnniversariesForCitizens, weddingAnniversaryFromCitizen } from './weddingAnniversaries.js';
+import { questionnaireCaseId, syncQuestionnaireCasesForImport, upsertQuestionnaireCase } from './questionnaireCases.js';
 import { followUpSeedCsv, groupedTestAssignments, monthAfterNext, questionnaireCitizenPatch, rollingSimulationDate, seedCsv } from './testdata.js';
 import { render, renderDialog } from './render.js';
 import { renderCitizenDetail } from './views.js';
@@ -253,13 +254,10 @@ const cleanedWeddingAnniversary = (item, citizen) => ({
   updatedAt: todayIso()
 });
 const cleanWeddingAnniversariesAfterImport = result => {
-  const months = new Set(result.affectedMonths || []);
-  if (!months.size) return;
   const importedByKey = new Map([...result.updates, ...result.newRows].map(citizen => [duplicateKey(citizen), citizen]));
-  state.data.weddingAnniversaries = (state.data.weddingAnniversaries || []).flatMap(item => {
-    if (!months.has(String(item.birthDate || "").slice(5, 7))) return [item];
+  state.data.weddingAnniversaries = (state.data.weddingAnniversaries || []).map(item => {
     const citizen = importedByKey.get(duplicateKey(item));
-    return citizen ? [cleanedWeddingAnniversary(item, citizen)] : [];
+    return citizen ? cleanedWeddingAnniversary(item, citizen) : item;
   });
 };
 const resetCitizenReviewFilters = month => {
@@ -276,33 +274,19 @@ const saveImportStep = async () => {
   const saved = await saveData();
   return !hadAuthToken || Boolean(saved);
 };
-const deleteCurrentImportMonthCitizens = async months => {
-  if (!months.size) return [];
-  const deleted = state.data.citizens.filter(citizen => months.has(monthOf(citizen.birthDate)));
-  if (!deleted.length) return [];
-  state.data.citizens = state.data.citizens.filter(citizen => !months.has(monthOf(citizen.birthDate)));
-  if (!await saveImportStep()) return null;
-  if (state.auth.token) await deleteQuestionnairePagesForCitizens(deleted.map(citizen => citizen.id));
-  return deleted;
-};
 const importMappedRows = async (mapped, { resetFilters = true, allowMultipleMonths = false } = {}) => {
   const months = importMonths(mapped);
   if (!allowMultipleMonths && months.size > 1) {
     importToast("Import abgebrochen: Eine CSV-Importdatei darf nur einen Geburtsmonat enthalten.");
     return { newRows: [], updates: [], skipped: 0, deleted: [], retained: state.data.citizens, affectedMonths: [...months], missing: [], aborted: true };
   }
-  const deletedBeforeImport = await deleteCurrentImportMonthCitizens(months);
-  if (!deletedBeforeImport) {
-    render();
-    importToast("Import abgebrochen: Die bisherigen Monatsdaten konnten nicht gelöscht werden.");
-    return { newRows: [], updates: [], skipped: 0, deleted: [], retained: state.data.citizens, affectedMonths: [...months], missing: [], aborted: true };
-  }
-  const result = buildImportResult(mapped, state.data.citizens, row => streetAssignment(row)?.groupId);
-  result.deleted = [...deletedBeforeImport, ...result.deleted];
+  const previousCitizens = state.data.citizens;
+  const result = buildImportResult(mapped, previousCitizens, row => streetAssignment(row)?.groupId);
   const updatesById = new Map(result.updates.map(c => [c.id, c]));
   state.data.citizens = [...result.retained.map(c => updatesById.get(c.id) ?? c), ...result.newRows];
+  state.data.questionnaireCases = syncQuestionnaireCasesForImport(state.data.questionnaireCases, previousCitizens, [...result.updates, ...result.newRows]);
   cleanWeddingAnniversariesAfterImport(result);
-  state.importMissingCitizens = [];
+  state.importMissingCitizens = result.missing;
   if (resetFilters) resetCitizenReviewFilters(months.size === 1 ? [...months][0] : "alle");
   selectImportedCitizen(result);
   render();
@@ -339,7 +323,10 @@ const sokoPdfNotice = pages => {
   ].filter(Boolean).join(" ") || "Keine Fragebögen erkannt.";
 };
 
-const hasNoQuestionnaire = citizen => !citizen.sokoQuestionnaireImages?.length;
+const hasNoQuestionnaire = citizen => {
+  const caseId = questionnaireCaseId(citizen.id, citizen.questionnaireCycle);
+  return !citizen.sokoQuestionnaireImages?.some(page => page.importId && page.importId === caseId);
+};
 const isImportedCitizen = citizen => citizen.status === "importiert";
 const questionnaireCitizenPool = citizens => {
   if (citizens.length) return citizens;
@@ -359,6 +346,7 @@ const sokoQuestionnaireImagePages = (resultPages, sourcePages) => resultPages
     return page.applied && citizenId && image ? {
       id: source.id || "",
       citizenId,
+      importId: source.importId || page.qrData?.questionnaireCaseId || questionnaireCaseId(citizenId, page.citizen?.questionnaireCycle),
       image,
       marks: page.marks || source.marks || {},
       source: source.source || "pdf",
@@ -382,14 +370,19 @@ const applySokoPdfImport = async (file, generatedPages = []) => {
   const pages = parsedSokoQuestionnairePages(parsed.pages, generatedPages);
   const result = applySokoQuestionnaireResults(state.data.citizens, pages);
   const previousCitizens = state.data.citizens;
+  const previousQuestionnaireCases = state.data.questionnaireCases;
   const previousWeddingAnniversaries = state.data.weddingAnniversaries;
   state.data.citizens = result.citizens;
+  result.pages.filter(page => page.applied && page.citizen).forEach(page => {
+    state.data.questionnaireCases = upsertQuestionnaireCase(state.data.questionnaireCases, page.citizen, { source: 'SOKO-PDF', capturedAt: todayIso() });
+  });
   syncWeddingAnniversaries(result.pages.filter(page => page.applied).map(page => page.citizen).filter(Boolean), "SOKO-PDF");
   const imagePages = sokoQuestionnaireImagePages(result.pages, generatedPages.length ? generatedPages : parsed.pages);
   try {
     await saveQuestionnairePages(imagePages);
   } catch (error) {
     state.data.citizens = previousCitizens;
+    state.data.questionnaireCases = previousQuestionnaireCases;
     state.data.weddingAnniversaries = previousWeddingAnniversaries;
     throw error;
   }
@@ -550,8 +543,10 @@ export const actions = {
     const citizenVersion = currentCitizen?._version || state.collectionVersions.citizens?.[values.id] || "";
     const weddingAnniversaryVersion = previousWeddingAnniversary?._version || state.collectionVersions.weddingAnniversaries?.[previousWeddingAnniversary?.id || ""] || "";
     const status = isPrintedCitizen(currentCitizen) ? "gedruckt" : "geprüft";
-    const updatedCitizen = { ...values, postalCode: normalizeDigits(values.postalCode), updatedAt: todayIso(), status, ...(citizenVersion ? { _version: citizenVersion } : {}) };
+    const updatedCitizen = { ...currentCitizen, ...values, postalCode: normalizeDigits(values.postalCode), updatedAt: todayIso(), status, ...(citizenVersion ? { _version: citizenVersion } : {}) };
     state.data.citizens = updateItem(state.data.citizens, values.id, updatedCitizen);
+    state.data.questionnaireCases = upsertQuestionnaireCase(state.data.questionnaireCases, updatedCitizen, { source: 'Manuelle Prüfung', capturedAt: todayIso() });
+    const currentQuestionnaireCase = state.data.questionnaireCases.find(item => item.id === questionnaireCaseId(updatedCitizen.id, updatedCitizen.questionnaireCycle));
     state.data.weddingAnniversaries = upsertWeddingAnniversaryForCitizen(state.data.weddingAnniversaries || [], updatedCitizen);
     const nextCitizenId = currentIds[currentIndex + 1] || "";
     const reachedEnd = !nextCitizenId || currentIndex < 0;
@@ -562,6 +557,7 @@ export const actions = {
       } else {
         const savedCitizen = await apiRequest(`/citizens/${values.id}`, { method: "PUT", body: JSON.stringify(updatedCitizen) });
         syncSavedCollectionItem("citizens", savedCitizen);
+        if (currentQuestionnaireCase) await saveCollectionItem('questionnaireCases', currentQuestionnaireCase);
         const weddingAnniversary = weddingAnniversaryFromCitizen(updatedCitizen);
         if (weddingAnniversary) {
           const weddingAnniversaryPayload = { ...weddingAnniversary, ...(weddingAnniversaryVersion ? { _version: weddingAnniversaryVersion } : {}) };
@@ -580,6 +576,7 @@ export const actions = {
       toast(reachedEnd ? "Jubilar gespeichert. Ende der Liste erreicht." : "Jubilar gespeichert.");
     } catch (error) {
       const reloadEntries = [{ collection: "citizens", id: values.id }];
+      if (currentQuestionnaireCase) reloadEntries.push({ collection: 'questionnaireCases', id: currentQuestionnaireCase.id });
       const weddingAnniversary = weddingAnniversaryFromCitizen(updatedCitizen);
       if (weddingAnniversary) reloadEntries.push({ collection: "weddingAnniversaries", id: weddingAnniversary.id });
       else if (previousWeddingAnniversary) reloadEntries.push({ collection: "weddingAnniversaries", id: previousWeddingAnniversary.id });
@@ -870,6 +867,7 @@ export const actions = {
   },
   "confirm-reset-test-database": async () => {
     state.data.citizens = [];
+    state.data.questionnaireCases = [];
     state.data.weddingAnniversaries = [];
     state.selectedCitizenId = "";
     state.generatedDocs = [];
@@ -883,6 +881,7 @@ export const actions = {
     const result = await importMappedRows(parseCsv(csv).map(mapImportRow), { resetFilters: false, allowMultipleMonths: true });
     const patches = new Map(importedCitizensFromResult(result).map((citizen, index) => [citizen.id, questionnaireCitizenPatch(citizen, index, rowCount)]));
     state.data.citizens = state.data.citizens.map(citizen => patches.get(citizen.id) || citizen);
+    state.data.questionnaireCases = [...patches.values()].reduce((cases, citizen) => upsertQuestionnaireCase(cases, citizen, { source: 'Simulation', capturedAt: citizen.updatedAt }), []);
     syncWeddingAnniversaries([...patches.values()], "Simulation");
     const batch = await seedCurrentLaboBatch(groupedTestAssignments(state.data.streets));
     saveData();

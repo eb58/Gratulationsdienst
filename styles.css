@@ -745,6 +745,26 @@ h3 {
   border: 1px solid var(--line);
 }
 
+.citizen-questionnaire-image figcaption {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.questionnaire-history {
+  margin-bottom: 16px;
+}
+
+.questionnaire-history .list-item {
+  display: grid;
+  grid-template-columns: 72px minmax(120px, 1fr);
+  gap: 2px 10px;
+}
+
+.questionnaire-history .muted {
+  grid-column: 2;
+}
+
 .citizen-panel-scroll {
   flex: 1;
   min-height: 0;

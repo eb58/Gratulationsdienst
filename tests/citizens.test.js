@@ -21,6 +21,7 @@ globalThis.ResizeObserver = class {
 };
 
 const { buildImportResult, importNotice, citizenGridRow, memberMatchesFilters, nextMemberIdAfterDelete } = await import('../modules/citizens.js');
+const { questionnaireCycleForCitizen } = await import('../modules/questionnaireCases.js');
 
 const row = patch => ({
   salutation: 'Frau',
@@ -73,42 +74,67 @@ describe('buildImportResult', () => {
     assert.equal(result.newRows.length, 0);
   });
 
-  it('ersetzt vorhandene Jubilare des Importmonats durch neue LABO-Datensaetze', () => {
-    const existing = [row({ id: 'G-2026-001', street: 'Alte Straße', houseNo: '1', wish: 'per Post', status: 'geprüft', pressPublication: true })];
+  it('startet bei einem neuen Gratulationslauf mit einer offenen Rueckmeldung', () => {
+    const existing = [row({ id: 'G-2026-001', street: 'Alte Straße', houseNo: '1', wish: 'per Post', status: 'geprüft', pressPublication: true, weddingDate: '1976-06-01', spouseName: 'Ernst' })];
     const incoming = [row({ street: 'Musterstraße', houseNo: '99', postalCode: '13439' })];
     const result = buildImportResult(incoming, existing, assignTegel);
 
-    assert.equal(result.newRows.length, 1);
-    assert.equal(result.updates.length, 0);
-    assert.deepEqual(result.deleted.map(citizen => citizen.id), ['G-2026-001']);
-    assert.equal(result.newRows[0].id, 'G-2026-001');
-    assert.equal(result.newRows[0].street, 'Musterstraße');
-    assert.equal(result.newRows[0].houseNo, '99');
-    assert.equal(result.newRows[0].postalCode, '13439');
-    assert.equal(result.newRows[0].wish, 'offen');
-    assert.equal(result.newRows[0].pressPublication, undefined);
-    assert.equal(result.newRows[0].status, 'importiert');
+    assert.equal(result.newRows.length, 0);
+    assert.equal(result.updates.length, 1);
+    assert.deepEqual(result.deleted, []);
+    assert.equal(result.updates[0].id, 'G-2026-001');
+    assert.equal(result.updates[0].street, 'Musterstraße');
+    assert.equal(result.updates[0].houseNo, '99');
+    assert.equal(result.updates[0].postalCode, '13439');
+    assert.equal(result.updates[0].wish, 'offen');
+    assert.equal(result.updates[0].pressPublication, false);
+    assert.equal(result.updates[0].weddingDate, '');
+    assert.equal(result.updates[0].spouseName, '');
+    assert.equal(result.updates[0].status, 'importiert');
+    assert.match(result.updates[0].questionnaireCycle, /^\d{4}-06$/);
     assert.equal(result.skipped, 0);
+  });
+
+  it('bewahrt die Rueckmeldung bei einem erneuten Import desselben Laufs', () => {
+    const incoming = row({ street: 'Neue Straße' });
+    const questionnaireCycle = questionnaireCycleForCitizen(incoming);
+    const existing = [row({ id: 'G-2026-001', questionnaireCycle, wish: 'per Post', status: 'geprüft', pressPublication: true })];
+    const result = buildImportResult([incoming], existing, assignTegel);
+
+    assert.equal(result.updates[0].wish, 'per Post');
+    assert.equal(result.updates[0].pressPublication, true);
+    assert.equal(result.updates[0].status, 'geprüft');
+  });
+
+  it('reaktiviert eine im selben Lauf wiederkehrende Person ohne ihren Bearbeitungsstand zu verlieren', () => {
+    const incoming = row({ street: 'Neue Straße' });
+    const existing = [row({ id: 'G-2026-001', archived: true, questionnaireCycle: questionnaireCycleForCitizen(incoming), wish: 'per Post', status: 'gedruckt' })];
+    const result = buildImportResult([incoming], existing, assignTegel);
+
+    assert.equal(result.updates[0].archived, false);
+    assert.equal(result.updates[0].wish, 'per Post');
+    assert.equal(result.updates[0].status, 'gedruckt');
   });
 
   it('setzt Status auf offen, wenn beim Import keine SOKO-Zuordnung gefunden wird', () => {
     const existing = [row({ id: 'G-2026-001', street: 'Alte Straße', status: 'geprüft' })];
     const result = buildImportResult([row({ street: 'Auswärtige Straße' })], existing, assignTegel);
 
-    assert.equal(result.newRows[0].status, 'offen');
+    assert.equal(result.updates[0].status, 'offen');
   });
 
-  it('legt gedruckte Rueckkehrer als neuen offenen Monatsdatensatz an', () => {
+  it('reaktiviert gedruckte Rueckkehrer unter ihrer stabilen Id', () => {
     const existing = [row({ id: 'G-2026-001', status: 'gedruckt', street: 'Alte Straße', printedAt: '2025-06-01', printedAge: 90, printedYear: 2025 })];
     const result = buildImportResult([row({ street: 'Musterstraße' })], existing, assignTegel);
 
-    assert.deepEqual(result.deleted.map(citizen => citizen.id), ['G-2026-001']);
-    assert.equal(result.newRows.length, 1);
-    assert.equal(result.newRows[0].status, 'importiert');
-    assert.equal(result.newRows[0].printedAt, undefined);
-    assert.equal(result.newRows[0].printedAge, undefined);
-    assert.equal(result.newRows[0].printedYear, undefined);
-    assert.equal(result.newRows[0].street, 'Musterstraße');
+    assert.deepEqual(result.deleted, []);
+    assert.equal(result.newRows.length, 0);
+    assert.equal(result.updates[0].id, 'G-2026-001');
+    assert.equal(result.updates[0].status, 'importiert');
+    assert.equal(result.updates[0].printedAt, '');
+    assert.equal(result.updates[0].printedAge, '');
+    assert.equal(result.updates[0].printedYear, '');
+    assert.equal(result.updates[0].street, 'Musterstraße');
     assert.equal(result.skipped, 0);
   });
 
@@ -123,12 +149,12 @@ describe('buildImportResult', () => {
     const existing = [row({ id: 'G-2026-001' })];
     const result = buildImportResult([row(), row()], existing, assignTegel);
 
-    assert.equal(result.updates.length, 0);
-    assert.equal(result.newRows.length, 1);
+    assert.equal(result.updates.length, 1);
+    assert.equal(result.newRows.length, 0);
     assert.equal(result.skipped, 1);
   });
 
-  it('meldet geloeschte Jubilare des Importmonats', () => {
+  it('behält im Folgelauf fehlende Jubilare und meldet sie zur Prüfung', () => {
     const existing = [
       row({ id: 'G-2026-001', source: 'CSV Import', firstName: 'Erika', birthDate: '1936-06-01' }),
       row({ id: 'G-2026-002', source: 'CSV Import', firstName: 'Eva', birthDate: '1936-06-02' }),
@@ -137,8 +163,10 @@ describe('buildImportResult', () => {
     ];
     const result = buildImportResult([row({ firstName: 'Erika', birthDate: '1936-06-01' })], existing, assignTegel);
 
-    assert.deepEqual(result.deleted.map(citizen => citizen.id), ['G-2026-001', 'G-2026-002', 'G-2026-004']);
-    assert.deepEqual(result.retained.map(citizen => citizen.id), ['G-2026-003']);
+    assert.deepEqual(result.deleted, []);
+    assert.deepEqual(result.retained.map(citizen => citizen.id), ['G-2026-001', 'G-2026-002', 'G-2026-003', 'G-2026-004']);
+    assert.deepEqual(result.retained.filter(citizen => citizen.archived).map(citizen => citizen.id), ['G-2026-002', 'G-2026-004']);
+    assert.deepEqual(result.missing.map(citizen => citizen.id), ['G-2026-002', 'G-2026-004']);
     assert.deepEqual(result.affectedMonths, ['06']);
   });
 
@@ -159,6 +187,10 @@ describe('importNotice', () => {
 
   it('reports deleted records', () => {
     assert.equal(importNotice({ newRows: [1], updates: [], skipped: 0, deleted: [1, 2] }), '2 Monatsdatensätze gelöscht, 1 neue Datensätze importiert.');
+  });
+
+  it('reports archived records missing from the follow-up import', () => {
+    assert.equal(importNotice({ newRows: [], updates: [], skipped: 0, missing: [1, 2] }), '2 bisherige Datensätze zur Prüfung archiviert.');
   });
 
   it('reports no changes when all lists are empty', () => {

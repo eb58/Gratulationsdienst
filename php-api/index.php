@@ -3,8 +3,8 @@ declare(strict_types=1);
 
 // Bei jeder Schema-Aenderung (neue ensureColumn/ensureIndex-Zeile in initSchema) erhoehen,
 // damit die Migration nach dem Deployment einmal laeuft; danach ueberspringt sie jeder Request.
-const SCHEMA_VERSION = '6';
-const COLLECTIONS = ['citizens', 'weddingAnniversaries', 'sokoGroups', 'sokoMembers', 'streets', 'senders', 'templates'];
+const SCHEMA_VERSION = '7';
+const COLLECTIONS = ['citizens', 'questionnaireCases', 'weddingAnniversaries', 'sokoGroups', 'sokoMembers', 'streets', 'senders', 'templates'];
 const ADMIN_COLLECTIONS = ['sokoGroups', 'sokoMembers', 'streets', 'senders', 'templates'];
 const SESSION_TTL_SECONDS = 28800;
 const MFA_TICKET_TTL_SECONDS = 300;
@@ -94,6 +94,27 @@ function collectionConfig(string $collection): array
                 'weddingAnniversary' => ['wedding_anniversary', 'string'],
                 'weddingDate' => ['wedding_date', 'date'],
                 'spouseName' => ['spouse_name', 'string'],
+                'archived' => ['archived', 'bool'],
+                'questionnaireCycle' => ['questionnaire_cycle', 'string'],
+                'createdAt' => ['created_at', 'createdAt'],
+            ],
+        ],
+        'questionnaireCases' => [
+            'table' => 'gd_questionnaire_cases',
+            'order' => 'cycle DESC, citizen_id, id',
+            'columns' => [
+                'id' => ['id', 'string'],
+                'citizenId' => ['citizen_id', 'string'],
+                'cycle' => ['cycle', 'string'],
+                'wish' => ['wish', 'string'],
+                'pressPublication' => ['press_publication', 'bool'],
+                'weddingAnniversary' => ['wedding_anniversary', 'string'],
+                'weddingDate' => ['wedding_date', 'date'],
+                'spouseName' => ['spouse_name', 'string'],
+                'notes' => ['notes', 'string'],
+                'source' => ['source', 'string'],
+                'capturedAt' => ['captured_at_date', 'date'],
+                'updatedAt' => ['updated_at_date', 'date'],
                 'createdAt' => ['created_at', 'createdAt'],
             ],
         ],
@@ -688,6 +709,8 @@ function initSchema(array $db): void
     ensureColumn($db, 'gd_citizens', 'wedding_anniversary', "ALTER TABLE gd_citizens ADD COLUMN wedding_anniversary VARCHAR(80) NOT NULL DEFAULT '' AFTER press_publication");
     ensureColumn($db, 'gd_citizens', 'wedding_date', 'ALTER TABLE gd_citizens ADD COLUMN wedding_date DATE NULL AFTER wedding_anniversary');
     ensureColumn($db, 'gd_citizens', 'spouse_name', "ALTER TABLE gd_citizens ADD COLUMN spouse_name VARCHAR(180) NOT NULL DEFAULT '' AFTER wedding_date");
+    ensureColumn($db, 'gd_citizens', 'archived', 'ALTER TABLE gd_citizens ADD COLUMN archived TINYINT(1) NOT NULL DEFAULT 0 AFTER spouse_name');
+    ensureColumn($db, 'gd_citizens', 'questionnaire_cycle', "ALTER TABLE gd_citizens ADD COLUMN questionnaire_cycle VARCHAR(7) NOT NULL DEFAULT '' AFTER archived");
     ensureColumn($db, 'gd_streets', 'rules', 'ALTER TABLE gd_streets ADD COLUMN rules JSON NULL AFTER district');
     ensureColumn($db, 'gd_streets', 'area', "ALTER TABLE gd_streets ADD COLUMN area VARCHAR(120) NOT NULL DEFAULT '' AFTER rules");
     ensureColumn($db, 'gd_streets', 'group_id', "ALTER TABLE gd_streets ADD COLUMN group_id VARCHAR(32) NOT NULL DEFAULT '' AFTER area");
@@ -739,7 +762,7 @@ function saveReceiptSettings(array $db, array $settings): void
 
 function readQuestionnairePages(array $db, string $citizenId): array
 {
-    $sql = 'SELECT id, citizen_id, source, mime_type, image_data, marks, created_at FROM gd_questionnaire_pages WHERE citizen_id = ? ORDER BY created_at DESC';
+    $sql = 'SELECT id, citizen_id, import_id, source, mime_type, image_data, marks, created_at FROM gd_questionnaire_pages WHERE citizen_id = ? ORDER BY created_at DESC';
     if ($db['driver'] === 'mysqli') {
         $stmt = $db['mysqli']->prepare($sql);
         bindValues($stmt, [$citizenId]);
@@ -766,17 +789,18 @@ function saveQuestionnairePage(array $db, array $page, int $index): array
     if ($citizenId === '') throw new ApiError(422, 'Fragebogen-Seite braucht citizenId.');
     [$mimeType, $imageData] = questionnaireImageFromDataUrl((string)($page['image'] ?? ''));
     $id = trim((string)($page['id'] ?? '')) ?: newId('QP');
+    $importId = substr(trim((string)($page['importId'] ?? $page['import_id'] ?? '')), 0, 64);
     $source = substr(trim((string)($page['source'] ?? 'pdf')), 0, 40);
     $marks = json_encode($page['marks'] ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
-    $values = [$id, $citizenId, $source, $mimeType, $imageData, $marks];
+    $values = [$id, $citizenId, $importId, $source, $mimeType, $imageData, $marks];
 
     if ($db['driver'] === 'mysqli' || $db['driver'] === 'mysql') {
-        executeStatement($db, 'INSERT INTO gd_questionnaire_pages (id, citizen_id, source, mime_type, image_data, marks) VALUES (?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE citizen_id = VALUES(citizen_id), source = VALUES(source), mime_type = VALUES(mime_type), image_data = VALUES(image_data), marks = VALUES(marks)', $values);
-        return questionnairePageFromRow(fetchOne($db, 'SELECT id, citizen_id, source, mime_type, image_data, marks, created_at FROM gd_questionnaire_pages WHERE id = ?', [$id]) ?? []);
+        executeStatement($db, 'INSERT INTO gd_questionnaire_pages (id, citizen_id, import_id, source, mime_type, image_data, marks) VALUES (?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE citizen_id = VALUES(citizen_id), import_id = VALUES(import_id), source = VALUES(source), mime_type = VALUES(mime_type), image_data = VALUES(image_data), marks = VALUES(marks)', $values);
+        return questionnairePageFromRow(fetchOne($db, 'SELECT id, citizen_id, import_id, source, mime_type, image_data, marks, created_at FROM gd_questionnaire_pages WHERE id = ?', [$id]) ?? []);
     }
 
-    executeStatement($db, 'INSERT INTO gd_questionnaire_pages (id, citizen_id, source, mime_type, image_data, marks) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET citizen_id = excluded.citizen_id, source = excluded.source, mime_type = excluded.mime_type, image_data = excluded.image_data, marks = excluded.marks', $values);
-    return questionnairePageFromRow(fetchOne($db, 'SELECT id, citizen_id, source, mime_type, image_data, marks, created_at FROM gd_questionnaire_pages WHERE id = ?', [$id]) ?? []);
+    executeStatement($db, 'INSERT INTO gd_questionnaire_pages (id, citizen_id, import_id, source, mime_type, image_data, marks) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET citizen_id = excluded.citizen_id, import_id = excluded.import_id, source = excluded.source, mime_type = excluded.mime_type, image_data = excluded.image_data, marks = excluded.marks', $values);
+    return questionnairePageFromRow(fetchOne($db, 'SELECT id, citizen_id, import_id, source, mime_type, image_data, marks, created_at FROM gd_questionnaire_pages WHERE id = ?', [$id]) ?? []);
 }
 
 function questionnaireImageFromDataUrl(string $image): array
@@ -803,6 +827,7 @@ function questionnairePageFromRow(array $row): array
     return [
         'id' => (string)($row['id'] ?? ''),
         'citizenId' => (string)($row['citizen_id'] ?? ''),
+        'importId' => (string)($row['import_id'] ?? ''),
         'source' => (string)($row['source'] ?? ''),
         'image' => 'data:' . (string)($row['mime_type'] ?? 'image/jpeg') . ';base64,' . base64_encode((string)($row['image_data'] ?? '')),
         'marks' => is_array($marks) ? $marks : [],

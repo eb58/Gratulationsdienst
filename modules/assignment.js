@@ -3,10 +3,11 @@ import { sokoGroupId } from './domain.js';
 import { state } from './state.js';
 
 export const isPrintedCitizen = citizen => citizen.status === "gedruckt";
+export const isArchivedCitizen = citizen => Boolean(citizen.archived) || citizen.status === 'archiviert';
 export const isCheckedCitizen = citizen => normalize(citizen.status).startsWith("gepr") || isPrintedCitizen(citizen);
 export const wantsGreeting = citizen => normalize(citizen.wish) !== "keine";
 export const wantsVisit = citizen => normalize(citizen.wish).startsWith("besuch");
-export const activeCitizens = () => state.data.citizens.filter(citizen => !isPrintedCitizen(citizen));
+export const activeCitizens = () => state.data.citizens.filter(citizen => !isPrintedCitizen(citizen) && !isArchivedCitizen(citizen));
 export const duplicateKey = citizen => [
   citizen.firstName,
   citizen.lastName,
@@ -82,7 +83,7 @@ export const leaderForGroup = group => byId(state.data.sokoMembers, group?.leade
 
 export const selectedCitizen = () => {
   const citizen = byId(state.data.citizens, state.selectedCitizenId);
-  return citizen && !isPrintedCitizen(citizen) ? citizen : activeCitizens()[0];
+  return citizen && !isPrintedCitizen(citizen) && !isArchivedCitizen(citizen) ? citizen : activeCitizens()[0];
 };
 export const selectedTemplate = () => byId(state.data.templates, state.selectedTemplateId) || state.data.templates[0];
 export const selectedSender = () => byId(state.data.senders, state.selectedSenderId) || state.data.senders[0];
@@ -91,7 +92,7 @@ export const selectedStreet = () => byId(state.data.streets, state.selectedStree
 
 export const matchesSelectedMonth = citizen => state.filters.month === "alle" || birthdayMonth(citizen.birthDate) === state.filters.month;
 
-export const filteredCitizens = () => state.data.citizens.filter(citizen => {
+export const filteredCitizens = () => state.data.citizens.filter(citizen => !isArchivedCitizen(citizen)).filter(citizen => {
   const haystack = normalize([citizen.firstName, citizen.lastName, citizen.street, citizen.district, citizen.wish].join(" "));
   const age = calculateAge(citizen.birthDate);
   const group = groupForCitizen(citizen);

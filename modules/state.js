@@ -73,7 +73,7 @@ export const dataForPersistence = data => ({
   citizens: persistentCitizens(data?.citizens)
 });
 
-export const collectionVersionMap = items => Object.fromEntries((items || [])
+export const collectionVersionMap = items => Object.fromEntries((Array.isArray(items) ? items : [])
   .filter(item => item?.id && item._version)
   .map(item => [item.id, String(item._version)]));
 
@@ -92,7 +92,7 @@ const sortKeys = value => {
 };
 const itemSignature = item => JSON.stringify(sortKeys(withoutVersion(item)));
 const itemsById = items => Object.fromEntries((items || []).filter(item => item?.id).map(item => [item.id, item]));
-const collectionBaselineMap = items => Object.fromEntries((items || [])
+const collectionBaselineMap = items => Object.fromEntries((Array.isArray(items) ? items : [])
   .filter(item => item?.id)
   .map(item => [item.id, withoutVersion(item)]));
 const persistedCollectionItems = (data, collection) => dataForPersistence(data)[collection] || [];
@@ -157,6 +157,7 @@ export const normalizeLoadedData = data => {
   return {
     ...repaired,
     citizens: persistentCitizens(repaired?.citizens),
+    questionnaireCases: Array.isArray(repaired?.questionnaireCases) ? repaired.questionnaireCases : [],
     weddingAnniversaries: Array.isArray(repaired?.weddingAnniversaries) ? repaired.weddingAnniversaries : [],
     sokoGroups: mergeById(repaired?.sokoGroups, defaultData.sokoGroups, group => activeGroupIds.has(group.id)),
     sokoMembers: mergeById(repaired?.sokoMembers, defaultData.sokoMembers, member => activeGroupIds.has(member.groupId)),
@@ -235,7 +236,7 @@ export const state = {
   localChangeVersion: 0
 };
 
-export const apiCollections = ["citizens", "weddingAnniversaries", "sokoGroups", "sokoMembers", "streets", "senders", "templates"];
+export const apiCollections = ["citizens", "questionnaireCases", "weddingAnniversaries", "sokoGroups", "sokoMembers", "streets", "senders", "templates"];
 export const adminCollections = ["sokoGroups", "sokoMembers", "streets", "senders", "templates"];
 export const adminViews = ["soko", "regions", "map", "senders", "templates", "quittungStamm", "users"];
 export const persistedCollections = apiCollections;
@@ -336,10 +337,11 @@ const persistBackendCollections = async data => {
     .filter(result => result.status === "fulfilled")
     .map(result => result.value)
     .forEach(([collection, savedItems]) => {
-      state.collectionVersions[collection] = collectionVersionMap(savedItems);
-      state.collectionBaselines[collection] = collectionBaselineMap(savedItems);
+      const normalizedSavedItems = Array.isArray(savedItems) ? savedItems : [];
+      state.collectionVersions[collection] = collectionVersionMap(normalizedSavedItems);
+      state.collectionBaselines[collection] = collectionBaselineMap(normalizedSavedItems);
       if (Array.isArray(state.data?.[collection])) {
-        const versionById = new Map(savedItems.map(item => [item.id, item._version]));
+        const versionById = new Map(normalizedSavedItems.map(item => [item.id, item._version]));
         state.data[collection] = state.data[collection].map(item => versionById.has(item.id) ? { ...item, _version: versionById.get(item.id) } : item);
       }
     });

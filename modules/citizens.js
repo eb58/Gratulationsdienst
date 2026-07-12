@@ -1,21 +1,28 @@
 import { normalize, nextId, todayIso, calculateAge } from './utils.js';
 import { duplicateKey } from './assignment.js';
+import { questionnaireCycleForCitizen } from './questionnaireCases.js';
 
 const LABO_FIELDS = ['salutation', 'street', 'houseNo', 'postalCode', 'district', 'phone', 'email'];
 export const monthOf = value => String(value || "").slice(5, 7);
 const isImportableRow = row => row.firstName && row.lastName && row.birthDate && row.street;
 export const importMonths = mapped => new Set(mapped.filter(isImportableRow).map(row => monthOf(row.birthDate)).filter(Boolean));
-
 const mergeCitizen = (existing, incoming, hasGroup) => {
+  const questionnaireCycle = questionnaireCycleForCitizen(incoming);
+  const sameQuestionnaireCycle = existing.questionnaireCycle === questionnaireCycle;
   return {
     ...existing,
     ...Object.fromEntries(LABO_FIELDS.map(key => [key, incoming[key] ?? existing[key]])),
-    status: hasGroup ? "importiert" : "offen",
+    archived: false,
+    questionnaireCycle,
+    status: sameQuestionnaireCycle ? existing.status : hasGroup ? 'importiert' : 'offen',
     printedAt: "",
     printedAge: "",
     printedYear: "",
-    wish: "offen",
-    pressPublication: false,
+    wish: sameQuestionnaireCycle ? existing.wish : 'offen',
+    pressPublication: sameQuestionnaireCycle ? Boolean(existing.pressPublication) : false,
+    weddingAnniversary: sameQuestionnaireCycle ? existing.weddingAnniversary || '' : '',
+    weddingDate: sameQuestionnaireCycle ? existing.weddingDate || '' : '',
+    spouseName: sameQuestionnaireCycle ? existing.spouseName || '' : '',
     updatedAt: todayIso()
   };
 };
@@ -23,9 +30,7 @@ const mergeCitizen = (existing, incoming, hasGroup) => {
 export const buildImportResult = (mapped, existingCitizens, assignGroup) => {
   const validRows = mapped.filter(isImportableRow);
   const months = importMonths(mapped);
-  const deleted = existingCitizens.filter(citizen => months.has(monthOf(citizen.birthDate)));
-  const retained = existingCitizens.filter(citizen => !months.has(monthOf(citizen.birthDate)));
-  const existingByKey = new Map(retained.map(c => [duplicateKey(c), c]));
+  const existingByKey = new Map(existingCitizens.map(citizen => [duplicateKey(citizen), citizen]));
   const seen = new Set();
   const newRows = [];
   const updates = [];
@@ -41,10 +46,15 @@ export const buildImportResult = (mapped, existingCitizens, assignGroup) => {
     } else {
       seen.add(key);
       const group = assignGroup(row);
-      newRows.push({ ...row, id: nextId("G-2026", [...retained, ...updates, ...newRows]), source: "CSV Import", createdAt: row.createdAt || todayIso(), updatedAt: todayIso(), status: group ? "importiert" : "offen" });
+      newRows.push({ ...row, id: nextId("G-2026", [...existingCitizens, ...newRows]), archived: false, questionnaireCycle: questionnaireCycleForCitizen(row), source: "CSV Import", createdAt: row.createdAt || todayIso(), updatedAt: todayIso(), status: group ? "importiert" : "offen" });
     }
   }
-  return { newRows, updates, skipped, deleted, retained, affectedMonths: [...months], missing: [] };
+  const missing = existingCitizens.filter(citizen => months.has(monthOf(citizen.birthDate)) && !seen.has(duplicateKey(citizen)));
+  const missingIds = new Set(missing.map(citizen => citizen.id));
+  const retained = existingCitizens.map(citizen => missingIds.has(citizen.id) && !citizen.archived
+    ? { ...citizen, archived: true, updatedAt: todayIso() }
+    : citizen);
+  return { newRows, updates, skipped, deleted: [], retained, affectedMonths: [...months], missing };
 };
 
 export const importNotice = ({ newRows, updates, skipped, deleted = [], missing = [] }) => {
@@ -53,7 +63,7 @@ export const importNotice = ({ newRows, updates, skipped, deleted = [], missing 
   if (newRows.length) parts.push(`${newRows.length} neue Datensätze importiert`);
   if (updates.length) parts.push(`${updates.length} Bestände aktualisiert`);
   if (skipped) parts.push(`${skipped} Dubletten übersprungen`);
-  if (missing.length) parts.push(`${missing.length} bisherige Datensätze im neuen Import nicht enthalten`);
+  if (missing.length) parts.push(`${missing.length} bisherige Datensätze zur Prüfung archiviert`);
   return parts.length ? parts.join(", ") + "." : "Keine Änderungen.";
 };
 

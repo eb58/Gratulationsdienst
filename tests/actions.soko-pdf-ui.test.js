@@ -81,6 +81,7 @@ const citizen = (id, lastName) => ({
   firstName: 'Erika',
   lastName,
   birthDate: '1936-06-01',
+  questionnaireCycle: '2026-06',
   street: 'Teststraße',
   houseNo: '1',
   postalCode: '13437',
@@ -108,6 +109,7 @@ beforeEach(() => {
   simulationCitizens = null;
   state.data = {
     citizens: [citizen('G-1', 'Alpha'), citizen('G-2', 'Beta')],
+    questionnaireCases: [],
     sokoGroups: [],
     sokoMembers: [],
     streets: [],
@@ -141,11 +143,13 @@ describe('SOKO-PDF UI refresh', () => {
   it('rolls back citizen changes when questionnaire scans cannot be saved', async () => {
     saveQuestionnairePagesImpl = async () => { throw new Error('scan save failed'); };
     const previousCitizens = structuredClone(state.data.citizens);
+    const previousQuestionnaireCases = structuredClone(state.data.questionnaireCases);
     setVisibleCitizenRows(['G-1']);
 
     await actions['run-soko-pdf-import']({ file: { name: 'scan.pdf', type: 'application/pdf' } });
 
     assert.deepEqual(state.data.citizens, previousCitizens);
+    assert.deepEqual(state.data.questionnaireCases, previousQuestionnaireCases);
     assert.equal(renderCitizenDetailCount, 0);
   });
 });
@@ -169,7 +173,7 @@ describe('SOKO-PDF-Simulation Auswahl', () => {
   it('lässt Jubilare mit bereits vorhandenem Fragebogen aus', async () => {
     state.data.citizens = [
       citizen('G-1', 'Alpha'),
-      { ...citizen('G-2', 'Beta'), sokoQuestionnaireImages: [{ id: 'x' }] }
+      { ...citizen('G-2', 'Beta'), sokoQuestionnaireImages: [{ id: 'x', importId: 'QC-G-2-2026-06' }] }
     ];
     setVisibleCitizenRows(['G-1', 'G-2']);
 

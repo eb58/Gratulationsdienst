@@ -18,6 +18,7 @@ const citizen = {
   firstName: 'Erika',
   lastName: 'Mustermann',
   birthDate: '1936-06-01',
+  questionnaireCycle: '2026-06',
   wish: 'offen',
   status: 'importiert'
 };
@@ -29,6 +30,7 @@ describe('SOKO questionnaire codes', () => {
     assert.equal(citizenIdFromSokoQuestionnaireCode(code), 'G-2026-001');
     assert.deepEqual(sokoQuestionnaireDataFromCode(code), {
       id: 'G-2026-001',
+      questionnaireCaseId: 'QC-G-2026-001-2026-06',
       firstName: 'Erika',
       lastName: 'Mustermann',
       birthDate: '1936-06-01',
@@ -112,5 +114,16 @@ describe('SOKO questionnaire application', () => {
     assert.equal(result.citizens[0].wish, 'keine');
     assert.equal(result.pages[0].ok, true);
     assert.equal(result.pages[1].ok, false);
+  });
+
+  it('rejects a scan from an earlier gratification cycle', () => {
+    const result = applySokoQuestionnaireResult(citizen, {
+      qrData: { questionnaireCaseId: 'QC-G-2026-001-2025-06' },
+      marks: { wishPost: true }
+    });
+
+    assert.equal(result.applied, false);
+    assert.match(result.error, /früheren Gratulationslauf/);
+    assert.equal(result.citizen.wish, 'offen');
   });
 });

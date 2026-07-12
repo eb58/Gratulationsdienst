@@ -29,6 +29,7 @@ const {
   documentCitizens,
   duplicateKey,
   editableStreetAssignment,
+  filteredCitizens,
   groupForCitizen,
   houseNumberValue,
   isCheckedCitizen,
@@ -114,13 +115,15 @@ describe('citizen status helpers', () => {
     assert.equal(wantsVisit({ wish: 'per Post' }), false);
   });
 
-  it('returns only non-printed citizens as active', () => {
+  it('returns neither printed nor archived citizens as active', () => {
     state.data.citizens = [
       baseCitizen({ id: 'active', status: 'geprüft' }),
-      baseCitizen({ id: 'printed', status: 'gedruckt' })
+      baseCitizen({ id: 'printed', status: 'gedruckt' }),
+      baseCitizen({ id: 'archived', status: 'archiviert' })
     ];
 
     assert.deepEqual(activeCitizens().map(citizen => citizen.id), ['active']);
+    assert.deepEqual(filteredCitizens().map(citizen => citizen.id), ['active', 'printed']);
   });
 });
 

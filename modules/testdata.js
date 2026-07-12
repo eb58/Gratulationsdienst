@@ -228,6 +228,7 @@ export const questionnaireCitizenPatch = (citizen, index, rowCount) => {
     printedAt,
     printedAge: printedYear - Number(citizen.birthDate?.slice(0, 4)),
     printedYear,
+    questionnaireCycle: `${printedYear}-${citizen.birthDate.slice(5, 7)}`,
     wish: questionnaireWish(index),
     pressPublication: pseudoBucket(index, 100, 53) < 36,
     weddingAnniversary,
