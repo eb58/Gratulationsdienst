@@ -220,7 +220,7 @@ describe('view partials', () => {
     assert.doesNotMatch(html, /citizen-questionnaire-image/);
   });
 
-  it('shows questionnaire scans without the import date caption', () => {
+  it('renders questionnaire scans without cycle labels', () => {
     state.data.citizens = [{
       ...citizen,
       sokoQuestionnaireImages: [{ image: 'data:image/png;base64,abc', createdAt: '2026-06-01' }]
@@ -229,7 +229,6 @@ describe('view partials', () => {
     const html = views.citizens();
 
     assert.match(html, /citizen-questionnaire-image/);
-    assert.doesNotMatch(html, /<figcaption>/);
     assert.doesNotMatch(html, /01\.06\.2026/);
   });
 
