@@ -105,6 +105,7 @@ beforeEach(() => {
   state.importText = '';
   state.importMissingCitizens = [];
   state.generatedDocs = [];
+  state.audit = [];
   state.printBackground = true;
   state.showMapPeople = true;
   state.collectionVersions = { citizens: {}, weddingAnniversaries: {}, sokoGroups: {}, sokoMembers: {}, streets: {}, senders: {}, templates: {} };
@@ -404,16 +405,19 @@ describe('Jubilare löschen und Testdaten', () => {
   it('reset-test-database loescht Bestand, laesst Monatsauswahl unveraendert und erzeugt 500 Jahresdaten mit realistischen Fragebogenwerten', async () => {
     state.data.citizens = [{ id: 'G-old' }];
     state.data.weddingAnniversaries = [{ id: 'WA-G-old', citizenId: 'G-old' }];
+    state.audit = [{ id: 'A-1', action: 'UPDATE' }];
     state.filters = { ...state.filters, month: '05' };
 
     actions['reset-test-database']();
     assert.equal(state.dialog.type, 'reset-test-database');
+    assert.match(state.dialog.message, /Änderungen/);
     assert.equal(state.data.citizens.length, 1, 'noch nicht geloescht vor Bestaetigung');
 
     await actions['confirm-reset-test-database']();
 
     assert.equal(state.dialog, null);
     assert.equal(state.filters.month, '05');
+    assert.deepEqual(state.audit, []);
 
     const allCitizens = state.data.citizens;
     const idNum = citizen => Number(citizen.id.split('-').pop());
@@ -432,6 +436,8 @@ describe('Jubilare löschen und Testdaten', () => {
     assert.equal(allCitizens.length, 503);
     assert.equal(printed.length, 458);
     assert.ok(missing.length > 0);
+    assert.ok(missing.every(citizen => citizen.status === 'archiviert'));
+    assert.equal(allCitizens.filter(citizen => citizen.status === 'gedruckt' && citizen.archived).length, 0);
     assert.equal(monthCounts.length, 11);
     assert.ok(Math.max(...monthCounts) - Math.min(...monthCounts) <= 1);
     assert.ok(untouched.every(citizen => citizen.printedAt && citizen.printedYear && Number.isFinite(citizen.printedAge)));
@@ -449,7 +455,8 @@ describe('Jubilare löschen und Testdaten', () => {
 
     assert.ok(openCitizens.length > 0, 'zusätzlich zur Jahressimulation wird ein impliziter LABO-Lauf für den Zielmonat erzeugt');
     assert.ok(openCitizens.every(citizen => citizen.birthDate.slice(5, 7) === monthAfterNext()));
-    assert.ok(openCitizens.every(citizen => citizen.status === 'importiert' || citizen.status === 'offen'));
+    assert.ok(openCitizens.every(citizen => citizen.status === 'importiert'));
+    assert.equal(allCitizens.filter(citizen => citizen.status === 'offen').length, 0);
     assert.ok(currentRun.every(citizen => citizen.birthDate.slice(5, 7) === monthAfterNext()));
 
     assert.equal(printed.some(citizen => citizen.birthDate.slice(5, 7) === monthAfterNext()), false);
@@ -961,6 +968,24 @@ describe('Benutzerverwaltung (apiRequest)', () => {
     await actions['load-users']();
     assert.equal(state.auth.users.length, 2);
     assert.equal(state.selectedUserId, 'u1');
+  });
+
+  it('load-audit loads the audit entries', async () => {
+    route('GET /audit?limit=100', [{ id: '1', action: 'UPDATE', collection: 'citizens', recordId: 'G-1' }]);
+    await actions['load-audit']();
+    assert.equal(calls.some(call => call.method === 'GET' && call.path === '/audit?limit=100'), true);
+    assert.deepEqual(state.audit, [{ id: '1', action: 'UPDATE', collection: 'citizens', recordId: 'G-1' }]);
+  });
+
+  it('clear-audit leert lokale und Backend-Änderungen', async () => {
+    state.auth.token = 'token';
+    state.audit = [{ id: '1', action: 'UPDATE' }];
+    route('DELETE /audit', { ok: true });
+
+    await actions['clear-audit']();
+
+    assert.equal(calls.some(call => call.method === 'DELETE' && call.path === '/audit'), true);
+    assert.deepEqual(state.audit, []);
   });
 
   it('save-user legt per POST an und lädt die Liste neu', async () => {

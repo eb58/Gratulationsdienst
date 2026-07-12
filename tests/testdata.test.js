@@ -71,6 +71,21 @@ describe('test assignments', () => {
     assert.deepEqual(result.map(a => [a.street.id, a.rule.soko]), [['STR-1', '02'], ['STR-2', '01']]);
   });
 
+  it('ignores SOKO rules without any unambiguous test house number', () => {
+    const result = testAssignments([{
+      id: 'STR-X',
+      name: 'Mehrdeutigweg',
+      district: 'Tegel',
+      rules: [
+        { soko: '01', plz: '13437', ortsteil: 'Tegel', von: '1', bis: '9', art: 'F' },
+        { soko: '02', plz: '13437', ortsteil: 'Tegel', von: '', bis: '', art: 'F' }
+      ]
+    }]);
+
+    assert.deepEqual(result.map(a => [a.street.id, a.rule.soko]), [['STR-X', '02']]);
+    assert.equal(testHouseNo(result[0].rule, result[0].street.rules, () => 0), '10');
+  });
+
   it('groups by SOKO sorted numerically', () => {
     const groups = groupedTestAssignments(streets);
     assert.deepEqual(groups.map(g => g.soko), ['01', '02']);

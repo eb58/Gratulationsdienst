@@ -166,6 +166,7 @@ beforeEach(() => {
     sender: sender.role,
     createdAt: '2026-06-01'
   }];
+  state.audit = [];
   state.printBackground = true;
   state.showMapPeople = true;
   state.importText = 'Vorname;Nachname';
@@ -377,5 +378,45 @@ describe('main views', () => {
 
     state.selectedUserId = 'new';
     assert.match(views.users(), /Startpasswort/);
+  });
+
+  it('renders the audit view with snapshots', () => {
+    state.audit = [{
+      id: '42',
+      action: 'UPDATE',
+      collection: 'citizens',
+      recordId: 'G-1',
+      actorEmail: 'admin@example.test',
+      occurredAt: '2026-07-12 10:00:00',
+      entryHash: 'abcdef1234567890',
+      beforeJson: { wish: 'offen' },
+      afterJson: { wish: 'Besuch erwünscht' }
+    }, {
+      id: '43',
+      action: 'UPDATE',
+      collection: 'citizens',
+      recordId: 'G-2',
+      actorEmail: 'admin@example.test',
+      occurredAt: '2026-07-12 10:01:00',
+      entryHash: '1234567890abcdef',
+      beforeJson: { _version: '1' },
+      afterJson: { _version: '2' }
+    }];
+
+    const html = views.audit();
+
+    assert.match(html, /Änderungen/);
+    assert.match(html, /Geändert/);
+    assert.match(html, /Jubilar \/ G-1/);
+    assert.match(html, /admin@example\.test/);
+    assert.match(html, /abcdef123456/);
+    assert.match(html, /Wunsch/);
+    assert.match(html, /offen → Besuch erw/);
+    assert.match(html, /Vorher/);
+    assert.match(html, /Nachher/);
+    assert.match(html, /Besuch erw/);
+    assert.doesNotMatch(html, /G-2/);
+    assert.doesNotMatch(html, /keine Feldänderung/);
+    state.audit = [];
   });
 });

@@ -305,6 +305,16 @@ const seedCurrentLaboBatch = groups => {
   const rows = parseCsv(csv).map(mapImportRow);
   return importMappedRows(rows, { resetFilters: false }).then(result => ({ rowCount: rows.length, result }));
 };
+const markMissingTestCitizensArchived = missing => {
+  const missingIds = new Set((missing || []).map(citizen => citizen.id));
+  if (!missingIds.size) return;
+  state.data.citizens = state.data.citizens.map(citizen => missingIds.has(citizen.id) && citizen.archived
+    ? { ...citizen, status: 'archiviert' }
+    : citizen);
+  state.importMissingCitizens = state.importMissingCitizens.map(citizen => missingIds.has(citizen.id)
+    ? { ...citizen, status: 'archiviert', archived: true }
+    : citizen);
+};
 const importedCitizensFromResult = result => {
   const ids = new Set([...result.updates, ...result.newRows].map(citizen => citizen.id));
   return state.data.citizens.filter(citizen => ids.has(citizen.id));
@@ -466,6 +476,19 @@ export const actions = {
     try {
       state.auth.users = await apiRequest("/users");
       state.selectedUserId = state.selectedUserId || state.auth.users[0]?.id || "";
+      render();
+    } catch (error) { toast(error.message); }
+  },
+  "load-audit": async () => {
+    try {
+      state.audit = await apiRequest("/audit?limit=100");
+      render();
+    } catch (error) { toast(error.message); }
+  },
+  "clear-audit": async () => {
+    try {
+      state.audit = [];
+      if (state.auth.token) await apiRequest("/audit", { method: "DELETE" });
       render();
     } catch (error) { toast(error.message); }
   },
@@ -862,7 +885,7 @@ export const actions = {
     if (state.auth.user?.role !== "admin") { toast("Nur Admins können Testdaten zurücksetzen."); return; }
     const groups = groupedTestAssignments(state.data.streets);
     if (!groups.length) { toast("Keine SOKO-Zuordnungen für Testdaten gefunden."); return; }
-    state.dialog = { type: "reset-test-database", title: "Test-Datenbank zurücksetzen", message: "Sollen alle Jubilare, Fragebögen und das Import-Protokoll gelöscht und durch 500 neue Jahres-Testdaten mit Fragebogen-Rückmeldungen ersetzt werden? Stammdaten und Benutzer bleiben erhalten.", confirmLabel: "Zurücksetzen", confirmAction: "confirm-reset-test-database" };
+    state.dialog = { type: "reset-test-database", title: "Test-Datenbank zurücksetzen", message: "Sollen alle Jubilare, Fragebögen, das Import-Protokoll und die Änderungen gelöscht und durch 500 neue Jahres-Testdaten mit Fragebogen-Rückmeldungen ersetzt werden? Stammdaten und Benutzer bleiben erhalten.", confirmLabel: "Zurücksetzen", confirmAction: "confirm-reset-test-database" };
     state.focusTarget = ".dialog-box [data-autofocus]";
     render();
   },
@@ -885,7 +908,9 @@ export const actions = {
     state.data.questionnaireCases = [...patches.values()].reduce((cases, citizen) => upsertQuestionnaireCase(cases, citizen, { source: 'Simulation', capturedAt: citizen.updatedAt }), []);
     syncWeddingAnniversaries([...patches.values()], "Simulation");
     const batch = await seedCurrentLaboBatch(groupedTestAssignments(state.data.streets));
-    saveData();
+    markMissingTestCitizensArchived(batch.result.missing);
+    await saveData();
+    await actions["clear-audit"]();
     render();
     importToast(`Test-Datenbank zurückgesetzt: ${patches.size.toLocaleString("de-DE")} Jahres-Testdaten mit Fragebogen-Rückmeldungen und ${batch.rowCount.toLocaleString("de-DE")} offene LABO-Fälle für ${monthAfterNext()} simuliert.`);
   },

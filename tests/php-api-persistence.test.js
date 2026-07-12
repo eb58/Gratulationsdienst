@@ -8,15 +8,22 @@ import os from 'node:os';
 import { describe, it } from 'node:test';
 import path from 'node:path';
 
-const powershell = 'C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe';
-const php = 'C:\\Users\\erich\\AppData\\Local\\Programs\\PHP\\current\\php.exe';
-const phpExtDir = path.join(path.dirname(php), 'ext');
+const configuredPhp = process.env.PHP_BINARY || 'php';
+const phpProbe = spawnSync(configuredPhp, ['-v'], { encoding: 'utf8' });
+const php = phpProbe.status === 0 ? configuredPhp : 'C:\\Users\\erich\\AppData\\Local\\Programs\\PHP\\current\\php.exe';
+const moduleProbe = phpProbe.status === 0 ? spawnSync(php, ['-m'], { encoding: 'utf8' }) : null;
+const detectedExtDir = phpProbe.status === 0
+  ? spawnSync(php, ['-r', 'echo ini_get("extension_dir");'], { encoding: 'utf8' }).stdout.trim()
+  : '';
+const phpExtDir = detectedExtDir || path.join(path.dirname(php), 'ext');
 const apiIndex = path.resolve('php-api/index.php').replace(/\\/g, '/');
 const canRunPhp = (() => {
   try {
+    if (phpProbe.status === 0) {
+      return moduleProbe?.stdout.toLowerCase().includes('pdo_sqlite') || fs.existsSync(path.join(phpExtDir, 'php_pdo_sqlite.dll'));
+    }
     fs.accessSync(php, fs.constants.X_OK);
-    fs.accessSync(path.join(phpExtDir, 'php_pdo_sqlite.dll'));
-    return true;
+    return fs.existsSync(path.join(phpExtDir, 'php_pdo_sqlite.dll'));
   } catch {
     return false;
   }
@@ -29,8 +36,10 @@ const runPhp = code => {
   fs.writeFileSync(tempFile, `<?php\ndeclare(strict_types=1);\n${code}\n`, 'utf8');
 
   try {
-    const flags = `-d display_errors=1 -d extension_dir='${phpExtDir.replace(/\\/g, '/')}' -d extension=pdo_sqlite`;
-    const result = spawnSync(powershell, ['-NoProfile', '-Command', `& '${php}' ${flags} -f '${tempFile.replace(/\\/g, '/')}'`], { encoding: 'utf8' });
+    const args = ['-d', 'display_errors=1'];
+    if (!moduleProbe?.stdout.toLowerCase().includes('pdo_sqlite')) args.push('-d', `extension_dir=${phpExtDir}`, '-d', 'extension=pdo_sqlite');
+    args.push('-f', tempFile);
+    const result = spawnSync(php, args, { encoding: 'utf8' });
     assert.equal(result.status, 0, result.stderr || result.stdout || String(result.error ?? ''));
     return JSON.parse(result.stdout.trim());
   } finally {
@@ -60,6 +69,11 @@ const prelude = `
     id TEXT PRIMARY KEY, role TEXT DEFAULT '', name TEXT DEFAULT '', department TEXT DEFAULT '',
     address TEXT DEFAULT '', phone TEXT DEFAULT '', email TEXT DEFAULT '', logo TEXT DEFAULT '',
     signature TEXT DEFAULT '', color TEXT DEFAULT '', row_version INTEGER NOT NULL DEFAULT 1
+  )");
+  $pdo->exec("CREATE TABLE gd_audit_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, actor_user_id TEXT DEFAULT '', actor_email TEXT DEFAULT '', action TEXT,
+    collection_name TEXT, record_id TEXT DEFAULT '', before_json TEXT, after_json TEXT,
+    occurred_at TEXT DEFAULT CURRENT_TIMESTAMP, previous_hash TEXT DEFAULT '', entry_hash TEXT UNIQUE
   )");
   $db = ['driver' => 'sqlite', 'pdo' => $pdo];
   $conflict = static function (callable $fn): array {
@@ -147,4 +161,79 @@ suite('php-api persistence', () => {
     assert.equal(result.korrekterCode, true);
     assert.equal(result.falscherCode, false);
   });
+
+  it('protokolliert nur Änderungen an auditierten Collections', () => {
+    const result = runPhp(`${prelude}
+      $actor = ['id' => 'U-1', 'email' => 'user@example.test', 'role' => 'user'];
+      upsertItem($db, 'citizens', 'C-1', ['id' => 'C-1', 'firstName' => 'Anna'], $actor);
+      upsertItem($db, 'citizens', 'C-1', ['id' => 'C-1', 'firstName' => 'Anne'], $actor);
+      deleteItem($db, 'citizens', 'C-1', $actor);
+      upsertItem($db, 'senders', 'S-1', ['id' => 'S-1', 'name' => 'Nicht auditiert'], $actor);
+      $audit = $pdo->query('SELECT action, collection_name, record_id, actor_email, previous_hash, entry_hash, before_json, after_json FROM gd_audit_log ORDER BY id')->fetchAll();
+      echo json_encode(['citizen' => readItem($db, 'citizens', 'C-1'), 'audit' => $audit]);
+    `);
+
+    assert.equal(result.citizen, null);
+    assert.deepEqual(result.audit.map(row => row.action), ['CREATE', 'UPDATE', 'DELETE']);
+    assert.deepEqual([...new Set(result.audit.map(row => row.collection_name))], ['citizens']);
+    assert.ok(result.audit.every(row => row.actor_email === 'user@example.test'));
+    assert.equal(result.audit[0].previous_hash, '');
+    assert.ok(result.audit.every(row => row.entry_hash.length === 64));
+    assert.ok(result.audit[2].before_json.includes('Anne'));
+    assert.equal(result.audit[2].after_json, null);
+  });
+
+  it('beschränkt Audit auf Jubilare, SOKOs und Straßenzuordnungen', () => {
+    const result = runPhp(`${prelude}
+      $actor = ['id' => 'U-1', 'email' => 'user@example.test', 'role' => 'user'];
+      echo json_encode([
+        'citizens' => shouldAuditCollection('citizens', $actor),
+        'sokoGroups' => shouldAuditCollection('sokoGroups', $actor),
+        'sokoMembers' => shouldAuditCollection('sokoMembers', $actor),
+        'streets' => shouldAuditCollection('streets', $actor),
+        'senders' => shouldAuditCollection('senders', $actor),
+        'templates' => shouldAuditCollection('templates', $actor),
+        'anonymous' => shouldAuditCollection('citizens', null),
+      ]);
+    `);
+
+    assert.deepEqual(result, {
+      citizens: true,
+      sokoGroups: true,
+      sokoMembers: true,
+      streets: true,
+      senders: false,
+      templates: false,
+      anonymous: false,
+    });
+  });
+
+  it('liefert Audit-Einträge über den Admin-Endpunkt', () => {
+    const result = runPhp(`${prelude}
+      $admin = ['id' => 'A-1', 'email' => 'admin@example.test', 'role' => 'admin'];
+      auditLog($db, $admin, 'UPDATE', 'citizens', 'C-1', ['wish' => 'offen'], ['wish' => 'Besuch erwünscht']);
+      $_GET['limit'] = '10';
+      handleAudit($db, 'GET', $admin);
+    `);
+
+    assert.equal(result.length, 1);
+    assert.equal(result[0].actorEmail, 'admin@example.test');
+    assert.equal(result[0].action, 'UPDATE');
+    assert.equal(result[0].collection, 'citizens');
+    assert.equal(result[0].recordId, 'C-1');
+    assert.deepEqual(result[0].beforeJson, { wish: 'offen' });
+    assert.deepEqual(result[0].afterJson, { wish: 'Besuch erwünscht' });
+  });
+
+  it('leert Audit-Eintraege ueber den Admin-Endpunkt', () => {
+    const result = runPhp(`${prelude}
+      $admin = ['id' => 'A-1', 'email' => 'admin@example.test', 'role' => 'admin'];
+      auditLog($db, $admin, 'UPDATE', 'citizens', 'C-1', ['wish' => 'offen'], ['wish' => 'Besuch erwünscht']);
+      handleAudit($db, 'DELETE', $admin);
+    `);
+
+    assert.equal(result.ok, true);
+    assert.equal(result.deleted, 1);
+  });
+
 });

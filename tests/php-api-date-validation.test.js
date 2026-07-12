@@ -5,11 +5,13 @@ import os from 'node:os';
 import { describe, it } from 'node:test';
 import path from 'node:path';
 
-const powershell = 'C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe';
-const php = 'C:\\Users\\erich\\AppData\\Local\\Programs\\PHP\\current\\php.exe';
+const configuredPhp = process.env.PHP_BINARY || 'php';
+const phpProbe = spawnSync(configuredPhp, ['-v'], { encoding: 'utf8' });
+const php = phpProbe.status === 0 ? configuredPhp : 'C:\\Users\\erich\\AppData\\Local\\Programs\\PHP\\current\\php.exe';
 const apiIndex = path.resolve('php-api/index.php').replace(/\\/g, '/');
 const canRunPhp = (() => {
   try {
+    if (php === configuredPhp) return phpProbe.status === 0;
     fs.accessSync(php, fs.constants.X_OK);
     return true;
   } catch {
@@ -24,7 +26,7 @@ const runPhp = code => {
   fs.writeFileSync(tempFile, `<?php\ndeclare(strict_types=1);\n${code}\n`, 'utf8');
 
   try {
-    const result = spawnSync(powershell, ['-NoProfile', '-Command', `& '${php}' -d display_errors=1 -f '${tempFile.replace(/\\/g, '/')}'`], { encoding: 'utf8' });
+    const result = spawnSync(php, ['-d', 'display_errors=1', '-f', tempFile], { encoding: 'utf8' });
     assert.equal(result.status, 0, result.stderr || result.stdout || String(result.error ?? ''));
     return JSON.parse(result.stdout.trim());
   } finally {

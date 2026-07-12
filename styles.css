@@ -2043,6 +2043,69 @@ tbody tr.selected {
   display: block;
 }
 
+.audit-entry {
+  display: block;
+}
+
+.audit-details {
+  display: grid;
+  gap: 12px;
+  padding: 0 12px 12px;
+}
+
+.audit-details h3 {
+  margin: 0 0 6px;
+  font-size: 13px;
+}
+
+.audit-details pre {
+  overflow: auto;
+  max-height: 240px;
+  margin: 0;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  font-size: 12px;
+  white-space: pre-wrap;
+}
+
+.audit-change-list {
+  display: grid;
+  gap: 6px;
+  padding: 0 12px 12px;
+}
+
+.audit-change-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 220px) minmax(0, 1fr);
+  gap: 10px;
+  font-size: 13px;
+}
+
+.audit-change-row strong {
+  color: var(--muted);
+}
+
+.audit-change-row span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.audit-raw {
+  padding: 0 12px 12px;
+}
+
+.audit-raw > summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.audit-raw .audit-details {
+  padding: 10px 0 0;
+}
+
 
 .document-preview,
 .editor-preview {

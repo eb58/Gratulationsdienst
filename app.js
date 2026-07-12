@@ -71,6 +71,7 @@ const guardedActions = new Set(["new-member",
   "delete-member",
   "new-template",
   "new-user",
+  "load-audit",
   "load-users",
   "user-reset-password",
   "user-reset-mfa",
@@ -85,6 +86,7 @@ const busyActions = new Set([
   "auth-reset-request",
   "auth-reset-apply",
   "auth-logout",
+  "load-audit",
   "load-users",
   "save-user",
   "confirm-delete-user",
@@ -116,6 +118,7 @@ const runActionByName = (actionName, event, options = {}) => {
 };
 const afterViewChange = () => {
   if (state.view === "documents") runActionByName("generate-docs");
+  if (state.view === "audit") runActionByName("load-audit");
   if (state.view === "users") runActionByName("load-users");
 };
 const isPdfFile = file => file?.type === "application/pdf" || /\.pdf$/i.test(file?.name || "");
@@ -434,5 +437,6 @@ runBusy(() => loadAuthStatus().then(() => {
   }
   render();
   if (state.auth.user) runBusy(() => loadCollectionData());
+  if (state.auth.user && state.view === "audit") runActionByName("load-audit");
   if (state.auth.user && state.view === "users") runActionByName("load-users");
 }));

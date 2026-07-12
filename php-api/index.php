@@ -3,9 +3,10 @@ declare(strict_types=1);
 
 // Bei jeder Schema-Aenderung (neue ensureColumn/ensureIndex-Zeile in initSchema) erhoehen,
 // damit die Migration nach dem Deployment einmal laeuft; danach ueberspringt sie jeder Request.
-const SCHEMA_VERSION = '7';
+const SCHEMA_VERSION = '8';
 const COLLECTIONS = ['citizens', 'questionnaireCases', 'weddingAnniversaries', 'sokoGroups', 'sokoMembers', 'streets', 'senders', 'templates'];
 const ADMIN_COLLECTIONS = ['sokoGroups', 'sokoMembers', 'streets', 'senders', 'templates'];
+const AUDITED_COLLECTIONS = ['citizens', 'sokoGroups', 'sokoMembers', 'streets'];
 const SESSION_TTL_SECONDS = 28800;
 const MFA_TICKET_TTL_SECONDS = 300;
 const PASSWORD_RESET_TTL_SECONDS = 900;
@@ -275,6 +276,11 @@ function dispatch(array $db): void
         return;
     }
 
+    if (($route[0] ?? '') === 'audit') {
+        handleAudit($db, $method, $user);
+        return;
+    }
+
     $collection = $route[0] ?? '';
     $id = $route[1] ?? null;
     if (!in_array($collection, COLLECTIONS, true)) {
@@ -297,11 +303,11 @@ function handleData(array $db, string $method, array $user): void
                 if (array_key_exists($collection, $data)) respond(['error' => 'Admin-Rechte für Stammdaten erforderlich.'], 403);
             }
         }
-        transaction($db, static function () use ($db, $data): void {
+        transaction($db, static function () use ($db, $data, $user): void {
             foreach (COLLECTIONS as $collection) {
                 if (array_key_exists($collection, $data)) {
                     ['items' => $items, 'knownVersions' => $knownVersions] = collectionPayload($data[$collection], $collection);
-                    replaceCollection($db, $collection, $items, $knownVersions);
+                    replaceCollection($db, $collection, $items, $knownVersions, $user);
                 }
             }
         });
@@ -326,7 +332,7 @@ function handleCollection(array $db, string $method, string $collection, ?string
 
     if ($method === 'PUT' && $id === null) {
         ['items' => $items, 'knownVersions' => $knownVersions] = collectionPayload(readJson(), $collection);
-        transaction($db, static fn () => replaceCollection($db, $collection, $items, $knownVersions));
+        transaction($db, static fn () => replaceCollection($db, $collection, $items, $knownVersions, $user));
         respond(readCollection($db, $collection));
     }
 
@@ -334,9 +340,9 @@ function handleCollection(array $db, string $method, string $collection, ?string
         $item = requireObject(readJson());
         $itemId = itemId($item);
         if ($itemId === '') respond(['error' => 'Datensatz braucht ein id-Feld.'], 422);
-        transaction($db, static function () use ($db, $collection, $itemId, $item): void {
+        transaction($db, static function () use ($db, $collection, $itemId, $item, $user): void {
             assertItemVersionAllowsWrite($db, $collection, $itemId, $item);
-            upsertItem($db, $collection, $itemId, $item);
+            upsertItem($db, $collection, $itemId, $item, $user);
         });
         respond(readItem($db, $collection, $itemId), 201);
     }
@@ -344,9 +350,9 @@ function handleCollection(array $db, string $method, string $collection, ?string
     if ($method === 'PUT' && $id !== null) {
         $item = requireObject(readJson());
         $item['id'] = $id;
-        transaction($db, static function () use ($db, $collection, $id, $item): void {
+        transaction($db, static function () use ($db, $collection, $id, $item, $user): void {
             assertItemVersionAllowsWrite($db, $collection, $id, $item);
-            upsertItem($db, $collection, $id, $item);
+            upsertItem($db, $collection, $id, $item, $user);
         });
         respond(readItem($db, $collection, $id));
     }
@@ -354,9 +360,9 @@ function handleCollection(array $db, string $method, string $collection, ?string
     if ($method === 'DELETE' && $id !== null) {
         $expectedVersion = requestExpectedVersion() ?? '';
         $deleted = false;
-        transaction($db, static function () use ($db, $collection, $id, $expectedVersion, &$deleted): void {
+        transaction($db, static function () use ($db, $collection, $id, $expectedVersion, $user, &$deleted): void {
             assertItemVersionAllowsDelete($db, $collection, $id, $expectedVersion);
-            $deleted = deleteItem($db, $collection, $id);
+            $deleted = deleteItem($db, $collection, $id, $user);
         });
         respond(['deleted' => $deleted]);
     }
@@ -418,6 +424,26 @@ function handleQuestionnairePages(array $db, string $method, array $route, array
     }
 
     respond(['error' => 'Methode nicht erlaubt.'], 405);
+}
+
+function handleAudit(array $db, string $method, array $user): void
+{
+    requireAdmin($user);
+    if ($method === 'DELETE') {
+        $deleted = executeStatement($db, 'DELETE FROM gd_audit_log', []);
+        respond(['ok' => true, 'deleted' => $deleted]);
+    }
+    if ($method !== 'GET') respond(['error' => 'Methode nicht erlaubt.'], 405);
+    $limit = min(500, max(1, (int)($_GET['limit'] ?? 100)));
+    $rows = queryAll($db, 'SELECT id, actor_user_id AS actorUserId, actor_email AS actorEmail, action, collection_name AS collection, record_id AS recordId, before_json AS beforeJson, after_json AS afterJson, occurred_at AS occurredAt, previous_hash AS previousHash, entry_hash AS entryHash FROM gd_audit_log ORDER BY id DESC LIMIT ' . $limit, []);
+    respond(array_map(static function (array $row): array {
+        foreach (['beforeJson', 'afterJson'] as $field) {
+            $decoded = json_decode((string)($row[$field] ?? ''), true);
+            $row[$field] = is_array($decoded) ? $decoded : null;
+        }
+        $row['id'] = (string)$row['id'];
+        return $row;
+    }, $rows));
 }
 
 function handleAuth(array $db, string $method, array $route): void
@@ -1017,7 +1043,7 @@ function readItem(array $db, string $collection, string $id, bool $forUpdate = f
     return $row ? rowToItem($row, $config) : null;
 }
 
-function replaceCollection(array $db, string $collection, array $items, ?array $knownVersions = null): void
+function replaceCollection(array $db, string $collection, array $items, ?array $knownVersions = null, ?array $actor = null): void
 {
     $config = collectionConfig($collection);
     $incomingById = incomingItemsById($items, $collection);
@@ -1026,21 +1052,23 @@ function replaceCollection(array $db, string $collection, array $items, ?array $
     assertCollectionVersionsAllowReplace($collection, $incomingById, $currentById, $knownVersions);
 
     foreach ($currentById as $id => $currentItem) {
-        if (!array_key_exists($id, $incomingById)) deleteItem($db, $collection, $id);
+        if (!array_key_exists($id, $incomingById)) deleteItem($db, $collection, $id, $actor);
     }
 
     foreach ($incomingById as $id => $item) {
         if (!array_key_exists($id, $currentById) || !itemsEqualForPersistence($item, $currentById[$id], $config)) {
-            upsertItem($db, $collection, $id, $item);
+            upsertItem($db, $collection, $id, $item, $actor);
         }
     }
 }
 
-function upsertItem(array $db, string $collection, string $id, array $item): void
+function upsertItem(array $db, string $collection, string $id, array $item, ?array $actor = null): void
 {
     $config = collectionConfig($collection);
     $item['id'] = $id;
     assertValidDateFields($item, $config);
+    $shouldAudit = shouldAuditCollection($collection, $actor);
+    $before = $shouldAudit ? readItem($db, $collection, $id, forUpdate: true) : null;
     $columns = $config['columns'];
     $dbColumns = array_map(static fn ($column) => $column[0], $columns);
     $values = array_map(static fn ($apiField) => valueForDb($item[$apiField] ?? null, $columns[$apiField][1], $apiField), array_keys($columns));
@@ -1054,6 +1082,7 @@ function upsertItem(array $db, string $collection, string $id, array $item): voi
             versionColumn($config) . ' = ' . versionColumn($config) . ' + 1',
         ]);
         executeStatement($db, 'INSERT INTO ' . $config['table'] . ' (' . implode(', ', $dbColumns) . ') VALUES (' . $placeholders . ') ON DUPLICATE KEY UPDATE ' . $updates, $values);
+        if ($shouldAudit) auditLog($db, $actor, $before ? 'UPDATE' : 'CREATE', $collection, $id, $before, readItem($db, $collection, $id));
         return;
     }
 
@@ -1063,12 +1092,40 @@ function upsertItem(array $db, string $collection, string $id, array $item): voi
         versionColumn($config) . ' = ' . versionColumn($config) . ' + 1',
     ]);
     executeStatement($db, 'INSERT INTO ' . $config['table'] . ' (' . implode(', ', $dbColumns) . ') VALUES (' . $placeholders . ') ON CONFLICT(id) DO UPDATE SET ' . $updates, $values);
+    if ($shouldAudit) auditLog($db, $actor, $before ? 'UPDATE' : 'CREATE', $collection, $id, $before, readItem($db, $collection, $id));
 }
 
-function deleteItem(array $db, string $collection, string $id): bool
+function deleteItem(array $db, string $collection, string $id, ?array $actor = null): bool
 {
     $config = collectionConfig($collection);
-    return executeStatement($db, 'DELETE FROM ' . $config['table'] . ' WHERE id = ?', [$id]) > 0;
+    $before = shouldAuditCollection($collection, $actor) ? readItem($db, $collection, $id, forUpdate: true) : null;
+    $deleted = executeStatement($db, 'DELETE FROM ' . $config['table'] . ' WHERE id = ?', [$id]) > 0;
+    if ($deleted && $before) auditLog($db, $actor, 'DELETE', $collection, $id, $before, null);
+    return $deleted;
+}
+
+function shouldAuditCollection(string $collection, ?array $actor): bool
+{
+    return $actor !== null && in_array($collection, AUDITED_COLLECTIONS, true);
+}
+
+function auditLog(array $db, array $actor, string $action, string $collection, string $recordId, ?array $before, ?array $after): void
+{
+    $beforeJson = $before === null ? null : json_encode($before, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+    $afterJson = $after === null ? null : json_encode($after, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+    $previousHash = (string)(fetchOne($db, 'SELECT entry_hash FROM gd_audit_log ORDER BY id DESC LIMIT 1')['entry_hash'] ?? '');
+    $canonical = json_encode([$previousHash, (string)$actor['id'], $action, $collection, $recordId, $beforeJson, $afterJson], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+    executeStatement($db, 'INSERT INTO gd_audit_log (actor_user_id, actor_email, action, collection_name, record_id, before_json, after_json, previous_hash, entry_hash) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', [
+        (string)$actor['id'],
+        (string)($actor['email'] ?? ''),
+        $action,
+        $collection,
+        $recordId,
+        $beforeJson,
+        $afterJson,
+        $previousHash,
+        hash('sha256', $canonical),
+    ]);
 }
 
 function rowToItem(array $row, array $config): array
@@ -1432,6 +1489,20 @@ function fetchOne(array $db, string $sql, array $values = []): ?array
     return $row ?: null;
 }
 
+function queryAll(array $db, string $sql, array $values = []): array
+{
+    if ($db['driver'] === 'mysqli') {
+        $stmt = $db['mysqli']->prepare($sql);
+        bindValues($stmt, $values);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+
+    $stmt = $db['pdo']->prepare($sql);
+    $stmt->execute($values);
+    return $stmt->fetchAll();
+}
+
 function executeStatement(array $db, string $sql, array $values = []): int
 {
     if ($db['driver'] === 'mysqli') {
@@ -1571,6 +1642,7 @@ function routes(): array
         'GET /questionnaire-pages?citizenId={id}',
         'POST /questionnaire-pages',
         'DELETE /questionnaire-pages',
+        'GET /audit',
         'GET /data',
         'PUT /data',
         'GET /settings/receipt',

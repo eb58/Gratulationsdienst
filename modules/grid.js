@@ -1,7 +1,7 @@
 import { normalize, escapeHtml, formatDate, safeStorageSetItem, birthdayMonth } from './utils.js';
 import { streetGroupDisplay, sokoColors } from './domain.js';
 import { state } from './state.js';
-import { filteredCitizens, groupForCitizen } from './assignment.js';
+import { filteredCitizens, groupForCitizen, isArchivedCitizen } from './assignment.js';
 import { SOKO_QUESTIONNAIRE_IMPORTED_STATUS } from './sokoQuestionnaire.js';
 import { render, renderDialog } from './render.js'; // Zyklus OK: render wird nur in Event-Callbacks aufgerufen
 import { renderCitizenDetail, renderRegionAssignment } from './views.js'; // Zyklus OK: lazy
@@ -345,6 +345,7 @@ export const gridDefinitions = {
     ...baseGridOptions(),
     rowData: state.data.citizens
       .filter(citizen => citizen.source === "CSV Import")
+      .filter(citizen => !isArchivedCitizen(citizen))
       .filter(citizen => state.filters.month === "alle" || birthdayMonth(citizen.birthDate) === state.filters.month)
       .map(citizen => ({
         id: citizen.id,

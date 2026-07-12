@@ -49,9 +49,7 @@ export const mortalityWeightedTestAges = (count, salutations = [], allowedAges =
   return keys.map(key => agesByKey[key].shift() || allowedAges[0]);
 };
 
-export const testAssignments = streets => streets.flatMap(street => (street.rules || [])
-  .filter(rule => rule.soko)
-  .map(rule => ({ street, rule })));
+export const testAssignments = streets => streets.flatMap(testStreetAssignments);
 export const groupedTestAssignments = streets => [...testAssignments(streets).reduce((groups, assignment) => {
   const group = groups.get(assignment.rule.soko) || [];
   group.push(assignment);
@@ -68,10 +66,14 @@ export const balancedTestAssignments = (groups, count, rand = Math.random) => Ar
 const sokoCode = rule => String(rule.soko).padStart(2, "0");
 // Hausnummern, die nur die gewünschte Regel treffen – nicht auch eine andere SOKO derselben Straße (überlappende Bereiche im Verzeichnis)
 const ruleHouseNumbers = (rule, siblingRules = []) => {
-  const conflicts = siblingRules.filter(other => other !== rule && sokoCode(other) !== sokoCode(rule));
+  const conflicts = siblingRules.filter(other => other !== rule && other.soko && sokoCode(other) !== sokoCode(rule));
   return Array.from({ length: 220 }, (_, index) => index + 1)
     .filter(number => ruleMatchesHouseNo(rule, number) && !conflicts.some(other => ruleMatchesHouseNo(other, number)));
 };
+const hasUnambiguousHouseNumber = (rule, siblingRules = []) => ruleHouseNumbers(rule, siblingRules).length > 0;
+const testStreetAssignments = street => (street.rules || [])
+  .filter(rule => rule.soko && hasUnambiguousHouseNumber(rule, street.rules || []))
+  .map(rule => ({ street, rule }));
 export const testHouseNo = (rule, siblingRules = [], rand = Math.random) => {
   const candidates = ruleHouseNumbers(rule, siblingRules);
   return String(candidates.length ? candidates[Math.floor(rand() * candidates.length)] : numberFrom(rule.von) || numberFrom(rule.bis) || 1);

@@ -179,6 +179,16 @@ describe('grid definitions', () => {
     assert.equal(rows.find(row => row.id === 'G-7').status, 'geprüft');
   });
 
+  it('blendet archivierte Jubilare im Importgrid aus', () => {
+    state.data.citizens = [
+      { ...citizen, id: 'G-6', source: 'CSV Import', birthDate: '1936-06-01', status: 'importiert' },
+      { ...citizen, id: 'G-7', source: 'CSV Import', birthDate: '1936-06-02', status: 'gedruckt', archived: true }
+    ];
+    state.filters.month = 'alle';
+
+    assert.deepEqual(gridDefinitions.imported().rowData.map(row => row.id), ['G-6']);
+  });
+
   it('filtert das Importgrid strikt nach dem gewaehlten Monat', () => {
     state.data.citizens = [
       { ...citizen, id: 'G-6', source: 'CSV Import', birthDate: '1936-06-01' },

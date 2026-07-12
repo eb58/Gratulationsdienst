@@ -189,6 +189,7 @@ const storedSelectedMonth = () => localStorage.getItem(MONTH_KEY)
 export const state = {
   view: "dashboard",
   data: loadData(),
+  audit: [],
   auth: {
     ready: false,
     setupRequired: false,
@@ -238,7 +239,7 @@ export const state = {
 
 export const apiCollections = ["citizens", "questionnaireCases", "weddingAnniversaries", "sokoGroups", "sokoMembers", "streets", "senders", "templates"];
 export const adminCollections = ["sokoGroups", "sokoMembers", "streets", "senders", "templates"];
-export const adminViews = ["soko", "regions", "map", "senders", "templates", "quittungStamm", "users"];
+export const adminViews = ["soko", "regions", "map", "senders", "templates", "quittungStamm", "users", "audit"];
 export const persistedCollections = apiCollections;
 export const hasBackendData = data => data && persistedCollections.some(key => Array.isArray(data[key]) && data[key].length);
 export const isAdmin = () => state.auth.user?.role === "admin";

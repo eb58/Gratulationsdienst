@@ -26,7 +26,8 @@ export const viewTitles = {
   quittungStamm: "Stammdaten: Quittung",
   import: "LABO-Import",
   profile: "Mein Zugang",
-  users: "Benutzerverwaltung"
+  users: "Benutzerverwaltung",
+  audit: "Änderungen"
 };
 
 const templateBackgroundInput = (field, label, hasImage) => {
@@ -531,7 +532,109 @@ export const sokoMapInfoHtml = (groupId, streetName = "") => {
   `;
 };
 
+const auditActionLabels = {
+  CREATE: "Angelegt",
+  UPDATE: "Geändert",
+  DELETE: "Gelöscht"
+};
+const auditCollectionLabels = {
+  citizens: "Jubilar",
+  sokoGroups: "SOKO",
+  sokoMembers: "SOKO-Mitglied",
+  streets: "Straßenzuordnung"
+};
+const auditFieldLabels = {
+  firstName: "Vorname",
+  lastName: "Nachname",
+  salutation: "Anrede",
+  street: "Straße",
+  houseNo: "Hausnummer",
+  postalCode: "PLZ",
+  district: "Ortsteil",
+  birthDate: "Geburtsdatum",
+  phone: "Telefon",
+  email: "E-Mail",
+  wish: "Wunsch",
+  notes: "Notiz",
+  status: "Status",
+  groupId: "SOKO",
+  name: "Name",
+  region: "Region",
+  leaderId: "Leitung",
+  rules: "Regeln",
+  area: "Bereich",
+  isLeader: "Leitung",
+  termFrom: "Berufung von",
+  termTo: "Berufung bis",
+  bank: "Bankverbindung",
+  allowance: "Aufwandsentschädigung",
+  billingAmount: "Abrechnung"
+};
+const auditIgnoredFields = new Set(["_version", "createdAt"]);
+const auditValue = value => {
+  if (value === null || value === undefined || value === "") return "leer";
+  if (typeof value === "boolean") return value ? "ja" : "nein";
+  if (Array.isArray(value)) return `${value.length.toLocaleString("de-DE")} Einträge`;
+  if (typeof value === "object") return JSON.stringify(value);
+  return String(value);
+};
+const auditChangeRows = entry => {
+  const before = entry.beforeJson && typeof entry.beforeJson === "object" ? entry.beforeJson : {};
+  const after = entry.afterJson && typeof entry.afterJson === "object" ? entry.afterJson : {};
+  if (entry.action === "CREATE") return `<div class="audit-change-row"><strong>Datensatz</strong><span>neu angelegt</span></div>`;
+  if (entry.action === "DELETE") return `<div class="audit-change-row"><strong>Datensatz</strong><span>gelöscht</span></div>`;
+  const keys = [...new Set([...Object.keys(before), ...Object.keys(after)])]
+    .filter(key => !auditIgnoredFields.has(key))
+    .filter(key => JSON.stringify(before[key] ?? null) !== JSON.stringify(after[key] ?? null));
+  return keys.map(key => `
+    <div class="audit-change-row">
+      <strong>${escapeHtml(auditFieldLabels[key] || key)}</strong>
+      <span>${escapeHtml(auditValue(before[key]))} → ${escapeHtml(auditValue(after[key]))}</span>
+    </div>
+  `).join("");
+};
+const hasVisibleAuditChanges = entry => Boolean(auditChangeRows(entry));
+const auditJson = value => value && typeof value === "object" ? escapeHtml(JSON.stringify(value, null, 2)) : "";
+const auditDetails = entry => {
+  const before = auditJson(entry.beforeJson);
+  const after = auditJson(entry.afterJson);
+  return `
+    <div class="audit-details">
+      ${before ? `<div><h3>Vorher</h3><pre>${before}</pre></div>` : ""}
+      ${after ? `<div><h3>Nachher</h3><pre>${after}</pre></div>` : ""}
+      ${!before && !after ? `<p class="muted">Keine Snapshot-Daten gespeichert.</p>` : ""}
+    </div>
+  `;
+};
+
 export const views = {
+  audit: () => {
+    const entries = (state.audit || []).filter(hasVisibleAuditChanges);
+    return `
+      <div class="toolbar">
+        <button type="button" class="ghost-button" data-action="load-audit">Aktualisieren</button>
+      </div>
+      <section class="panel">
+        <h2>Änderungen</h2>
+        <p class="muted">Protokolliert werden Änderungen an Jubilaren, SOKOs, SOKO-Mitgliedern und Straßenzuordnungen.</p>
+        <div class="list">
+          ${entries.map(entry => `
+            <div class="list-item-row audit-entry">
+              <div class="list-item-main">
+                <strong>${escapeHtml(auditActionLabels[entry.action] || entry.action)} · ${escapeHtml(auditCollectionLabels[entry.collection] || entry.collection)} / ${escapeHtml(entry.recordId)}</strong>
+                <span class="muted">${escapeHtml(entry.occurredAt)} · ${escapeHtml(entry.actorEmail || "unbekannt")} · Hash ${escapeHtml(String(entry.entryHash || "").slice(0, 12))}</span>
+              </div>
+              <div class="audit-change-list">${auditChangeRows(entry)}</div>
+              <details class="audit-raw">
+                <summary>Technische Details</summary>
+                ${auditDetails(entry)}
+              </details>
+            </div>
+          `).join("") || `<div class="empty-state">Noch keine Änderungen protokolliert.</div>`}
+        </div>
+      </section>
+    `;
+  },
   dashboard: () => {
     const rows = dashboardRows();
     const citizens = dashboardCitizens();

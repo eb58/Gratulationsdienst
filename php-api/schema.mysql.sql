@@ -229,3 +229,20 @@ CREATE TABLE IF NOT EXISTS gd_api_meta (
     value VARCHAR(255) NOT NULL,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS gd_audit_log (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    actor_user_id VARCHAR(48) NOT NULL DEFAULT '',
+    actor_email VARCHAR(180) NOT NULL DEFAULT '',
+    action VARCHAR(32) NOT NULL,
+    collection_name VARCHAR(80) NOT NULL,
+    record_id VARCHAR(80) NOT NULL DEFAULT '',
+    before_json JSON NULL,
+    after_json JSON NULL,
+    occurred_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    previous_hash CHAR(64) NOT NULL DEFAULT '',
+    entry_hash CHAR(64) NOT NULL,
+    INDEX idx_gd_audit_record (collection_name, record_id, occurred_at),
+    INDEX idx_gd_audit_actor (actor_user_id, occurred_at),
+    UNIQUE INDEX idx_gd_audit_hash (entry_hash)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

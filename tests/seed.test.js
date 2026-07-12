@@ -122,12 +122,11 @@ describe('seed-citizens integration (echtes Strassenverzeichnis)', () => {
     assert.deepEqual([...new Set(mapped.map(row => row.birthDate.slice(5, 7)))], [expectedMonth]);
   });
 
-  it('importiert restlos und markiert mehrdeutige Adressen als offen', () => {
+  it('importiert restlos ohne mehrdeutige Testadressen', () => {
     const { rowCount, mapped } = seed();
     const result = buildImportResult(mapped, [], row => streetAssignment(row)?.groupId);
     assert.equal(result.newRows.length, rowCount, 'nicht alle Zeilen importiert');
     assert.equal(result.skipped, 0, 'unerwartete Dubletten');
-    assert.ok(result.newRows.every(row => row.status === 'importiert' || row.status === 'offen'), 'ungültiger Importstatus');
-    result.newRows.filter(row => row.status === 'offen').forEach(row => assert.equal(streetAssignment(row)?.groupId, ''));
+    assert.ok(result.newRows.every(row => row.status === 'importiert'), 'unerwartete offene Testadresse');
   });
 });
