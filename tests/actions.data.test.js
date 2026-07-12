@@ -106,6 +106,7 @@ beforeEach(() => {
   state.importMissingCitizens = [];
   state.generatedDocs = [];
   state.audit = [];
+  state.auditDays = 5;
   state.printBackground = true;
   state.showMapPeople = true;
   state.collectionVersions = { citizens: {}, weddingAnniversaries: {}, sokoGroups: {}, sokoMembers: {}, streets: {}, senders: {}, templates: {} };
@@ -970,11 +971,22 @@ describe('Benutzerverwaltung (apiRequest)', () => {
     assert.equal(state.selectedUserId, 'u1');
   });
 
-  it('load-audit loads the audit entries', async () => {
-    route('GET /audit?limit=100', [{ id: '1', action: 'UPDATE', collection: 'citizens', recordId: 'G-1' }]);
+  it('load-audit loads the audit entries for the selected time range', async () => {
+    route('GET /audit?limit=100&days=5', [{ id: '1', action: 'UPDATE', collection: 'citizens', recordId: 'G-1' }]);
     await actions['load-audit']();
-    assert.equal(calls.some(call => call.method === 'GET' && call.path === '/audit?limit=100'), true);
+    assert.equal(calls.some(call => call.method === 'GET' && call.path === '/audit?limit=100&days=5'), true);
     assert.deepEqual(state.audit, [{ id: '1', action: 'UPDATE', collection: 'citizens', recordId: 'G-1' }]);
+  });
+
+  it('set-audit-days begrenzt den Zeitraum und laedt neu', async () => {
+    route('GET /audit?limit=100&days=12', []);
+    const target = { value: '12' };
+
+    await actions['set-audit-days']({ target });
+
+    assert.equal(state.auditDays, 12);
+    assert.equal(target.value, '12');
+    assert.equal(calls.some(call => call.method === 'GET' && call.path === '/audit?limit=100&days=12'), true);
   });
 
   it('clear-audit leert lokale und Backend-Änderungen', async () => {

@@ -21,6 +21,7 @@ const formEntryValue = value => typeof value === "string" ? value : value.name;
 const formValues = selector => Object.fromEntries([...new FormData($(selector)).entries()].filter(([key]) => !key.startsWith("_")).map(([key, value]) => [key, formEntryValue(value)]));
 const TEMPLATE_BACKGROUND_MAX_BYTES = 1_500_000;
 const quittungSettingKeys = ["quittungBetrag", "quittungTelefon", "quittungKapitel", "quittungTitel"];
+const auditDays = value => Math.min(365, Math.max(1, Number.parseInt(value, 10) || 5));
 const quittungSettingsFromForm = () => Object.fromEntries(quittungSettingKeys.map(key => [key, $(`[data-bind="${key}"]`)?.value ?? state[key]]));
 const readFileAsDataUrl = file => new Promise((resolve, reject) => {
   const reader = new FileReader();
@@ -481,9 +482,15 @@ export const actions = {
   },
   "load-audit": async () => {
     try {
-      state.audit = await apiRequest("/audit?limit=100");
+      state.auditDays = auditDays(state.auditDays);
+      state.audit = await apiRequest(`/audit?limit=100&days=${state.auditDays}`);
       render();
     } catch (error) { toast(error.message); }
+  },
+  "set-audit-days": async event => {
+    state.auditDays = auditDays(event.target.value);
+    event.target.value = String(state.auditDays);
+    await actions["load-audit"]();
   },
   "clear-audit": async () => {
     try {

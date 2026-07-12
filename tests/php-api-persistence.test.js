@@ -225,6 +225,21 @@ suite('php-api persistence', () => {
     assert.deepEqual(result[0].afterJson, { wish: 'Besuch erwünscht' });
   });
 
+  it('filtert Audit-Eintraege ueber den Admin-Endpunkt nach Zeitraum', () => {
+    const result = runPhp(`${prelude}
+      $admin = ['id' => 'A-1', 'email' => 'admin@example.test', 'role' => 'admin'];
+      auditLog($db, $admin, 'UPDATE', 'citizens', 'C-old', ['wish' => 'offen'], ['wish' => 'Besuch']);
+      $old = (new DateTimeImmutable())->modify('-6 days')->format('Y-m-d H:i:s');
+      executeStatement($db, 'UPDATE gd_audit_log SET occurred_at = ? WHERE record_id = ?', [$old, 'C-old']);
+      auditLog($db, $admin, 'UPDATE', 'citizens', 'C-new', ['wish' => 'offen'], ['wish' => 'Post']);
+      $_GET['limit'] = '10';
+      $_GET['days'] = '5';
+      handleAudit($db, 'GET', $admin);
+    `);
+
+    assert.deepEqual(result.map(row => row.recordId), ['C-new']);
+  });
+
   it('leert Audit-Eintraege ueber den Admin-Endpunkt', () => {
     const result = runPhp(`${prelude}
       $admin = ['id' => 'A-1', 'email' => 'admin@example.test', 'role' => 'admin'];

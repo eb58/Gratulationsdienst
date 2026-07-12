@@ -167,6 +167,7 @@ beforeEach(() => {
     createdAt: '2026-06-01'
   }];
   state.audit = [];
+  state.auditDays = 5;
   state.printBackground = true;
   state.showMapPeople = true;
   state.importText = 'Vorname;Nachname';
@@ -404,6 +405,7 @@ describe('main views', () => {
     }];
 
     const html = views.audit();
+    assert.match(html, /value="5" data-action="set-audit-days"/);
 
     assert.match(html, /Änderungen/);
     assert.match(html, /Geändert/);

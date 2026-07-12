@@ -435,7 +435,9 @@ function handleAudit(array $db, string $method, array $user): void
     }
     if ($method !== 'GET') respond(['error' => 'Methode nicht erlaubt.'], 405);
     $limit = min(500, max(1, (int)($_GET['limit'] ?? 100)));
-    $rows = queryAll($db, 'SELECT id, actor_user_id AS actorUserId, actor_email AS actorEmail, action, collection_name AS collection, record_id AS recordId, before_json AS beforeJson, after_json AS afterJson, occurred_at AS occurredAt, previous_hash AS previousHash, entry_hash AS entryHash FROM gd_audit_log ORDER BY id DESC LIMIT ' . $limit, []);
+    $days = min(365, max(1, (int)($_GET['days'] ?? 5)));
+    $cutoff = (new DateTimeImmutable())->modify('-' . $days . ' days')->format('Y-m-d H:i:s');
+    $rows = queryAll($db, 'SELECT id, actor_user_id AS actorUserId, actor_email AS actorEmail, action, collection_name AS collection, record_id AS recordId, before_json AS beforeJson, after_json AS afterJson, occurred_at AS occurredAt, previous_hash AS previousHash, entry_hash AS entryHash FROM gd_audit_log WHERE occurred_at >= ? ORDER BY id DESC LIMIT ' . $limit, [$cutoff]);
     respond(array_map(static function (array $row): array {
         foreach (['beforeJson', 'afterJson'] as $field) {
             $decoded = json_decode((string)($row[$field] ?? ''), true);

@@ -190,6 +190,7 @@ export const state = {
   view: "dashboard",
   data: loadData(),
   audit: [],
+  auditDays: 5,
   auth: {
     ready: false,
     setupRequired: false,

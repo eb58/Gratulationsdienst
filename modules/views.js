@@ -612,6 +612,10 @@ export const views = {
     const entries = (state.audit || []).filter(hasVisibleAuditChanges);
     return `
       <div class="toolbar">
+        <label class="inline-field">Zeitraum
+          <input type="number" min="1" max="365" step="1" value="${escapeHtml(state.auditDays || 5)}" data-action="set-audit-days">
+          Tage
+        </label>
         <button type="button" class="ghost-button" data-action="load-audit">Aktualisieren</button>
       </div>
       <section class="panel">
