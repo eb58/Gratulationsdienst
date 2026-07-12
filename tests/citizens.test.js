@@ -21,6 +21,8 @@ globalThis.ResizeObserver = class {
 };
 
 const { buildImportResult, importNotice, citizenGridRow, memberMatchesFilters, nextMemberIdAfterDelete } = await import('../modules/citizens.js');
+const { streetAssignment } = await import('../modules/assignment.js');
+const { state } = await import('../modules/state.js');
 const { questionnaireCycleForCitizen } = await import('../modules/questionnaireCases.js');
 
 const row = patch => ({
@@ -130,6 +132,31 @@ describe('buildImportResult', () => {
     const result = buildImportResult([row({ street: 'Auswärtige Straße' })], existing, assignTegel);
 
     assert.equal(result.updates[0].status, 'offen');
+  });
+
+  it('setzt Status auf offen, wenn die SOKO-Zuordnung mehrdeutig ist', () => {
+    state.data.streets = [{
+      id: 'STR-3',
+      name: 'Mehrdeutigstraße',
+      district: 'Tegel',
+      groupId: 'SOKO 01',
+      rules: [
+        { plz: '13437', ortsteil: 'Tegel', soko: '01', von: '1', bis: '20', art: 'F' },
+        { plz: '13437', ortsteil: 'Wittenau', soko: '02', von: '10', bis: '30', art: 'F' }
+      ]
+    }];
+
+    const result = buildImportResult([row({ street: 'Mehrdeutigstraße', houseNo: '12' })], [], streetAssignment);
+
+    assert.equal(result.newRows[0].status, 'offen');
+  });
+
+  it('setzt einen bestehenden Jubilar bei neuer mehrdeutiger Zuordnung auf offen', () => {
+    const existing = row({ questionnaireCycle: '2027-06', status: 'geprüft', wish: 'per Post' });
+    const result = buildImportResult([row({ street: 'Mehrdeutigstraße', houseNo: '12' })], [existing], streetAssignment);
+
+    assert.equal(result.updates[0].status, 'offen');
+    assert.equal(result.updates[0].wish, 'per Post');
   });
 
   it('reaktiviert gedruckte Rueckkehrer unter ihrer stabilen Id', () => {

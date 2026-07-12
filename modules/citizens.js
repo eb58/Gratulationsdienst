@@ -6,7 +6,11 @@ const LABO_FIELDS = ['salutation', 'street', 'houseNo', 'postalCode', 'district'
 export const monthOf = value => String(value || "").slice(5, 7);
 const isImportableRow = row => row.firstName && row.lastName && row.birthDate && row.street;
 export const importMonths = mapped => new Set(mapped.filter(isImportableRow).map(row => monthOf(row.birthDate)).filter(Boolean));
-const mergeCitizen = (existing, incoming, hasGroup) => {
+const assignmentInfo = assignment => typeof assignment === 'object' && assignment !== null
+  ? assignment
+  : { groupId: assignment };
+const mergeCitizen = (existing, incoming, assignment) => {
+  const { groupId, ambiguous } = assignmentInfo(assignment);
   const questionnaireCycle = questionnaireCycleForCitizen(incoming);
   // Verstorbene starten keinen neuen Lauf: Rückmeldung bleibt "verstorben", bis der LABO-Import sie nicht mehr liefert.
   const keepResponse = existing.questionnaireCycle === questionnaireCycle || isDeceasedCitizen(existing);
@@ -15,7 +19,7 @@ const mergeCitizen = (existing, incoming, hasGroup) => {
     ...Object.fromEntries(LABO_FIELDS.map(key => [key, incoming[key] ?? existing[key]])),
     archived: false,
     questionnaireCycle,
-    status: keepResponse ? existing.status : hasGroup ? 'importiert' : 'offen',
+    status: isDeceasedCitizen(existing) ? existing.status : ambiguous ? 'offen' : keepResponse ? existing.status : groupId ? 'importiert' : 'offen',
     printedAt: "",
     printedAge: "",
     printedYear: "",
@@ -46,8 +50,8 @@ export const buildImportResult = (mapped, existingCitizens, assignGroup) => {
       skipped++;
     } else {
       seen.add(key);
-      const group = assignGroup(row);
-      newRows.push({ ...row, id: nextId("G-2026", [...existingCitizens, ...newRows]), archived: false, questionnaireCycle: questionnaireCycleForCitizen(row), source: "CSV Import", createdAt: row.createdAt || todayIso(), updatedAt: todayIso(), status: group ? "importiert" : "offen" });
+      const assignment = assignmentInfo(assignGroup(row));
+      newRows.push({ ...row, id: nextId("G-2026", [...existingCitizens, ...newRows]), archived: false, questionnaireCycle: questionnaireCycleForCitizen(row), source: "CSV Import", createdAt: row.createdAt || todayIso(), updatedAt: todayIso(), status: assignment.ambiguous || !assignment.groupId ? "offen" : "importiert" });
     }
   }
   const missing = existingCitizens.filter(citizen => months.has(monthOf(citizen.birthDate)) && !seen.has(duplicateKey(citizen)));

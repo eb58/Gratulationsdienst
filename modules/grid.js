@@ -216,7 +216,7 @@ export const gridDefinitions = {
       { headerName: "Status", field: "status", width: 135, minWidth: 115, cellRenderer: params => statusBadgeCell(params.value) },
       { headerName: "Glückwünsche", field: "wish", width: 155, minWidth: 130, cellRenderer: params => wishBadgeCell(params.value) },
       { headerName: "Geburtstag", field: "birthday", width: 130, minWidth: 120, valueFormatter: params => formatDate(params.value) },
-      { headerName: "Alter", field: "age", width: 90, minWidth: 80, filter: "agNumberColumnFilter" },
+      { headerName: "Jubiläumsalter", field: "age", width: 90, minWidth: 80, filter: "agNumberColumnFilter" },
       { headerName: "Adresse", field: "address", width: 280, minWidth: 180 },
       { headerName: "SOKO", field: "groupId", width: 115, minWidth: 105, cellRenderer: params => sokoBadgeCell(params.value) }
     ],
@@ -358,7 +358,7 @@ export const gridDefinitions = {
     columnDefs: [
       { headerName: "Name", field: "name", width: 230, minWidth: 170 },
       { headerName: "Geburtstag", field: "birthday", width: 130, minWidth: 120, valueFormatter: params => formatDate(params.value) },
-      { headerName: "Alter", field: "age", width: 90, minWidth: 80, filter: "agNumberColumnFilter" },
+      { headerName: "Jubiläumsalter", field: "age", width: 90, minWidth: 80, filter: "agNumberColumnFilter" },
       { headerName: "Adresse", field: "address", width: 280, minWidth: 180 },
       { headerName: "SOKO", field: "groupId", width: 115, minWidth: 105, cellRenderer: params => sokoBadgeCell(params.value) },
       { headerName: "Status", field: "status", width: 135, minWidth: 115, cellRenderer: params => statusBadgeCell(params.value) }

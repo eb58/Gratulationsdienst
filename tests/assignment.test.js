@@ -166,6 +166,27 @@ describe('street assignment helpers', () => {
     assert.equal(editableStreetAssignment(baseCitizen({ houseNo: '13' }))?.groupId, 'SOKO 02');
   });
 
+  it('leaves overlapping rules ungrouped instead of taking the first matching SOKO', () => {
+    state.data.streets = [{
+      id: 'STR-3',
+      name: 'Mehrdeutigstraße',
+      district: 'Tegel',
+      groupId: 'SOKO 01',
+      rules: [
+        { plz: '13437', ortsteil: 'Tegel', soko: '01', von: '1', bis: '20', art: 'F' },
+        { plz: '13437', ortsteil: 'Wittenau', soko: '02', von: '10', bis: '30', art: 'F' }
+      ]
+    }];
+
+    const assignment = editableStreetAssignment(baseCitizen({ street: 'Mehrdeutigstraße', houseNo: '12' }));
+
+    assert.equal(assignment?.groupId, '');
+    assert.equal(assignment?.ambiguous, true);
+    assert.equal(assignment?.rule, undefined);
+    assert.equal(streetAssignment(baseCitizen({ street: 'Mehrdeutigstraße', houseNo: '12' }))?.ambiguous, true);
+    assert.equal(streetAssignment(baseCitizen({ street: 'Mehrdeutigstraße', houseNo: '12' }))?.groupId, '');
+  });
+
   it('leaves streets without a matching house-number rule ungrouped instead of guessing the first rule', () => {
     const assignment = editableStreetAssignment(baseCitizen({ houseNo: '200' }));
 

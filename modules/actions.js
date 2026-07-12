@@ -281,7 +281,7 @@ const importMappedRows = async (mapped, { resetFilters = true, allowMultipleMont
     return { newRows: [], updates: [], skipped: 0, deleted: [], retained: state.data.citizens, affectedMonths: [...months], missing: [], aborted: true };
   }
   const previousCitizens = state.data.citizens;
-  const result = buildImportResult(mapped, previousCitizens, row => streetAssignment(row)?.groupId);
+  const result = buildImportResult(mapped, previousCitizens, row => streetAssignment(row));
   const updatesById = new Map(result.updates.map(c => [c.id, c]));
   state.data.citizens = [...result.retained.map(c => updatesById.get(c.id) ?? c), ...result.newRows];
   state.data.questionnaireCases = syncQuestionnaireCasesForImport(state.data.questionnaireCases, previousCitizens, [...result.updates, ...result.newRows]);

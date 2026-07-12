@@ -43,6 +43,11 @@ const ruleParityMatches = (rule, number) => {
   if (rule.art === "U") return number % 2 !== 0;
   return true;
 };
+const uniqueRule = rules => {
+  const sokoRules = rules.filter(rule => rule.soko);
+  const sokos = [...new Set(sokoRules.map(rule => String(rule.soko)))];
+  return sokos.length === 1 ? sokoRules[0] : null;
+};
 export const ruleMatchesHouseNo = (rule, houseNo) => {
   const number = houseNumberValue(houseNo);
   if (!Number.isFinite(number)) return !rule.von && !rule.bis;
@@ -55,8 +60,9 @@ export const editableStreetAssignment = citizen => {
   if (!street?.rules?.length) return street || null;
   const plz = String(citizen.postalCode || "").trim();
   const rules = street.rules.filter(rule => (!plz || !rule.plz || rule.plz === plz) && ruleMatchesHouseNo(rule, citizen.houseNo));
-  const rule = rules[0] || street.rules.find(item => ruleMatchesHouseNo(item, citizen.houseNo));
-  return rule ? { ...street, district: rule.ortsteil || street.district, groupId: sokoGroupId(rule.soko), rule } : street;
+  const rule = uniqueRule(rules) || uniqueRule(street.rules.filter(item => ruleMatchesHouseNo(item, citizen.houseNo)));
+  if (rule) return { ...street, district: rule.ortsteil || street.district, groupId: sokoGroupId(rule.soko), rule };
+  return { ...street, groupId: "", ambiguous: true };
 };
 export const preciseStreetAssignment = citizen => {
   const assignment = (() => {
@@ -74,6 +80,7 @@ export const preciseStreetAssignment = citizen => {
 };
 export const streetAssignment = citizen => {
   const editable = editableStreetAssignment(citizen);
+  if (editable?.ambiguous) return editable;
   if (editable?.groupId) return editable;
   const precise = preciseStreetAssignment(citizen);
   const street = streetByName(precise?.name || citizen.street);
