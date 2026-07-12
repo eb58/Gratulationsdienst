@@ -58,6 +58,7 @@ const statusBadgeCell = value => {
 };
 const wishBadgeCell = value => {
   const normalized = normalize(value);
+  if (normalized === "verstorben") return accentBadgeCell(value, "#66706d");
   const tone = normalized === "keine" ? "red"
     : normalized === "offen" || !normalized ? "gold"
     : normalized.startsWith("besuch") ? "green"

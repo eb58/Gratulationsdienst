@@ -1,5 +1,5 @@
 import { normalize, nextId, todayIso, calculateAge } from './utils.js';
-import { duplicateKey } from './assignment.js';
+import { duplicateKey, isDeceasedCitizen } from './assignment.js';
 import { questionnaireCycleForCitizen } from './questionnaireCases.js';
 
 const LABO_FIELDS = ['salutation', 'street', 'houseNo', 'postalCode', 'district', 'phone', 'email'];
@@ -8,21 +8,22 @@ const isImportableRow = row => row.firstName && row.lastName && row.birthDate &&
 export const importMonths = mapped => new Set(mapped.filter(isImportableRow).map(row => monthOf(row.birthDate)).filter(Boolean));
 const mergeCitizen = (existing, incoming, hasGroup) => {
   const questionnaireCycle = questionnaireCycleForCitizen(incoming);
-  const sameQuestionnaireCycle = existing.questionnaireCycle === questionnaireCycle;
+  // Verstorbene starten keinen neuen Lauf: Rückmeldung bleibt "verstorben", bis der LABO-Import sie nicht mehr liefert.
+  const keepResponse = existing.questionnaireCycle === questionnaireCycle || isDeceasedCitizen(existing);
   return {
     ...existing,
     ...Object.fromEntries(LABO_FIELDS.map(key => [key, incoming[key] ?? existing[key]])),
     archived: false,
     questionnaireCycle,
-    status: sameQuestionnaireCycle ? existing.status : hasGroup ? 'importiert' : 'offen',
+    status: keepResponse ? existing.status : hasGroup ? 'importiert' : 'offen',
     printedAt: "",
     printedAge: "",
     printedYear: "",
-    wish: sameQuestionnaireCycle ? existing.wish : 'offen',
-    pressPublication: sameQuestionnaireCycle ? Boolean(existing.pressPublication) : false,
-    weddingAnniversary: sameQuestionnaireCycle ? existing.weddingAnniversary || '' : '',
-    weddingDate: sameQuestionnaireCycle ? existing.weddingDate || '' : '',
-    spouseName: sameQuestionnaireCycle ? existing.spouseName || '' : '',
+    wish: keepResponse ? existing.wish : 'offen',
+    pressPublication: keepResponse ? Boolean(existing.pressPublication) : false,
+    weddingAnniversary: keepResponse ? existing.weddingAnniversary || '' : '',
+    weddingDate: keepResponse ? existing.weddingDate || '' : '',
+    spouseName: keepResponse ? existing.spouseName || '' : '',
     updatedAt: todayIso()
   };
 };

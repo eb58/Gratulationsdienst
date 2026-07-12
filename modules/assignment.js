@@ -5,7 +5,8 @@ import { state } from './state.js';
 export const isPrintedCitizen = citizen => citizen.status === "gedruckt";
 export const isArchivedCitizen = citizen => Boolean(citizen.archived) || citizen.status === 'archiviert';
 export const isCheckedCitizen = citizen => normalize(citizen.status).startsWith("gepr") || isPrintedCitizen(citizen);
-export const wantsGreeting = citizen => normalize(citizen.wish) !== "keine";
+export const isDeceasedCitizen = citizen => normalize(citizen.wish) === "verstorben";
+export const wantsGreeting = citizen => !isDeceasedCitizen(citizen) && normalize(citizen.wish) !== "keine";
 export const wantsVisit = citizen => normalize(citizen.wish).startsWith("besuch");
 export const activeCitizens = () => state.data.citizens.filter(citizen => !isPrintedCitizen(citizen) && !isArchivedCitizen(citizen));
 export const duplicateKey = citizen => [

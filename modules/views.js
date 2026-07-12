@@ -185,7 +185,7 @@ export const citizenDetailContent = citizen => `
       <button type="button" class="primary-button${citizen.wish && citizen.wish !== "offen" ? "" : " btn-disabled"}" data-action="save-citizen">Speichern</button>
       ${isPrintedCitizen(citizen) ? `<button type="button" class="ghost-button" data-action="reset-selected-for-reprint">Für Nachdruck auf geprüft setzen</button>` : ""}
     </div>
-    ${radioField("wish", "Glückwünsche", citizen.wish, [["per Post", "per Post"], ["Besuch erwünscht", "Besuch erwünscht"], ["keine", "keine"]], "full")}
+    ${radioField("wish", "Glückwünsche", citizen.wish, [["per Post", "per Post"], ["Besuch erwünscht", "Besuch erwünscht"], ["keine", "keine"], ["verstorben", "verstorben"]], "full")}
     ${checkField("pressPublication", "Veröffentlichung in der lokalen Presse", citizen.pressPublication, "full")}
     ${radioField("weddingAnniversary", "Es steht bevor die", citizen.weddingAnniversary ?? "", [
   ["", "—"],

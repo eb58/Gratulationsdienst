@@ -1,7 +1,7 @@
 import { $, todayIso, MONTH_KEY, isValidEmail, isValidIban, formatIban, updateItem, nextId, csvEscape, downloadText, downloadBlob, toast, byId, normalizeEmail, normalizeAmount, normalizeDigits, isValidPostalCode, safeStorageSetItem } from './utils.js';
 import { normalizeStreetRules, streetDistrictSummary, streetGroupSummary, normalizeStreetDistrict, defaultData } from './domain.js';
 import { state, saveData, saveCollectionData, saveQuittungSettings, apiRequest, setAuthSession, clearAuthSession, loadCollectionData, hasPendingBackendData, syncSavedCollectionItem, removeSavedCollectionItem } from './state.js';
-import { streetAssignment, filteredCitizens, documentCitizens, isPrintedCitizen, selectedTemplate, selectedSender, selectedMember, activeCitizens, groupForCitizen, isReceiptGroupReady, receiptCitizens, receiptCitizensForReadyGroups, duplicateKey } from './assignment.js';
+import { streetAssignment, filteredCitizens, documentCitizens, isDeceasedCitizen, isPrintedCitizen, selectedTemplate, selectedSender, selectedMember, activeCitizens, groupForCitizen, isReceiptGroupReady, receiptCitizens, receiptCitizensForReadyGroups, duplicateKey } from './assignment.js';
 import { printCurrentRun, completePrintRun, renderSokoForm, renderSokoQuittung } from './documents.js';
 import { parseCsv, mapImportRow } from './import.js';
 import { buildImportResult, importMonths, importNotice, citizenGridRow, nextMemberIdAfterDelete } from './citizens.js';
@@ -328,6 +328,7 @@ const hasNoQuestionnaire = citizen => {
   return !citizen.sokoQuestionnaireImages?.some(page => page.importId && page.importId === caseId);
 };
 const isImportedCitizen = citizen => citizen.status === "importiert";
+const awaitsQuestionnaire = citizen => isImportedCitizen(citizen) && !isDeceasedCitizen(citizen) && hasNoQuestionnaire(citizen);
 const questionnaireCitizenPool = citizens => {
   if (citizens.length) return citizens;
   return filteredCitizens().filter(citizen => citizen?.id);
@@ -335,9 +336,9 @@ const questionnaireCitizenPool = citizens => {
 const sokoPdfSimulationCitizens = () => {
   const rows = currentCitizenGridRows();
   const citizens = rows.map(row => byId(state.data.citizens, row.id)).filter(Boolean);
-  return questionnaireCitizenPool(citizens).filter(hasNoQuestionnaire).filter(isImportedCitizen);
+  return questionnaireCitizenPool(citizens).filter(awaitsQuestionnaire);
 };
-const importedCitizensAwaitingQuestionnaire = () => state.data.citizens.filter(hasNoQuestionnaire).filter(isImportedCitizen);
+const importedCitizensAwaitingQuestionnaire = () => state.data.citizens.filter(awaitsQuestionnaire);
 const sokoQuestionnaireImagePages = (resultPages, sourcePages) => resultPages
   .map((page, index) => {
     const source = sourcePages[index] || {};

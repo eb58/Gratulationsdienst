@@ -78,7 +78,8 @@ export const mapRow = (row, index) => {
   const fromName = splitName(row["Name"]);
   const { street, houseNo } = splitStreet(row["Str/Nr"]);
   const birthDate = parseDate(row["Geb_Datum"]);
-  const inactive = isTruthy(row["verstorben"]) || isTruthy(row["verzogen nach ort"]) || row["verstorben am"] || row["verzogen nach plz"];
+  const deceased = Boolean(deceasedInfo(row));
+  const moved = Boolean(movedInfo(row));
   const age = Number(cleanNumber(row["Alter"]));
   const printed = isTruthy(row["kartegedruckt"]);
   const birthYear = Number(birthDate.slice(0, 4));
@@ -94,8 +95,8 @@ export const mapRow = (row, index) => {
     birthDate,
     phone: "",
     email: "",
-    // Verstorbene/Verzogene bekommen keine Karte – Detail steht in den Notizen.
-    wish: inactive ? "keine" : wishFromFlags(row),
+    // Verstorbene werden als solche markiert, Verzogene bekommen keine Karte – Detail steht jeweils in den Notizen.
+    wish: deceased ? "verstorben" : moved ? "keine" : wishFromFlags(row),
     notes: buildNotes(row),
     source: "CSV Import",
     updatedAt: today,

@@ -232,6 +232,7 @@ describe('grid definitions', () => {
     assert.match(wishRenderer({ value: 'Besuch erwünscht' }), /pill green/);
     assert.match(wishRenderer({ value: 'keine' }), /pill red/);
     assert.match(wishRenderer({ value: '' }), /pill gold/);
+    assert.match(wishRenderer({ value: 'verstorben' }), /style="color:#66706d"/);
     assert.match(statusRenderer({ value: 'offen' }), /pill gold/);
     assert.match(statusRenderer({ value: 'gedruckt' }), /#0f5d58/);
   });

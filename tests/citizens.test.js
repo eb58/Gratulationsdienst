@@ -116,6 +116,15 @@ describe('buildImportResult', () => {
     assert.equal(result.updates[0].status, 'gedruckt');
   });
 
+  it('behaelt "verstorben" auch beim Import in einen neuen Gratulationslauf', () => {
+    const existing = [row({ id: 'G-2026-001', questionnaireCycle: '2025-06', wish: 'verstorben', status: 'geprüft' })];
+    const result = buildImportResult([row()], existing, assignTegel);
+
+    assert.equal(result.updates[0].wish, 'verstorben');
+    assert.equal(result.updates[0].status, 'geprüft');
+    assert.match(result.updates[0].questionnaireCycle, /^\d{4}-06$/);
+  });
+
   it('setzt Status auf offen, wenn beim Import keine SOKO-Zuordnung gefunden wird', () => {
     const existing = [row({ id: 'G-2026-001', street: 'Alte Straße', status: 'geprüft' })];
     const result = buildImportResult([row({ street: 'Auswärtige Straße' })], existing, assignTegel);

@@ -163,8 +163,9 @@ describe('mapRow', () => {
     assert.equal(row.lastName, 'Müller-Lüdenscheidt');
   });
 
-  it('setzt wish="keine" für Verstorbene/Verzogene', () => {
-    assert.equal(mapRow({ ...base, verstorben: '1', 'glück soko': '1' }, 0).wish, 'keine');
+  it('markiert Verstorbene als "verstorben" und Verzogene als "keine"', () => {
+    assert.equal(mapRow({ ...base, verstorben: '1', 'glück soko': '1' }, 0).wish, 'verstorben');
+    assert.equal(mapRow({ ...base, 'verstorben am': '01.02.2020' }, 0).wish, 'verstorben');
     assert.equal(mapRow({ ...base, 'verzogen nach plz': '12345' }, 0).wish, 'keine');
   });
 

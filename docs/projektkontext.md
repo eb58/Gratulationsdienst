@@ -18,6 +18,7 @@ Die Anwendung bildet den Gratulationsdienst Reinickendorf ab. Schwerpunkt sind J
 - Die CSV-Simulation darf nur Jubilare fuer den uebernaechsten Monat generieren.
 - Rueckmeldungen und Scans aus dem Fragebogen duerfen beim Neuimport nicht verloren gehen.
 - Person und jaehrlicher Gratulationslauf sind getrennt: Ein neuer Lauf erhaelt eine offene Rueckmeldung; abgeschlossene Rueckmeldungen bleiben als Historie beim bisherigen Lauf.
+- Ausnahme: `wish="verstorben"` bleibt ueber Laeufe hinweg erhalten und unterdrueckt Karten, Quittungen und neue Frageboegen, bis der LABO-Import die Person nicht mehr liefert und sie archiviert wird.
 - Neu erzeugte Frageboegen und Scans muessen ueber ihre Lauf-ID dem passenden Gratulationslauf zugeordnet werden.
 - Import- und Dokumentenlauf-Aenderungen immer mit Tests absichern.
 - Textdateien als UTF-8 behandeln; bei sichtbaren Umlautfehlern die Quelle statt den Inhalt umschreiben.

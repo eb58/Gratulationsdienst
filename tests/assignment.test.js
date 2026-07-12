@@ -33,6 +33,7 @@ const {
   groupForCitizen,
   houseNumberValue,
   isCheckedCitizen,
+  isDeceasedCitizen,
   isPrintedCitizen,
   isReceiptGroupReady,
   leaderForGroup,
@@ -113,6 +114,8 @@ describe('citizen status helpers', () => {
     assert.equal(isCheckedCitizen({ status: 'offen' }), false);
     assert.equal(wantsVisit({ wish: 'Besuch erwünscht' }), true);
     assert.equal(wantsVisit({ wish: 'per Post' }), false);
+    assert.equal(isDeceasedCitizen({ wish: 'verstorben' }), true);
+    assert.equal(isDeceasedCitizen({ wish: 'keine' }), false);
   });
 
   it('returns neither printed nor archived citizens as active', () => {
@@ -234,6 +237,15 @@ describe('document helpers', () => {
       baseCitizen({ id: 'none', status: 'geprueft', wish: 'keine' }),
       baseCitizen({ id: 'open', status: 'offen', wish: 'per Post' }),
       baseCitizen({ id: 'printed', status: 'gedruckt', wish: 'per Post' })
+    ];
+
+    assert.deepEqual(documentCitizens().map(citizen => citizen.id), ['post']);
+  });
+
+  it('excludes citizens marked as deceased from document runs', () => {
+    state.data.citizens = [
+      baseCitizen({ id: 'post', status: 'geprueft', wish: 'per Post' }),
+      baseCitizen({ id: 'deceased', status: 'geprueft', wish: 'verstorben' })
     ];
 
     assert.deepEqual(documentCitizens().map(citizen => citizen.id), ['post']);
