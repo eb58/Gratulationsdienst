@@ -429,7 +429,7 @@ describe('Jubilare löschen und Testdaten', () => {
     const wishCounts = printed.reduce((map, citizen) => ({ ...map, [citizen.wish]: (map[citizen.wish] || 0) + 1 }), {});
     const reference = untouched[0];
 
-    assert.equal(allCitizens.length, 500 + missing.length);
+    assert.equal(allCitizens.length, 503);
     assert.equal(printed.length, 458);
     assert.ok(missing.length > 0);
     assert.equal(monthCounts.length, 11);

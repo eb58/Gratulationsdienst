@@ -1,4 +1,4 @@
-import { csvEscape, todayIso } from './utils.js';
+import { csvEscape, todayIso, calculateAge } from './utils.js';
 import { ruleMatchesHouseNo } from './assignment.js';
 
 const femaleNames = ["Anna", "Clara", "Eva", "Gisela", "Inge", "Karin", "Monika", "Petra", "Julia", "Maria", "Evelyn", "Sabine", "Renate", "Ursula", "Brigitte", "Helga", "Christine", "Barbara", "Waltraud", "Margot", "Erika", "Hildegard", "Elfriede", "Irmgard", "Lieselotte", "Hannelore", "Roswitha", "Ingrid", "Gudrun", "Annemarie", "Dorothea", "Adelheid", "Herta", "Gertrud", "Margarete", "Ilse", "Hedwig", "Frieda", "Käthe", "Helene"];
@@ -12,6 +12,9 @@ export const testLastNames = ["Schulz", "Berger", "Klein", "Neumann", "Richter",
 export const shuffledTestValues = values => values.map(value => ({ value, order: Math.random() })).sort((a, b) => a.order - b.order).map(item => item.value);
 export const numberFrom = value => Number.parseInt(String(value ?? "").match(/\d+/)?.[0] || "", 10);
 export const honouredTestAges = [85, ...Array.from({ length: 12 }, (_, index) => index + 90)];
+// Geschäftsregel: 85 sowie jedes Jahr ab 90 (unbegrenzt) ist ein Gratulationsalter.
+// honouredTestAges ist nur die Stichprobenliste fürs Testdaten-Sampling (mortalityAgeWeights kennt keine Gewichte über 101 hinaus).
+export const isHonouredAge = age => age === 85 || age >= 90;
 const mortalityAgeWeights = {
   unknown: new Map([[85, 28], [90, 20], [91, 17], [92, 14], [93, 11], [94, 9], [95, 7], [96, 5], [97, 4], [98, 3], [99, 2], [100, 1.4], [101, 1]]),
   female: new Map([[85, 24], [90, 20], [91, 18], [92, 16], [93, 14], [94, 12], [95, 10], [96, 8], [97, 6], [98, 4.5], [99, 3.4], [100, 2.4], [101, 1.7]]),
@@ -20,8 +23,8 @@ const mortalityAgeWeights = {
 const salutationMortalityKey = salutation => String(salutation || "").toLowerCase() === "frau"
   ? "female"
   : String(salutation || "").toLowerCase() === "herr" ? "male" : "unknown";
-const weightedAges = (count, weights) => {
-  const baseAges = count >= honouredTestAges.length ? honouredTestAges : honouredTestAges.slice(0, count);
+const weightedAges = (count, weights, allowedAges = honouredTestAges) => {
+  const baseAges = count >= allowedAges.length ? allowedAges : allowedAges.slice(0, count);
   const baseCount = baseAges.length;
   const remaining = Math.max(0, count - baseCount);
   const totalWeight = baseAges.reduce((sum, age) => sum + weights.get(age), 0);
@@ -36,14 +39,14 @@ const weightedAges = (count, weights) => {
   const maxCount = Math.max(0, ...counts.map(item => item.count));
   return Array.from({ length: maxCount }, (_, round) => counts.filter(item => round < item.count).map(item => item.age)).flat().slice(0, count);
 };
-export const mortalityWeightedTestAges = (count, salutations = []) => {
-  if (!salutations.length) return weightedAges(count, mortalityAgeWeights.unknown);
+export const mortalityWeightedTestAges = (count, salutations = [], allowedAges = honouredTestAges) => {
+  if (!salutations.length) return weightedAges(count, mortalityAgeWeights.unknown, allowedAges);
   const keys = Array.from({ length: count }, (_, index) => salutationMortalityKey(salutations[index]));
   const agesByKey = ["female", "male", "unknown"].reduce((acc, key) => {
-    acc[key] = weightedAges(keys.filter(item => item === key).length, mortalityAgeWeights[key]);
+    acc[key] = weightedAges(keys.filter(item => item === key).length, mortalityAgeWeights[key], allowedAges);
     return acc;
   }, {});
-  return keys.map(key => agesByKey[key].shift() || 85);
+  return keys.map(key => agesByKey[key].shift() || allowedAges[0]);
 };
 
 export const testAssignments = streets => streets.flatMap(street => (street.rules || [])
@@ -109,9 +112,20 @@ export const seedCsvRows = (streets, rowCount, dateForIndex, rand = Math.random)
     const [salutation, firstName] = firstNames[index % firstNames.length];
     return { salutation, firstName, lastName: lastNames[index % lastNames.length] };
   });
-  const ages = mortalityWeightedTestAges(rowCount, names.map(name => name.salutation));
+  const currentYear = Number(todayIso().slice(0, 4));
+  const dates = assignments.map((_, index) => dateForIndex(index));
+  const offsets = dates.map(date => date instanceof Date ? currentYear - date.getFullYear() : 0);
+  // Das Alter muss sowohl im simulierten Lauf als auch heute ein Gratulationsalter sein,
+  // sonst entstehen aus Vorjahres-Läufen z.B. 86-Jährige (85 + 1 Jahr Offset, kein Gratulationsalter).
+  const ages = [];
+  [...new Set(offsets)].forEach(offset => {
+    const indexes = offsets.flatMap((value, index) => value === offset ? [index] : []);
+    const allowed = honouredTestAges.filter(age => isHonouredAge(age + offset));
+    const groupAges = mortalityWeightedTestAges(indexes.length, indexes.map(index => names[index].salutation), allowed);
+    indexes.forEach((rowIndex, position) => { ages[rowIndex] = groupAges[position]; });
+  });
   const rows = assignments.map((assignment, index) => {
-    const date = dateForIndex(index);
+    const date = dates[index];
     const month = date instanceof Date ? String(date.getMonth() + 1).padStart(2, "0") : date;
     const row = testCsvRow(index, names[index], assignment, month, ages[index], rand);
     return date instanceof Date ? { ...row, Geburtsdatum: `${date.getFullYear() - ages[index]}-${row.Geburtsdatum.slice(5)}` } : row;
@@ -133,7 +147,7 @@ const csvRowFromCitizen = citizen => ({
   Telefon: citizen.phone,
   Email: citizen.email
 });
-const simulationMonthMatches = (citizen, month) => citizen.birthDate?.slice(5, 7) === month;
+const simulationMonthMatches = (citizen, month) => citizen.birthDate?.slice(5, 7) === month && isHonouredAge(calculateAge(citizen.birthDate));
 const removedFollowUpCount = count => count >= 8 ? 3 : count >= 4 ? 2 : 0;
 const changedAddressCitizen = (citizen, assignment, rand = Math.random) => ({
   ...citizen,
