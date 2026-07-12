@@ -313,22 +313,31 @@ function handleCollection(array $db, string $method, string $collection, ?string
         $item = requireObject(readJson());
         $itemId = itemId($item);
         if ($itemId === '') respond(['error' => 'Datensatz braucht ein id-Feld.'], 422);
-        assertItemVersionAllowsWrite($db, $collection, $itemId, $item);
-        upsertItem($db, $collection, $itemId, $item);
+        transaction($db, static function () use ($db, $collection, $itemId, $item): void {
+            assertItemVersionAllowsWrite($db, $collection, $itemId, $item);
+            upsertItem($db, $collection, $itemId, $item);
+        });
         respond(readItem($db, $collection, $itemId), 201);
     }
 
     if ($method === 'PUT' && $id !== null) {
         $item = requireObject(readJson());
         $item['id'] = $id;
-        assertItemVersionAllowsWrite($db, $collection, $id, $item);
-        upsertItem($db, $collection, $id, $item);
+        transaction($db, static function () use ($db, $collection, $id, $item): void {
+            assertItemVersionAllowsWrite($db, $collection, $id, $item);
+            upsertItem($db, $collection, $id, $item);
+        });
         respond(readItem($db, $collection, $id));
     }
 
     if ($method === 'DELETE' && $id !== null) {
-        assertItemVersionAllowsDelete($db, $collection, $id, requestExpectedVersion() ?? '');
-        respond(['deleted' => deleteItem($db, $collection, $id)]);
+        $expectedVersion = requestExpectedVersion() ?? '';
+        $deleted = false;
+        transaction($db, static function () use ($db, $collection, $id, $expectedVersion, &$deleted): void {
+            assertItemVersionAllowsDelete($db, $collection, $id, $expectedVersion);
+            $deleted = deleteItem($db, $collection, $id);
+        });
+        respond(['deleted' => $deleted]);
     }
 
     respond(['error' => 'Methode nicht erlaubt.'], 405);
@@ -457,7 +466,7 @@ function handleAuth(array $db, string $method, array $route): void
         }
         $tokenRow = authTokenRow($db, $ticket, 'mfa');
         $user = $tokenRow ? userById($db, (string)$tokenRow['user_id']) : null;
-        if (!$user || !verifyTotp((string)$user['mfa_secret'], (string)($data['code'] ?? ''))) {
+        if (!$user || !(bool)$user['mfa_enabled'] || !verifyTotp((string)$user['mfa_secret'], (string)($data['code'] ?? ''))) {
             // Nach zu vielen Fehlversuchen das Ticket entwerten, sonst ließe sich der Code durchprobieren.
             if ($tokenRow && !rateLimit($db, 'mfa-ticket:' . tokenHash($ticket), MFA_VERIFY_MAX_ATTEMPTS, MFA_TICKET_TTL_SECONDS)) {
                 deleteAuthToken($db, $ticket);
@@ -526,6 +535,7 @@ function handleAuth(array $db, string $method, array $route): void
             if (!password_verify((string)($data['password'] ?? ''), (string)$freshUser['password_hash'])) respond(['error' => 'Passwort ist ungültig.'], 401);
             if ((bool)$freshUser['mfa_enabled'] && !verifyTotp((string)$freshUser['mfa_secret'], (string)($data['code'] ?? ''))) respond(['error' => 'MFA-Code ist ungültig.'], 401);
             executeStatement($db, "UPDATE gd_users SET mfa_enabled = 0, mfa_secret = '', mfa_pending_secret = '' WHERE id = ?", [$user['id']]);
+            executeStatement($db, "DELETE FROM gd_auth_tokens WHERE user_id = ? AND token_type = 'mfa'", [$user['id']]);
             respond(['ok' => true, 'user' => publicUser(userById($db, (string)$user['id']))]);
         }
     }
@@ -916,7 +926,7 @@ function incomingPayloadHasVersions(array $incomingById): bool
 
 function assertItemVersionAllowsWrite(array $db, string $collection, string $id, array $item): void
 {
-    $current = readItem($db, $collection, $id);
+    $current = readItem($db, $collection, $id, forUpdate: true);
     $expectedVersion = itemVersion($item);
     if (!$current) {
         if ($expectedVersion !== '') throwConflict($collection, $id, '');
@@ -929,7 +939,7 @@ function assertItemVersionAllowsWrite(array $db, string $collection, string $id,
 
 function assertItemVersionAllowsDelete(array $db, string $collection, string $id, string $expectedVersion): void
 {
-    $current = readItem($db, $collection, $id);
+    $current = readItem($db, $collection, $id, forUpdate: true);
     if (!$current) return;
     if ($expectedVersion === '' || $expectedVersion !== itemVersion($current)) {
         throwConflict($collection, $id, itemVersion($current));
@@ -971,11 +981,13 @@ function readCollection(array $db, string $collection): array
     return array_map(static fn ($row) => rowToItem($row, $config), $db['pdo']->query($sql)->fetchAll());
 }
 
-function readItem(array $db, string $collection, string $id): ?array
+function readItem(array $db, string $collection, string $id, bool $forUpdate = false): ?array
 {
     $config = collectionConfig($collection);
     $dbColumns = selectColumns($config);
     $sql = 'SELECT ' . implode(', ', $dbColumns) . ' FROM ' . $config['table'] . ' WHERE id = ?';
+    // Sperrt die Zeile bis zum Commit, damit parallele Writes den Versions-Check nicht unterlaufen (SQLite sperrt per Transaktion).
+    if ($forUpdate && ($db['driver'] === 'mysqli' || $db['driver'] === 'mysql')) $sql .= ' FOR UPDATE';
     $row = fetchOne($db, $sql, [$id]);
     return $row ? rowToItem($row, $config) : null;
 }
@@ -1007,11 +1019,13 @@ function upsertItem(array $db, string $collection, string $id, array $item): voi
     $columns = $config['columns'];
     $dbColumns = array_map(static fn ($column) => $column[0], $columns);
     $values = array_map(static fn ($apiField) => valueForDb($item[$apiField] ?? null, $columns[$apiField][1], $apiField), array_keys($columns));
+    // created_at nie mit-updaten: fehlt createdAt im Payload, liefert valueForDb "jetzt" und wuerde das Anlagedatum ueberschreiben.
+    $updateColumns = array_map(static fn ($column) => $column[0], array_filter($columns, static fn ($column) => $column[0] !== 'id' && $column[1] !== 'createdAt'));
 
     if ($db['driver'] === 'mysqli' || $db['driver'] === 'mysql') {
         $placeholders = implode(', ', array_fill(0, count($dbColumns), '?'));
         $updates = implode(', ', [
-            ...array_map(static fn ($column) => "{$column} = VALUES({$column})", array_filter($dbColumns, static fn ($column) => $column !== 'id')),
+            ...array_map(static fn ($column) => "{$column} = VALUES({$column})", $updateColumns),
             versionColumn($config) . ' = ' . versionColumn($config) . ' + 1',
         ]);
         executeStatement($db, 'INSERT INTO ' . $config['table'] . ' (' . implode(', ', $dbColumns) . ') VALUES (' . $placeholders . ') ON DUPLICATE KEY UPDATE ' . $updates, $values);
@@ -1020,7 +1034,7 @@ function upsertItem(array $db, string $collection, string $id, array $item): voi
 
     $placeholders = implode(', ', array_fill(0, count($dbColumns), '?'));
     $updates = implode(', ', [
-        ...array_map(static fn ($column) => "{$column} = excluded.{$column}", array_filter($dbColumns, static fn ($column) => $column !== 'id')),
+        ...array_map(static fn ($column) => "{$column} = excluded.{$column}", $updateColumns),
         versionColumn($config) . ' = ' . versionColumn($config) . ' + 1',
     ]);
     executeStatement($db, 'INSERT INTO ' . $config['table'] . ' (' . implode(', ', $dbColumns) . ') VALUES (' . $placeholders . ') ON CONFLICT(id) DO UPDATE SET ' . $updates, $values);
@@ -1336,6 +1350,8 @@ function otpauthUrl(string $email, string $secret): string
 
 function verifyTotp(string $secret, string $code): bool
 {
+    // Leeres Secret ergaebe einen HMAC mit leerem Key, dessen Codes rein aus der Uhrzeit berechenbar waeren.
+    if (trim($secret) === '') return false;
     $code = preg_replace('/\s+/', '', $code);
     if (!preg_match('/^\d{6}$/', $code)) return false;
     $counter = intdiv(time(), 30);
