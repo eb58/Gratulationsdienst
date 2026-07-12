@@ -23,7 +23,7 @@ globalThis.document = {
   querySelectorAll: () => []
 };
 
-const { saveQuestionnairePages } = await import('../modules/questionnairePages.js');
+const { loadQuestionnairePagesForCitizen, saveQuestionnairePages } = await import('../modules/questionnairePages.js');
 const { state } = await import('../modules/state.js');
 
 beforeEach(() => {
@@ -38,6 +38,7 @@ beforeEach(() => {
     senders: [],
     templates: []
   };
+  state.selectedCitizenId = 'G-1';
 });
 
 describe('saveQuestionnairePages', () => {
@@ -72,5 +73,47 @@ describe('saveQuestionnairePages', () => {
 
     assert.equal(saved[0].id, 'QP-1');
     assert.equal(state.data.citizens[0].sokoQuestionnaireImages[0].id, 'QP-1');
+  });
+
+  it('keeps saved scan images only for the selected citizen', async () => {
+    state.selectedCitizenId = 'G-2';
+    state.data.citizens = [{ id: 'G-1' }, { id: 'G-2' }];
+    globalThis.fetch = (url, options = {}) => Promise.resolve({
+      ok: true,
+      json: async () => JSON.parse(options.body).pages.map((page, index) => ({ ...page, id: `QP-${page.citizenId}-${index + 1}` }))
+    });
+
+    await saveQuestionnairePages([
+      { citizenId: 'G-1', image: 'data:image/png;base64,a' },
+      { citizenId: 'G-2', image: 'data:image/png;base64,b' }
+    ]);
+
+    assert.equal(state.data.citizens[0].sokoQuestionnaireImages, undefined);
+    assert.equal(state.data.citizens[1].sokoQuestionnaireImages[0].citizenId, 'G-2');
+  });
+});
+
+describe('loadQuestionnairePagesForCitizen', () => {
+  it('loads the selected citizen freshly and discards other scan images', async () => {
+    state.selectedCitizenId = 'G-2';
+    state.data.citizens = [
+      { id: 'G-1', sokoQuestionnaireImages: [{ id: 'old-1', image: 'data:image/png;base64,a' }] },
+      { id: 'G-2', sokoQuestionnaireImages: [{ id: 'old-2', image: 'data:image/png;base64,b' }] }
+    ];
+    const calls = [];
+    globalThis.fetch = url => {
+      calls.push(String(url));
+      return Promise.resolve({
+        ok: true,
+        json: async () => [{ id: 'fresh-2', citizenId: 'G-2', image: 'data:image/png;base64,c', createdAt: '2026-06-01T00:00:00.000Z' }]
+      });
+    };
+
+    const pages = await loadQuestionnairePagesForCitizen('G-2');
+
+    assert.equal(calls.length, 1);
+    assert.equal(pages[0].id, 'fresh-2');
+    assert.equal(state.data.citizens[0].sokoQuestionnaireImages, undefined);
+    assert.equal(state.data.citizens[1].sokoQuestionnaireImages[0].id, 'fresh-2');
   });
 });

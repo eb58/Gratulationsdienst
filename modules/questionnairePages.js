@@ -1,27 +1,41 @@
 import { state, apiRequest } from './state.js';
 
-const loadedCitizenIds = new Set();
 const hasBackend = () => Boolean(state.auth.token);
 const normalizedPage = page => ({
-  id: page.id || "",
-  citizenId: page.citizenId || "",
-  importId: page.importId || "",
-  image: page.image || "",
+  id: page.id || '',
+  citizenId: page.citizenId || '',
+  importId: page.importId || '',
+  image: page.image || '',
   marks: page.marks || {},
-  source: page.source || "pdf",
+  source: page.source || 'pdf',
   createdAt: page.createdAt || new Date().toISOString()
 });
 const pagesWithImages = pages => pages.map(normalizedPage).filter(page => page.citizenId && page.image);
-const sortedPages = pages => [...pages].sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
-const attachPagesToCitizen = (citizenId, pages) => {
+const sortedPages = pages => [...pages].sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+const withoutQuestionnaireImages = citizen => {
+  const { sokoQuestionnaireImages, ...rest } = citizen || {};
+  return rest;
+};
+
+export const clearQuestionnaireImagesExcept = (citizenId, { clearCurrent = false } = {}) => {
+  state.data.citizens = (state.data.citizens || []).map(citizen =>
+    citizen.id === citizenId && !clearCurrent ? citizen : withoutQuestionnaireImages(citizen)
+  );
+};
+
+export const prepareQuestionnairePageLoadForCitizen = citizenId => {
+  clearQuestionnaireImagesExcept(citizenId, { clearCurrent: hasBackend() });
+};
+
+const attachPagesToCitizen = (citizenId, pages, { merge = true, keepOnlyCitizen = false } = {}) => {
   if (!citizenId || !pages.length) return [];
   const normalized = sortedPages(pagesWithImages(pages));
   state.data.citizens = state.data.citizens.map(citizen => {
-    if (citizen.id !== citizenId) return citizen;
-    const existing = Array.isArray(citizen.sokoQuestionnaireImages) ? citizen.sokoQuestionnaireImages : [];
+    if (citizen.id !== citizenId) return keepOnlyCitizen ? withoutQuestionnaireImages(citizen) : citizen;
+    const existing = merge && Array.isArray(citizen.sokoQuestionnaireImages) ? citizen.sokoQuestionnaireImages : [];
     const known = new Set(normalized.map(page => page.id || page.image));
     return {
-      ...citizen,
+      ...withoutQuestionnaireImages(citizen),
       sokoQuestionnaireImages: sortedPages([
         ...normalized,
         ...existing.filter(page => !known.has(page.id || page.image))
@@ -30,57 +44,63 @@ const attachPagesToCitizen = (citizenId, pages) => {
   });
   return normalized;
 };
+
 const attachPages = pages => {
+  const currentCitizenId = state.selectedCitizenId || pagesWithImages(pages)[0]?.citizenId || '';
+  clearQuestionnaireImagesExcept(currentCitizenId, { clearCurrent: true });
   const grouped = pagesWithImages(pages).reduce((groups, page) => ({
     ...groups,
     [page.citizenId]: [...(groups[page.citizenId] || []), page]
   }), {});
-  Object.entries(grouped).forEach(([citizenId, items]) => attachPagesToCitizen(citizenId, items));
+  if (currentCitizenId && grouped[currentCitizenId]) {
+    attachPagesToCitizen(currentCitizenId, grouped[currentCitizenId], { keepOnlyCitizen: true });
+  }
   return pages;
 };
 
 export const loadQuestionnairePagesForCitizen = citizenId => {
   if (!citizenId || !hasBackend()) return Promise.resolve([]);
-  const citizen = state.data.citizens.find(item => item.id === citizenId);
-  if (citizen?.sokoQuestionnaireImages?.length) return Promise.resolve(citizen.sokoQuestionnaireImages);
-  if (loadedCitizenIds.has(citizenId)) return Promise.resolve([]);
-  loadedCitizenIds.add(citizenId);
+  prepareQuestionnairePageLoadForCitizen(citizenId);
   return apiRequest(`/questionnaire-pages?citizenId=${encodeURIComponent(citizenId)}`)
-    .then(pages => attachPagesToCitizen(citizenId, Array.isArray(pages) ? pages : []))
+    .then(pages => state.selectedCitizenId && state.selectedCitizenId !== citizenId
+      ? []
+      : attachPagesToCitizen(citizenId, Array.isArray(pages) ? pages : [], { merge: false, keepOnlyCitizen: true }))
     .catch(error => {
-      console.warn("Fragebogen-Scans konnten nicht geladen werden.", error);
+      console.warn('Fragebogen-Scans konnten nicht geladen werden.', error);
       return [];
     });
 };
 
 export const deleteAllQuestionnairePages = () => {
-  loadedCitizenIds.clear();
+  clearQuestionnaireImagesExcept('', { clearCurrent: true });
   if (!hasBackend()) return Promise.resolve();
-  return apiRequest("/questionnaire-pages", { method: "DELETE" }).catch(error => {
-    console.warn("Fragebogen-Scans konnten nicht gelöscht werden.", error);
+  return apiRequest('/questionnaire-pages', { method: 'DELETE' }).catch(error => {
+    console.warn('Fragebogen-Scans konnten nicht geloescht werden.', error);
   });
 };
 
 export const deleteQuestionnairePagesForCitizens = citizenIds => {
   const ids = [...new Set((citizenIds || []).filter(Boolean))];
-  ids.forEach(id => loadedCitizenIds.delete(id));
+  state.data.citizens = (state.data.citizens || []).map(citizen =>
+    ids.includes(citizen.id) ? withoutQuestionnaireImages(citizen) : citizen
+  );
   if (!ids.length || !hasBackend()) return Promise.resolve();
-  return apiRequest("/questionnaire-pages", {
-    method: "DELETE",
+  return apiRequest('/questionnaire-pages', {
+    method: 'DELETE',
     body: JSON.stringify({ citizenIds: ids })
   }).catch(error => {
-    console.warn("Fragebogen-Scans konnten nicht gelöscht werden.", error);
+    console.warn('Fragebogen-Scans konnten nicht geloescht werden.', error);
   });
 };
 
-const saveQuestionnairePage = page => apiRequest("/questionnaire-pages", {
-  method: "POST",
+const saveQuestionnairePage = page => apiRequest('/questionnaire-pages', {
+  method: 'POST',
   body: JSON.stringify({ pages: [page] })
 })
   .then(saved => (Array.isArray(saved) ? saved : [])[0])
   .catch(error => {
-    console.warn("Fragebogen-Scans konnten nicht in der Datenbank gespeichert werden.", error);
-    throw Object.assign(new Error("Fragebogen-Scans konnten nicht in der Datenbank gespeichert werden."), { cause: error });
+    console.warn('Fragebogen-Scans konnten nicht in der Datenbank gespeichert werden.', error);
+    throw Object.assign(new Error('Fragebogen-Scans konnten nicht in der Datenbank gespeichert werden.'), { cause: error });
   });
 
 export const saveQuestionnairePages = pages => {
@@ -89,8 +109,9 @@ export const saveQuestionnairePages = pages => {
   if (!hasBackend()) return Promise.resolve(attachPages(payload));
   return payload.reduce((chain, page) => chain.then(async records => {
     const record = await saveQuestionnairePage(page);
-    loadedCitizenIds.add(record.citizenId);
-    attachPages([record]);
     return [...records, record];
-  }), Promise.resolve([]));
+  }), Promise.resolve([])).then(records => {
+    attachPages(records);
+    return records;
+  });
 };

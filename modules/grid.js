@@ -6,7 +6,7 @@ import { SOKO_QUESTIONNAIRE_IMPORTED_STATUS } from './sokoQuestionnaire.js';
 import { render, renderDialog } from './render.js'; // Zyklus OK: render wird nur in Event-Callbacks aufgerufen
 import { renderCitizenDetail, renderRegionAssignment } from './views.js'; // Zyklus OK: lazy
 import { requestDirtyFormLeave } from './dirtyForms.js';
-import { loadQuestionnairePagesForCitizen } from './questionnairePages.js';
+import { loadQuestionnairePagesForCitizen, prepareQuestionnairePageLoadForCitizen } from './questionnairePages.js';
 import { loadScript } from './scriptLoader.js';
 import { weddingAnniversaryLabel } from './weddingAnniversaries.js';
 
@@ -32,8 +32,9 @@ export const gridTheme = () => globalThis.agGrid?.themeQuartz?.withParams ? glob
 
 export const badgeCell = (value, tone = "") => `<span class="pill ${tone}">${escapeHtml(value)}</span>`;
 const renderCitizenDetailWithQuestionnaires = () => {
-  renderCitizenDetail();
   const citizenId = state.selectedCitizenId;
+  prepareQuestionnairePageLoadForCitizen(citizenId);
+  renderCitizenDetail();
   loadQuestionnairePagesForCitizen(citizenId).then(pages => {
     if (pages.length && state.selectedCitizenId === citizenId) renderCitizenDetail();
   });
