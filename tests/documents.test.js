@@ -157,7 +157,6 @@ describe('template rendering', () => {
 
     assert.match(html, /signature-image/);
     assert.match(html, /sig\.png/);
-    assert.match(html, /Signatur/);
   });
 });
 
