@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 // Bei jeder Schema-Aenderung (neue ensureColumn/ensureIndex-Zeile in initSchema) erhoehen,
 // damit die Migration nach dem Deployment einmal laeuft; danach ueberspringt sie jeder Request.
-const SCHEMA_VERSION = '8';
+const SCHEMA_VERSION = '9';
 const COLLECTIONS = ['citizens', 'questionnaireCases', 'weddingAnniversaries', 'sokoGroups', 'sokoMembers', 'streets', 'senders', 'templates'];
 const ADMIN_COLLECTIONS = ['sokoGroups', 'sokoMembers', 'streets', 'senders', 'templates'];
 const AUDITED_COLLECTIONS = ['citizens', 'sokoGroups', 'sokoMembers', 'streets'];
@@ -84,6 +84,8 @@ function collectionConfig(string $collection): array
                 'phone' => ['phone', 'string'],
                 'email' => ['email', 'string'],
                 'wish' => ['wish', 'string'],
+                'deceased' => ['deceased', 'bool'],
+                'moved' => ['moved', 'bool'],
                 'notes' => ['notes', 'string'],
                 'source' => ['source', 'string'],
                 'updatedAt' => ['updated_at_date', 'date'],
@@ -734,6 +736,8 @@ function initSchema(array $db): void
         ensureColumn($db, $config['table'], 'row_version', 'ALTER TABLE ' . $config['table'] . ' ADD COLUMN row_version BIGINT UNSIGNED NOT NULL DEFAULT 1');
     }
     ensureColumn($db, 'gd_citizens', 'press_publication', 'ALTER TABLE gd_citizens ADD COLUMN press_publication TINYINT(1) NOT NULL DEFAULT 0 AFTER printed_year');
+    ensureColumn($db, 'gd_citizens', 'deceased', 'ALTER TABLE gd_citizens ADD COLUMN deceased TINYINT(1) NOT NULL DEFAULT 0 AFTER wish');
+    ensureColumn($db, 'gd_citizens', 'moved', 'ALTER TABLE gd_citizens ADD COLUMN moved TINYINT(1) NOT NULL DEFAULT 0 AFTER deceased');
     ensureColumn($db, 'gd_citizens', 'wedding_anniversary', "ALTER TABLE gd_citizens ADD COLUMN wedding_anniversary VARCHAR(80) NOT NULL DEFAULT '' AFTER press_publication");
     ensureColumn($db, 'gd_citizens', 'wedding_date', 'ALTER TABLE gd_citizens ADD COLUMN wedding_date DATE NULL AFTER wedding_anniversary');
     ensureColumn($db, 'gd_citizens', 'spouse_name', "ALTER TABLE gd_citizens ADD COLUMN spouse_name VARCHAR(180) NOT NULL DEFAULT '' AFTER wedding_date");

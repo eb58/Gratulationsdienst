@@ -61,5 +61,7 @@ export const mapImportRow = row => ({
   phone: getAny(row, ["Telefon", "phone"]),
   email: getAny(row, ["E-Mail", "Email", "email"]),
   wish: "offen",
+  deceased: false,
+  moved: false,
   notes: ""
 });

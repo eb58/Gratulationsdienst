@@ -9,6 +9,7 @@ import { requestDirtyFormLeave } from './dirtyForms.js';
 import { loadQuestionnairePagesForCitizen, prepareQuestionnairePageLoadForCitizen } from './questionnairePages.js';
 import { loadScript } from './scriptLoader.js';
 import { weddingAnniversaryLabel } from './weddingAnniversaries.js';
+import { citizenFlagText } from './citizenFlags.js';
 
 let agGridPromise = null;
 export const ensureAgGrid = () => agGridPromise ||= loadScript(`${import.meta.env?.BASE_URL ?? "/"}vendor/ag-grid-community.min.js`);
@@ -59,7 +60,6 @@ const statusBadgeCell = value => {
 };
 const wishBadgeCell = value => {
   const normalized = normalize(value);
-  if (normalized === "verstorben") return accentBadgeCell(value, "#66706d");
   const tone = normalized === "keine" ? "red"
     : normalized === "offen" || !normalized ? "gold"
     : normalized.startsWith("besuch") ? "green"
@@ -209,11 +209,13 @@ export const gridDefinitions = {
       address: `${citizen.street} ${citizen.houseNo}`,
       groupId: groupForCitizen(citizen)?.id || "offen",
       wish: citizen.wish || "",
+      flags: citizenFlagText(citizen),
       status: citizen.status
     })),
     columnDefs: [
       { headerName: "Name", field: "name", width: 220, minWidth: 150 },
       { headerName: "Status", field: "status", width: 135, minWidth: 115, cellRenderer: params => statusBadgeCell(params.value) },
+      { headerName: "Merkmal", field: "flags", width: 145, minWidth: 125 },
       { headerName: "Glückwünsche", field: "wish", width: 155, minWidth: 130, cellRenderer: params => wishBadgeCell(params.value) },
       { headerName: "Geburtstag", field: "birthday", width: 130, minWidth: 120, valueFormatter: params => formatDate(params.value) },
       { headerName: "Jubiläumsalter", field: "age", width: 90, minWidth: 80, filter: "agNumberColumnFilter" },

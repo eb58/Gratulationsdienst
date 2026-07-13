@@ -84,6 +84,8 @@ describe('import row mapping', () => {
       phone: '030 123456',
       email: 'erika@example.de',
       wish: 'offen',
+      deceased: false,
+      moved: false,
       notes: ''
     });
   });

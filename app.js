@@ -336,7 +336,7 @@ document.addEventListener("change", event => {
   const dirtyTracked = trackDirtyFormChange(event);
   const input = event.target.closest("[data-filter]");
   if (input) { updateFilter(input); return; }
-  if (event.target.matches('[name="wish"]')) { document.querySelector('[data-action="save-citizen"]')?.classList.remove("btn-disabled"); return; }
+  if (event.target.matches('[name="wish"], [name="deceased"], [name="moved"]')) { document.querySelector('[data-action="save-citizen"]')?.classList.remove("btn-disabled"); return; }
   if (event.target.matches("#doc-template, #doc-sender, #doc-month, #doc-group")) { runActionByName("generate-docs"); return; }
   const bound = event.target.closest("[data-bind]");
   if (bound) {

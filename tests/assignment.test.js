@@ -34,6 +34,7 @@ const {
   houseNumberValue,
   isCheckedCitizen,
   isDeceasedCitizen,
+  isMovedCitizen,
   isPrintedCitizen,
   isReceiptGroupReady,
   leaderForGroup,
@@ -114,19 +115,22 @@ describe('citizen status helpers', () => {
     assert.equal(isCheckedCitizen({ status: 'offen' }), false);
     assert.equal(wantsVisit({ wish: 'Besuch erwünscht' }), true);
     assert.equal(wantsVisit({ wish: 'per Post' }), false);
-    assert.equal(isDeceasedCitizen({ wish: 'verstorben' }), true);
-    assert.equal(isDeceasedCitizen({ wish: 'keine' }), false);
+    assert.equal(isDeceasedCitizen({ deceased: true, wish: 'per Post' }), true);
+    assert.equal(isDeceasedCitizen({ deceased: false, wish: 'keine' }), false);
+    assert.equal(isMovedCitizen({ moved: true, wish: 'per Post' }), true);
   });
 
-  it('returns neither printed nor archived citizens as active', () => {
+  it('keeps flagged citizens visible for correction but removes them from active workflows', () => {
     state.data.citizens = [
       baseCitizen({ id: 'active', status: 'geprüft' }),
       baseCitizen({ id: 'printed', status: 'gedruckt' }),
-      baseCitizen({ id: 'archived', status: 'archiviert' })
+      baseCitizen({ id: 'archived', status: 'archiviert' }),
+      baseCitizen({ id: 'deceased', deceased: true }),
+      baseCitizen({ id: 'moved', moved: true })
     ];
 
     assert.deepEqual(activeCitizens().map(citizen => citizen.id), ['active']);
-    assert.deepEqual(filteredCitizens().map(citizen => citizen.id), ['active', 'printed']);
+    assert.deepEqual(filteredCitizens().map(citizen => citizen.id), ['active', 'printed', 'deceased', 'moved']);
   });
 });
 
@@ -266,7 +270,8 @@ describe('document helpers', () => {
   it('excludes citizens marked as deceased from document runs', () => {
     state.data.citizens = [
       baseCitizen({ id: 'post', status: 'geprueft', wish: 'per Post' }),
-      baseCitizen({ id: 'deceased', status: 'geprueft', wish: 'verstorben' })
+      baseCitizen({ id: 'deceased', status: 'geprueft', wish: 'per Post', deceased: true }),
+      baseCitizen({ id: 'moved', status: 'geprueft', wish: 'per Post', moved: true })
     ];
 
     assert.deepEqual(documentCitizens().map(citizen => citizen.id), ['post']);

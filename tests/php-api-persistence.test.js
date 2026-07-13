@@ -58,7 +58,7 @@ const prelude = `
   $pdo->exec("CREATE TABLE gd_citizens (
     id TEXT PRIMARY KEY, salutation TEXT DEFAULT '', first_name TEXT DEFAULT '', last_name TEXT DEFAULT '',
     street TEXT DEFAULT '', house_no TEXT DEFAULT '', postal_code TEXT DEFAULT '', district TEXT DEFAULT '',
-    birth_date TEXT, phone TEXT DEFAULT '', email TEXT DEFAULT '', wish TEXT DEFAULT '', notes TEXT DEFAULT '',
+    birth_date TEXT, phone TEXT DEFAULT '', email TEXT DEFAULT '', wish TEXT DEFAULT '', deceased INTEGER DEFAULT 0, moved INTEGER DEFAULT 0, notes TEXT DEFAULT '',
     source TEXT DEFAULT '', updated_at_date TEXT, status TEXT DEFAULT '', printed_at_date TEXT,
     printed_age INTEGER, printed_year INTEGER, press_publication INTEGER DEFAULT 0,
     wedding_anniversary TEXT DEFAULT '', wedding_date TEXT, spouse_name TEXT DEFAULT '',

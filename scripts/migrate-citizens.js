@@ -95,8 +95,9 @@ export const mapRow = (row, index) => {
     birthDate,
     phone: "",
     email: "",
-    // Verstorbene werden als solche markiert, Verzogene bekommen keine Karte – Detail steht jeweils in den Notizen.
-    wish: deceased ? "verstorben" : moved ? "keine" : wishFromFlags(row),
+    wish: wishFromFlags(row),
+    deceased,
+    moved,
     notes: buildNotes(row),
     source: "CSV Import",
     updatedAt: today,
@@ -128,8 +129,8 @@ const runImport = () => {
   fs.writeFileSync(outputFile, JSON.stringify(citizens, null, 2));
 
   console.log(`${citizens.length} Bürger migriert -> ${outputFile}`);
-  if (deceased) console.log(`Hinweis: ${deceased} verstorben (wish="keine", Detail in notes).`);
-  if (moved) console.log(`Hinweis: ${moved} verzogen (wish="keine", Detail in notes).`);
+  if (deceased) console.log(`Hinweis: ${deceased} verstorben (deceased=true, Detail in notes).`);
+  if (moved) console.log(`Hinweis: ${moved} verzogen (moved=true, Detail in notes).`);
   console.log("Nicht übernommene Spalten: monat, gebtag, Geburtsmonat, Alter_zusatz, Ort (immer Berlin), soko (per Straßenverzeichnis ableitbar), kartentext (Glückwunschtext global je Druck-Lauf), präs, glück, nummer, zahllistenzusatz, arbeitslistenzusatz_soko/_bezirk, anfragegedruckt.");
 };
 

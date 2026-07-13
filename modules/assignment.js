@@ -1,14 +1,16 @@
 import { normalize, calculateAge, birthdayMonth, byId } from './utils.js';
 import { sokoGroupId } from './domain.js';
 import { state } from './state.js';
+import { citizenFlagText, hasCitizenExclusionFlag } from './citizenFlags.js';
+
+export { isDeceasedCitizen, isMovedCitizen } from './citizenFlags.js';
 
 export const isPrintedCitizen = citizen => citizen.status === "gedruckt";
 export const isArchivedCitizen = citizen => Boolean(citizen.archived) || citizen.status === 'archiviert';
 export const isCheckedCitizen = citizen => normalize(citizen.status).startsWith("gepr") || isPrintedCitizen(citizen);
-export const isDeceasedCitizen = citizen => normalize(citizen.wish) === "verstorben";
-export const wantsGreeting = citizen => !isDeceasedCitizen(citizen) && normalize(citizen.wish) !== "keine";
-export const wantsVisit = citizen => normalize(citizen.wish).startsWith("besuch");
-export const activeCitizens = () => state.data.citizens.filter(citizen => !isPrintedCitizen(citizen) && !isArchivedCitizen(citizen));
+export const wantsGreeting = citizen => !hasCitizenExclusionFlag(citizen) && normalize(citizen.wish) !== "keine";
+export const wantsVisit = citizen => wantsGreeting(citizen) && normalize(citizen.wish).startsWith("besuch");
+export const activeCitizens = () => state.data.citizens.filter(citizen => !isPrintedCitizen(citizen) && !isArchivedCitizen(citizen) && !hasCitizenExclusionFlag(citizen));
 export const duplicateKey = citizen => [
   citizen.firstName,
   citizen.lastName,
@@ -101,7 +103,7 @@ export const selectedStreet = () => byId(state.data.streets, state.selectedStree
 export const matchesSelectedMonth = citizen => state.filters.month === "alle" || birthdayMonth(citizen.birthDate) === state.filters.month;
 
 export const filteredCitizens = () => state.data.citizens.filter(citizen => !isArchivedCitizen(citizen)).filter(citizen => {
-  const haystack = normalize([citizen.firstName, citizen.lastName, citizen.street, citizen.district, citizen.wish].join(" "));
+  const haystack = normalize([citizen.firstName, citizen.lastName, citizen.street, citizen.district, citizen.wish, citizenFlagText(citizen)].join(" "));
   const age = calculateAge(citizen.birthDate);
   const group = groupForCitizen(citizen);
   const ageOk = state.filters.age === "alle"

@@ -1,7 +1,8 @@
 import { $, todayIso, MONTH_KEY, isValidEmail, isValidIban, formatIban, updateItem, nextId, csvEscape, downloadText, downloadBlob, toast, byId, normalizeEmail, normalizeAmount, normalizeDigits, isValidPostalCode, safeStorageSetItem } from './utils.js';
 import { normalizeStreetRules, streetDistrictSummary, streetGroupSummary, normalizeStreetDistrict, defaultData } from './domain.js';
 import { state, saveData, saveCollectionData, saveQuittungSettings, apiRequest, setAuthSession, clearAuthSession, loadCollectionData, hasPendingBackendData, syncSavedCollectionItem, removeSavedCollectionItem } from './state.js';
-import { streetAssignment, filteredCitizens, documentCitizens, isDeceasedCitizen, isPrintedCitizen, selectedTemplate, selectedSender, selectedMember, activeCitizens, groupForCitizen, isReceiptGroupReady, receiptCitizens, receiptCitizensForReadyGroups, duplicateKey } from './assignment.js';
+import { streetAssignment, filteredCitizens, documentCitizens, isPrintedCitizen, selectedTemplate, selectedSender, selectedMember, activeCitizens, groupForCitizen, isReceiptGroupReady, receiptCitizens, receiptCitizensForReadyGroups, duplicateKey } from './assignment.js';
+import { hasCitizenExclusionFlag } from './citizenFlags.js';
 import { printCurrentRun, completePrintRun, renderSokoForm, renderSokoQuittung } from './documents.js';
 import { parseCsv, mapImportRow } from './import.js';
 import { buildImportResult, importMonths, importNotice, citizenGridRow, nextMemberIdAfterDelete } from './citizens.js';
@@ -19,6 +20,7 @@ import { buildBirthdayAgeTexts, normalizeTemplateAgeTexts } from './templates.js
 
 const formEntryValue = value => typeof value === "string" ? value : value.name;
 const formValues = selector => Object.fromEntries([...new FormData($(selector)).entries()].filter(([key]) => !key.startsWith("_")).map(([key, value]) => [key, formEntryValue(value)]));
+const formFlag = value => value === true || value === 'true' || value === 'on';
 const TEMPLATE_BACKGROUND_MAX_BYTES = 1_500_000;
 const quittungSettingKeys = ["quittungBetrag", "quittungTelefon", "quittungKapitel", "quittungTitel"];
 const auditDays = value => Math.min(365, Math.max(1, Number.parseInt(value, 10) || 5));
@@ -339,7 +341,7 @@ const hasNoQuestionnaire = citizen => {
   return !citizen.sokoQuestionnaireImages?.some(page => page.importId && page.importId === caseId);
 };
 const isImportedCitizen = citizen => citizen.status === "importiert";
-const awaitsQuestionnaire = citizen => isImportedCitizen(citizen) && !isDeceasedCitizen(citizen) && hasNoQuestionnaire(citizen);
+const awaitsQuestionnaire = citizen => isImportedCitizen(citizen) && !hasCitizenExclusionFlag(citizen) && hasNoQuestionnaire(citizen);
 const questionnaireCitizenPool = citizens => {
   if (citizens.length) return citizens;
   return filteredCitizens().filter(citizen => citizen?.id);
@@ -563,18 +565,21 @@ export const actions = {
   },
   "save-citizen": async () => {
     const values = formValues("#citizen-form");
-    if (!values.wish || values.wish === "offen") { toast("Bitte eine Glückwunsch-Option auswählen."); return; }
+    const currentCitizen = byId(state.data.citizens, values.id);
+    const deceased = formFlag(values.deceased);
+    const moved = formFlag(values.moved);
+    const wish = values.wish || currentCitizen?.wish || 'offen';
+    if (wish === "offen" && !deceased && !moved) { toast("Bitte eine Glückwunsch-Option auswählen oder Verstorben/Verzogen markieren."); return; }
     if (!validateEmailFields("#citizen-form")) { toast("Bitte eine gültige E-Mail-Adresse eingeben."); return; }
     if (!validatePostalCodeFields("#citizen-form")) { toast("Bitte eine gültige PLZ mit 5 Ziffern eingeben."); return; }
     const currentRows = currentCitizenGridRows();
     const currentIds = currentRows.map(row => row.id);
     const currentIndex = currentIds.indexOf(values.id);
-    const currentCitizen = byId(state.data.citizens, values.id);
     const previousWeddingAnniversary = (state.data.weddingAnniversaries || []).find(item => item.citizenId === values.id) || null;
     const citizenVersion = currentCitizen?._version || state.collectionVersions.citizens?.[values.id] || "";
     const weddingAnniversaryVersion = previousWeddingAnniversary?._version || state.collectionVersions.weddingAnniversaries?.[previousWeddingAnniversary?.id || ""] || "";
     const status = isPrintedCitizen(currentCitizen) ? "gedruckt" : "geprüft";
-    const updatedCitizen = { ...currentCitizen, ...values, postalCode: normalizeDigits(values.postalCode), updatedAt: todayIso(), status, ...(citizenVersion ? { _version: citizenVersion } : {}) };
+    const updatedCitizen = { ...currentCitizen, ...values, wish, deceased, moved, pressPublication: formFlag(values.pressPublication), postalCode: normalizeDigits(values.postalCode), updatedAt: todayIso(), status, ...(citizenVersion ? { _version: citizenVersion } : {}) };
     state.data.citizens = updateItem(state.data.citizens, values.id, updatedCitizen);
     state.data.questionnaireCases = upsertQuestionnaireCase(state.data.questionnaireCases, updatedCitizen, { source: 'Manuelle Prüfung', capturedAt: todayIso() });
     const currentQuestionnaireCase = state.data.questionnaireCases.find(item => item.id === questionnaireCaseId(updatedCitizen.id, updatedCitizen.questionnaireCycle));

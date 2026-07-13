@@ -1,5 +1,6 @@
 import { normalize, nextId, todayIso, calculateAge } from './utils.js';
-import { duplicateKey, isDeceasedCitizen } from './assignment.js';
+import { duplicateKey } from './assignment.js';
+import { citizenFlagText, hasCitizenExclusionFlag } from './citizenFlags.js';
 import { questionnaireCycleForCitizen } from './questionnaireCases.js';
 
 const LABO_FIELDS = ['salutation', 'street', 'houseNo', 'postalCode', 'district', 'phone', 'email'];
@@ -12,14 +13,14 @@ const assignmentInfo = assignment => typeof assignment === 'object' && assignmen
 const mergeCitizen = (existing, incoming, assignment) => {
   const { groupId, ambiguous } = assignmentInfo(assignment);
   const questionnaireCycle = questionnaireCycleForCitizen(incoming);
-  // Verstorbene starten keinen neuen Lauf: Rückmeldung bleibt "verstorben", bis der LABO-Import sie nicht mehr liefert.
-  const keepResponse = existing.questionnaireCycle === questionnaireCycle || isDeceasedCitizen(existing);
+  // Verstorbene und Verzogene starten keinen neuen Lauf, falls sie wider Erwarten erneut geliefert werden.
+  const keepResponse = existing.questionnaireCycle === questionnaireCycle || hasCitizenExclusionFlag(existing);
   return {
     ...existing,
     ...Object.fromEntries(LABO_FIELDS.map(key => [key, incoming[key] ?? existing[key]])),
     archived: false,
     questionnaireCycle,
-    status: isDeceasedCitizen(existing) ? existing.status : ambiguous ? 'offen' : keepResponse ? existing.status : groupId ? 'importiert' : 'offen',
+    status: hasCitizenExclusionFlag(existing) ? existing.status : ambiguous ? 'offen' : keepResponse ? existing.status : groupId ? 'importiert' : 'offen',
     printedAt: "",
     printedAge: "",
     printedYear: "",
@@ -51,7 +52,7 @@ export const buildImportResult = (mapped, existingCitizens, assignGroup) => {
     } else {
       seen.add(key);
       const assignment = assignmentInfo(assignGroup(row));
-      newRows.push({ ...row, id: nextId("G-2026", [...existingCitizens, ...newRows]), archived: false, questionnaireCycle: questionnaireCycleForCitizen(row), source: "CSV Import", createdAt: row.createdAt || todayIso(), updatedAt: todayIso(), status: assignment.ambiguous || !assignment.groupId ? "offen" : "importiert" });
+      newRows.push({ ...row, deceased: false, moved: false, id: nextId("G-2026", [...existingCitizens, ...newRows]), archived: false, questionnaireCycle: questionnaireCycleForCitizen(row), source: "CSV Import", createdAt: row.createdAt || todayIso(), updatedAt: todayIso(), status: assignment.ambiguous || !assignment.groupId ? "offen" : "importiert" });
     }
   }
   const missing = existingCitizens.filter(citizen => months.has(monthOf(citizen.birthDate)) && !seen.has(duplicateKey(citizen)));
@@ -80,6 +81,7 @@ export const citizenGridRow = (citizen, group) => ({
   address: `${citizen.street} ${citizen.houseNo}`,
   groupId: group?.id || "offen",
   wish: citizen.wish || "",
+  flags: citizenFlagText(citizen),
   status: citizen.status
 });
 

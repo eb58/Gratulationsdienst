@@ -176,8 +176,17 @@ describe('SOKO-PDF-Simulation Auswahl', () => {
   it('erzeugt keine Fragebögen für Verstorbene', async () => {
     state.data.citizens = [
       citizen('G-1', 'Alpha'),
-      { ...citizen('G-2', 'Beta'), wish: 'verstorben' }
+      { ...citizen('G-2', 'Beta'), deceased: true }
     ];
+    setVisibleCitizenRows(['G-1', 'G-2']);
+
+    await actions['simulate-soko-pdf-import']();
+
+    assert.deepEqual(simulationCitizens.map(c => c.id), ['G-1']);
+  });
+
+  it('erzeugt keine Fragebögen für aus Reinickendorf Verzogene', async () => {
+    state.data.citizens = [citizen('G-1', 'Alpha'), { ...citizen('G-2', 'Beta'), moved: true }];
     setVisibleCitizenRows(['G-1', 'G-2']);
 
     await actions['simulate-soko-pdf-import']();

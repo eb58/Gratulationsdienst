@@ -163,10 +163,14 @@ describe('mapRow', () => {
     assert.equal(row.lastName, 'Müller-Lüdenscheidt');
   });
 
-  it('markiert Verstorbene als "verstorben" und Verzogene als "keine"', () => {
-    assert.equal(mapRow({ ...base, verstorben: '1', 'glück soko': '1' }, 0).wish, 'verstorben');
-    assert.equal(mapRow({ ...base, 'verstorben am': '01.02.2020' }, 0).wish, 'verstorben');
-    assert.equal(mapRow({ ...base, 'verzogen nach plz': '12345' }, 0).wish, 'keine');
+  it('trennt Verstorben- und Verzogen-Flags von der Glückwunsch-Auswahl', () => {
+    const deceased = mapRow({ ...base, verstorben: '1', 'glück soko': '1' }, 0);
+    const deceasedByDate = mapRow({ ...base, 'verstorben am': '01.02.2020' }, 0);
+    const moved = mapRow({ ...base, 'verzogen nach plz': '12345', 'glück post': '1' }, 0);
+
+    assert.deepEqual({ wish: deceased.wish, deceased: deceased.deceased, moved: deceased.moved }, { wish: 'Besuch erwünscht', deceased: true, moved: false });
+    assert.equal(deceasedByDate.deceased, true);
+    assert.deepEqual({ wish: moved.wish, deceased: moved.deceased, moved: moved.moved }, { wish: 'per Post', deceased: false, moved: true });
   });
 
   it('berechnet gedruckte Felder aus Alter und Geburtsjahr', () => {

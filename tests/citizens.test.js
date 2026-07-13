@@ -118,13 +118,23 @@ describe('buildImportResult', () => {
     assert.equal(result.updates[0].status, 'gedruckt');
   });
 
-  it('behaelt "verstorben" auch beim Import in einen neuen Gratulationslauf', () => {
-    const existing = [row({ id: 'G-2026-001', questionnaireCycle: '2025-06', wish: 'verstorben', status: 'geprüft' })];
+  it('behält das Verstorben-Flag und den Wunsch auch beim Import in einen neuen Gratulationslauf', () => {
+    const existing = [row({ id: 'G-2026-001', questionnaireCycle: '2025-06', wish: 'per Post', deceased: true, status: 'geprüft' })];
     const result = buildImportResult([row()], existing, assignTegel);
 
-    assert.equal(result.updates[0].wish, 'verstorben');
+    assert.equal(result.updates[0].wish, 'per Post');
+    assert.equal(result.updates[0].deceased, true);
     assert.equal(result.updates[0].status, 'geprüft');
     assert.match(result.updates[0].questionnaireCycle, /^\d{4}-06$/);
+  });
+
+  it('behält das Verzogen-Flag bei einem unerwarteten erneuten Import', () => {
+    const existing = [row({ id: 'G-2026-001', questionnaireCycle: '2025-06', wish: 'keine', moved: true, status: 'geprüft' })];
+    const result = buildImportResult([row()], existing, assignTegel);
+
+    assert.equal(result.updates[0].wish, 'keine');
+    assert.equal(result.updates[0].moved, true);
+    assert.equal(result.updates[0].status, 'geprüft');
   });
 
   it('setzt Status auf offen, wenn beim Import keine SOKO-Zuordnung gefunden wird', () => {
@@ -246,6 +256,7 @@ describe('citizenGridRow', () => {
       address: 'Musterstraße 12',
       groupId: 'SOKO 01',
       wish: 'per Post',
+      flags: '',
       status: 'geprüft'
     });
   });

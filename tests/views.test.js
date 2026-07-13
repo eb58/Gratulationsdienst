@@ -198,6 +198,9 @@ describe('view partials', () => {
   it('renders citizen and region forms with escaped user data', () => {
     assert.match(citizenDetailContent(citizen), /&lt;notiz&gt;/);
     assert.match(citizenDetailContent(citizen), /data-action="save-citizen"/);
+    assert.match(citizenDetailContent(citizen), /name="deceased"/);
+    assert.match(citizenDetailContent(citizen), /name="moved"/);
+    assert.doesNotMatch(citizenDetailContent(citizen), /value="verstorben"/);
 
     const region = regionAssignmentContent();
     assert.match(region, /street-form/);
@@ -212,6 +215,8 @@ describe('view partials', () => {
     assert.ok(html.indexOf('name="wish"') < html.indexOf('citizen-personal-section'));
     assert.ok(html.indexOf('name="notes"') < html.indexOf('citizen-personal-section'));
     assert.ok(html.indexOf('citizen-personal-section') < html.indexOf('name="firstName"'));
+    assert.ok(html.indexOf('citizen-personal-section') < html.indexOf('name="deceased"'));
+    assert.ok(html.indexOf('citizen-personal-section') < html.indexOf('name="moved"'));
   });
 
   it('shows an explicit empty questionnaire state for citizens without scans', () => {

@@ -44,6 +44,22 @@ describe('wedding anniversaries', () => {
     assert.equal(weddingAnniversaryFromCitizen({ ...citizen, weddingDate: '1976-06-01', spouseName: '' }), null);
   });
 
+  it('entfernt den aktuellen Hochzeitseintrag für Verstorbene', () => {
+    const entries = upsertWeddingAnniversaryForCitizen([], citizen);
+    const deceased = { ...citizen, deceased: true };
+
+    assert.equal(weddingAnniversaryFromCitizen(deceased), null);
+    assert.deepEqual(upsertWeddingAnniversaryForCitizen(entries, deceased), []);
+  });
+
+  it('entfernt den aktuellen Hochzeitseintrag für Verzogene', () => {
+    const entries = upsertWeddingAnniversaryForCitizen([], citizen);
+    const moved = { ...citizen, moved: true };
+
+    assert.equal(weddingAnniversaryFromCitizen(moved), null);
+    assert.deepEqual(upsertWeddingAnniversaryForCitizen(entries, moved), []);
+  });
+
   it('berechnet das Jubiläums-Label aus dem Hochzeitsdatum, bezogen auf heute', () => {
     assert.equal(weddingAnniversaryLabel('1976-06-01', '2026-06-01'), 'Goldene Hochzeit');
     assert.equal(weddingAnniversaryLabel('1966-06-01', '2026-06-01'), 'Diamantene Hochzeit');

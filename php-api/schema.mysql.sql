@@ -65,6 +65,8 @@ CREATE TABLE IF NOT EXISTS gd_citizens (
     phone VARCHAR(80) NOT NULL DEFAULT '',
     email VARCHAR(160) NOT NULL DEFAULT '',
     wish VARCHAR(160) NOT NULL DEFAULT '',
+    deceased TINYINT(1) NOT NULL DEFAULT 0,
+    moved TINYINT(1) NOT NULL DEFAULT 0,
     notes TEXT NULL,
     source VARCHAR(80) NOT NULL DEFAULT '',
     updated_at_date DATE NULL,

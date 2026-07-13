@@ -1,4 +1,5 @@
 import { todayIso } from './utils.js';
+import { hasCitizenExclusionFlag } from './citizenFlags.js';
 
 const clean = value => String(value ?? "").trim();
 const idPart = value => clean(value).replace(/[^A-Za-z0-9-]+/g, "-").replace(/^-+|-+$/g, "") || "offen";
@@ -18,7 +19,7 @@ export const weddingAnniversaryLabel = (weddingDate, today = todayIso()) => {
 };
 
 export const weddingAnniversaryFromCitizen = (citizen, source = "Fragebogen") => {
-  if (!clean(citizen?.weddingDate) || !clean(citizen?.spouseName)) return null;
+  if (hasCitizenExclusionFlag(citizen) || !clean(citizen?.weddingDate) || !clean(citizen?.spouseName)) return null;
   const now = todayIso();
   return {
     id: weddingAnniversaryId(citizen),

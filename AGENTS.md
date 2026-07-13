@@ -21,6 +21,7 @@
 - `Lastenheft.pdf` im Repo-Root ist die fachliche Referenz und bei Anforderungen zuerst zu beachten.
 - Import- und Dokumentenlauf-Aenderungen immer zusammen mit den zugehoerigen Tests anfassen.
 - Bei Schemaaenderungen (neue `ensureColumn`/`ensureIndex`-Zeile in `initSchema`) die Konstante `SCHEMA_VERSION` in `php-api/index.php` erhoehen, sonst laeuft die Migration nach dem Deployment nicht.
+- `deceased` und `moved` sind eigenstaendige Citizen-Flags; beide schliessen eine Person aus operativen Gratulationsablaeufen und der aktuellen Hochzeitsliste aus, ohne Historie oder Scans zu loeschen.
 - Wenn ein Verhalten dauerhaft fuer Code-Agents relevant ist, gehoert es hier hinein, nicht nur in den Prompt.
 
 ## Pruefen

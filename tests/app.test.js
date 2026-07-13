@@ -286,10 +286,10 @@ describe('app filter and change handlers', () => {
     assert.equal(prevented, true);
   });
 
-  it('enables citizen save after wish changes', () => {
+  it('enables citizen save after wish or citizen flag changes', () => {
     const saveButton = elements['[data-action="save-citizen"]'];
     saveButton.classList.add('btn-disabled');
-    const target = eventTarget({ matches: selector => selector === '[name="wish"]' });
+    const target = eventTarget({ matches: selector => selector === '[name="wish"], [name="deceased"], [name="moved"]' });
 
     listeners.change({ target });
 

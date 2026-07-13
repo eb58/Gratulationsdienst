@@ -31,8 +31,9 @@ Mapping-Eckpunkte:
   (Kürzel wie `Wdm` werden ausgeschrieben), `Geb_Datum`→`birthDate`.
 - `glück soko/post/nein`→`wish`; `kartegedruckt`→`status` +
   `printedAge`/`printedYear`; `zeitung`→`pressPublication`.
-- **Verstorbene** werden importiert und mit `wish="verstorben"` markiert;
-  **Verzogene** mit `wish="keine"`. Das Detail steht jeweils in `notes`.
+- **Verstorbene** werden mit `deceased=true`, **Verzogene** mit `moved=true`
+  markiert. `wish` bleibt ausschließlich der Glückwunsch-Auswahl vorbehalten;
+  das Detail zu Tod oder Wegzug steht jeweils in `notes`.
 - IDs werden als `G-2026-001`, `G-2026-002`, … vergeben.
 
 ## 2. API-Basis kennen

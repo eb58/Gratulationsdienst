@@ -183,10 +183,10 @@ export const citizenDetailContent = citizen => `
   <form id="citizen-form" class="form-grid">
     <input type="hidden" name="id" value="${escapeHtml(citizen.id)}">
     <div class="field full button-row citizen-action-row">
-      <button type="button" class="primary-button${citizen.wish && citizen.wish !== "offen" ? "" : " btn-disabled"}" data-action="save-citizen">Speichern</button>
+      <button type="button" class="primary-button${(citizen.wish && citizen.wish !== "offen") || citizen.deceased || citizen.moved ? "" : " btn-disabled"}" data-action="save-citizen">Speichern</button>
       ${isPrintedCitizen(citizen) ? `<button type="button" class="ghost-button" data-action="reset-selected-for-reprint">Für Nachdruck auf geprüft setzen</button>` : ""}
     </div>
-    ${radioField("wish", "Glückwünsche", citizen.wish, [["per Post", "per Post"], ["Besuch erwünscht", "Besuch erwünscht"], ["keine", "keine"], ["verstorben", "verstorben"]], "full")}
+    ${radioField("wish", "Glückwünsche", citizen.wish, [["per Post", "per Post"], ["Besuch erwünscht", "Besuch erwünscht"], ["keine", "keine"]], "full")}
     ${checkField("pressPublication", "Veröffentlichung in der lokalen Presse", citizen.pressPublication, "full")}
     ${radioField("weddingAnniversary", "Es steht bevor die", citizen.weddingAnniversary ?? "", [
   ["", "—"],
@@ -211,6 +211,8 @@ export const citizenDetailContent = citizen => `
         ${field("district", "Ortsteil", citizen.district)}
         ${field("phone", "Telefon", citizen.phone)}
         ${emailField("email", "E-Mail", citizen.email, "", true)}
+        ${checkField('deceased', 'Verstorben', citizen.deceased)}
+        ${checkField('moved', 'Verzogen', citizen.moved)}
       </div>
     </section>
   </form>
@@ -619,6 +621,8 @@ const auditFieldLabels = {
   phone: "Telefon",
   email: "E-Mail",
   wish: "Wunsch",
+  deceased: 'Verstorben',
+  moved: 'Verzogen',
   notes: "Notiz",
   status: "Status",
   groupId: "SOKO",

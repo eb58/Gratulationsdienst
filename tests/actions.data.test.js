@@ -597,6 +597,7 @@ describe('Import-Lauf', () => {
     assert.notEqual(state.selectedCitizenId, 'G-2026-011');
     assert.equal(state.dialog, null);
   });
+
 });
 
 describe('Jubilare pruefen', () => {
@@ -651,6 +652,24 @@ describe('Jubilare pruefen', () => {
     });
     assert.equal(state.data.weddingAnniversaries[0].weddingAnniversary, undefined, 'Jubiläums-Label wird nicht gespeichert, sondern in der UI berechnet');
   });
+
+  it('save-citizen speichert Verzogen unabhängig vom offenen Wunsch und entfernt den Jubilar aus operativen Läufen', async () => {
+    state.data.citizens = [{
+      id: 'G-1', salutation: 'Frau', firstName: 'Erika', lastName: 'Muster', street: 'Teststrasse', houseNo: '1',
+      postalCode: '13437', district: 'Tegel', birthDate: '1936-06-01', wish: 'offen', status: 'geladen', source: 'CSV Import'
+    }];
+    setForm('#citizen-form', {
+      id: 'G-1', salutation: 'Frau', firstName: 'Erika', lastName: 'Muster', street: 'Teststrasse', houseNo: '1',
+      postalCode: '13437', district: 'Tegel', birthDate: '1936-06-01', phone: '', email: '', notes: '', source: 'CSV Import',
+      deceased: 'false', moved: 'true', pressPublication: 'false', weddingAnniversary: '', weddingDate: '', spouseName: ''
+    });
+
+    await actions['save-citizen']();
+
+    assert.equal(state.data.citizens[0].wish, 'offen');
+    assert.equal(state.data.citizens[0].moved, true);
+    assert.deepEqual(activeCitizens(), []);
+  });
 });
 
 describe('Jubilare pruefen (Backend)', () => {
@@ -671,7 +690,7 @@ describe('Jubilare pruefen (Backend)', () => {
       updatedAt: '2026-06-01'
     }];
     state.auth.token = 'token';
-    route('PUT /citizens/G-1', { ...state.data.citizens[0], updatedAt: '2026-06-01', _version: '4' });
+    route('PUT /citizens/G-1', request => ({ ...request.body, updatedAt: '2026-06-01', _version: '4' }));
     route('PUT /weddingAnniversaries/WA-G-1-1976-06-01', {
       id: 'WA-G-1-1976-06-01',
       citizenId: 'G-1',
@@ -720,7 +739,7 @@ describe('Jubilare pruefen (Backend)', () => {
     state.auth.token = '';
   });
 
-  it('save-citizen löscht ein entfallenes Hochzeitsjubiläum mit Versionsprüfung', async () => {
+  it('save-citizen löscht den Hochzeitseintrag bei Verstorben mit Versionsprüfung', async () => {
     state.data.citizens = [{
       id: 'G-1',
       salutation: 'Frau',
@@ -757,7 +776,7 @@ describe('Jubilare pruefen (Backend)', () => {
     state.collectionVersions.citizens['G-1'] = '4';
     state.collectionVersions.weddingAnniversaries['WA-G-1-1976-06-01'] = '2';
     state.auth.token = 'token';
-    route('PUT /citizens/G-1', { ...state.data.citizens[0], updatedAt: '2026-06-01', _version: '4' });
+    route('PUT /citizens/G-1', request => ({ ...request.body, updatedAt: '2026-06-01', _version: '4' }));
     route('DELETE /weddingAnniversaries/WA-G-1-1976-06-01', { deleted: true });
     setForm('#citizen-form', {
       id: 'G-1',
@@ -771,19 +790,23 @@ describe('Jubilare pruefen (Backend)', () => {
       birthDate: '1936-06-01',
       phone: '',
       email: '',
-      wish: 'Besuch erwünscht',
+      wish: 'per Post',
+      deceased: 'true',
+      moved: 'false',
       notes: '',
       source: 'CSV Import',
       pressPublication: 'on',
-      weddingAnniversary: '',
-      weddingDate: '',
-      spouseName: ''
+      weddingAnniversary: 'Goldene Hochzeit',
+      weddingDate: '1976-06-01',
+      spouseName: 'Heinz'
     });
 
     await actions['save-citizen']();
 
     const deleteCall = calls.find(call => call.method === 'DELETE' && call.path === '/weddingAnniversaries/WA-G-1-1976-06-01');
     assert.equal(deleteCall?.headers?.['If-Match'], '2');
+    assert.equal(calls.find(call => call.method === 'PUT' && call.path === '/citizens/G-1')?.body.deceased, true);
+    assert.equal(state.data.citizens[0].wish, 'per Post');
     assert.equal(state.data.weddingAnniversaries.some(item => item.id === 'WA-G-1-1976-06-01'), false);
     assert.equal(state.collectionVersions.weddingAnniversaries['WA-G-1-1976-06-01'], undefined);
     state.auth.token = '';
