@@ -69,7 +69,8 @@ const sender = {
   phone: '030 123',
   email: 'kontakt@example.test',
   color: '#005f56',
-  signature: 'Signatur'
+  signature: 'Signatur',
+  signatureImage: ''
 };
 
 const template = {
@@ -237,6 +238,16 @@ describe('view partials', () => {
 
     assert.match(html, /citizen-questionnaire-image/);
     assert.doesNotMatch(html, /01\.06\.2026/);
+  });
+
+  it('renders a sender signature image upload control and preview', () => {
+    state.data.senders = [{ ...sender, signatureImage: 'sig.png' }];
+
+    const html = views.senders();
+
+    assert.match(html, /upload-sender-signature-image/);
+    assert.match(html, /remove-sender-signature-image/);
+    assert.match(html, /sig\.png/);
   });
 
   it('renders map info for empty and assigned SOKO selections', () => {

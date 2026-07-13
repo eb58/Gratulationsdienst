@@ -60,6 +60,7 @@ const sender = {
   id: 'A-001',
   name: 'Bezirksamt',
   signature: 'Signatur',
+  signatureImage: '',
   color: '#005f56',
   logo: 'BA',
   department: 'Seniorenservice',
@@ -146,6 +147,17 @@ describe('template rendering', () => {
     const body = compactBirthdayCardBody(citizen);
     assert.match(body, /^Frau Mustermann,/);
     assert.match(body, /90\. Geburtstag/);
+  });
+
+  it('renders sender signature images in the card text', () => {
+    const html = documentPreview({
+      subject: 'Titel {{vorname}}',
+      body: 'Text {{nachname}}'
+    }, citizen, { ...sender, signatureImage: 'sig.png' });
+
+    assert.match(html, /signature-image/);
+    assert.match(html, /sig\.png/);
+    assert.match(html, /Signatur/);
   });
 });
 

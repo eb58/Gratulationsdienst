@@ -54,11 +54,17 @@ export const templateBackBackgroundImage = template => String(template.backBackg
 const templateBackgroundLayer = backgroundImage => {
   return backgroundImage ? `<img class="template-background-image" src="${escapeHtml(backgroundImage)}" alt="" aria-hidden="true">` : "";
 };
-const squareGreetingContent = (subject, body, signature) => `
+const signatureBlock = (signature, signatureImage) => signatureImage ? `
+  <div class="signature-block" style="display:flex;flex-direction:column;align-items:flex-start;gap:1mm;margin-top:3mm">
+    <img class="signature-image" src="${escapeHtml(signatureImage)}" alt="" aria-hidden="true" style="max-width:65mm;max-height:18mm;object-fit:contain;display:block">
+    <div class="signature" style="font-size:14pt;color:#0f5d58;font-family:'Segoe Script','Brush Script MT',cursive">${escapeHtml(signature)}</div>
+  </div>` : `
+  <div class="signature" style="margin-top:3mm;font-size:14pt;color:#0f5d58;font-family:'Segoe Script','Brush Script MT',cursive">${escapeHtml(signature)}</div>`;
+const squareGreetingContent = (subject, body, signature, signatureImage) => `
   <div class="square-greeting" style="position:absolute;top:113mm;right:0;bottom:38mm;left:0;box-sizing:border-box;padding:8mm 18mm 0;overflow:hidden;font-family:Arial,sans-serif">
     <div class="doc-title" style="font-weight:800;font-size:12pt;line-height:1.18;margin:0 0 3mm;color:#173b38">${escapeHtml(subject)}</div>
     <div class="doc-body" style="font-size:9.5pt;line-height:1.32;white-space:pre-wrap">${escapeHtml(body)}</div>
-    <div class="signature" style="margin-top:3mm;font-size:14pt;color:#0f5d58;font-family:'Segoe Script','Brush Script MT',cursive">${escapeHtml(signature)}</div>
+    ${signatureBlock(signature, signatureImage)}
   </div>`;
 const squareBackAddress = citizen => {
   const sokoLabel = normalize(citizen.wish || "").startsWith("besuch")
@@ -103,7 +109,7 @@ export const documentPreview = (template = selectedTemplate(), citizen = selecte
         ${designClass === "birthday-card" ? `<div class="card-age-mark" aria-hidden="true">${escapeHtml(calculateAge(citizen.birthDate))}</div>` : ""}
         ${isSquareGreetingCard ? `
           ${backgroundImage ? `<img class="square-card-preview-image" src="${escapeHtml(backgroundImage)}" alt="" aria-hidden="true">` : ""}
-          ${squareGreetingContent(rendered.subject, body, sender.signature)}
+          ${squareGreetingContent(rendered.subject, body, sender.signature, sender.signatureImage)}
         ` : `
           <div class="document-content">
             <div class="doc-letterhead" style="border-color:${escapeHtml(sender.color)}">
@@ -120,7 +126,7 @@ export const documentPreview = (template = selectedTemplate(), citizen = selecte
             </div>
             <div class="doc-title">${escapeHtml(rendered.subject)}</div>
             <div class="doc-body">${escapeHtml(body)}</div>
-            <div class="signature">${escapeHtml(sender.signature)}</div>
+            ${signatureBlock(sender.signature, sender.signatureImage)}
           </div>
         `}
       </div>
@@ -158,7 +164,7 @@ export const printSquareCardPage = (template, citizen, sender) => {
   return `
   <div style="position:relative;width:210mm;height:210mm;page-break-after:always;break-after:page;background:#fff">
     ${bgImg}
-    ${squareGreetingContent(rendered.subject, rendered.body, sender.signature)}
+    ${squareGreetingContent(rendered.subject, rendered.body, sender.signature, sender.signatureImage)}
   </div>`;
 };
 export const printSquareCardBack = (template, citizen) => {

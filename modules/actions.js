@@ -45,6 +45,7 @@ const templateAgeTextsFromForm = () => {
   return normalizeTemplateAgeTexts(values);
 };
 const templateFormValues = () => $("#template-form") ? { ...selectedTemplate(), ...formValues("#template-form"), ageTexts: templateAgeTextsFromForm() } : selectedTemplate();
+const senderFormValues = () => $("#sender-form") ? { ...selectedSender(), ...formValues("#sender-form") } : selectedSender();
 const collectionItemVersion = (collection, id) => state.collectionVersions[collection]?.[id] || "";
 const collectionItemPayload = (collection, item) => {
   const version = item?._version || collectionItemVersion(collection, item?.id);
@@ -106,6 +107,23 @@ const saveTemplatePatch = async patch => {
     return true;
   } catch (error) {
     if (await handleSingleSaveError(error, [{ collection: "templates", id }])) return false;
+    toast(error.message);
+    return false;
+  }
+};
+const saveSenderPatch = async patch => {
+  const values = { ...senderFormValues(), ...patch };
+  const id = String(values.id);
+  const sender = { ...values, id };
+  state.data.senders = updateItem(state.data.senders, id, sender);
+  state.selectedSenderId = id;
+  try {
+    if (!state.auth.token) await saveData();
+    else await saveCollectionItem("senders", sender);
+    render();
+    return true;
+  } catch (error) {
+    if (await handleSingleSaveError(error, [{ collection: "senders", id }])) return false;
     toast(error.message);
     return false;
   }
@@ -771,19 +789,8 @@ export const actions = {
     render();
   },
   "save-sender": async () => {
-    const values = formValues("#sender-form");
     if (!validateEmailFields("#sender-form")) { toast("Bitte eine gültige E-Mail-Adresse eingeben."); return; }
-    state.data.senders = updateItem(state.data.senders, values.id, values);
-    state.selectedSenderId = values.id;
-    try {
-      if (!state.auth.token) await saveData();
-      else await saveCollectionItem("senders", values);
-      render();
-      toast("Absenderprofil gespeichert.");
-    } catch (error) {
-      if (await handleSingleSaveError(error, [{ collection: "senders", id: values.id }])) return;
-      toast(error.message);
-    }
+    if (await saveSenderPatch({})) toast("Absenderprofil gespeichert.");
   },
   "insert-token": event => {
     const form = event.target.closest?.("#template-form");
@@ -837,13 +844,48 @@ export const actions = {
       toast("Bitte ein Bild bis 1,5 MB auswählen.");
       return;
     }
-    readFileAsDataUrl(file)
+    return readFileAsDataUrl(file)
       .then(backgroundImage => {
         saveTemplatePatch({ [field]: backgroundImage }).then(saved => {
           if (saved) toast(`Hintergrundbild ${side} gespeichert.`);
         });
       })
       .catch(() => toast("Hintergrundbild konnte nicht gelesen werden."));
+  },
+  "upload-sender-signature-image": event => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!isTemplateBackgroundFile(file)) {
+      event.target.value = "";
+      toast("Bitte eine Bilddatei auswählen.");
+      return;
+    }
+    if (file.size > TEMPLATE_BACKGROUND_MAX_BYTES) {
+      event.target.value = "";
+      toast("Bitte ein Bild bis 1,5 MB auswählen.");
+      return;
+    }
+    return readFileAsDataUrl(file)
+      .then(signatureImage => {
+        saveSenderPatch({ signatureImage }).then(saved => {
+          if (saved) toast("Unterschriftenbild gespeichert.");
+        });
+      })
+      .catch(() => toast("Unterschriftenbild konnte nicht gelesen werden."));
+  },
+  "remove-sender-signature-image": () => {
+    const sender = selectedSender();
+    if (!sender?.signatureImage) return;
+    state.dialog = { type: "remove-sender-signature-image", title: "Unterschriftenbild entfernen", message: "Soll das Unterschriftenbild wirklich entfernt werden?", cancelLabel: "Abbrechen", confirmLabel: "Entfernen", confirmAction: "confirm-remove-sender-signature-image" };
+    state.focusTarget = ".dialog-box [data-autofocus]";
+    render();
+  },
+  "confirm-remove-sender-signature-image": async () => {
+    const sender = selectedSender();
+    if (!sender) return;
+    state.dialog = null;
+    state.focusTarget = "#view";
+    if (await saveSenderPatch({ signatureImage: "" })) toast("Unterschriftenbild entfernt.");
   },
   "remove-template-background": event => {
     const field = templateBackgroundField(event);

@@ -47,6 +47,24 @@ const templateBackgroundInput = (field, label, hasImage) => {
   `;
 };
 
+const senderSignatureImageInput = sender => {
+  const hasImage = !!sender.signatureImage;
+  return `
+    <div class="field full template-background-field">
+      <label>Unterschriftenbild</label>
+      <div class="file-action-row">
+        <label class="file-picker" for="sender-signature-image">
+          <span>Bild hochladen</span>
+          <em>${hasImage ? "Unterschriftenbild hinterlegt" : "PNG, JPG, WebP oder SVG bis 1,5 MB"}</em>
+        </label>
+        ${hasImage ? `<button type="button" class="icon-button user-delete-btn" data-action="remove-sender-signature-image" title="Unterschriftenbild entfernen" aria-label="Unterschriftenbild entfernen"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>` : ""}
+        ${hasImage ? `<img class="sender-signature-preview" src="${escapeHtml(sender.signatureImage)}" alt="Aktuelles Unterschriftenbild" style="max-height:42px;max-width:180px;object-fit:contain">` : `<span class="muted">Noch kein Bild hinterlegt</span>`}
+      </div>
+      <input id="sender-signature-image" class="file-input" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" data-action="upload-sender-signature-image">
+    </div>
+  `;
+};
+
 const documentPreviewStack = (template, citizen, sender) => {
   const backPreview = documentBackPreview(template, citizen);
   return `
@@ -990,6 +1008,7 @@ export const views = {
               ${emailField("email", "E-Mail", sender.email)}
               ${field("logo", "Logo/Briefkopf", sender.logo)}
               ${field("signature", "Unterschrift", sender.signature)}
+              ${senderSignatureImageInput(sender)}
               ${field("color", "Akzentfarbe", sender.color, "color", "full")}
               <div class="field full">
                 <button type="button" class="primary-button" data-action="save-sender">Speichern</button>

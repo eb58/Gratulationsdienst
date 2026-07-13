@@ -43,6 +43,24 @@ globalThis.ResizeObserver = class { observe() {} disconnect() {} };
 globalThis.requestAnimationFrame = callback => callback();
 globalThis.FormData = class { constructor(form) { this._entries = form?._entries || []; } entries() { return this._entries; } };
 globalThis.Blob = class { constructor(parts, opts) { this.parts = parts; this.opts = opts; } };
+globalThis.FileReader = class {
+  constructor() {
+    this.result = '';
+    this.error = null;
+    this._load = null;
+    this._error = null;
+  }
+  addEventListener(type, handler) {
+    if (type === 'load') this._load = handler;
+    if (type === 'error') this._error = handler;
+  }
+  readAsDataURL(file) {
+    queueMicrotask(() => {
+      this.result = file?.dataUrl || `data:${file?.type || 'application/octet-stream'};base64,${file?.name || 'x'}`;
+      this._load?.();
+    });
+  }
+};
 URL.createObjectURL = blob => { lastBlobParts = blob.parts; return 'blob:x'; }; // echten URL-Konstruktor erhalten
 URL.revokeObjectURL = () => {};
 globalThis.document = {
@@ -318,6 +336,23 @@ describe('Absender und Vorlagen', () => {
     assert.equal(state.dialog.type, 'remove-template-background');
     await actions['confirm-remove-template-background']();
     assert.equal(state.data.templates[0].backgroundImage, '');
+  });
+
+  it('upload-sender-signature-image speichert ein Bild fuer die Unterschrift', async () => {
+    const sender = state.data.senders[0];
+    state.auth.token = 'token';
+    route(`PUT /senders/${sender.id}`, request => ({ ...request.body, _version: '2' }));
+
+    await actions['upload-sender-signature-image']({
+      target: {
+        value: 'sig.png',
+        files: [{ name: 'sig.png', type: 'image/png', size: 1200, dataUrl: 'data:image/png;base64,abc' }]
+      }
+    });
+
+    assert.equal(state.data.senders.find(s => s.id === sender.id).signatureImage, 'data:image/png;base64,abc');
+    assert.equal(calls.find(call => call.method === 'PUT' && call.path === `/senders/${sender.id}`)?.body.signatureImage, 'data:image/png;base64,abc');
+    state.auth.token = '';
   });
 });
 

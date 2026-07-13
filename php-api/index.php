@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 // Bei jeder Schema-Aenderung (neue ensureColumn/ensureIndex-Zeile in initSchema) erhoehen,
 // damit die Migration nach dem Deployment einmal laeuft; danach ueberspringt sie jeder Request.
-const SCHEMA_VERSION = '9';
+const SCHEMA_VERSION = '10';
 const COLLECTIONS = ['citizens', 'questionnaireCases', 'weddingAnniversaries', 'sokoGroups', 'sokoMembers', 'streets', 'senders', 'templates'];
 const ADMIN_COLLECTIONS = ['sokoGroups', 'sokoMembers', 'streets', 'senders', 'templates'];
 const AUDITED_COLLECTIONS = ['citizens', 'sokoGroups', 'sokoMembers', 'streets'];
@@ -206,6 +206,7 @@ function collectionConfig(string $collection): array
                 'email' => ['email', 'string'],
                 'logo' => ['logo', 'string'],
                 'signature' => ['signature', 'string'],
+                'signatureImage' => ['signature_image', 'string'],
                 'color' => ['color', 'string'],
             ],
         ],
@@ -750,6 +751,7 @@ function initSchema(array $db): void
     ensureColumn($db, 'gd_templates', 'age_texts', 'ALTER TABLE gd_templates ADD COLUMN age_texts JSON NULL AFTER body');
     ensureColumn($db, 'gd_templates', 'background_image', 'ALTER TABLE gd_templates ADD COLUMN background_image LONGTEXT NULL AFTER body');
     ensureColumn($db, 'gd_templates', 'back_background_image', 'ALTER TABLE gd_templates ADD COLUMN back_background_image LONGTEXT NULL AFTER background_image');
+    ensureColumn($db, 'gd_senders', 'signature_image', 'ALTER TABLE gd_senders ADD COLUMN signature_image LONGTEXT NULL AFTER signature');
     ensureColumn($db, 'gd_soko_members', 'account_holder', "ALTER TABLE gd_soko_members ADD COLUMN account_holder VARCHAR(180) NOT NULL DEFAULT '' AFTER bank");
     ensureColumn($db, 'gd_soko_members', 'birth_date', 'ALTER TABLE gd_soko_members ADD COLUMN birth_date DATE NULL AFTER last_name');
     ensureColumn($db, 'gd_soko_members', 'zp_nr', "ALTER TABLE gd_soko_members ADD COLUMN zp_nr VARCHAR(40) NOT NULL DEFAULT '' AFTER billing_amount");

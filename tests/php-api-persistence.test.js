@@ -68,7 +68,7 @@ const prelude = `
   $pdo->exec("CREATE TABLE gd_senders (
     id TEXT PRIMARY KEY, role TEXT DEFAULT '', name TEXT DEFAULT '', department TEXT DEFAULT '',
     address TEXT DEFAULT '', phone TEXT DEFAULT '', email TEXT DEFAULT '', logo TEXT DEFAULT '',
-    signature TEXT DEFAULT '', color TEXT DEFAULT '', row_version INTEGER NOT NULL DEFAULT 1
+    signature TEXT DEFAULT '', signature_image TEXT DEFAULT '', color TEXT DEFAULT '', row_version INTEGER NOT NULL DEFAULT 1
   )");
   $pdo->exec("CREATE TABLE gd_audit_log (
     id INTEGER PRIMARY KEY AUTOINCREMENT, actor_user_id TEXT DEFAULT '', actor_email TEXT DEFAULT '', action TEXT,
@@ -181,6 +181,16 @@ suite('php-api persistence', () => {
     assert.ok(result.audit.every(row => row.entry_hash.length === 64));
     assert.ok(result.audit[2].before_json.includes('Anne'));
     assert.equal(result.audit[2].after_json, null);
+  });
+
+  it('mapped sender signature images through the API layer', () => {
+    const result = runPhp(`${prelude}
+      upsertItem($db, 'senders', 'S-1', ['id' => 'S-1', 'role' => 'Rolle', 'signatureImage' => 'data:image/png;base64,abc']);
+      echo json_encode(readItem($db, 'senders', 'S-1'));
+    `);
+
+    assert.equal(result.signatureImage, 'data:image/png;base64,abc');
+    assert.equal(result._version, '1');
   });
 
   it('beschränkt Audit auf Jubilare, SOKOs und Straßenzuordnungen', () => {
