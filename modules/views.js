@@ -8,7 +8,7 @@ import { documentBackPreview, documentPreview } from './documents.js';
 import { qrCodeSvg } from './qr.js';
 import { SOKO_QUESTIONNAIRE_IMPORTED_STATUS } from './sokoQuestionnaire.js';
 import { weddingAnniversaryLabel } from './weddingAnniversaries.js';
-import { render, applyPendingFocus } from './render.js'; // Zyklus OK: render wird nur in Callbacks aufgerufen
+import { render, applyPendingFocus, mountDocumentPreviews } from './render.js'; // Zyklus OK: render wird nur in Callbacks aufgerufen
 import { rememberDirtyFormBaselines } from './dirtyForms.js';
 import { templateAgeTextOpen, templateAgeTextsForView, templateTextAges } from './templates.js';
 
@@ -263,6 +263,70 @@ export const renderCitizenDetail = () => {
   if (!element || !citizen) { render(); return; }
   renderCitizenQuestionnaireImages(citizen);
   element.innerHTML = citizenDetailContent(citizen);
+  rememberDirtyFormBaselines(element);
+  applyPendingFocus();
+};
+
+export const memberDetailContent = member => member ? `
+  <form id="member-form" class="member-form">
+    <input type="hidden" name="id" value="${escapeHtml(member.id)}">
+    <div class="member-tabs">
+      <input id="member-tab-basic" class="member-tab-control" type="radio" name="_memberTab" checked>
+      <input id="member-tab-contact" class="member-tab-control" type="radio" name="_memberTab">
+      <input id="member-tab-billing" class="member-tab-control" type="radio" name="_memberTab">
+      <input id="member-tab-notes" class="member-tab-control" type="radio" name="_memberTab">
+      <div class="member-tab-list" role="tablist" aria-label="SOKO-Mitglied erfassen">
+        <label class="member-tab" for="member-tab-basic" role="tab">Basis</label>
+        <label class="member-tab" for="member-tab-contact" role="tab">Kontakt</label>
+        <label class="member-tab" for="member-tab-billing" role="tab">Abrechnung</label>
+        <label class="member-tab" for="member-tab-notes" role="tab">Notizen</label>
+      </div>
+      <section class="member-tab-panel member-tab-basic-panel form-grid" role="tabpanel">
+        ${selectField("salutation", "Anrede", member.salutation, [["Frau", "Frau"], ["Herr", "Herr"]], "", "required")}
+        ${field("firstName", "Vorname", member.firstName, "text", "", "required")}
+        ${field("lastName", "Nachname", member.lastName, "text", "", "required")}
+        ${field("birthDate", "Geburtsdatum", member.birthDate, "date")}
+        ${selectField("groupId", "SOKO", member.groupId, sokoSelectOptions(), "full", "required")}
+        <div class="member-term-row">
+          ${field("termFrom", "Berufung von", member.termFrom, "date", "", "required")}
+          ${field("termTo", "Berufung bis", member.termTo, "date", "", "required")}
+        </div>
+        ${selectField("isLeader", "Rolle", String(member.isLeader), [["false", "Mitglied"], ["true", "Leitung"]], "full")}
+      </section>
+      <section class="member-tab-panel member-tab-contact-panel form-grid" role="tabpanel">
+        ${field("street", "Straße", member.street, "text", "full")}
+        ${postalCodeField("postalCode", "PLZ", member.postalCode)}
+        ${field("city", "Ort", member.city)}
+        ${field("phone", "Telefon", member.phone)}
+        ${field("mobile", "Mobiffunk", member.mobile)}
+        ${emailField("email", "E-Mail", member.email)}
+      </section>
+      <section class="member-tab-panel member-tab-billing-panel form-grid" role="tabpanel">
+        <div class="member-bank-row">
+          ${ibanField("bank", "Bankverbindung / IBAN", member.bank)}
+          ${field("accountHolder", "Kontoinhaber", member.accountHolder)}
+        </div>
+        ${field("allowance", "Aufwandspauschale", member.allowance, "text", "", 'inputmode="decimal" data-amount-field')}
+        ${field("billingAmount", "Abrechnungsbetrag", member.billingAmount, "text", "", 'inputmode="decimal" data-amount-field')}
+        ${field("zpNr", "Zahlungspartner-Nummer", member.zpNr)}
+        ${field("kassenzeichen", "Kassenzeichen", member.kassenzeichen)}
+      </section>
+      <section class="member-tab-panel member-tab-notes-panel form-grid" role="tabpanel">
+        ${field("misc", "Sonstiges", member.misc, "text", "full")}
+        ${textField("note", "Bemerkung", member.note, "full")}
+      </section>
+    </div>
+    <div class="field full button-row member-form-actions">
+      <button type="button" class="primary-button" data-action="save-member">Speichern</button>
+      <button type="button" class="ghost-button danger-button" data-action="delete-member">Löschen</button>
+    </div>
+  </form>
+` : `<div class="empty-state">Kein Mitglied ausgewählt</div>`;
+
+export const renderMemberDetail = () => {
+  const element = document.querySelector("#member-detail-panel");
+  if (!element) { render(); return; }
+  element.innerHTML = memberDetailContent(selectedMember());
   rememberDirtyFormBaselines(element);
   applyPendingFocus();
 };
@@ -607,6 +671,26 @@ const auditDetails = entry => {
   `;
 };
 
+export const documentPreviewContent = () => {
+  const template = selectedTemplate();
+  const sender = selectedSender();
+  const docs = state.generatedDocs;
+  const previewDoc = docs.find(doc => doc.citizenId === state.selectedCitizenId) || docs[0];
+  const previewCitizen = previewDoc ? byId(state.data.citizens, previewDoc.citizenId) : filteredCitizens().find(c => isCheckedCitizen(c) && c.status !== "gedruckt") || selectedCitizen();
+  const previewTemplate = previewDoc ? byId(state.data.templates, previewDoc.templateId) || template : template;
+  const printablePreviewTemplate = state.printBackground ? previewTemplate : { ...previewTemplate, backgroundImage: "", backBackgroundImage: "" };
+  const previewSender = previewDoc ? byId(state.data.senders, previewDoc.senderId) || sender : sender;
+  return docs.length ? documentPreviewStack(printablePreviewTemplate, previewCitizen, previewSender) : `<div class="empty-state">Kein Dokument ausgewählt</div>`;
+};
+
+export const renderDocumentPreview = () => {
+  const element = document.querySelector("#document-preview-panel");
+  if (!element) { render(); return; }
+  element.innerHTML = documentPreviewContent();
+  mountDocumentPreviews();
+  applyPendingFocus();
+};
+
 export const views = {
   audit: () => {
     const entries = (state.audit || []).filter(hasVisibleAuditChanges);
@@ -782,7 +866,6 @@ export const views = {
   },
 
   soko: () => {
-    const member = selectedMember();
     return `
       <div class="toolbar">
         <input name="q" data-filter placeholder="Suche" value="${escapeHtml(state.filters.q)}">
@@ -799,63 +882,7 @@ export const views = {
         <div class="vertical-splitter" data-splitter="soko" role="separator" aria-orientation="vertical" aria-label="Mitgliederliste und Erfassung aufteilen" aria-valuemin="20" aria-valuemax="80" aria-valuenow="${state.sokoSplit}" tabindex="0"></div>
         <section class="panel template-panel">
           <h2>Erfassungsmaske</h2>
-          <div class="template-panel-scroll">
-            ${member ? `
-              <form id="member-form" class="member-form">
-                <input type="hidden" name="id" value="${escapeHtml(member.id)}">
-                <div class="member-tabs">
-                  <input id="member-tab-basic" class="member-tab-control" type="radio" name="_memberTab" checked>
-                  <input id="member-tab-contact" class="member-tab-control" type="radio" name="_memberTab">
-                  <input id="member-tab-billing" class="member-tab-control" type="radio" name="_memberTab">
-                  <input id="member-tab-notes" class="member-tab-control" type="radio" name="_memberTab">
-                  <div class="member-tab-list" role="tablist" aria-label="SOKO-Mitglied erfassen">
-                    <label class="member-tab" for="member-tab-basic" role="tab">Basis</label>
-                    <label class="member-tab" for="member-tab-contact" role="tab">Kontakt</label>
-                    <label class="member-tab" for="member-tab-billing" role="tab">Abrechnung</label>
-                    <label class="member-tab" for="member-tab-notes" role="tab">Notizen</label>
-                  </div>
-                  <section class="member-tab-panel member-tab-basic-panel form-grid" role="tabpanel">
-                    ${selectField("salutation", "Anrede", member.salutation, [["Frau", "Frau"], ["Herr", "Herr"]], "", "required")}
-                    ${field("firstName", "Vorname", member.firstName, "text", "", "required")}
-                    ${field("lastName", "Nachname", member.lastName, "text", "", "required")}
-                    ${field("birthDate", "Geburtsdatum", member.birthDate, "date")}
-                    ${selectField("groupId", "SOKO", member.groupId, sokoSelectOptions(), "full", "required")}
-                    <div class="member-term-row">
-                      ${field("termFrom", "Berufung von", member.termFrom, "date", "", "required")}
-                      ${field("termTo", "Berufung bis", member.termTo, "date", "", "required")}
-                    </div>
-                    ${selectField("isLeader", "Rolle", String(member.isLeader), [["false", "Mitglied"], ["true", "Leitung"]], "full")}
-                  </section>
-                  <section class="member-tab-panel member-tab-contact-panel form-grid" role="tabpanel">
-                    ${field("street", "Straße", member.street, "text", "full")}
-                    ${postalCodeField("postalCode", "PLZ", member.postalCode)}
-                    ${field("city", "Ort", member.city)}
-                    ${field("phone", "Telefon", member.phone)}
-                    ${field("mobile", "Mobiffunk", member.mobile)}
-                    ${emailField("email", "E-Mail", member.email)}
-                  </section>
-                  <section class="member-tab-panel member-tab-billing-panel form-grid" role="tabpanel">
-                    <div class="member-bank-row">
-                      ${ibanField("bank", "Bankverbindung / IBAN", member.bank)}
-                      ${field("accountHolder", "Kontoinhaber", member.accountHolder)}
-                    </div>
-                    ${field("allowance", "Aufwandspauschale", member.allowance, "text", "", 'inputmode="decimal" data-amount-field')}
-                    ${field("billingAmount", "Abrechnungsbetrag", member.billingAmount, "text", "", 'inputmode="decimal" data-amount-field')}
-                    ${field("zpNr", "Zahlungspartner-Nummer", member.zpNr)}
-                    ${field("kassenzeichen", "Kassenzeichen", member.kassenzeichen)}
-                  </section>
-                  <section class="member-tab-panel member-tab-notes-panel form-grid" role="tabpanel">
-                    ${field("misc", "Sonstiges", member.misc, "text", "full")}
-                    ${textField("note", "Bemerkung", member.note, "full")}
-                  </section>
-                </div>
-                <div class="field full button-row member-form-actions">
-                  <button type="button" class="primary-button" data-action="save-member">Speichern</button>
-                  <button type="button" class="ghost-button danger-button" data-action="delete-member">Löschen</button>
-                </div>
-              </form>
-            ` : `<div class="empty-state">Kein Mitglied ausgewählt</div>`}
-          </div>
+          <div id="member-detail-panel" class="template-panel-scroll">${memberDetailContent(selectedMember())}</div>
         </section>
       </div>
     `;
@@ -1038,12 +1065,7 @@ export const views = {
     const template = selectedTemplate();
     const sender = selectedSender();
     const docs = state.generatedDocs;
-    const previewDoc = docs.find(doc => doc.citizenId === state.selectedCitizenId) || docs[0];
     const checkedCount = filteredCitizens().filter(c => isCheckedCitizen(c) && c.status !== "gedruckt").length;
-    const previewCitizen = previewDoc ? byId(state.data.citizens, previewDoc.citizenId) : filteredCitizens().find(c => isCheckedCitizen(c) && c.status !== "gedruckt") || selectedCitizen();
-    const previewTemplate = previewDoc ? byId(state.data.templates, previewDoc.templateId) || template : template;
-    const printablePreviewTemplate = state.printBackground ? previewTemplate : { ...previewTemplate, backgroundImage: "", backBackgroundImage: "" };
-    const previewSender = previewDoc ? byId(state.data.senders, previewDoc.senderId) || sender : sender;
     return `
       <div class="panel">
         <h2>Dokumentlauf konfigurieren</h2>
@@ -1070,7 +1092,7 @@ export const views = {
         <div class="vertical-splitter" data-splitter="print" role="separator" aria-orientation="vertical" aria-label="Druckliste und Vorschau aufteilen" aria-valuemin="20" aria-valuemax="80" aria-valuenow="${state.printSplit}" tabindex="0"></div>
         <section class="panel">
           <h2>Seriendruck-Vorschau</h2>
-          ${docs.length ? documentPreviewStack(printablePreviewTemplate, previewCitizen, previewSender) : `<div class="empty-state">Kein Dokument ausgewählt</div>`}
+          <div id="document-preview-panel">${documentPreviewContent()}</div>
         </section>
       </div>
       <div class="print-pages print-only">

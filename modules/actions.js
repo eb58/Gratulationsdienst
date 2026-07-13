@@ -13,7 +13,7 @@ import { upsertWeddingAnniversaryForCitizen, upsertWeddingAnniversariesForCitize
 import { questionnaireCaseId, syncQuestionnaireCasesForImport, upsertQuestionnaireCase } from './questionnaireCases.js';
 import { followUpSeedCsv, groupedTestAssignments, monthAfterNext, questionnaireCitizenPatch, rollingSimulationDate, seedCsv } from './testdata.js';
 import { render, renderDialog } from './render.js';
-import { renderCitizenDetail } from './views.js';
+import { renderCitizenDetail, renderMemberDetail } from './views.js';
 import { cancelDirtyFormLeave, confirmDirtyFormLeave } from './dirtyForms.js';
 import { buildBirthdayAgeTexts, normalizeTemplateAgeTexts } from './templates.js';
 
@@ -617,7 +617,8 @@ export const actions = {
   },
   "select-member": event => {
     state.selectedMemberId = event.target.closest("[data-id]").dataset.id;
-    render();
+    renderMemberDetail();
+    state.gridApis.members?.redrawRows?.();
   },
   "new-member": async () => {
     const id = nextId("S", state.data.sokoMembers);

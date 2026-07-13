@@ -52,7 +52,7 @@ globalThis.fetch = (url, options) => {
 
 // render.js zum No-Op machen, bevor actions.js (und sein Graph) geladen wird.
 mock.module('../modules/render.js', {
-  namedExports: { render: () => {}, renderDialog: () => {}, applyPendingFocus: () => {} }
+  namedExports: { render: () => {}, renderDialog: () => {}, applyPendingFocus: () => {}, mountDocumentPreviews: () => {} }
 });
 
 const { actions } = await import('../modules/actions.js');

@@ -151,6 +151,91 @@ describe('grid definitions', () => {
     assert.equal(gridDefinitions.weddingAnniversaries().rowData[0].weddingAnniversary, 'Goldene Hochzeit');
   });
 
+  it('wechselt SOKO-Mitglieder im Grid ohne kompletten View-Render', () => {
+    state.data.sokoMembers = [...state.data.sokoMembers, {
+      id: 'S-002',
+      salutation: 'Frau',
+      firstName: 'Eva',
+      lastName: 'Mitglied',
+      groupId: 'SOKO 01',
+      email: 'eva@example.test',
+      phone: '',
+      mobile: '',
+      termFrom: '2025-01-01',
+      termTo: '2028-12-31',
+      isLeader: false
+    }];
+    const originalDocument = globalThis.document;
+    const panel = { innerHTML: '', querySelectorAll: () => [] };
+    globalThis.document = {
+      querySelector: selector => selector === '#member-detail-panel' ? panel : null,
+      querySelectorAll: () => []
+    };
+    const redrawCalls = [];
+
+    try {
+      gridDefinitions.members().onRowClicked({ data: { id: 'S-002' }, api: { redrawRows: () => redrawCalls.push('members') } });
+    } finally {
+      globalThis.document = originalDocument;
+    }
+
+    assert.equal(state.selectedMemberId, 'S-002');
+    assert.match(panel.innerHTML, /value="S-002"/);
+    assert.deepEqual(redrawCalls, ['members']);
+  });
+
+  it('wechselt Drucklisten-Einträge im Grid ohne kompletten View-Render', () => {
+    const secondCitizen = { ...citizen, id: 'G-2', firstName: 'Erna', lastName: 'Beispiel' };
+    const sender = {
+      id: 'A-001',
+      name: 'Bezirksamt',
+      signature: 'Signatur',
+      color: '#005f56',
+      logo: 'BA',
+      department: 'Seniorenservice',
+      address: 'Eichborndamm 215',
+      phone: '030 123',
+      email: 'kontakt@example.test'
+    };
+    const template = {
+      id: 'T-001',
+      name: 'Standard',
+      occasion: 'Geburtstag',
+      format: 'DIN A4 Brief',
+      senderId: sender.id,
+      subject: 'Glückwunsch {{vorname}}',
+      body: 'Text {{nachname}}',
+      backgroundImage: '',
+      backBackgroundImage: ''
+    };
+    state.data.citizens = [citizen, secondCitizen];
+    state.data.senders = [sender];
+    state.data.templates = [template];
+    state.selectedSenderId = sender.id;
+    state.selectedTemplateId = template.id;
+    state.generatedDocs = [
+      { id: 'DOC-G-1', citizenId: 'G-1', templateId: template.id, senderId: sender.id, recipient: 'Erika Mustermann' },
+      { id: 'DOC-G-2', citizenId: 'G-2', templateId: template.id, senderId: sender.id, recipient: 'Erna Beispiel' }
+    ];
+    const originalDocument = globalThis.document;
+    const panel = { innerHTML: '', querySelectorAll: () => [] };
+    globalThis.document = {
+      querySelector: selector => selector === '#document-preview-panel' ? panel : null,
+      querySelectorAll: () => []
+    };
+    const redrawCalls = [];
+
+    try {
+      gridDefinitions.documents().onRowClicked({ data: { citizenId: 'G-2' }, api: { redrawRows: () => redrawCalls.push('documents') } });
+    } finally {
+      globalThis.document = originalDocument;
+    }
+
+    assert.equal(state.selectedCitizenId, 'G-2');
+    assert.match(panel.innerHTML, /Erna/);
+    assert.deepEqual(redrawCalls, ['documents']);
+  });
+
   it('filtert importierte Jubilare nach ausgewaehltem Monat', () => {
     state.data.citizens = [
       { ...citizen, id: 'G-6', source: 'CSV Import', birthDate: '1936-06-01' },

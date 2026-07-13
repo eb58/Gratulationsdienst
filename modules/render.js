@@ -17,7 +17,7 @@ const previewObserver = new ResizeObserver(entries => entries.forEach(({ target 
   target.style.setProperty("--square-preview-scale", size / baseSize);
 }));
 
-const mountDocumentPreviews = () => {
+export const mountDocumentPreviews = () => {
   previewObserver.disconnect();
   $$(".document-preview.format-square").forEach(preview => previewObserver.observe(preview));
 };

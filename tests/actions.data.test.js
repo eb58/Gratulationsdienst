@@ -76,7 +76,7 @@ globalThis.fetch = (url, options = {}) => {
 (0, eval)(readFileSync(new URL('../public/data/soko-strassenverzeichnis.js', import.meta.url), 'utf8'));
 
 mock.module('../modules/render.js', {
-  namedExports: { render: () => {}, renderDialog: () => {}, applyPendingFocus: () => {} }
+  namedExports: { render: () => {}, renderDialog: () => {}, applyPendingFocus: () => {}, mountDocumentPreviews: () => {} }
 });
 
 const { actions } = await import('../modules/actions.js');

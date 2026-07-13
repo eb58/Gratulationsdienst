@@ -4,7 +4,7 @@ import { state } from './state.js';
 import { filteredCitizens, groupForCitizen, isArchivedCitizen } from './assignment.js';
 import { SOKO_QUESTIONNAIRE_IMPORTED_STATUS } from './sokoQuestionnaire.js';
 import { render, renderDialog } from './render.js'; // Zyklus OK: render wird nur in Event-Callbacks aufgerufen
-import { renderCitizenDetail, renderRegionAssignment } from './views.js'; // Zyklus OK: lazy
+import { renderCitizenDetail, renderDocumentPreview, renderMemberDetail, renderRegionAssignment } from './views.js'; // Zyklus OK: lazy
 import { requestDirtyFormLeave } from './dirtyForms.js';
 import { loadQuestionnairePagesForCitizen, prepareQuestionnairePageLoadForCitizen } from './questionnairePages.js';
 import { loadScript } from './scriptLoader.js';
@@ -263,7 +263,8 @@ export const gridDefinitions = {
       if (params.data.id === state.selectedMemberId) return;
       const selectRow = () => {
         state.selectedMemberId = params.data.id;
-        render();
+        renderMemberDetail();
+        params.api.redrawRows?.();
       };
       if (!requestDirtyFormLeave(selectRow)) { params.api.redrawRows?.(); renderDialog(); }
     }
@@ -307,7 +308,12 @@ export const gridDefinitions = {
     ],
     getRowId: params => params.data.id,
     getRowClass: params => params.data.citizenId === state.selectedCitizenId ? "selected" : "",
-    onRowClicked: params => { state.selectedCitizenId = params.data.citizenId; render(); }
+    onRowClicked: params => {
+      if (params.data.citizenId === state.selectedCitizenId) return;
+      state.selectedCitizenId = params.data.citizenId;
+      renderDocumentPreview();
+      params.api.redrawRows?.();
+    }
   }),
   weddingAnniversaries: () => ({
     ...baseGridOptions(),

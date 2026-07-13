@@ -33,7 +33,10 @@ mock.module('../modules/render.js', {
   namedExports: { render: () => {}, renderDialog: () => {}, applyPendingFocus: () => {} }
 });
 mock.module('../modules/views.js', {
-  namedExports: { renderCitizenDetail: () => { renderCitizenDetailCount += 1; } }
+  namedExports: {
+    renderCitizenDetail: () => { renderCitizenDetailCount += 1; },
+    renderMemberDetail: () => {}
+  }
 });
 mock.module('../modules/documents.js', {
   namedExports: {
