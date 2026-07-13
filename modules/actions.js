@@ -9,7 +9,7 @@ import { buildImportResult, importMonths, importNotice, citizenGridRow, nextMemb
 import { parseSokoQuestionnairePdf } from './sokoQuestionnairePdf.js';
 import { applySokoQuestionnaireResults } from './sokoQuestionnaire.js';
 import { createSokoQuestionnaireSimulation } from './sokoQuestionnaireSimulation.js';
-import { saveQuestionnairePages, deleteAllQuestionnairePages, deleteQuestionnairePagesForCitizens } from './questionnairePages.js';
+import { saveQuestionnairePages, deleteAllQuestionnairePages, deleteQuestionnairePagesForCitizens, loadQuestionnairePagesForCitizen, prepareQuestionnairePageLoadForCitizen } from './questionnairePages.js';
 import { upsertWeddingAnniversaryForCitizen, upsertWeddingAnniversariesForCitizens, weddingAnniversaryFromCitizen } from './weddingAnniversaries.js';
 import { questionnaireCaseId, syncQuestionnaireCasesForImport, upsertQuestionnaireCase } from './questionnaireCases.js';
 import { followUpSeedCsv, groupedTestAssignments, monthAfterNext, questionnaireCitizenPatch, rollingSimulationDate, seedCsv } from './testdata.js';
@@ -239,6 +239,14 @@ const refreshSokoPdfImportUi = result => {
   if (!gridUpdated) { render(); return; }
   renderCitizenDetail();
   showCitizenGridRow(selectedRow);
+};
+const renderSelectedCitizenDetailWithQuestionnaires = () => {
+  const citizenId = state.selectedCitizenId;
+  prepareQuestionnairePageLoadForCitizen(citizenId);
+  renderCitizenDetail();
+  return loadQuestionnairePagesForCitizen(citizenId).then(pages => {
+    if (pages.length && state.selectedCitizenId === citizenId) renderCitizenDetail();
+  });
 };
 const syncWeddingAnniversaries = (citizens, source = "Fragebogen") => {
   state.data.weddingAnniversaries = upsertWeddingAnniversariesForCitizens(state.data.weddingAnniversaries || [], citizens, source);
@@ -561,7 +569,7 @@ export const actions = {
   },
   "select-citizen": event => {
     state.selectedCitizenId = event.target.closest("[data-id]").dataset.id;
-    render();
+    renderSelectedCitizenDetailWithQuestionnaires();
   },
   "save-citizen": async () => {
     const values = formValues("#citizen-form");
@@ -604,11 +612,12 @@ export const actions = {
         }
       }
       const gridUpdated = updateCitizenGridRow(byId(state.data.citizens, values.id));
+      const questionnaireLoad = renderSelectedCitizenDetailWithQuestionnaires();
       if (gridUpdated) {
-        renderCitizenDetail();
         const nextRow = currentRows.find(row => row.id === state.selectedCitizenId);
         showCitizenGridRow(nextRow);
-      } else render();
+      }
+      await questionnaireLoad;
       toast(reachedEnd ? "Jubilar gespeichert. Ende der Liste erreicht." : "Jubilar gespeichert.");
     } catch (error) {
       const reloadEntries = [{ collection: "citizens", id: values.id }];

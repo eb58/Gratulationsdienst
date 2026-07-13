@@ -60,6 +60,8 @@ mock.module('../modules/sokoQuestionnaireSimulation.js', {
 mock.module('../modules/questionnairePages.js', {
   namedExports: {
     saveQuestionnairePages: pages => saveQuestionnairePagesImpl(pages),
+    loadQuestionnairePagesForCitizen: async () => [],
+    prepareQuestionnairePageLoadForCitizen: () => {},
     deleteAllQuestionnairePages: async () => {},
     deleteQuestionnairePagesForCitizens: async () => {}
   }

@@ -670,6 +670,54 @@ describe('Jubilare pruefen', () => {
     assert.equal(state.data.citizens[0].moved, true);
     assert.deepEqual(activeCitizens(), []);
   });
+
+  it('save-citizen laedt nach dem Sprung die Fragebogenscans des naechsten Jubilars', async () => {
+    state.data.citizens = [
+      {
+        id: 'G-1', salutation: 'Frau', firstName: 'Erika', lastName: 'Muster', street: 'Teststrasse', houseNo: '1',
+        postalCode: '13437', district: 'Tegel', birthDate: '1936-06-01', questionnaireCycle: '2026-06',
+        wish: 'offen', status: 'geladen', source: 'CSV Import', sokoQuestionnaireImages: [{ id: 'old-1', image: 'data:image/png;base64,a' }]
+      },
+      {
+        id: 'G-2', salutation: 'Herr', firstName: 'Max', lastName: 'Probe', street: 'Teststrasse', houseNo: '2',
+        postalCode: '13437', district: 'Tegel', birthDate: '1937-06-02', questionnaireCycle: '2026-06',
+        wish: 'offen', status: 'geladen', source: 'CSV Import'
+      }
+    ];
+    state.selectedCitizenId = 'G-1';
+    state.auth.token = 'token';
+    state.gridApis.citizens = {
+      forEachNodeAfterFilterAndSort: callback => [
+        { id: 'G-1', rowIndex: 0 },
+        { id: 'G-2', rowIndex: 1 }
+      ].forEach(row => callback({ data: { id: row.id }, rowIndex: row.rowIndex })),
+      getRowNode: id => id === 'G-1' ? { data: { id: 'G-1' } } : null,
+      applyTransaction() {},
+      refreshClientSideRowModel() {},
+      redrawRows() {},
+      paginationGetPageSize: () => 100,
+      paginationGoToPage() {},
+      ensureIndexVisible() {}
+    };
+    route('PUT /citizens/G-1', request => ({ ...request.body, _version: '4' }));
+    route('PUT /questionnaireCases/QC-G-1-2026-06', request => ({ ...request.body, _version: 'qc-1' }));
+    route('GET /questionnaire-pages?citizenId=G-2', [
+      { id: 'fresh-2', citizenId: 'G-2', image: 'data:image/png;base64,b', createdAt: '2026-06-01T00:00:00.000Z' }
+    ]);
+    setForm('#citizen-form', {
+      id: 'G-1', salutation: 'Frau', firstName: 'Erika', lastName: 'Muster', street: 'Teststrasse', houseNo: '1',
+      postalCode: '13437', district: 'Tegel', birthDate: '1936-06-01', phone: '', email: '', notes: '', source: 'CSV Import',
+      wish: 'per Post', deceased: 'false', moved: 'false', pressPublication: 'false', weddingAnniversary: '', weddingDate: '', spouseName: ''
+    });
+
+    await actions['save-citizen']();
+
+    assert.equal(state.selectedCitizenId, 'G-2');
+    assert.equal(calls.some(call => call.method === 'GET' && call.path === '/questionnaire-pages?citizenId=G-2'), true);
+    assert.equal(state.data.citizens[0].sokoQuestionnaireImages, undefined);
+    assert.equal(state.data.citizens[1].sokoQuestionnaireImages[0].id, 'fresh-2');
+    state.auth.token = '';
+  });
 });
 
 describe('Jubilare pruefen (Backend)', () => {
