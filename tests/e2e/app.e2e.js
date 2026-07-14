@@ -134,6 +134,9 @@ describe('Gratulationsdienst E2E', () => {
       await page.click('[data-nav="templates"]');
       await page.waitForSelector('.view-templates');
       assert.equal(await page.locator('#page-title').textContent(), 'Stammdaten: Vorlagen');
+      // Ohne ausgewählten Jubilar zeigt die Vorschau-Spalte Beispieldaten statt eines leeren Zustands.
+      assert.match(await page.locator('.view-templates .card-layout').first().textContent(), /Mustermann/);
+      assert.match(await page.locator('.view-templates h2', { hasText: 'Vorschau' }).textContent(), /Beispieldaten/);
     } finally { await context.close(); }
   });
 

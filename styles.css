@@ -815,7 +815,12 @@ h3 {
 
 .template-split {
   display: grid;
-  grid-template-columns: minmax(0, calc(var(--template-left, 50%) - 6px)) 12px minmax(0, calc(100% - var(--template-left, 50%) - 6px));
+  grid-template-columns:
+    minmax(0, calc(var(--template-left, 24%) - 6px))
+    12px
+    minmax(0, calc(var(--templatePreview-left, 62%) - var(--template-left, 24%) - 12px))
+    12px
+    minmax(0, calc(100% - var(--templatePreview-left, 62%) - 6px));
   align-items: stretch;
   flex: 1;
   min-height: 0;

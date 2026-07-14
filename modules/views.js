@@ -65,6 +65,9 @@ const senderSignatureImageInput = sender => {
   `;
 };
 
+// Beispiel-Jubilarin für die Vorlagen-Vorschau, wenn (noch) kein Jubilar ausgewählt ist.
+export const sampleCitizen = { id: "beispiel", salutation: "Frau", firstName: "Erika", lastName: "Mustermann", street: "Musterstraße", houseNo: "12", postalCode: "13437", district: "Tegel", birthDate: "1936-06-15", wish: "Besuch erwünscht" };
+
 const documentPreviewStack = (template, citizen, sender) => {
   const backPreview = documentBackPreview(template, citizen);
   return `
@@ -1022,12 +1025,12 @@ export const views = {
 
   templates: () => {
     const template = selectedTemplate();
-    const citizen = selectedCitizen();
+    const citizen = selectedCitizen() || sampleCitizen;
     const sender = byId(state.data.senders, template.senderId) || selectedSender();
     const hasFrontBackgroundImage = !!template.backgroundImage;
     const hasBackBackgroundImage = !!template.backBackgroundImage;
     return `
-      <div class="template-split" style="--template-left:${state.templateSplit}%">
+      <div class="template-split templatePreview-split" style="--template-left:${state.templateSplit}%;--templatePreview-left:${state.templatePreviewSplit}%">
         <section class="panel template-panel">
           <div class="section-head">
             <h2>Vorlagen</h2>
@@ -1049,10 +1052,13 @@ export const views = {
             </div>
           </div>
         </section>
-        <div class="vertical-splitter" data-splitter="template" role="separator" aria-orientation="vertical" aria-label="Vorlagenliste und Editor aufteilen" aria-valuemin="20" aria-valuemax="80" aria-valuenow="${state.templateSplit}" tabindex="0"></div>
+        <div class="vertical-splitter" data-splitter="template" role="separator" aria-orientation="vertical" aria-label="Vorlagenliste und Editor aufteilen" aria-valuemin="12" aria-valuemax="60" aria-valuenow="${state.templateSplit}" tabindex="0"></div>
         <section class="panel template-panel">
-          <div class="template-panel-scroll">
+          <div class="section-head">
             <h2>Editor</h2>
+            <button type="button" class="primary-button" data-action="save-template">Vorlage speichern</button>
+          </div>
+          <div class="template-panel-scroll">
             <form id="template-form" class="form-grid">
               <input type="hidden" name="id" value="${escapeHtml(template.id)}">
               ${field("name", "Vorlagenname", template.name)}
@@ -1070,14 +1076,14 @@ export const views = {
               </div>
               ${textField("body", "Text", template.body, "full")}
               ${templateAgeTextFields(template)}
-              <div class="field full">
-                <button type="button" class="primary-button" data-action="save-template">Vorlage speichern</button>
-              </div>
             </form>
-            <div style="margin-top:16px">
-              <h2>Vorschau</h2>
-              ${documentPreviewStack(template, citizen, sender)}
-            </div>
+          </div>
+        </section>
+        <div class="vertical-splitter" data-splitter="templatePreview" role="separator" aria-orientation="vertical" aria-label="Editor und Vorschau aufteilen" aria-valuemin="40" aria-valuemax="90" aria-valuenow="${state.templatePreviewSplit}" tabindex="0"></div>
+        <section class="panel template-panel">
+          <div class="template-panel-scroll">
+            <h2>Vorschau${citizen === sampleCitizen ? ` <span class="muted" style="font-weight:400;font-size:13px">· Beispieldaten</span>` : ""}</h2>
+            ${documentPreviewStack(template, citizen, sender)}
           </div>
         </section>
       </div>
