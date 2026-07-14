@@ -5,7 +5,7 @@ import { render } from './render.js'; // Zyklus OK: render wird nur in Callbacks
 import { templateBodyForAge } from './templates.js';
 import { qrCodeSvg } from './qr.js';
 import { SOKO_CHECKBOXES, SOKO_CHECKBOX_SIZE_MM, SOKO_QR_BOX, SOKO_QR_BOX2, sokoQuestionnaireCode } from './sokoQuestionnaire.js';
-import { cardLayoutFor } from './cardLayouts.js';
+import { cardBackLayoutFor, cardLayoutFor } from './cardLayouts.js';
 
 export const letterSalutation = salutation => {
   if (salutation === "Herr") return "Sehr geehrter Herr";
@@ -98,6 +98,22 @@ const squareBackAddress = citizen => {
     <div class="square-back-meta" style="font-size:8.5pt;margin-top:1mm">${escapeHtml(sokoLabel)}&nbsp;&nbsp;${escapeHtml(birthDay)}</div>
   `;
 };
+// Rückseiten-Inhalt aus einem JS-Layout: null = kein Layout hinterlegt (Standard-Rückseite),
+// "" = Layout unterdrückt die Rückseite, sonst das fertige HTML. Im Druckpfad (forPrint)
+// entscheidet zusätzlich die Einstellung "Hintergrundbild drucken" über das Rückseitenbild.
+const cardBackLayoutContent = (template, citizen, sender, { forPrint = false } = {}) => {
+  const layout = cardBackLayoutFor(template);
+  if (!layout) return null;
+  const backgroundImage = templateBackBackgroundImage(template);
+  const showBackground = backgroundImage && (!forPrint || state.printBackground);
+  return layout({
+    addressHtml: squareBackAddress(citizen),
+    backgroundHtml: showBackground ? `<img src="${escapeHtml(backgroundImage)}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">` : "",
+    citizen,
+    sender,
+    escapeHtml
+  });
+};
 export const compactBirthdayCardBody = citizen => [
   `${citizen.salutation} ${citizen.lastName},`,
   `zu Ihrem ${calculateAge(citizen.birthDate)}. Geburtstag gratulieren wir sehr herzlich.`,
@@ -175,6 +191,8 @@ export const documentPreview = (template = selectedTemplate(), citizen = selecte
 
 export const documentBackPreview = (template = selectedTemplate(), citizen = selectedCitizen(), options = {}) => {
   if (!citizen) return "";
+  const layoutContent = cardBackLayoutContent(template, citizen, options.sender || selectedSender());
+  if (layoutContent !== null) return layoutContent ? cardBackLayoutPreview(template, layoutContent) : "";
   const includeBlank = options.includeBlank ?? false;
   const format = documentFormat(template);
   const isSquareGreetingCard = format.size === "square";
@@ -194,19 +212,39 @@ export const documentBackPreview = (template = selectedTemplate(), citizen = sel
   `;
 };
 
-// Druckseite für Layout-Vorlagen abseits der Quadratkarte: mm-getreu und komplett inline,
-// weil das Druckfenster styles.css nicht lädt.
+// Vorschau einer Layout-Rückseite: mm-getreue Leinwand (Quadrat direkt im mm-Blatt).
+const cardBackLayoutPreview = (template, layoutContent) => {
+  const format = documentFormat(template);
+  const { widthMm, heightMm } = formatDimensions(template);
+  if (format.size === "square") return `
+    <div class="document-preview document-back-preview format-square square-card-back">
+      <div class="document-sheet">${layoutContent}</div>
+    </div>`;
+  return `
+    <div class="document-preview document-back-preview ${format.className}">
+      <div class="document-sheet has-card-layout">
+        <div class="card-layout-canvas" style="position:absolute;top:0;left:0;width:${widthMm}mm;height:${heightMm}mm;overflow:hidden;background:#fff;transform-origin:top left">${layoutContent}</div>
+      </div>
+    </div>`;
+};
+
+// Eigenständige Druckseite in Formatgröße, komplett inline, weil das Druckfenster styles.css nicht lädt.
+const layoutPrintPage = (template, content) => {
+  const { widthMm, heightMm } = formatDimensions(template);
+  return `
+  <div style="position:relative;width:${widthMm}mm;height:${heightMm}mm;overflow:hidden;page-break-after:always;break-after:page;background:#fff">
+    ${content}
+  </div>`;
+};
+
+// Druckseite für Layout-Vorlagen abseits der Quadratkarte.
 export const printLayoutPage = (template, citizen, sender) => {
   const { widthMm, heightMm } = formatDimensions(template);
   const backgroundImage = templateBackgroundImage(template);
   const bgImg = state.printBackground && backgroundImage
     ? `<img src="${escapeHtml(backgroundImage)}" alt="" style="position:absolute;top:0;left:0;width:${widthMm}mm;height:${heightMm}mm;object-fit:cover">`
     : "";
-  return `
-  <div style="position:relative;width:${widthMm}mm;height:${heightMm}mm;overflow:hidden;page-break-after:always;break-after:page;background:#fff">
-    ${bgImg}
-    ${cardLayoutContent(template, citizen, sender)}
-  </div>`;
+  return layoutPrintPage(template, `${bgImg}${cardLayoutContent(template, citizen, sender)}`);
 };
 export const printSquareCardPage = (template, citizen, sender) => {
   const rendered = renderTemplate(template, citizen, sender);
@@ -220,7 +258,9 @@ export const printSquareCardPage = (template, citizen, sender) => {
     ${cardLayoutContent(template, citizen, sender) || squareGreetingContent(rendered.subject, rendered.body, sender.signature, sender.signatureImage)}
   </div>`;
 };
-export const printSquareCardBack = (template, citizen) => {
+export const printSquareCardBack = (template, citizen, sender = selectedSender()) => {
+  const layoutContent = cardBackLayoutContent(template, citizen, sender, { forPrint: true });
+  if (layoutContent !== null) return layoutContent ? layoutPrintPage(template, layoutContent) : "";
   const backgroundImage = templateBackBackgroundImage(template);
   const bgImg = state.printBackground && backgroundImage
     ? `<img src="${escapeHtml(backgroundImage)}" style="position:absolute;top:0;left:0;width:210mm;height:210mm;display:block" alt="">`
@@ -243,10 +283,14 @@ export const printDocumentPages = () => state.generatedDocs.map(doc => {
   const frontPage = cardLayoutFor(printTemplate)
     ? printLayoutPage(printTemplate, citizen, sender)
     : `<section class="print-page ${printFormatClass(template)}">${documentPreview(printTemplate, citizen, sender)}</section>`;
-  const backPage = documentBackPreview(printTemplate, citizen, { includeBlank: false });
+  const layoutBack = cardBackLayoutContent(printTemplate, citizen, sender, { forPrint: true });
+  const backPage = layoutBack === null ? documentBackPreview(printTemplate, citizen, { includeBlank: false, sender }) : "";
+  const backSection = layoutBack
+    ? layoutPrintPage(printTemplate, layoutBack)
+    : backPage ? `<section class="print-page ${printFormatClass(template)}">${backPage}</section>` : "";
   return format.size === "square"
-    ? printSquareCardPage(printTemplate, citizen, sender) + printSquareCardBack(printTemplate, citizen)
-    : `${frontPage}${backPage ? `<section class="print-page ${printFormatClass(template)}">${backPage}</section>` : ""}`;
+    ? printSquareCardPage(printTemplate, citizen, sender) + printSquareCardBack(printTemplate, citizen, sender)
+    : `${frontPage}${backSection}`;
 }).join("");
 
 export const preparePrint = () => {

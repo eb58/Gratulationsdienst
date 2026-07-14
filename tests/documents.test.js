@@ -187,7 +187,8 @@ describe('document previews and print pages', () => {
   });
 
   it('suppresses non-square back previews unless a back image or blank page is requested', () => {
-    const plain = { ...template, format: 'DIN A4 Brief', backBackgroundImage: '' };
+    // id ohne registriertes cardBackLayout: hier gilt weiterhin die Standard-Regel
+    const plain = { ...template, id: 'T-900', format: 'DIN A4 Brief', backBackgroundImage: '' };
 
     assert.equal(documentBackPreview(plain, citizen), '');
     assert.match(documentBackPreview(plain, citizen, { includeBlank: true }), /document-back-preview/);

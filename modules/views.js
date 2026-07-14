@@ -69,7 +69,7 @@ const senderSignatureImageInput = sender => {
 export const sampleCitizen = { id: "beispiel", salutation: "Frau", firstName: "Erika", lastName: "Mustermann", street: "Musterstraße", houseNo: "12", postalCode: "13437", district: "Tegel", birthDate: "1936-06-15", wish: "Besuch erwünscht" };
 
 const documentPreviewStack = (template, citizen, sender) => {
-  const backPreview = documentBackPreview(template, citizen);
+  const backPreview = documentBackPreview(template, citizen, { sender });
   return `
     <div class="document-preview-stack">
       <div class="document-preview-side">

@@ -20,8 +20,8 @@ globalThis.ResizeObserver = class {
   disconnect() {}
 };
 
-const { cardLayoutFor, cardLayouts } = await import('../modules/cardLayouts.js');
-const { documentPreview, printLayoutPage, printSquareCardPage } = await import('../modules/documents.js');
+const { cardBackLayoutFor, cardBackLayouts, cardLayoutFor, cardLayouts } = await import('../modules/cardLayouts.js');
+const { documentBackPreview, documentPreview, printDocumentPages, printLayoutPage, printSquareCardBack, printSquareCardPage } = await import('../modules/documents.js');
 const { state } = await import('../modules/state.js');
 
 const citizen = {
@@ -141,5 +141,56 @@ describe('Layouts für A5-Karte und A4-Briefe', () => {
   it('nutzt die Berliner Hausschrift mit Fallback', () => {
     const html = documentPreview(template('T-003', 'DIN A4 Brief'), citizen, sender);
     assert.match(html, /font-family:'Berlin Type Office',Arial,sans-serif/);
+  });
+});
+
+describe('Rückseiten-Layouts', () => {
+  it('liefert das Rückseiten-Layout zur Vorlagen-ID und sonst nichts', () => {
+    assert.equal(typeof cardBackLayoutFor({ id: 'T-001' }), 'function');
+    assert.equal(cardBackLayoutFor({ id: 'T-002' }), undefined);
+  });
+
+  it('druckt die Quadratkarten-Rückseite über das Layout mit Adresse und Drehung', () => {
+    const html = printSquareCardBack(squareTemplate('T-001'), citizen, sender);
+    assert.match(html, /card-layout/);
+    assert.match(html, /rotate\(180deg\)/);
+    assert.match(html, /Muster &amp; Mann/);
+    assert.match(html, /page-break-after:always/);
+  });
+
+  it('zeigt das Rückseiten-Layout auch in der Vorschau', () => {
+    const html = documentBackPreview(squareTemplate('T-001'), citizen, { sender });
+    assert.match(html, /square-card-back/);
+    assert.match(html, /card-layout/);
+    assert.match(html, /Muster &amp; Mann/);
+  });
+
+  it('fällt ohne Rückseiten-Layout auf die Standard-Rückseite zurück', () => {
+    const html = printSquareCardBack(squareTemplate('T-999'), citizen, sender);
+    assert.match(html, /square-back-meta/);
+    assert.doesNotMatch(html, /card-layout/);
+  });
+
+  it('unterdrückt die Rückseite, wenn das Layout einen leeren String liefert', () => {
+    cardBackLayouts['T-999'] = () => '';
+    try {
+      assert.equal(printSquareCardBack(squareTemplate('T-999'), citizen, sender), '');
+      assert.equal(documentBackPreview(squareTemplate('T-999'), citizen, { sender }), '');
+    } finally {
+      delete cardBackLayouts['T-999'];
+    }
+  });
+
+  it('hängt Layout-Rückseiten auch im Seriendruck an Nicht-Quadrat-Formate an', () => {
+    cardBackLayouts['T-003'] = ({ addressHtml }) => `<div class="card-layout back-test">${addressHtml}</div>`;
+    try {
+      state.data.templates = [template('T-003', 'DIN A4 Brief')];
+      state.generatedDocs = [{ id: 'DOC-1', citizenId: citizen.id, templateId: 'T-003', senderId: sender.id }];
+      const html = printDocumentPages();
+      assert.match(html, /back-test/);
+      assert.match(html, /width:210mm;height:297mm/);
+    } finally {
+      delete cardBackLayouts['T-003'];
+    }
   });
 });

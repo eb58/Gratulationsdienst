@@ -79,3 +79,22 @@ export const cardLayouts = {
 };
 
 export const cardLayoutFor = template => cardLayouts[String(template?.id ?? "")];
+
+// Rückseiten-Layouts: gleiche Mechanik wie cardLayouts. Kein Eintrag -> Standard-Rückseite;
+// eine Funktion, die einen leeren String liefert, unterdrückt die Rückseite komplett.
+// Zusätzlich im Kontext: addressHtml (fertiger Adressblock des Jubilars) und
+// backgroundHtml (fertiges Rückseiten-Hintergrundbild oder "").
+//
+// T-001: um 180 Grad gedreht, damit die Adresse beim Duplexdruck über die kurze Kante
+// nach dem Wenden der Karte richtig herum steht.
+const reinickendorfCardBack = ({ addressHtml, backgroundHtml }) => `
+  <div class="card-layout" style="position:absolute;inset:0;transform:rotate(180deg)">
+    ${backgroundHtml}
+    <div style="position:absolute;left:20mm;top:168mm;font-size:10.5pt;font-family:${FONT};line-height:6.5mm">${addressHtml}</div>
+  </div>`;
+
+export const cardBackLayouts = {
+  "T-001": reinickendorfCardBack
+};
+
+export const cardBackLayoutFor = template => cardBackLayouts[String(template?.id ?? "")];
