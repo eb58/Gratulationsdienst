@@ -17,9 +17,17 @@ const previewObserver = new ResizeObserver(entries => entries.forEach(({ target 
   target.style.setProperty("--square-preview-scale", size / baseSize);
 }));
 
+// Skaliert die mm-getreue Layout-Leinwand (cardLayouts.js) auf die px-basierte Blattgröße der Vorschau.
+const layoutCanvasObserver = new ResizeObserver(entries => entries.forEach(({ target }) => {
+  const canvas = target.querySelector(".card-layout-canvas");
+  if (canvas?.offsetWidth) canvas.style.transform = `scale(${target.clientWidth / canvas.offsetWidth})`;
+}));
+
 export const mountDocumentPreviews = () => {
   previewObserver.disconnect();
+  layoutCanvasObserver.disconnect();
   $$(".document-preview.format-square").forEach(preview => previewObserver.observe(preview));
+  $$(".document-sheet.has-card-layout").forEach(sheet => layoutCanvasObserver.observe(sheet));
 };
 
 export const applyPendingFocus = () => {
