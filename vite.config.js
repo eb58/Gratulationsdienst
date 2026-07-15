@@ -4,7 +4,7 @@ import { execSync } from 'node:child_process';
 
 const dataDest = 'docker/src/gratulationsdienst/data';
 const copyDataFile = file => { try { copyFileSync(`public/data/${file}`, `${dataDest}/${file}`); } catch {} };
-const gitShortHash = () => { try { return execSync('git rev-parse --short HEAD').toString().trim(); } catch { return 'nogit'; } };
+const gitShortHash = () => { try { return execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim(); } catch { return 'nogit'; } };
 const buildDateStamp = () => new Date().toISOString().slice(0, 10).replaceAll('-', '');
 const appVersion = `${buildDateStamp()}-${gitShortHash()}`;
 

@@ -227,7 +227,7 @@ Beim ersten Start kann eine Migration von der alten Sammelstruktur auf die neuen
 
 Vite baut das Frontend und leitet während der lokalen Entwicklung `/php-api` an das PHP-Backend weiter. Die API initialisiert und aktualisiert ihr relationales Schema beim Start anhand von `php-api/schema.mysql.sql`.
 
-Systemvoraussetzungen, Datenbankeinrichtung, lokale Inbetriebnahme, Produktiv-Deployment und Fehlerbehebung sind in der eigenständigen [Installationsanleitung](INSTALLATIONSANLEITUNG.md) beschrieben.
+Die beiden Betriebsinstallationen sind in der [Übersicht der Installationswege](INSTALLATIONSANLEITUNG.md) beschrieben. Lokale Entwicklungsserver, Tests und das Erstellen eines Release-Pakets stehen getrennt in der [Entwicklungsanleitung](ENTWICKLUNG.md).
 
 ## 10. Barrierefreiheit nach BITV 2.0
 

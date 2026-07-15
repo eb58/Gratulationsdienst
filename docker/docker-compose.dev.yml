@@ -1,0 +1,6 @@
+services:
+  web:
+    environment:
+      ALLOW_SELF_SIGNED_CERT: 'true'
+    volumes:
+      - ./certs:/etc/apache2/ssl

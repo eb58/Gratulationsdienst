@@ -1,0 +1,11 @@
+.git
+.github
+.agents
+.codex
+node_modules
+docker/.env
+docker/certs
+docker/secrets
+docker/src
+php-api/config.php
+*.log

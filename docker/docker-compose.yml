@@ -1,50 +1,96 @@
 name: gratulationsdienst
 
 services:
-  # 1. PHP & Apache Webserver
   web:
     build:
       context: ..
       dockerfile: docker/Dockerfile
-    container_name: php_webserver
-    restart: always
+    restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
+      - '80:80'
+      - '443:443'
     volumes:
-      - ./src:/var/www/html
-      - ../php-api:/var/www/html/gratulationsdienst/php-api
-      - ./certs:/etc/apache2/ssl
-    depends_on:
-      - db
-
-  # 2. MariaDB Datenbank-Server
-  db:
-    image: mariadb:11
-    container_name: mariadb_db
-    restart: always
+      - ./certs:/etc/apache2/ssl:ro
     environment:
-      MARIADB_ROOT_PASSWORD: test123456!!
+      ALLOW_SELF_SIGNED_CERT: 'false'
+      GD_DB_DSN: 'mysql:host=db;port=3306;dbname=gratulationsdienst;charset=utf8mb4'
+      GD_DB_USER: eb
+      GD_DB_PASSWORD_FILE: /run/secrets/db_password
+      GD_APP_URL: ${GD_APP_URL:?Set GD_APP_URL in docker/.env}
+      GD_MAIL_FROM: ${GD_MAIL_FROM:-noreply@example.org}
+      GD_MAIL_FROM_NAME: ${GD_MAIL_FROM_NAME:-Gratulationsdienst Reinickendorf}
+    secrets:
+      - db_password
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/lib/php/sessions
+      - /var/lock/apache2
+      - /var/run/apache2
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 512m
+    cpus: 1.0
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mariadb:11.4.8-noble
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
       MARIADB_DATABASE: gratulationsdienst
       MARIADB_USER: eb
-      MARIADB_PASSWORD: test123456!!
-    ports:
-      - "3306:3306"
+      MARIADB_PASSWORD_FILE: /run/secrets/db_password
+    secrets:
+      - db_root_password
+      - db_password
     volumes:
       - mariadb_data:/var/lib/mysql
+    healthcheck:
+      test: ['CMD-SHELL', 'healthcheck.sh --connect --innodb_initialized']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 1g
+    cpus: 1.0
 
-  # 3. phpMyAdmin Web-Oberfläche
   phpmyadmin:
-    image: phpmyadmin/phpmyadmin
-    container_name: phpmyadmin_web
-    restart: always
+    image: phpmyadmin/phpmyadmin:5.2.3
+    profiles:
+      - admin
+    restart: unless-stopped
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
       PMA_HOST: db
       PMA_PORT: 3306
     ports:
-      - "8080:80"
+      - '127.0.0.1:8080:80'
+    volumes:
+      - phpmyadmin_config:/etc/phpmyadmin
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /sessions
+      - /var/lock/apache2
+      - /var/run/apache2
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 256m
+    cpus: 0.5
 
 volumes:
   mariadb_data:
+  phpmyadmin_config:
+
+secrets:
+  db_root_password:
+    file: ./secrets/db_root_password.txt
+  db_password:
+    file: ./secrets/db_password.txt
