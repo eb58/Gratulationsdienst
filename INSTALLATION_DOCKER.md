@@ -1,6 +1,6 @@
 # Installation mit Docker
 
-Diese Anleitung beschreibt die Installation des Gratulationsdienstes mit Docker Compose. Apache/PHP, MariaDB und optional phpMyAdmin laufen in getrennten Containern. Node.js muss auf dem Installationsrechner nicht installiert sein; Docker verwendet Node.js nur vorübergehend beim Bau des Web-Images.
+Diese Anleitung beschreibt die Installation des Gratulationsdienstes mit Docker Compose. Apache/PHP, MariaDB und optional phpMyAdmin laufen in getrennten Containern. Node.js muss auf dem Installationsrechner nicht installiert sein; Node.js wird nur vorübergehend beim Bau des Web-Images benötigt.
 
 ## 1. Voraussetzungen
 

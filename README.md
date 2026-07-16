@@ -7,6 +7,7 @@ Gratulationsdienst Reinickendorf
 - [Übersicht der Installationswege](INSTALLATIONSANLEITUNG.md)
 - [Installation mit Docker](INSTALLATION_DOCKER.md)
 - [Installation ohne Docker](INSTALLATION_OHNE_DOCKER.md)
+- [Direkte Debian-Installation mit Ansible](ansible/README_DIREKT.md)
 - [Entwicklung und Release-Build](ENTWICKLUNG.md)
 - [Technische Dokumentation](TECHNISCHE_DOKUMENTATION.md)
 - [Projektkontext fuer Codex](docs/projektkontext.md)

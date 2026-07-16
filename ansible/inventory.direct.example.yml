@@ -1,0 +1,29 @@
+---
+all:
+  children:
+    gratulationsdienst_direct:
+      hosts:
+        gratulationsdienst-debian:
+          ansible_host: 192.0.2.10
+          ansible_user: deploy
+      vars:
+        gratulationsdienst_direct_hostname: gratulationsdienst.example.org
+        gratulationsdienst_direct_app_url: https://gratulationsdienst.example.org/gratulationsdienst/
+
+        # Der Release muss vorher mit `npm run build:release` erstellt worden sein.
+        gratulationsdienst_direct_release_src: '{{ playbook_dir }}/../docker/src/gratulationsdienst'
+        gratulationsdienst_direct_release_version: '2026-07-15'
+
+        # Ohne Let's Encrypt wird standardmäßig ein selbstsigniertes Zertifikat erzeugt.
+        gratulationsdienst_direct_tls_mode: self_signed
+        gratulationsdienst_direct_tls_san: DNS:gratulationsdienst.example.org
+        gratulationsdienst_direct_tls_validate_certs: false
+
+        gratulationsdienst_direct_mail_from: noreply@example.org
+        gratulationsdienst_direct_mail_from_name: Gratulationsdienst Reinickendorf
+
+        # Für ein vorhandenes Zertifikat stattdessen diese Werte verwenden:
+        # gratulationsdienst_direct_tls_mode: provided
+        # gratulationsdienst_direct_tls_fullchain_src: '{{ playbook_dir }}/files/fullchain.pem'
+        # gratulationsdienst_direct_tls_privkey_src: '{{ playbook_dir }}/files/privkey.pem'
+        # gratulationsdienst_direct_tls_validate_certs: true
