@@ -177,8 +177,9 @@ describe('mortalityWeightedTestAges', () => {
 describe('test CSV row and text', () => {
   it('maps a row with PLZ and district fallbacks', () => {
     const assignment = { street: streets[0], rule: streets[0].rules[0] };
-    const row = testCsvRow(0, { salutation: 'Frau', firstName: 'Anna', lastName: 'Berger' }, assignment, '06', undefined, () => 0);
+    const row = testCsvRow(0, { salutation: 'Frau', doctoralDegree: 'Dr.', firstName: 'Anna', lastName: 'Berger' }, assignment, '06', undefined, () => 0);
 
+    assert.equal(row['Dr.-Grad'], 'Dr.');
     assert.equal(row['Hs-Nr.'], '1');
     assert.equal(row.PLZ, '13437', 'leere Regel-PLZ fällt auf Standard zurück');
     assert.equal(row.Wohnort, 'Berlin Tegel', 'leerer Regel-Ortsteil fällt auf Straßen-Bezirk zurück');
@@ -205,12 +206,15 @@ describe('seed CSV generation', () => {
     assert.equal(csv.split('\n').length, 5);
     assert.deepEqual(assignments.map(assignment => assignment.rule.soko), ['01', '02', '01', '02']);
     assert.deepEqual([...new Set(rows.map(row => row.Geburtsdatum.split('/')[1]))], ['6']);
+    assert.equal(rows[0]['Dr.-Grad'], 'Dr.');
+    assert.equal(rows.slice(1).some(row => row['Dr.-Grad'] === 'Dr.'), false);
   });
 
   it('builds a follow-up LABO CSV from existing birthdays', () => {
     const citizens = Array.from({ length: 10 }, (_, index) => ({
       id: `G-${index + 1}`,
       salutation: index % 2 ? 'Herr' : 'Frau',
+      doctoralDegree: index === 3 ? 'Dr.' : '',
       firstName: `Vor${index + 1}`,
       lastName: `Nach${index + 1}`,
       street: 'Astraße',
@@ -223,6 +227,7 @@ describe('seed CSV generation', () => {
     const result = followUpSeedCsvRows(streets, citizens, null, '06', () => 0);
 
     assert.equal(result.rows.length, 10);
+    assert.equal(result.rows.find(row => row.Rufname === 'Vor4')['Dr.-Grad'], 'Dr.');
     assert.deepEqual(result.removedIds, ['G-1', 'G-2', 'G-3']);
     assert.equal(result.rows.some(row => row.Rufname === 'Vor1'), false);
     assert.equal(result.rows.filter(row => /^Vor/.test(row.Rufname)).length, 7);

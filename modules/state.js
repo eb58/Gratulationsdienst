@@ -406,7 +406,12 @@ export const loadCollectionData = ({ force = false, seedEmpty = true } = {}) => 
       if (!data.sokoGroups?.length && state.data.sokoGroups.length && isAdmin()) {
         state.collectionBaselines.sokoGroups = {};
         state.collectionBaselines.sokoMembers = {};
-        saveCollectionData(state.data).catch(() => {});
+        if (seedEmpty) {
+          return saveCollectionData(state.data).then(() => {
+            render();
+            toast("Daten aus der Datenbank geladen.");
+          });
+        }
       }
       render();
       toast("Daten aus der Datenbank geladen.");

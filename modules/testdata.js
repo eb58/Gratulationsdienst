@@ -124,7 +124,7 @@ export const seedCsvRows = (streets, rowCount, dateForIndex, rand = Math.random)
   const lastNames = shuffledTestValues(testLastNames);
   const names = assignments.map((_, index) => {
     const [salutation, firstName] = firstNames[index % firstNames.length];
-    return { salutation, firstName, lastName: lastNames[index % lastNames.length] };
+    return { salutation, doctoralDegree: index === 0 ? 'Dr.' : '', firstName, lastName: lastNames[index % lastNames.length] };
   });
   const currentYear = Number(todayIso().slice(0, 4));
   const dates = assignments.map((_, index) => dateForIndex(index));

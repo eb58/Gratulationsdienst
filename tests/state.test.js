@@ -176,6 +176,24 @@ describe('backend and permission helpers', () => {
     assert.equal(state.collectionVersions.templates['T-004'], '1');
   });
 
+  it('beendet auch den ersten SOKO-Seed vor der Freigabe der Oberfläche', async () => {
+    state.auth.token = 'token';
+    state.data = loadData();
+    globalThis.fetch = (/** @type {string} */ url, options = {}) => {
+      const path = url.replace(/.*\/php-api/, '');
+      if (!options.method) {
+        if (path === '/settings/receipt') return Promise.resolve({ ok: true, json: async () => ({}) });
+        return Promise.resolve({ ok: true, json: async () => path === '/citizens' ? [{ id: 'G-1' }] : [] });
+      }
+      const body = JSON.parse(options.body || '{}');
+      return Promise.resolve({ ok: true, json: async () => (body.items || []).map(item => ({ ...item, _version: '1' })) });
+    };
+
+    await loadCollectionData();
+
+    assert.equal(state.collectionVersions.sokoGroups['SOKO 01'], '1');
+  });
+
   it('allows admin views only for admins and limits writable collections', () => {
     state.auth.user = { role: 'user' };
     assert.equal(isAdmin(), false);

@@ -129,7 +129,7 @@ const saveSenderPatch = async patch => {
     return false;
   }
 };
-const authDone = session => {
+const authDone = async session => {
   setAuthSession(session);
   render();
   // Lief die Session ab (401 beim Speichern), liegen lokal noch ungespeicherte Änderungen vor.
@@ -137,7 +137,8 @@ const authDone = session => {
   // Baselines existieren nur, wenn in diesem Tab bereits Server-Daten geladen wurden; bei einem
   // Konflikt lädt handleSaveError ohnehin den Server-Stand.
   const pushPending = Object.keys(state.collectionBaselines || {}).length > 0 || hasPendingBackendData() ? saveCollectionData(state.data) : Promise.resolve();
-  pushPending.then(() => loadCollectionData());
+  await pushPending;
+  await loadCollectionData();
 };
 const authFail = error => {
   state.auth.message = error.message || "Aktion fehlgeschlagen.";
@@ -436,7 +437,7 @@ export const actions = {
   "auth-cancel-mfa": () => { state.auth.mfaTicket = ""; state.auth.message = ""; render(); },
   "auth-setup": async () => {
     try {
-      authDone(await apiRequest("/auth/setup", { method: "POST", body: JSON.stringify(formValues("#auth-setup-form")) }));
+      await authDone(await apiRequest("/auth/setup", { method: "POST", body: JSON.stringify(formValues("#auth-setup-form")) }));
     } catch (error) { authFail(error); }
   },
   "auth-login": async () => {
@@ -448,13 +449,13 @@ export const actions = {
         render();
         return;
       }
-      authDone(result);
+      await authDone(result);
     } catch (error) { authFail(error); }
   },
   "auth-mfa-login": async () => {
     try {
       const values = formValues("#auth-mfa-form");
-      authDone(await apiRequest("/auth/mfa/verify", { method: "POST", body: JSON.stringify({ ticket: state.auth.mfaTicket, code: values.code }) }));
+      await authDone(await apiRequest("/auth/mfa/verify", { method: "POST", body: JSON.stringify({ ticket: state.auth.mfaTicket, code: values.code }) }));
     } catch (error) { authFail(error); }
   },
   "auth-reset-request": async () => {
