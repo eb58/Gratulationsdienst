@@ -122,10 +122,11 @@ describe('Layouts für A5-Karte und A4-Briefe', () => {
   });
 
   it('rendert Brief- und Einladungslayout mit Absenderdaten', () => {
-    const letter = documentPreview(template('T-003', 'DIN A4 Brief'), citizen, sender);
+    const letter = documentPreview(template('T-003', 'DIN A4 Brief'), { ...citizen, doctoralDegree: 'Dr.' }, sender);
     assert.match(letter, /width:210mm;height:297mm/);
     assert.match(letter, /Seniorenservice/);
     assert.match(letter, /Muster &amp; Mann/);
+    assert.match(letter, /Frau Dr\. Erika Muster &amp; Mann/);
     const invitation = documentPreview(template('T-004', 'DIN A4 Brief'), citizen, sender);
     assert.match(invitation, /background:#005f56/);
     assert.match(invitation, /Alles Gute, Muster &amp; Mann!/);
@@ -151,10 +152,11 @@ describe('Rückseiten-Layouts', () => {
   });
 
   it('druckt die Quadratkarten-Rückseite über das Layout mit Adresse und Drehung', () => {
-    const html = printSquareCardBack(squareTemplate('T-001'), citizen, sender);
+    const html = printSquareCardBack(squareTemplate('T-001'), { ...citizen, doctoralDegree: 'Dr.' }, sender);
     assert.match(html, /card-layout/);
     assert.match(html, /rotate\(180deg\)/);
     assert.match(html, /Muster &amp; Mann/);
+    assert.match(html, /Frau Dr\. Erika Muster &amp; Mann/);
     assert.match(html, /page-break-after:always/);
   });
 

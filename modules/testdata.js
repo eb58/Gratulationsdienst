@@ -1,4 +1,4 @@
-import { csvEscape, todayIso, calculateAge } from './utils.js';
+import { todayIso, calculateAge } from './utils.js';
 import { ruleMatchesHouseNo } from './assignment.js';
 
 const femaleNames = ["Anna", "Clara", "Eva", "Gisela", "Inge", "Karin", "Monika", "Petra", "Julia", "Maria", "Evelyn", "Sabine", "Renate", "Ursula", "Brigitte", "Helga", "Christine", "Barbara", "Waltraud", "Margot", "Erika", "Hildegard", "Elfriede", "Irmgard", "Lieselotte", "Hannelore", "Roswitha", "Ingrid", "Gudrun", "Annemarie", "Dorothea", "Adelheid", "Herta", "Gertrud", "Margarete", "Ilse", "Hedwig", "Frieda", "Käthe", "Helene"];
@@ -85,22 +85,34 @@ export const testBirthDate = (index, month, age = mortalityWeightedTestAges(inde
   return `${year - age}-${useMonth}-${day}`;
 };
 export const monthAfterNext = (date = new Date()) => String(new Date(date.getFullYear(), date.getMonth() + 2, 1).getMonth() + 1).padStart(2, "0");
+const laboDate = value => {
+  const match = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return match ? `${Number(match[3])}/${Number(match[2])}/${match[1]}` : String(value || '');
+};
+const laboWohnort = district => ['Berlin', district].filter(Boolean).join(' ');
+const laboCsvCell = value => {
+  const text = String(value ?? '');
+  return /[",\r\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
+};
 export const testCsvRow = (index, name, assignment, month, age, rand = Math.random) => ({
   Anrede: name.salutation,
-  Vorname: name.firstName,
-  Nachname: name.lastName,
-  Strasse: assignment.street.name,
-  Hausnummer: testHouseNo(assignment.rule, assignment.street.rules || [], rand),
+  'Dr.-Grad': name.doctoralDegree || '',
+  Rufname: name.firstName,
+  Familienname: name.lastName,
   PLZ: assignment.rule.plz || "13437",
-  Ortsteil: assignment.rule.ortsteil || assignment.street.district || "",
-  Geburtsdatum: testBirthDate(index, month, age),
-  Telefon: `030 9000${String(index + 100).padStart(4, "0")}`,
-  Email: ""
+  Wohnort: laboWohnort(assignment.rule.ortsteil || assignment.street.district || ''),
+  Straße: assignment.street.name,
+  'Hs-Nr.': testHouseNo(assignment.rule, assignment.street.rules || [], rand),
+  'Bei...': '',
+  'Adress-Zusatz': '',
+  Geburtsdatum: laboDate(testBirthDate(index, month, age)),
+  Staatsangehörigkeit: 'Deutschland',
+  Alter: age
 });
+const laboHeaders = ['Anrede', 'Dr.-Grad', 'Rufname', 'Familienname', 'PLZ', 'Wohnort', 'Straße', 'Hs-Nr.', 'Bei...', 'Adress-Zusatz', 'Geburtsdatum', 'Staatsangehörigkeit', 'Alter'];
 export const testCsvText = rows => {
-  const headers = ["Anrede", "Vorname", "Nachname", "Strasse", "Hausnummer", "PLZ", "Ortsteil", "Geburtsdatum", "Telefon", "Email"];
-  return [headers, ...rows.map(row => headers.map(header => row[header] || ""))]
-    .map(row => row.map(csvEscape).join(";"))
+  return [laboHeaders, ...rows.map(row => laboHeaders.map(header => row[header] || ''))]
+    .map(row => row.map(laboCsvCell).join(','))
     .join("\n");
 };
 
@@ -130,7 +142,8 @@ export const seedCsvRows = (streets, rowCount, dateForIndex, rand = Math.random)
     const date = dates[index];
     const month = date instanceof Date ? String(date.getMonth() + 1).padStart(2, "0") : date;
     const row = testCsvRow(index, names[index], assignment, month, ages[index], rand);
-    return date instanceof Date ? { ...row, Geburtsdatum: `${date.getFullYear() - ages[index]}-${row.Geburtsdatum.slice(5)}` } : row;
+    const day = String((index % 28) + 1).padStart(2, '0');
+    return date instanceof Date ? { ...row, Geburtsdatum: laboDate(`${date.getFullYear() - ages[index]}-${month}-${day}`) } : row;
   });
   return { assignments, rows };
 };
@@ -139,15 +152,18 @@ export const seedCsv = (streets, rowCount, dateForIndex, rand = Math.random) => 
 const shuffledBy = (values, rand = Math.random) => values.map(value => ({ value, order: rand() })).sort((a, b) => a.order - b.order).map(item => item.value);
 const csvRowFromCitizen = citizen => ({
   Anrede: citizen.salutation,
-  Vorname: citizen.firstName,
-  Nachname: citizen.lastName,
-  Strasse: citizen.street,
-  Hausnummer: citizen.houseNo,
+  'Dr.-Grad': citizen.doctoralDegree || '',
+  Rufname: citizen.firstName,
+  Familienname: citizen.lastName,
   PLZ: citizen.postalCode,
-  Ortsteil: citizen.district,
-  Geburtsdatum: citizen.birthDate,
-  Telefon: citizen.phone,
-  Email: citizen.email
+  Wohnort: laboWohnort(citizen.district),
+  Straße: citizen.street,
+  'Hs-Nr.': citizen.houseNo,
+  'Bei...': '',
+  'Adress-Zusatz': '',
+  Geburtsdatum: laboDate(citizen.birthDate),
+  Staatsangehörigkeit: 'Deutschland',
+  Alter: calculateAge(citizen.birthDate)
 });
 const simulationMonthMatches = (citizen, month) => citizen.birthDate?.slice(5, 7) === month && isHonouredAge(calculateAge(citizen.birthDate));
 const removedFollowUpCount = count => count >= 8 ? 3 : count >= 4 ? 2 : 0;
@@ -167,7 +183,7 @@ const withOneChangedAddress = (citizens, groups, rand = Math.random) => {
   const assignment = assignments.find(item => assignmentDiffersFromCitizen(item, citizens[index]));
   return citizens.map((citizen, citizenIndex) => citizenIndex === index ? changedAddressCitizen(citizen, assignment, rand) : citizen);
 };
-const csvDuplicateKey = row => [row.Vorname, row.Nachname, row.Geburtsdatum].map(value => String(value ?? "").trim().toLowerCase()).join("|");
+const csvDuplicateKey = row => [row.Rufname, row.Familienname, row.Geburtsdatum].map(value => String(value ?? "").trim().toLowerCase()).join("|");
 const avoidExistingCsvDuplicates = (rows, existingRows) => {
   const existing = new Set(existingRows.map(csvDuplicateKey));
   return rows.map((row, index) => {
@@ -176,7 +192,7 @@ const avoidExistingCsvDuplicates = (rows, existingRows) => {
       existing.add(key);
       return row;
     }
-    const unique = { ...row, Nachname: `${row.Nachname}-${index + 1}` };
+    const unique = { ...row, Familienname: `${row.Familienname}-${index + 1}` };
     existing.add(csvDuplicateKey(unique));
     return unique;
   });

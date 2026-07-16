@@ -203,9 +203,13 @@ Das Schema legt unter anderem folgende Tabellen an:
 - `gd_users`
 - `gd_auth_tokens`
 - `gd_auth_rate_limits`
-- `gd_api_meta`
+- `gd_questionnaire_cases`
+- `gd_wedding_anniversaries`
+- `gd_questionnaire_pages`
+- `gd_settings`
+- `gd_audit_log`
 
-Beim ersten Start kann eine Migration von der alten Sammelstruktur auf die neuen Relationen erfolgen.
+Das Schema in `php-api/schema.mysql.sql` ist das vollständige Zielschema. Die Anwendung legt fehlende Tabellen an, führt aber keine nachträglichen Schema-Migrationen aus.
 
 ## 8. Datenfluss
 
@@ -225,7 +229,7 @@ Beim ersten Start kann eine Migration von der alten Sammelstruktur auf die neuen
 
 ## 9. Build, Installation und Deployment
 
-Vite baut das Frontend und leitet während der lokalen Entwicklung `/php-api` an das PHP-Backend weiter. Die API initialisiert und aktualisiert ihr relationales Schema beim Start anhand von `php-api/schema.mysql.sql`.
+Vite baut das Frontend und leitet während der lokalen Entwicklung `/php-api` an das PHP-Backend weiter. Die API initialisiert fehlende Tabellen beim Start anhand von `php-api/schema.mysql.sql`; Änderungen am Schema werden in der noch leeren Entwicklungsdatenbank durch Neu-Anlegen übernommen.
 
 Die beiden Betriebsinstallationen sind in der [Übersicht der Installationswege](INSTALLATIONSANLEITUNG.md) beschrieben. Lokale Entwicklungsserver, Tests und das Erstellen eines Release-Pakets stehen getrennt in der [Entwicklungsanleitung](ENTWICKLUNG.md).
 

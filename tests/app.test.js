@@ -317,13 +317,14 @@ describe('app filter and change handlers', () => {
   });
 
   it('loads import files and runs the import action', async () => {
-    const file = { text: async () => 'Vorname;Nachname\nErika;Mustermann' };
+    const csv = 'Anrede,Dr.-Grad,Rufname,Familienname,PLZ,Wohnort,Straße,Hs-Nr.,Bei...,Adress-Zusatz,Geburtsdatum,Staatsangehörigkeit,Alter\nFrau,,Erika,Mustermann,13437,Berlin Wittenau,Eichborndamm,215,,,5/4/1936,Deutschland,90';
+    const file = { text: async () => csv };
     const target = eventTarget({ files: [file], matches: selector => selector === '#import-file' });
 
     listeners.change({ target });
     await new Promise(resolve => setTimeout(resolve, 0));
 
-    assert.equal(state.importText, 'Vorname;Nachname\nErika;Mustermann');
+    assert.equal(state.importText, csv);
   });
 
   it('shows a busy signal while import files are processed', async () => {
@@ -338,7 +339,7 @@ describe('app filter and change handlers', () => {
     assert.equal(document.body.classList.contains('is-busy-visible'), true);
     assert.equal(elements['#busy-indicator'].hidden, false);
 
-    resolveText('Vorname;Nachname\nErika;Mustermann');
+    resolveText('Anrede,Dr.-Grad,Rufname,Familienname,PLZ,Wohnort,Straße,Hs-Nr.,Bei...,Adress-Zusatz,Geburtsdatum,Staatsangehörigkeit,Alter');
     await new Promise(resolve => setTimeout(resolve, 0));
     await new Promise(resolve => setTimeout(resolve, 0));
 

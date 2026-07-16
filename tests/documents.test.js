@@ -21,6 +21,7 @@ globalThis.ResizeObserver = class {
 };
 
 const documents = await import('../modules/documents.js');
+const { SOKO_PRIVACY_TEXT_HTML } = await import('../modules/sokoPrivacyText.js');
 const { state } = await import('../modules/state.js');
 
 const {
@@ -93,6 +94,7 @@ describe('document salutations and formats', () => {
   it('creates formal salutations', () => {
     assert.equal(letterSalutation('Herr'), 'Sehr geehrter Herr');
     assert.equal(letterSalutation('Frau'), 'Sehr geehrte Frau');
+    assert.equal(letterSalutation('Frau', 'Dr.'), 'Sehr geehrte Frau Dr.');
     assert.equal(letterSalutation(''), 'Sehr geehrte Damen und Herren');
   });
 
@@ -119,6 +121,7 @@ describe('template rendering', () => {
 
     assert.equal(rendered.subject, 'Glückwunsch Erika Mustermann');
     assert.match(rendered.body, /Sehr geehrte Frau Mustermann/);
+    assert.match(renderTemplate({ body: '{{anrede}} {{nachname}}' }, { ...citizen, doctoralDegree: 'Dr.' }, sender).body, /Sehr geehrte Frau Dr\. Mustermann/);
     assert.match(rendered.body, /Musterstraße 12/);
     assert.match(rendered.body, /13437 Tegel/);
     assert.match(rendered.body, /SOKO 01/);
@@ -144,8 +147,8 @@ describe('template rendering', () => {
   });
 
   it('builds compact birthday card text with salutation and age', () => {
-    const body = compactBirthdayCardBody(citizen);
-    assert.match(body, /^Frau Mustermann,/);
+    const body = compactBirthdayCardBody({ ...citizen, doctoralDegree: 'Dr.' });
+    assert.match(body, /^Frau Dr\. Mustermann,/);
     assert.match(body, /90\. Geburtstag/);
   });
 
@@ -280,17 +283,19 @@ describe('SOKO print artifacts', () => {
     assert.equal((html.match(/>8,50 €/g) || []).length, 15);
   });
 
-  it('renders SOKO questionnaire forms with assignment, date and contact data', () => {
-    const html = renderSokoForm({ ...citizen, phone: '030 999' }, 4);
+  it('renders SOKO questionnaire forms with assignment and date data', () => {
+    const html = renderSokoForm({ ...citizen, doctoralDegree: 'Dr.' }, 4);
 
     assert.doesNotMatch(html, /<img\b/);
     assert.match(html, /Bezirksamt Reinickendorf/);
     assert.match(html, /SOKO 01/);
+    assert.match(html, /Frau Dr\. Erika Mustermann/);
     assert.match(html, /005 \/ 06/);
     assert.ok(html.indexOf('005 / 06') < html.indexOf('Lfd. Nr. / Monat'));
     assert.match(html, /left:104mm;top:22mm;width:91mm;height:58mm;[\s\S]*?005 \/ 06<\/div><\/div>/);
     assert.match(html, /left:166mm;top:80mm;width:29mm;height:9mm;[\s\S]*?Lfd\. Nr\. \/ Monat/);
     assert.match(html, /width:82mm;height:14mm;[\s\S]*?innerhalb von drei Wochen<\/strong><br>ausgef&uuml;llt/);
-    assert.match(html, /030 999/);
+    assert.equal(html.includes(SOKO_PRIVACY_TEXT_HTML), true);
+    assert.doesNotMatch(html, /030 999/);
   });
 });

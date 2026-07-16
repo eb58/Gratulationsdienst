@@ -179,19 +179,19 @@ describe('test CSV row and text', () => {
     const assignment = { street: streets[0], rule: streets[0].rules[0] };
     const row = testCsvRow(0, { salutation: 'Frau', firstName: 'Anna', lastName: 'Berger' }, assignment, '06', undefined, () => 0);
 
-    assert.equal(row.Hausnummer, '1');
+    assert.equal(row['Hs-Nr.'], '1');
     assert.equal(row.PLZ, '13437', 'leere Regel-PLZ fällt auf Standard zurück');
-    assert.equal(row.Ortsteil, 'Tegel', 'leerer Regel-Ortsteil fällt auf Straßen-Bezirk zurück');
-    assert.equal(row.Geburtsdatum, `${new Date().getFullYear() - 85}-06-01`);
+    assert.equal(row.Wohnort, 'Berlin Tegel', 'leerer Regel-Ortsteil fällt auf Straßen-Bezirk zurück');
+    assert.equal(row.Geburtsdatum, `1/6/${new Date().getFullYear() - 85}`);
   });
 
-  it('serializes rows to a quoted semicolon CSV with header', () => {
-    const csv = testCsvText([{ Anrede: 'Frau', Vorname: 'Anna', Nachname: 'Berger' }]);
+  it('serializes rows with the customer header and comma delimiter', () => {
+    const csv = testCsvText([{ Anrede: 'Frau', Rufname: 'Anna', Familienname: 'Berger' }]);
     const lines = csv.split('\n');
 
     assert.equal(lines.length, 2);
-    assert.equal(lines[0], ['Anrede', 'Vorname', 'Nachname', 'Strasse', 'Hausnummer', 'PLZ', 'Ortsteil', 'Geburtsdatum', 'Telefon', 'Email'].map(h => `"${h}"`).join(';'));
-    assert.equal(lines[1].startsWith('"Frau";"Anna";"Berger";""'), true);
+    assert.equal(lines[0], 'Anrede,Dr.-Grad,Rufname,Familienname,PLZ,Wohnort,Straße,Hs-Nr.,Bei...,Adress-Zusatz,Geburtsdatum,Staatsangehörigkeit,Alter');
+    assert.equal(lines[1].startsWith('Frau,,Anna,Berger'), true);
   });
 });
 
@@ -204,7 +204,7 @@ describe('seed CSV generation', () => {
     assert.equal(rows.length, 4);
     assert.equal(csv.split('\n').length, 5);
     assert.deepEqual(assignments.map(assignment => assignment.rule.soko), ['01', '02', '01', '02']);
-    assert.deepEqual([...new Set(rows.map(row => row.Geburtsdatum.slice(5, 7)))], ['06']);
+    assert.deepEqual([...new Set(rows.map(row => row.Geburtsdatum.split('/')[1]))], ['6']);
   });
 
   it('builds a follow-up LABO CSV from existing birthdays', () => {
@@ -217,20 +217,18 @@ describe('seed CSV generation', () => {
       houseNo: String(index * 2 + 1),
       postalCode: '13437',
       district: 'Tegel',
-      birthDate: `1936-06-${String(index + 1).padStart(2, '0')}`,
-      phone: '',
-      email: ''
+      birthDate: `1936-06-${String(index + 1).padStart(2, '0')}`
     }));
 
     const result = followUpSeedCsvRows(streets, citizens, null, '06', () => 0);
 
     assert.equal(result.rows.length, 10);
     assert.deepEqual(result.removedIds, ['G-1', 'G-2', 'G-3']);
-    assert.equal(result.rows.some(row => row.Vorname === 'Vor1'), false);
-    assert.equal(result.rows.filter(row => /^Vor/.test(row.Vorname)).length, 7);
-    assert.equal(result.rows.filter(row => !/^Vor/.test(row.Vorname)).length, 3);
-    assert.ok(result.rows.some(row => row.Vorname === 'Vor4' && row.Strasse === 'Bweg'), 'ein Bestandsfall bekommt eine neue Adresse');
-    assert.deepEqual([...new Set(result.rows.map(row => row.Geburtsdatum.slice(5, 7)))], ['06']);
+    assert.equal(result.rows.some(row => row.Rufname === 'Vor1'), false);
+    assert.equal(result.rows.filter(row => /^Vor/.test(row.Rufname)).length, 7);
+    assert.equal(result.rows.filter(row => !/^Vor/.test(row.Rufname)).length, 3);
+    assert.ok(result.rows.some(row => row.Rufname === 'Vor4' && row.Straße === 'Bweg'), 'ein Bestandsfall bekommt eine neue Adresse');
+    assert.deepEqual([...new Set(result.rows.map(row => row.Geburtsdatum.split('/')[1]))], ['6']);
   });
 
   it('spreads rolling simulation dates across twelve months', () => {

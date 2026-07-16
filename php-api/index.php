@@ -1,9 +1,8 @@
 <?php
 declare(strict_types=1);
 
-// Bei jeder Schema-Aenderung (neue ensureColumn/ensureIndex-Zeile in initSchema) erhoehen,
-// damit die Migration nach dem Deployment einmal laeuft; danach ueberspringt sie jeder Request.
-const SCHEMA_VERSION = '10';
+// schema.mysql.sql ist das kanonische Zielschema. Die API legt fehlende Tabellen
+// idempotent an, veraendert vorhandene Tabellen aber nicht automatisch.
 const COLLECTIONS = ['citizens', 'questionnaireCases', 'weddingAnniversaries', 'sokoGroups', 'sokoMembers', 'streets', 'senders', 'templates'];
 const ADMIN_COLLECTIONS = ['sokoGroups', 'sokoMembers', 'streets', 'senders', 'templates'];
 const AUDITED_COLLECTIONS = ['citizens', 'sokoGroups', 'sokoMembers', 'streets'];
@@ -74,6 +73,7 @@ function collectionConfig(string $collection): array
             'columns' => [
                 'id' => ['id', 'string'],
                 'salutation' => ['salutation', 'string'],
+                'doctoralDegree' => ['doctoral_degree', 'string'],
                 'firstName' => ['first_name', 'string'],
                 'lastName' => ['last_name', 'string'],
                 'street' => ['street', 'string'],
@@ -81,8 +81,7 @@ function collectionConfig(string $collection): array
                 'postalCode' => ['postal_code', 'string'],
                 'district' => ['district', 'string'],
                 'birthDate' => ['birth_date', 'date'],
-                'phone' => ['phone', 'string'],
-                'email' => ['email', 'string'],
+                'age' => ['age', 'int'],
                 'wish' => ['wish', 'string'],
                 'deceased' => ['deceased', 'bool'],
                 'moved' => ['moved', 'bool'],
@@ -705,59 +704,7 @@ function db(): array
 
 function ensureSchema(array $db): void
 {
-    if (storedSchemaVersion($db) === SCHEMA_VERSION) return;
-    initSchema($db);
-    setSchemaVersion($db, SCHEMA_VERSION);
-}
-
-function storedSchemaVersion(array $db): string
-{
-    try {
-        $row = fetchOne($db, 'SELECT value FROM gd_api_meta WHERE name = ?', ['schema_version']);
-        return (string)($row['value'] ?? '');
-    } catch (Throwable) {
-        return ''; // gd_api_meta existiert noch nicht -> initSchema legt sie an.
-    }
-}
-
-function setSchemaVersion(array $db, string $version): void
-{
-    if ($db['driver'] === 'mysqli' || $db['driver'] === 'mysql') {
-        executeStatement($db, 'INSERT INTO gd_api_meta (name, value) VALUES (?, ?) ON DUPLICATE KEY UPDATE value = VALUES(value)', ['schema_version', $version]);
-        return;
-    }
-    executeStatement($db, 'INSERT INTO gd_api_meta (name, value) VALUES (?, ?) ON CONFLICT(name) DO UPDATE SET value = excluded.value', ['schema_version', $version]);
-}
-
-function initSchema(array $db): void
-{
     executeSqlScript($db, file_get_contents(__DIR__ . '/schema.mysql.sql'));
-    foreach (COLLECTIONS as $collection) {
-        $config = collectionConfig($collection);
-        ensureColumn($db, $config['table'], 'row_version', 'ALTER TABLE ' . $config['table'] . ' ADD COLUMN row_version BIGINT UNSIGNED NOT NULL DEFAULT 1');
-    }
-    ensureColumn($db, 'gd_citizens', 'press_publication', 'ALTER TABLE gd_citizens ADD COLUMN press_publication TINYINT(1) NOT NULL DEFAULT 0 AFTER printed_year');
-    ensureColumn($db, 'gd_citizens', 'deceased', 'ALTER TABLE gd_citizens ADD COLUMN deceased TINYINT(1) NOT NULL DEFAULT 0 AFTER wish');
-    ensureColumn($db, 'gd_citizens', 'moved', 'ALTER TABLE gd_citizens ADD COLUMN moved TINYINT(1) NOT NULL DEFAULT 0 AFTER deceased');
-    ensureColumn($db, 'gd_citizens', 'wedding_anniversary', "ALTER TABLE gd_citizens ADD COLUMN wedding_anniversary VARCHAR(80) NOT NULL DEFAULT '' AFTER press_publication");
-    ensureColumn($db, 'gd_citizens', 'wedding_date', 'ALTER TABLE gd_citizens ADD COLUMN wedding_date DATE NULL AFTER wedding_anniversary');
-    ensureColumn($db, 'gd_citizens', 'spouse_name', "ALTER TABLE gd_citizens ADD COLUMN spouse_name VARCHAR(180) NOT NULL DEFAULT '' AFTER wedding_date");
-    ensureColumn($db, 'gd_citizens', 'archived', 'ALTER TABLE gd_citizens ADD COLUMN archived TINYINT(1) NOT NULL DEFAULT 0 AFTER spouse_name');
-    ensureColumn($db, 'gd_citizens', 'questionnaire_cycle', "ALTER TABLE gd_citizens ADD COLUMN questionnaire_cycle VARCHAR(7) NOT NULL DEFAULT '' AFTER archived");
-    ensureColumn($db, 'gd_streets', 'rules', 'ALTER TABLE gd_streets ADD COLUMN rules JSON NULL AFTER district');
-    ensureColumn($db, 'gd_streets', 'area', "ALTER TABLE gd_streets ADD COLUMN area VARCHAR(120) NOT NULL DEFAULT '' AFTER rules");
-    ensureColumn($db, 'gd_streets', 'group_id', "ALTER TABLE gd_streets ADD COLUMN group_id VARCHAR(32) NOT NULL DEFAULT '' AFTER area");
-    ensureIndex($db, 'gd_streets', 'idx_gd_streets_group', 'ALTER TABLE gd_streets ADD INDEX idx_gd_streets_group (group_id)');
-    ensureColumn($db, 'gd_templates', 'age_texts', 'ALTER TABLE gd_templates ADD COLUMN age_texts JSON NULL AFTER body');
-    ensureColumn($db, 'gd_templates', 'background_image', 'ALTER TABLE gd_templates ADD COLUMN background_image LONGTEXT NULL AFTER body');
-    ensureColumn($db, 'gd_templates', 'back_background_image', 'ALTER TABLE gd_templates ADD COLUMN back_background_image LONGTEXT NULL AFTER background_image');
-    ensureColumn($db, 'gd_senders', 'signature_image', 'ALTER TABLE gd_senders ADD COLUMN signature_image LONGTEXT NULL AFTER signature');
-    ensureColumn($db, 'gd_soko_members', 'account_holder', "ALTER TABLE gd_soko_members ADD COLUMN account_holder VARCHAR(180) NOT NULL DEFAULT '' AFTER bank");
-    ensureColumn($db, 'gd_soko_members', 'birth_date', 'ALTER TABLE gd_soko_members ADD COLUMN birth_date DATE NULL AFTER last_name');
-    ensureColumn($db, 'gd_soko_members', 'zp_nr', "ALTER TABLE gd_soko_members ADD COLUMN zp_nr VARCHAR(40) NOT NULL DEFAULT '' AFTER billing_amount");
-    ensureColumn($db, 'gd_soko_members', 'kassenzeichen', "ALTER TABLE gd_soko_members ADD COLUMN kassenzeichen VARCHAR(40) NOT NULL DEFAULT '' AFTER zp_nr");
-    ensureColumn($db, 'gd_soko_members', 'misc', "ALTER TABLE gd_soko_members ADD COLUMN misc VARCHAR(255) NOT NULL DEFAULT '' AFTER kassenzeichen");
-    ensureColumn($db, 'gd_soko_members', 'note', 'ALTER TABLE gd_soko_members ADD COLUMN note TEXT NULL AFTER misc');
 }
 
 function readAll(array $db): array
@@ -1565,32 +1512,6 @@ function executeSqlScript(array $db, string $sql): void
         return;
     }
     $db['pdo']->exec($sql);
-}
-
-function ensureColumn(array $db, string $table, string $column, string $sql): void
-{
-    if ($db['driver'] === 'mysqli') {
-        $stmt = $db['mysqli']->prepare("SHOW COLUMNS FROM {$table} LIKE ?");
-        $stmt->bind_param('s', $column);
-        $stmt->execute();
-        if (!$stmt->get_result()->fetch_assoc()) $db['mysqli']->query($sql);
-        return;
-    }
-
-    if (!fetchOne($db, "SHOW COLUMNS FROM {$table} LIKE ?", [$column])) executeStatement($db, $sql);
-}
-
-function ensureIndex(array $db, string $table, string $index, string $sql): void
-{
-    if ($db['driver'] === 'mysqli') {
-        $stmt = $db['mysqli']->prepare("SHOW INDEX FROM {$table} WHERE Key_name = ?");
-        $stmt->bind_param('s', $index);
-        $stmt->execute();
-        if (!$stmt->get_result()->fetch_assoc()) $db['mysqli']->query($sql);
-        return;
-    }
-
-    if (!fetchOne($db, "SHOW INDEX FROM {$table} WHERE Key_name = ?", [$index])) executeStatement($db, $sql);
 }
 
 function parseDsn(string $dsn): array

@@ -64,7 +64,7 @@ const mergeStreets = (existing, generated) => {
   return [...existing, ...generated.filter(s => !knownNames.has(normalize(s.name)))];
 };
 const withoutTransientCitizenFields = citizen => {
-  const { sokoQuestionnaireImages, ...persisted } = citizen || {};
+  const { sokoQuestionnaireImages, phone, email, ...persisted } = citizen || {};
   return persisted;
 };
 const persistentCitizens = citizens => Array.isArray(citizens) ? citizens.map(withoutTransientCitizenFields) : citizens;
@@ -317,7 +317,7 @@ const handleSaveError = error => {
   if (isConflictError(error)) {
     console.warn("Datenbank-Konflikt erkannt.", error);
     toast("Daten wurden parallel geändert. Der aktuelle Stand wird neu geladen; bitte die Änderung erneut prüfen.");
-    return loadCollectionData({ force: true });
+    return loadCollectionData({ force: true, seedEmpty: false });
   }
   if (error?.status === 401) {
     storePendingBackendData(state.data);
@@ -374,7 +374,7 @@ export const saveData = () => {
   return saveCollectionData(state.data);
 };
 
-export const loadCollectionData = ({ force = false } = {}) => {
+export const loadCollectionData = ({ force = false, seedEmpty = true } = {}) => {
   if (!state.auth.user || !state.auth.token) return Promise.resolve();
   const loadChangeVersion = state.localChangeVersion;
   return Promise.all([
@@ -390,10 +390,15 @@ export const loadCollectionData = ({ force = false } = {}) => {
       if (!hasBackendData(data)) {
         state.collectionVersions = {};
         state.collectionBaselines = {};
-        saveCollectionData(state.data);
-        localStorage.removeItem(STORAGE_KEY);
-        render();
-        return;
+        if (!seedEmpty) {
+          localStorage.removeItem(STORAGE_KEY);
+          render();
+          return;
+        }
+        return saveCollectionData(state.data).then(() => {
+          localStorage.removeItem(STORAGE_KEY);
+          render();
+        });
       }
       state.data = normalizeLoadedData(data);
       trackCollectionState(state.data);
@@ -403,6 +408,8 @@ export const loadCollectionData = ({ force = false } = {}) => {
         state.collectionBaselines.sokoMembers = {};
         saveCollectionData(state.data).catch(() => {});
       }
+      render();
+      toast("Daten aus der Datenbank geladen.");
       render();
       toast("Daten aus der Datenbank geladen.");
     })

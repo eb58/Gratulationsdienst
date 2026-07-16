@@ -103,7 +103,7 @@ export const selectedStreet = () => byId(state.data.streets, state.selectedStree
 export const matchesSelectedMonth = citizen => state.filters.month === "alle" || birthdayMonth(citizen.birthDate) === state.filters.month;
 
 export const filteredCitizens = () => state.data.citizens.filter(citizen => !isArchivedCitizen(citizen)).filter(citizen => {
-  const haystack = normalize([citizen.firstName, citizen.lastName, citizen.street, citizen.district, citizen.wish, citizenFlagText(citizen)].join(" "));
+  const haystack = normalize([citizen.doctoralDegree, citizen.firstName, citizen.lastName, citizen.street, citizen.district, citizen.wish, citizenFlagText(citizen)].join(' '));
   const age = calculateAge(citizen.birthDate);
   const group = groupForCitizen(citizen);
   const ageOk = state.filters.age === "alle"

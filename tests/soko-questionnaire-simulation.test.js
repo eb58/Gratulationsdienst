@@ -27,6 +27,7 @@ const {
   randomSokoQuestionnaireMarks,
   SIMULATED_SOKO_PRIVACY_TEXT
 } = await import('../modules/sokoQuestionnaireSimulation.js');
+const { SOKO_PRIVACY_TEXT } = await import('../modules/sokoPrivacyText.js');
 
 describe('SOKO questionnaire simulation helpers', () => {
   it('creates unambiguous random marks', () => {
@@ -72,6 +73,7 @@ describe('SOKO questionnaire simulation helpers', () => {
   });
 
   it('uses the full questionnaire privacy text in the simulation', () => {
+    assert.equal(SIMULATED_SOKO_PRIVACY_TEXT.endsWith(SOKO_PRIVACY_TEXT), true);
     assert.match(SIMULATED_SOKO_PRIVACY_TEXT, /Datenschutzrechtliche Einwilligungserkl\u00e4rung/);
     assert.match(SIMULATED_SOKO_PRIVACY_TEXT, /Die Soko-Mitarbeiterin\/der Soko-Mitarbeiter hat die Jubilarin\/den Jubilar/);
     assert.match(SIMULATED_SOKO_PRIVACY_TEXT, /Die Verweigerung der Einwilligung f\u00fchrt dazu, dass keine Pressemitteilung/);

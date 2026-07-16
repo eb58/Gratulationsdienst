@@ -20,7 +20,8 @@
 - `docs/lastenheft-kurz.md` ist die komprimierte fachliche Lesefassung.
 - `Lastenheft.pdf` im Repo-Root ist die fachliche Referenz und bei Anforderungen zuerst zu beachten.
 - Import- und Dokumentenlauf-Aenderungen immer zusammen mit den zugehoerigen Tests anfassen.
-- Bei Schemaaenderungen (neue `ensureColumn`/`ensureIndex`-Zeile in `initSchema`) die Konstante `SCHEMA_VERSION` in `php-api/index.php` erhoehen, sonst laeuft die Migration nach dem Deployment nicht.
+- Der LABO-CSV-Import verwendet ausschließlich das Kundenformat `Anrede,Dr.-Grad,Rufname,Familienname,PLZ,Wohnort,Straße,Hs-Nr.,Bei...,Adress-Zusatz,Geburtsdatum,Staatsangehörigkeit,Alter`; Telefon und E-Mail sind keine Citizen-Felder.
+- Das relationale Zielschema steht vollstaendig in `php-api/schema.mysql.sql`; bei Schemaaenderungen wird die leere Entwicklungsdatenbank neu angelegt. Die Anwendung fuehrt keine nachtraeglichen Schema-Migrationen aus.
 - `deceased` und `moved` sind eigenstaendige Citizen-Flags; beide schliessen eine Person aus operativen Gratulationsablaeufen und der aktuellen Hochzeitsliste aus, ohne Historie oder Scans zu loeschen.
 - Wenn ein Verhalten dauerhaft fuer Code-Agents relevant ist, gehoert es hier hinein, nicht nur in den Prompt.
 

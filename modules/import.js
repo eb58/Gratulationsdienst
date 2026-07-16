@@ -39,29 +39,26 @@ export const parseCsv = text => {
   const headers = rows[0] || [];
   return rows.slice(1).map(row => Object.fromEntries(headers.map((header, index) => [header, row[index] || ""])));
 };
-export const getAny = (row, keys) => keys.map(key => row[key]).find(value => value !== undefined && value !== "") || "";
 const normalizeDate = value => {
   const raw = String(value ?? "").trim();
-  const german = raw.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
-  if (german) return `${german[3]}-${german[2].padStart(2, "0")}-${german[1].padStart(2, "0")}`;
   const slash = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
   if (slash) return `${slash[3]}-${slash[2].padStart(2, "0")}-${slash[1].padStart(2, "0")}`;
   return raw;
 };
+const normalizeDistrict = value => String(value ?? '').trim().replace(/^Berlin(?:[-\s]+)(?=\S)/i, '');
 export const mapImportRow = row => ({
-  salutation: getAny(row, ["Anrede", "salutation"]),
-  firstName: getAny(row, ["Vorname", "firstName", "Vorname(n)"]),
-  lastName: getAny(row, ["Nachname", "Name", "lastName"]),
-  street: getAny(row, ["Straße", "Strasse", "street"]),
-  houseNo: getAny(row, ["Hausnummer", "Nr", "houseNo"]),
-  postalCode: getAny(row, ["PLZ", "postalCode"]),
-  district: getAny(row, ["Ortsteil", "district"]),
-  birthDate: normalizeDate(getAny(row, ["Geburtsdatum", "Geburtstag", "Geb.-Datum", "Geb.Dat.", "birthDate", "birthday"])),
-  age: getAny(row, ["Alter", "age"]),
-  phone: getAny(row, ["Telefon", "phone"]),
-  email: getAny(row, ["E-Mail", "Email", "email"]),
-  wish: "offen",
+  salutation: row.Anrede || '',
+  doctoralDegree: row['Dr.-Grad'] || '',
+  firstName: row.Rufname || '',
+  lastName: row.Familienname || '',
+  street: row['Straße'] || '',
+  houseNo: row['Hs-Nr.'] || '',
+  postalCode: row.PLZ || '',
+  district: normalizeDistrict(row.Wohnort),
+  birthDate: normalizeDate(row.Geburtsdatum),
+  age: row.Alter || '',
+  wish: 'offen',
   deceased: false,
   moved: false,
-  notes: ""
+  notes: ''
 });

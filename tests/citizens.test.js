@@ -35,8 +35,6 @@ const row = patch => ({
   district: 'Tegel',
   birthDate: '1936-06-01',
   age: '',
-  phone: '030 1234567',
-  email: '',
   wish: 'offen',
   notes: '',
   ...patch

@@ -61,12 +61,12 @@ describe('seed-citizens integration (echtes Strassenverzeichnis)', () => {
   it('erzeugt nur Adressen, die im Strassenverzeichnis vorhanden und aufloesbar sind', () => {
     const { csvRows } = seed();
     const directory = globalThis.SOKO_STRASSENVERZEICHNIS;
-    const unbekannt = csvRows.filter(row => !directory[row.Strasse]).map(row => row.Strasse);
+    const unbekannt = csvRows.filter(row => !directory[row.Straße]).map(row => row.Straße);
     assert.deepEqual(unbekannt, [], 'Strasse nicht im Verzeichnis');
     const nichtAufloesbar = csvRows.filter(row => {
-      try { globalThis.findeSoko(row.Strasse, row.Hausnummer, row.PLZ); return false; }
+      try { globalThis.findeSoko(row.Straße, row['Hs-Nr.'], row.PLZ); return false; }
       catch { return true; }
-    }).map(row => `${row.Strasse} ${row.Hausnummer}`);
+    }).map(row => `${row.Straße} ${row['Hs-Nr.']}`);
     assert.deepEqual(nichtAufloesbar, [], 'Adresse im Verzeichnis nicht aufloesbar');
   });
 
@@ -74,12 +74,12 @@ describe('seed-citizens integration (echtes Strassenverzeichnis)', () => {
     const { csvRows, assignments } = seed();
     const verletzt = csvRows.filter((row, index) => {
       const rule = assignments[index].rule;
-      const num = Number.parseInt(String(row.Hausnummer).match(/\d+/)?.[0] || '', 10);
+      const num = Number.parseInt(String(row['Hs-Nr.']).match(/\d+/)?.[0] || '', 10);
       const from = rule.von ? Number.parseInt(rule.von) : -Infinity;
       const to = rule.bis ? Number.parseInt(rule.bis) : Infinity;
       const parity = rule.art === 'G' ? num % 2 === 0 : rule.art === 'U' ? num % 2 === 1 : true;
       return !(num >= from && num <= to && parity);
-    }).map(row => `${row.Strasse} ${row.Hausnummer}`);
+    }).map(row => `${row.Straße} ${row['Hs-Nr.']}`);
     assert.deepEqual(verletzt, [], 'Hausnummer ausserhalb der Regel');
   });
 
@@ -91,14 +91,14 @@ describe('seed-citizens integration (echtes Strassenverzeichnis)', () => {
 
   it('streut Strassen, Hausnummern und Namen ueber den Lauf', () => {
     const { rowCount, csvRows } = seed();
-    assert.ok(distinct(csvRows.map(r => r.Strasse)) >= rowCount * 0.6, 'zu wenige verschiedene Strassen');
-    assert.ok(distinct(csvRows.map(r => r.Hausnummer)) >= rowCount * 0.4, 'zu wenige verschiedene Hausnummern');
-    assert.equal(distinct(csvRows.map(r => `${r.Vorname}|${r.Nachname}`)), rowCount, 'Namen nicht alle verschieden');
+    assert.ok(distinct(csvRows.map(r => r.Straße)) >= rowCount * 0.6, 'zu wenige verschiedene Strassen');
+    assert.ok(distinct(csvRows.map(r => r['Hs-Nr.'])) >= rowCount * 0.4, 'zu wenige verschiedene Hausnummern');
+    assert.equal(distinct(csvRows.map(r => `${r.Rufname}|${r.Familienname}`)), rowCount, 'Namen nicht alle verschieden');
   });
 
   it('liefert bei zwei Laeufen unterschiedliche Strassen (echte Zufaelligkeit)', () => {
-    const a = seed().csvRows.map(r => r.Strasse);
-    const b = seed().csvRows.map(r => r.Strasse);
+    const a = seed().csvRows.map(r => r.Straße);
+    const b = seed().csvRows.map(r => r.Straße);
     assert.notDeepEqual(a, b, 'zwei Seed-Laeufe ergaben identische Strassen');
   });
 
@@ -118,7 +118,7 @@ describe('seed-citizens integration (echtes Strassenverzeichnis)', () => {
     const { csvRows, mapped } = seed();
     const expectedMonth = monthAfterNext();
 
-    assert.deepEqual([...new Set(csvRows.map(row => row.Geburtsdatum.slice(5, 7)))], [expectedMonth]);
+    assert.deepEqual([...new Set(csvRows.map(row => row.Geburtsdatum.split('/')[1].padStart(2, '0')))], [expectedMonth]);
     assert.deepEqual([...new Set(mapped.map(row => row.birthDate.slice(5, 7)))], [expectedMonth]);
   });
 

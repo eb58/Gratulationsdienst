@@ -11,6 +11,7 @@ import { weddingAnniversaryLabel } from './weddingAnniversaries.js';
 import { render, applyPendingFocus, mountDocumentPreviews } from './render.js'; // Zyklus OK: render wird nur in Callbacks aufgerufen
 import { rememberDirtyFormBaselines } from './dirtyForms.js';
 import { templateAgeTextOpen, templateAgeTextsForView, templateTextAges } from './templates.js';
+import { citizenDisplayName } from './citizenNames.js';
 
 export const viewTitles = {
   dashboard: "Dashboard",
@@ -181,7 +182,7 @@ export const regionAssignmentContent = () => {
         <div class="list" style="margin-top:16px">
           ${activeCitizens().filter(citizen => normalize(citizen.street) === normalize(street.name)).map(citizen => `
             <div class="list-item">
-              <div><strong>${escapeHtml(citizen.firstName)} ${escapeHtml(citizen.lastName)}</strong><span class="muted">${formatDate(citizen.birthDate)}</span></div>
+              <div><strong>${escapeHtml(citizenDisplayName(citizen))}</strong><span class="muted">${formatDate(citizen.birthDate)}</span></div>
               ${assignmentPill(citizen)}
             </div>
           `).join("") || `<div class="empty-state">Keine Jubilare in dieser Straße</div>`}
@@ -223,6 +224,7 @@ export const citizenDetailContent = citizen => `
       <h3>Persönliche Daten</h3>
       <div class="form-grid">
         ${selectField("salutation", "Anrede", citizen.salutation, [["Frau", "Frau"], ["Herr", "Herr"]])}
+        ${field('doctoralDegree', 'Dr.-Grad', citizen.doctoralDegree)}
         ${field("firstName", "Vorname", citizen.firstName)}
         ${field("lastName", "Nachname", citizen.lastName)}
         ${field("birthDate", "Geburtsdatum", citizen.birthDate, "date")}
@@ -230,8 +232,6 @@ export const citizenDetailContent = citizen => `
         ${field("houseNo", "Hausnummer", citizen.houseNo)}
         ${postalCodeField("postalCode", "PLZ", citizen.postalCode)}
         ${field("district", "Ortsteil", citizen.district)}
-        ${field("phone", "Telefon", citizen.phone)}
-        ${emailField("email", "E-Mail", citizen.email, "", true)}
         ${checkField('deceased', 'Verstorben', citizen.deceased)}
         ${checkField('moved', 'Verzogen', citizen.moved)}
       </div>
@@ -487,7 +487,7 @@ const sokoMemberRows = members => members.length
   ? members.map(m => `<div>${escapeHtml(personDisplayName(m))}${m.isLeader ? " <em>(Ltg.)</em>" : ""}</div>`).join("")
   : `<div class="muted">Keine Mitglieder</div>`;
 const sokoCitizenRows = citizens => citizens.length
-  ? citizens.map(c => `<div>${escapeHtml(personDisplayName(c))} <span class="muted">(${calculateAge(c.birthDate)})</span></div>`).join("")
+  ? citizens.map(c => `<div>${escapeHtml(citizenDisplayName(c))} <span class="muted">(${calculateAge(c.birthDate)})</span></div>`).join("")
   : `<div class="muted">Keine Jubilare</div>`;
 const sokoPeopleInfoHtml = (members, citizens, monthLabel) => {
   if (!state.showMapPeople) return "";

@@ -2,8 +2,9 @@ import { normalize, nextId, todayIso, calculateAge } from './utils.js';
 import { duplicateKey } from './assignment.js';
 import { citizenFlagText, hasCitizenExclusionFlag } from './citizenFlags.js';
 import { questionnaireCycleForCitizen } from './questionnaireCases.js';
+import { citizenListName } from './citizenNames.js';
 
-const LABO_FIELDS = ['salutation', 'street', 'houseNo', 'postalCode', 'district', 'phone', 'email'];
+const LABO_FIELDS = ['salutation', 'doctoralDegree', 'street', 'houseNo', 'postalCode', 'district', 'age'];
 export const monthOf = value => String(value || "").slice(5, 7);
 const isImportableRow = row => row.firstName && row.lastName && row.birthDate && row.street;
 export const importMonths = mapped => new Set(mapped.filter(isImportableRow).map(row => monthOf(row.birthDate)).filter(Boolean));
@@ -75,7 +76,7 @@ export const importNotice = ({ newRows, updates, skipped, deleted = [], missing 
 
 export const citizenGridRow = (citizen, group) => ({
   id: citizen.id,
-  name: `${citizen.lastName}, ${citizen.firstName}`,
+  name: citizenListName(citizen),
   birthday: citizen.birthDate,
   age: calculateAge(citizen.birthDate),
   address: `${citizen.street} ${citizen.houseNo}`,

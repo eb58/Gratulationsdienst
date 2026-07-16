@@ -54,8 +54,6 @@ const citizen = {
   birthDate: '1936-06-01',
   status: 'geprüft',
   wish: 'Besuch erwünscht',
-  email: 'erika@example.test',
-  phone: '030 999',
   notes: '<notiz>'
 };
 
@@ -171,7 +169,7 @@ beforeEach(() => {
   state.auditDays = 5;
   state.printBackground = true;
   state.showMapPeople = true;
-  state.importText = 'Vorname;Nachname';
+  state.importText = 'Anrede,Dr.-Grad,Rufname,Familienname,PLZ,Wohnort,Straße,Hs-Nr.,Bei...,Adress-Zusatz,Geburtsdatum,Staatsangehörigkeit,Alter';
   state.importMissingCitizens = [];
   state.dashboardSort = { key: 'group', dir: 'asc' };
 });
@@ -201,6 +199,8 @@ describe('view partials', () => {
     assert.match(citizenDetailContent(citizen), /data-action="save-citizen"/);
     assert.match(citizenDetailContent(citizen), /name="deceased"/);
     assert.match(citizenDetailContent(citizen), /name="moved"/);
+    assert.match(citizenDetailContent(citizen), /name="doctoralDegree"/);
+    assert.doesNotMatch(citizenDetailContent(citizen), /name="phone"|name="email"/);
     assert.doesNotMatch(citizenDetailContent(citizen), /value="verstorben"/);
 
     const region = regionAssignmentContent();

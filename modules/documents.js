@@ -5,11 +5,13 @@ import { render } from './render.js'; // Zyklus OK: render wird nur in Callbacks
 import { templateBodyForAge } from './templates.js';
 import { qrCodeSvg } from './qr.js';
 import { SOKO_CHECKBOXES, SOKO_CHECKBOX_SIZE_MM, SOKO_QR_BOX, SOKO_QR_BOX2, sokoQuestionnaireCode } from './sokoQuestionnaire.js';
+import { SOKO_PRIVACY_TEXT_HTML } from './sokoPrivacyText.js';
 import { cardBackLayoutFor, cardLayoutFor } from './cardLayouts.js';
+import { citizenAddressName, citizenFormalName, citizenListName } from './citizenNames.js';
 
-export const letterSalutation = salutation => {
-  if (salutation === "Herr") return "Sehr geehrter Herr";
-  if (salutation === "Frau") return "Sehr geehrte Frau";
+export const letterSalutation = (salutation, doctoralDegree = '') => {
+  if (salutation === 'Herr') return ['Sehr geehrter Herr', doctoralDegree].filter(Boolean).join(' ');
+  if (salutation === 'Frau') return ['Sehr geehrte Frau', doctoralDegree].filter(Boolean).join(' ');
   return "Sehr geehrte Damen und Herren";
 };
 
@@ -23,7 +25,7 @@ export const renderTemplate = (template = selectedTemplate(), citizen = selected
   const group = groupForCitizen(citizen);
   const age = calculateAge(citizen.birthDate);
   const replacements = {
-    anrede: letterSalutation(citizen.salutation),
+    anrede: letterSalutation(citizen.salutation, citizen.doctoralDegree),
     vorname: citizen.firstName,
     nachname: citizen.lastName,
     strasse: `${citizen.street} ${citizen.houseNo}`,
@@ -92,7 +94,7 @@ const squareBackAddress = citizen => {
     : "P";
   const birthDay = citizen.birthDate?.slice(8, 10) || "";
   return `
-    <div>${escapeHtml(citizen.salutation || "")} ${escapeHtml(citizen.firstName || "")} ${escapeHtml(citizen.lastName || "")}</div>
+    <div>${escapeHtml(citizenAddressName(citizen))}</div>
     <div>${escapeHtml(citizen.street || "")} ${escapeHtml(citizen.houseNo || "")}</div>
     <div>${escapeHtml(citizen.postalCode || "")} Berlin-${escapeHtml(citizen.district || "")}</div>
     <div class="square-back-meta" style="font-size:8.5pt;margin-top:1mm">${escapeHtml(sokoLabel)}&nbsp;&nbsp;${escapeHtml(birthDay)}</div>
@@ -115,7 +117,7 @@ const cardBackLayoutContent = (template, citizen, sender, { forPrint = false } =
   });
 };
 export const compactBirthdayCardBody = citizen => [
-  `${citizen.salutation} ${citizen.lastName},`,
+  `${citizenFormalName(citizen)},`,
   `zu Ihrem ${calculateAge(citizen.birthDate)}. Geburtstag gratulieren wir sehr herzlich.`,
   "Für das neue Lebensjahr wünschen wir Gesundheit, Zuversicht und viele gute Begegnungen."
 ].join("\n\n");
@@ -175,7 +177,7 @@ export const documentPreview = (template = selectedTemplate(), citizen = selecte
               <div class="doc-meta">${escapeHtml(sender.phone)}<br>${escapeHtml(sender.email)}</div>
             </div>
             <div class="doc-address">
-              ${escapeHtml(citizen.salutation)} ${escapeHtml(citizen.firstName)} ${escapeHtml(citizen.lastName)}<br>
+              ${escapeHtml(citizenAddressName(citizen))}<br>
               ${escapeHtml(citizen.street)} ${escapeHtml(citizen.houseNo)}<br>
               ${escapeHtml(citizen.postalCode)} Berlin
             </div>
@@ -387,7 +389,7 @@ const renderSokoQuittungPage = (citizens, groupId, betragProPerson, telefon, mon
   const rows = Array.from({ length: SOKO_QUITTUNG_ROW_COUNT }, (_, i) => {
     const c = citizens[i];
     const age = c ? calculateAge(c.birthDate) : "";
-    const name = c ? `${escapeHtml(c.lastName)}, ${escapeHtml(c.firstName)}, ${escapeHtml(c.street)} ${escapeHtml(c.houseNo)}, ${escapeHtml(c.postalCode)} Berlin` : "&nbsp;";
+    const name = c ? `${escapeHtml(citizenListName(c))}, ${escapeHtml(c.street)} ${escapeHtml(c.houseNo)}, ${escapeHtml(c.postalCode)} Berlin` : "&nbsp;";
     return `<tr>
       ${td("padding:1mm 2mm;width:8mm;height:8mm;text-align:center", i + 1)}
       ${td("padding:1mm 2mm;border-left:0;", name)}
@@ -456,10 +458,9 @@ export const renderSokoForm = (citizen, index) => {
       + text(c.left + SOKO_CHECKBOX_SIZE_MM + 1.5, c.top, 74, SOKO_CHECKBOX_SIZE_MM, label, "display:flex;align-items:center;white-space:nowrap");
   };
   const addr = `
-    <div>${escapeHtml(citizen.salutation || "")} ${escapeHtml(citizen.firstName || "")} ${escapeHtml(citizen.lastName || "")}</div>
+    <div>${escapeHtml(citizenAddressName(citizen))}</div>
     <div>${escapeHtml(citizen.street || "")} ${escapeHtml(citizen.houseNo || "")}</div>
     <div>${escapeHtml(citizen.postalCode || "")} Berlin-${escapeHtml(citizen.district || "")}</div>
-    ${citizen.phone ? `<div>${escapeHtml(citizen.phone)}</div>` : ""}
   `;
   return `
   <div style="${page}">
@@ -502,15 +503,7 @@ export const renderSokoForm = (citizen, index) => {
     ${box(15, 203, 180, 80, `
       <div style="font-size:11pt;text-decoration:underline;margin-bottom:5mm">*Datenschutzrechtliche Einwilligungserkl&auml;rung</div>
       <div style="font-size:10.5pt;line-height:1.28;text-decoration:none">
-        Die Soko-Mitarbeiterin/der Soko-Mitarbeiter hat die Jubilarin/den Jubilar darauf hingewiesen, dass
-        die im Rahmen der vorstehend genannten Zwecke erhobenen pers&ouml;nlichen Daten Ihrer Person unter
-        Beachtung der EU-Datenschutzgrundverordnung und des Berliner Datenschutzgesetzes erhoben,
-        verarbeitet und genutzt werden. Sie sind zudem darauf hingewiesen worden, dass die Erhebung,
-        Verarbeitung und Nutzung Ihrer Daten auf freiwilliger Basis erfolgt und die Einwilligung auch
-        verweigert werden kann. Die Verweigerung der Einwilligung f&uuml;hrt dazu, dass keine Pressemitteilung
-        ver&ouml;ffentlicht wird. Es besteht jederzeit die M&ouml;glichkeit, die Einwilligung zu widerrufen. Mit der
-        Unterschrift der Soko-Mitarbeiterin/des Soko-Mitarbeiters wird best&auml;tigt, dass die Einwilligung zur
-        Verarbeitung der personenbezogenen Daten m&uuml;ndlich/telefonisch gegeben wurde.
+        ${SOKO_PRIVACY_TEXT_HTML}
       </div>
     `, "padding:2mm")}
     ${text(SOKO_QR_BOX2.left, SOKO_QR_BOX2.top, SOKO_QR_BOX2.size, SOKO_QR_BOX2.size, qrCode, "background:#fff")}

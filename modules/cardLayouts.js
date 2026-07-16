@@ -1,3 +1,5 @@
+import { citizenAddressName } from './citizenNames.js';
+
 // Vorlagen-Layouts als JavaScript: pro Vorlagen-ID eine Renderfunktion, die den Inhalt der
 // Vorderseite als HTML liefert. Kein Eintrag -> Standard-Layout. Die Fläche ist mm-getreu
 // (Quadratkarte 210x210, A4 210x297, A5 148x210; quer entsprechend gedreht).
@@ -24,7 +26,7 @@ const letterhead = (sender, esc) => `
 
 const addressBlock = (citizen, esc) => `
   <div style="margin-top:12mm;font-size:10pt;line-height:1.5">
-    ${esc(citizen.salutation)} ${esc(citizen.firstName)} ${esc(citizen.lastName)}<br>
+    ${esc(citizenAddressName(citizen))}<br>
     ${esc(citizen.street)} ${esc(citizen.houseNo)}<br>
     ${esc(citizen.postalCode)} Berlin
   </div>`;

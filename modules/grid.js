@@ -10,6 +10,7 @@ import { loadQuestionnairePagesForCitizen, prepareQuestionnairePageLoadForCitize
 import { loadScript } from './scriptLoader.js';
 import { weddingAnniversaryLabel } from './weddingAnniversaries.js';
 import { citizenFlagText } from './citizenFlags.js';
+import { citizenListName } from './citizenNames.js';
 
 let agGridPromise = null;
 export const ensureAgGrid = () => agGridPromise ||= loadScript(`${import.meta.env?.BASE_URL ?? "/"}vendor/ag-grid-community.min.js`);
@@ -203,7 +204,7 @@ export const gridDefinitions = {
     ...baseGridOptions(),
     rowData: filteredCitizens().map(citizen => ({
       id: citizen.id,
-      name: `${citizen.lastName}, ${citizen.firstName}`,
+      name: citizenListName(citizen),
       birthday: citizen.birthDate,
       age: Number(new Date().getFullYear()) - Number(citizen.birthDate?.slice(0, 4)),
       address: `${citizen.street} ${citizen.houseNo}`,
@@ -357,7 +358,7 @@ export const gridDefinitions = {
       .filter(citizen => state.filters.month === "alle" || birthdayMonth(citizen.birthDate) === state.filters.month)
       .map(citizen => ({
         id: citizen.id,
-        name: `${citizen.lastName}, ${citizen.firstName}`,
+        name: citizenListName(citizen),
         birthday: citizen.birthDate,
         age: Number(new Date().getFullYear()) - Number(citizen.birthDate?.slice(0, 4)),
         address: `${citizen.street} ${citizen.houseNo}`,

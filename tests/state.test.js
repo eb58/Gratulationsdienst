@@ -136,9 +136,9 @@ describe('loaded data normalization', () => {
     assert.equal(normalized.sokoMembers.some(member => member.groupId === 'SOKO 99'), false);
     assert.ok(normalized.streets.some(street => street.name === 'Teststraße'));
   });
-  it('removes transient questionnaire images from loaded and persisted data', () => {
+  it('removes transient images and retired citizen contact fields from loaded and persisted data', () => {
     const data = {
-      citizens: [{ id: 'G-1', firstName: 'Ada', sokoQuestionnaireImages: [{ image: 'data:image/jpeg;base64,xxx' }] }],
+      citizens: [{ id: 'G-1', firstName: 'Ada', phone: '030 123', email: 'ada@example.test', sokoQuestionnaireImages: [{ image: 'data:image/jpeg;base64,xxx' }] }],
       sokoGroups: [],
       sokoMembers: [],
       streets: [],
@@ -146,7 +146,11 @@ describe('loaded data normalization', () => {
     };
 
     assert.equal(normalizeLoadedData(data).citizens[0].sokoQuestionnaireImages, undefined);
+    assert.equal(normalizeLoadedData(data).citizens[0].phone, undefined);
+    assert.equal(normalizeLoadedData(data).citizens[0].email, undefined);
     assert.equal(dataForPersistence(data).citizens[0].sokoQuestionnaireImages, undefined);
+    assert.equal(dataForPersistence(data).citizens[0].phone, undefined);
+    assert.equal(dataForPersistence(data).citizens[0].email, undefined);
     assert.equal(data.citizens[0].sokoQuestionnaireImages.length, 1);
   });
 });
@@ -155,6 +159,21 @@ describe('backend and permission helpers', () => {
   it('detects backend data from persisted collections', () => {
     assert.equal(hasBackendData({ citizens: [] }), false);
     assert.equal(hasBackendData({ citizens: [{ id: 'C-1' }] }), true);
+  });
+
+  it('beendet den ersten Seed erst nach dem Speichern der Versionsnummern', async () => {
+    state.auth.token = 'token';
+    state.data = loadData();
+    globalThis.fetch = (/** @type {string} */ url, options = {}) => {
+      const path = url.replace(/.*\/php-api/, '');
+      if (!options.method) return Promise.resolve({ ok: true, json: async () => path === '/settings/receipt' ? {} : [] });
+      const body = JSON.parse(options.body || '{}');
+      return Promise.resolve({ ok: true, json: async () => (body.items || []).map(item => ({ ...item, _version: '1' })) });
+    };
+
+    await loadCollectionData();
+
+    assert.equal(state.collectionVersions.templates['T-004'], '1');
   });
 
   it('allows admin views only for admins and limits writable collections', () => {
@@ -437,6 +456,7 @@ describe('backend and permission helpers', () => {
     assert.equal(state.data.citizens.length, 1);
     assert.equal(state.data.citizens[0].firstName, 'Importiert');
   });
+
 });
 
 describe('receipt settings', () => {

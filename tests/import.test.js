@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { cleanCell, detectDelimiter, getAny, mapImportRow, parseCsv } from '../modules/import.js';
+import { cleanCell, detectDelimiter, mapImportRow, parseCsv } from '../modules/import.js';
 
 describe('CSV delimiter detection', () => {
   it('detects semicolon, tab and comma separated headers', () => {
@@ -53,36 +53,23 @@ describe('CSV parsing', () => {
 });
 
 describe('import row mapping', () => {
-  it('uses the first non-empty value from possible column names', () => {
-    assert.equal(getAny({ Name: '', Nachname: 'Muster' }, ['Name', 'Nachname']), 'Muster');
-    assert.equal(getAny({ Name: 'Muster', Nachname: 'Ignored' }, ['Name', 'Nachname']), 'Muster');
-    assert.equal(getAny({}, ['Name']), '');
-  });
+  it('maps the customer LABO export columns', () => {
+    const [row] = parseCsv([
+      'Anrede,Dr.-Grad,Rufname,Familienname,PLZ,Wohnort,Straße,Hs-Nr.,Bei...,Adress-Zusatz,Geburtsdatum,Staatsangehörigkeit,Alter',
+      'Frau,Dr.,Helga,S.,13409,Berlin Reinickendorf,Hausotterstr.,93A ,,,1/10/1930,Deutschland,96'
+    ].join('\n'));
 
-  it('maps common German import columns to citizen fields', () => {
-    assert.deepEqual(mapImportRow({
-      Anrede: 'Frau',
-      Vorname: 'Erika',
-      Nachname: 'Mustermann',
-      Strasse: 'Eichborndamm',
-      Hausnummer: '215',
-      PLZ: '13437',
-      Ortsteil: 'Wittenau',
-      Geburtsdatum: '5.4.1936',
-      Telefon: '030 123456',
-      Email: 'erika@example.de'
-    }), {
+    assert.deepEqual(mapImportRow(row), {
       salutation: 'Frau',
-      firstName: 'Erika',
-      lastName: 'Mustermann',
-      street: 'Eichborndamm',
-      houseNo: '215',
-      postalCode: '13437',
-      district: 'Wittenau',
-      birthDate: '1936-04-05',
-      age: '',
-      phone: '030 123456',
-      email: 'erika@example.de',
+      doctoralDegree: 'Dr.',
+      firstName: 'Helga',
+      lastName: 'S.',
+      street: 'Hausotterstr.',
+      houseNo: '93A',
+      postalCode: '13409',
+      district: 'Reinickendorf',
+      birthDate: '1930-10-01',
+      age: '96',
       wish: 'offen',
       deceased: false,
       moved: false,
@@ -90,8 +77,11 @@ describe('import row mapping', () => {
     });
   });
 
-  it('normalizes slash separated dates and leaves ISO dates unchanged', () => {
-    assert.equal(mapImportRow({ birthDate: '5/4/1936' }).birthDate, '1936-04-05');
-    assert.equal(mapImportRow({ birthDate: '1936-04-05' }).birthDate, '1936-04-05');
+  it('does not interpret the discarded assumed column names', () => {
+    const mapped = mapImportRow({ Vorname: 'Erika', Nachname: 'Mustermann', Strasse: 'Eichborndamm', Hausnummer: '215' });
+
+    assert.deepEqual({ firstName: mapped.firstName, lastName: mapped.lastName, street: mapped.street, houseNo: mapped.houseNo }, {
+      firstName: '', lastName: '', street: '', houseNo: ''
+    });
   });
 });

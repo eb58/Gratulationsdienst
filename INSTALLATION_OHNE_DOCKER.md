@@ -55,7 +55,7 @@ FLUSH PRIVILEGES;
 
 Bei einer entfernten Datenbank den Hostanteil des Benutzers möglichst eng auf den Webserver beschränken. MariaDB nicht unnötig öffentlich erreichbar machen.
 
-Das Anwendungsschema muss nicht manuell importiert werden. Die PHP-API legt es beim ersten erfolgreichen Aufruf an und führt spätere Schemaergänzungen automatisch aus.
+Das Anwendungsschema muss nicht manuell importiert werden. Die PHP-API legt die Tabellen beim ersten erfolgreichen Aufruf anhand von `php-api/schema.mysql.sql` an. Bei Änderungen am Schema wird die noch leere Entwicklungsdatenbank neu angelegt; die API führt keine nachträglichen Schemaergänzungen aus.
 
 ## 4. Dateien auf den Webserver kopieren
 
@@ -156,7 +156,7 @@ Zusätzlich prüfen:
 
 Vor einem Update die Datenbank und die produktive `php-api/config.php` sichern.
 
-Dann ein neues fertiges Release-Paket entpacken und die Anwendungsdateien ersetzen. Die vorhandene produktive `php-api/config.php` nicht überschreiben. Beim nächsten API-Aufruf führt das Backend notwendige Schemaergänzungen aus.
+Dann ein neues fertiges Release-Paket entpacken und die Anwendungsdateien ersetzen. Die vorhandene produktive `php-api/config.php` nicht überschreiben. Schemaänderungen werden in dieser Vorproduktionsphase durch Neu-Anlegen der leeren Datenbank übernommen.
 
 ## 10. Datensicherung
 

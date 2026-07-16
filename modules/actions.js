@@ -17,6 +17,7 @@ import { render, renderDialog } from './render.js';
 import { renderCitizenDetail, renderMemberDetail } from './views.js';
 import { cancelDirtyFormLeave, confirmDirtyFormLeave } from './dirtyForms.js';
 import { buildBirthdayAgeTexts, normalizeTemplateAgeTexts } from './templates.js';
+import { citizenDisplayName } from './citizenNames.js';
 
 const formEntryValue = value => typeof value === "string" ? value : value.name;
 const formValues = selector => Object.fromEntries([...new FormData($(selector)).entries()].filter(([key]) => !key.startsWith("_")).map(([key, value]) => [key, formEntryValue(value)]));
@@ -596,7 +597,6 @@ export const actions = {
     const moved = formFlag(values.moved);
     const wish = values.wish || currentCitizen?.wish || 'offen';
     if (wish === "offen" && !deceased && !moved) { toast("Bitte eine Glückwunsch-Option auswählen oder Verstorben/Verzogen markieren."); return; }
-    if (!validateEmailFields("#citizen-form")) { toast("Bitte eine gültige E-Mail-Adresse eingeben."); return; }
     if (!validatePostalCodeFields("#citizen-form")) { toast("Bitte eine gültige PLZ mit 5 Ziffern eingeben."); return; }
     const currentRows = currentCitizenGridRows();
     const currentIds = currentRows.map(row => row.id);
@@ -1020,7 +1020,7 @@ export const actions = {
       citizenId: citizen.id,
       templateId: template.id,
       senderId: sender.id,
-      recipient: `${citizen.firstName} ${citizen.lastName}`,
+      recipient: citizenDisplayName(citizen),
       address: `${citizen.street} ${citizen.houseNo}, ${citizen.postalCode} Berlin`,
       groupId: streetAssignment(citizen)?.groupId || "",
       wish: citizen.wish || "",

@@ -433,7 +433,7 @@ describe('Jubilare löschen und Testdaten', () => {
 
     const csv = lastBlobParts[0];
     assert.equal(csv.codePointAt(0), 0xFEFF);
-    assert.match(csv, /"Anrede";"Vorname";"Nachname";"Strasse";"Hausnummer";"PLZ";"Ortsteil";"Geburtsdatum";"Telefon";"Email"/);
+    assert.match(csv, /Anrede,Dr\.-Grad,Rufname,Familienname,PLZ,Wohnort,Straße,Hs-Nr\.,Bei\.\.\.,Adress-Zusatz,Geburtsdatum,Staatsangehörigkeit,Alter/);
     assert.deepEqual(state.data.citizens, beforeCitizens);
     assert.equal(state.importText, beforeImportText);
   });
@@ -500,6 +500,9 @@ describe('Jubilare löschen und Testdaten', () => {
   });
 });
 
+const laboHeader = 'Anrede,Dr.-Grad,Rufname,Familienname,PLZ,Wohnort,Straße,Hs-Nr.,Bei...,Adress-Zusatz,Geburtsdatum,Staatsangehörigkeit,Alter';
+const laboCsv = (...rows) => [laboHeader, ...rows].join('\n');
+
 describe('Import-Lauf', () => {
   it('run-import meldet fehlende CSV', () => {
     actions['run-import']();
@@ -509,7 +512,7 @@ describe('Import-Lauf', () => {
   it('run-import verarbeitet vorhandenen Importtext und stellt den Geburtsmonat der CSV als Filter ein', async () => {
     state.filters = { q: 'unsichtbar', month: '01', groupId: 'SOKO 99', age: '100', status: 'geprüft', occasion: 'Geburtstag' };
     localStorage.setItem('gd_month_filter', '01');
-    state.importText = 'Vorname;Nachname;Strasse;Hausnummer;PLZ;Geburtsdatum\nMax;Muster;Hauptstr;1;13407;5.4.1936';
+    state.importText = laboCsv('Herr,,Max,Muster,13407,Berlin Reinickendorf,Hauptstr,1,,,5/4/1936,Deutschland,90');
     await actions['run-import']();
     assert.ok(state.data.citizens.length > 0);
     assert.deepEqual(
@@ -524,7 +527,10 @@ describe('Import-Lauf', () => {
   it('run-import bricht bei gemischten Geburtsmonaten in der CSV ab', async () => {
     state.filters = { ...state.filters, month: '01' };
     localStorage.setItem('gd_month_filter', '01');
-    state.importText = 'Vorname;Nachname;Strasse;Hausnummer;PLZ;Geburtsdatum\nMax;Muster;Hauptstr;1;13407;5.4.1936\nEva;Fehlt;Hauptstr;2;13407;6.6.1940';
+    state.importText = laboCsv(
+      'Herr,,Max,Muster,13407,Berlin Reinickendorf,Hauptstr,1,,,5/4/1936,Deutschland,90',
+      'Frau,,Eva,Fehlt,13407,Berlin Reinickendorf,Hauptstr,2,,,6/6/1940,Deutschland,86'
+    );
     await actions['run-import']();
 
     assert.equal(state.data.citizens.length, 0);
@@ -549,7 +555,7 @@ describe('Import-Lauf', () => {
       'G-2': { ...state.data.citizens[1] },
       'G-3': { ...state.data.citizens[2] }
     };
-    state.importText = 'Anrede;Vorname;Nachname;Strasse;Hausnummer;PLZ;Ortsteil;Geburtsdatum\nFrau;Erika;Muster;Hauptstr;1;13407;Tegel;5.4.1936';
+    state.importText = laboCsv('Frau,,Erika,Muster,13407,Berlin Tegel,Hauptstr,1,,,5/4/1936,Deutschland,90');
     route('PUT /citizens', request => request.body.items.map((item, index) => ({ ...item, _version: `2-${index}` })));
     route('PUT /questionnaireCases', request => request.body.items.map((item, index) => ({ ...item, _version: `2-${index}` })));
 
@@ -584,7 +590,7 @@ describe('Import-Lauf', () => {
       'G-1': { ...state.data.citizens[0], firstName: 'Alt' },
       'G-2': { ...state.data.citizens[1] }
     };
-    state.importText = 'Anrede;Vorname;Nachname;Strasse;Hausnummer;PLZ;Ortsteil;Geburtsdatum\nFrau;Erika;Muster;Hauptstr;1;13407;Tegel;5.4.1936';
+    state.importText = laboCsv('Frau,,Erika,Muster,13407,Berlin Tegel,Hauptstr,1,,,5/4/1936,Deutschland,90');
     route('PUT /citizens', { error: 'conflict' }, { ok: false, status: 409 });
 
     await actions['run-import']();
@@ -599,7 +605,7 @@ describe('Import-Lauf', () => {
       { id: 'G-2026-001', source: 'CSV Import', firstName: 'Max', lastName: 'Muster', birthDate: '1936-04-05', street: 'Hauptstr', houseNo: '1', postalCode: '13407' },
       { id: 'G-2026-002', source: 'CSV Import', firstName: 'Eva', lastName: 'Fehlt', birthDate: '1936-04-06', street: 'Hauptstr', houseNo: '2', postalCode: '13407' }
     ];
-    state.importText = 'Vorname;Nachname;Strasse;Hausnummer;PLZ;Geburtsdatum\nMax;Muster;Hauptstr;1;13407;5.4.1936';
+    state.importText = laboCsv('Herr,,Max,Muster,13407,Berlin Reinickendorf,Hauptstr,1,,,5/4/1936,Deutschland,90');
 
     await actions['run-import']();
 
@@ -619,7 +625,7 @@ describe('Import-Lauf', () => {
       { id: 'WA-3', citizenId: 'G-2026-099', firstName: 'Juli', lastName: 'Bleibt', birthDate: '1936-07-06', weddingDate: '1976-07-06', spouseName: 'Jan' }
     ];
     state.selectedCitizenId = 'G-2026-011';
-    state.importText = 'Vorname;Nachname;Strasse;Hausnummer;PLZ;Geburtsdatum\nMax;Muster;Hauptstr;1;13407;5.4.1936';
+    state.importText = laboCsv('Herr,,Max,Muster,13407,Berlin Reinickendorf,Hauptstr,1,,,5/4/1936,Deutschland,90');
 
     await actions['run-import']();
 
@@ -662,8 +668,6 @@ describe('Jubilare pruefen', () => {
       postalCode: '13437',
       district: 'Tegel',
       birthDate: '1936-06-01',
-      phone: '',
-      email: '',
       wish: 'Besuch erwünscht',
       notes: '',
       source: 'CSV Import',
@@ -695,7 +699,7 @@ describe('Jubilare pruefen', () => {
     }];
     setForm('#citizen-form', {
       id: 'G-1', salutation: 'Frau', firstName: 'Erika', lastName: 'Muster', street: 'Teststrasse', houseNo: '1',
-      postalCode: '13437', district: 'Tegel', birthDate: '1936-06-01', phone: '', email: '', notes: '', source: 'CSV Import',
+      postalCode: '13437', district: 'Tegel', birthDate: '1936-06-01', notes: '', source: 'CSV Import',
       deceased: 'false', moved: 'true', pressPublication: 'false', weddingAnniversary: '', weddingDate: '', spouseName: ''
     });
 
@@ -741,7 +745,7 @@ describe('Jubilare pruefen', () => {
     ]);
     setForm('#citizen-form', {
       id: 'G-1', salutation: 'Frau', firstName: 'Erika', lastName: 'Muster', street: 'Teststrasse', houseNo: '1',
-      postalCode: '13437', district: 'Tegel', birthDate: '1936-06-01', phone: '', email: '', notes: '', source: 'CSV Import',
+      postalCode: '13437', district: 'Tegel', birthDate: '1936-06-01', notes: '', source: 'CSV Import',
       wish: 'per Post', deceased: 'false', moved: 'false', pressPublication: 'false', weddingAnniversary: '', weddingDate: '', spouseName: ''
     });
 
@@ -802,8 +806,6 @@ describe('Jubilare pruefen (Backend)', () => {
       postalCode: '13437',
       district: 'Tegel',
       birthDate: '1936-06-01',
-      phone: '',
-      email: '',
       wish: 'Besuch erwÃ¼nscht',
       notes: '',
       source: 'CSV Import',
@@ -871,8 +873,6 @@ describe('Jubilare pruefen (Backend)', () => {
       postalCode: '13437',
       district: 'Tegel',
       birthDate: '1936-06-01',
-      phone: '',
-      email: '',
       wish: 'per Post',
       deceased: 'true',
       moved: 'false',
@@ -923,8 +923,6 @@ describe('Jubilare pruefen (Backend)', () => {
       postalCode: '13437',
       district: 'Tegel',
       birthDate: '1936-06-01',
-      phone: '',
-      email: '',
       wish: 'Besuch erwünscht',
       notes: '',
       source: 'CSV Import',

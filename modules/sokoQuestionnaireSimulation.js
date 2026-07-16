@@ -11,6 +11,8 @@ import {
   sokoQuestionnaireCode
 } from './sokoQuestionnaire.js';
 import { questionnaireCaseId } from './questionnaireCases.js';
+import { SOKO_PRIVACY_TEXT } from './sokoPrivacyText.js';
+import { citizenAddressName } from './citizenNames.js';
 
 const PX_PER_MM = 11;
 const PDF_WIDTH_PT = 595.28;
@@ -31,15 +33,7 @@ const checkboxLabels = {
 export const SIMULATED_SOKO_PRIVACY_TEXT = [
   "*Datenschutzrechtliche Einwilligungserkl\u00e4rung",
   "",
-  "Die Soko-Mitarbeiterin/der Soko-Mitarbeiter hat die Jubilarin/den Jubilar darauf hingewiesen, dass",
-  "die im Rahmen der vorstehend genannten Zwecke erhobenen pers\u00f6nlichen Daten Ihrer Person unter",
-  "Beachtung der EU-Datenschutzgrundverordnung und des Berliner Datenschutzgesetzes erhoben,",
-  "verarbeitet und genutzt werden. Sie sind zudem darauf hingewiesen worden, dass die Erhebung,",
-  "Verarbeitung und Nutzung Ihrer Daten auf freiwilliger Basis erfolgt und die Einwilligung auch",
-  "verweigert werden kann. Die Verweigerung der Einwilligung f\u00fchrt dazu, dass keine Pressemitteilung",
-  "ver\u00f6ffentlicht wird. Es besteht jederzeit die M\u00f6glichkeit, die Einwilligung zu widerrufen. Mit der",
-  "Unterschrift der Soko-Mitarbeiterin/des Soko-Mitarbeiters wird best\u00e4tigt, dass die Einwilligung zur",
-  "Verarbeitung der personenbezogenen Daten m\u00fcndlich/telefonisch gegeben wurde."
+  SOKO_PRIVACY_TEXT
 ].join("\n");
 
 const choice = (items, random) => items[Math.floor(random() * items.length)];
@@ -141,10 +135,9 @@ const drawQuestionnairePage = async (citizen, marks, pageIndex) => {
   const age = calculateAge(citizen.birthDate);
   const month = citizen.birthDate?.slice(5, 7) || "";
   const address = [
-    `${citizen.salutation || ""} ${citizen.firstName || ""} ${citizen.lastName || ""}`.trim(),
+    citizenAddressName(citizen),
     `${citizen.street || ""} ${citizen.houseNo || ""}`.trim(),
-    `${citizen.postalCode || ""} Berlin-${citizen.district || ""}`.trim(),
-    citizen.phone || ""
+    `${citizen.postalCode || ""} Berlin-${citizen.district || ""}`.trim()
   ].filter(Boolean).join("\n");
 
   await Promise.all([drawQr(context, citizen, SOKO_QR_BOX), drawQr(context, citizen, SOKO_QR_BOX2)]);
