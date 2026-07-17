@@ -299,7 +299,7 @@ describe('main views', () => {
     assert.match(sokoHtml, /member-tab-contact-panel/);
     assert.match(sokoHtml, /member-tab-billing-panel/);
     assert.match(sokoHtml, /member-tab-notes-panel/);
-    assert.match(sokoHtml, />Mobiffunk</);
+    assert.match(sokoHtml, />Mobilfunk</);
     assert.doesNotMatch(sokoHtml, />Handy</);
     assert.match(sokoHtml, /<div class="field full">\s*<label for="groupId">SOKO<\/label>/);
     ["salutation", "firstName", "lastName", "groupId", "termFrom", "termTo"].forEach(name => assert.match(sokoHtml, new RegExp(`id="${name}" name="${name}"[^>]*required`)));

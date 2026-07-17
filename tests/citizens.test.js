@@ -41,13 +41,14 @@ const row = patch => ({
 });
 
 const assignTegel = item => item.street === 'Musterstraße' ? 'SOKO 01' : '';
+const idPrefix = `G-${new Date().getFullYear()}`;
 
 describe('buildImportResult', () => {
   it('imports valid rows with incrementing ids and group status', () => {
     const result = buildImportResult([row(), row({ firstName: 'Hans', street: 'Ohnezuordnung' })], [], assignTegel);
 
     assert.equal(result.newRows.length, 2);
-    assert.deepEqual(result.newRows.map(r => r.id), ['G-2026-001', 'G-2026-002']);
+    assert.deepEqual(result.newRows.map(r => r.id), [`${idPrefix}-001`, `${idPrefix}-002`]);
     assert.equal(result.newRows[0].status, 'importiert');
     assert.equal(result.newRows[0].source, 'CSV Import');
     assert.equal(result.newRows[1].status, 'offen');
@@ -55,17 +56,17 @@ describe('buildImportResult', () => {
   });
 
   it('continues ids after existing citizens', () => {
-    const existing = [row({ id: 'G-2026-001', firstName: 'Alt', lastName: 'Bestand', birthDate: '1930-01-01' })];
+    const existing = [row({ id: `${idPrefix}-001`, firstName: 'Alt', lastName: 'Bestand', birthDate: '1930-01-01' })];
     const result = buildImportResult([row()], existing, assignTegel);
 
-    assert.equal(result.newRows[0].id, 'G-2026-002');
+    assert.equal(result.newRows[0].id, `${idPrefix}-002`);
   });
 
   it('reuses freed numbers only above the highest remaining id', () => {
-    const existing = [row({ id: 'G-2026-001', firstName: 'Alt', lastName: 'Bestand', birthDate: '1930-01-01' }), row({ id: 'G-2026-005', firstName: 'Zweit', lastName: 'Bestand', birthDate: '1931-01-01' })];
+    const existing = [row({ id: `${idPrefix}-001`, firstName: 'Alt', lastName: 'Bestand', birthDate: '1930-01-01' }), row({ id: `${idPrefix}-005`, firstName: 'Zweit', lastName: 'Bestand', birthDate: '1931-01-01' })];
     const result = buildImportResult([row()], existing, assignTegel);
 
-    assert.equal(result.newRows[0].id, 'G-2026-006');
+    assert.equal(result.newRows[0].id, `${idPrefix}-006`);
   });
 
   it('flags rows with missing mandatory fields as errors without importing them', () => {

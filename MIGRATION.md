@@ -34,7 +34,8 @@ Mapping-Eckpunkte:
 - **Verstorbene** werden mit `deceased=true`, **Verzogene** mit `moved=true`
   markiert. `wish` bleibt ausschließlich der Glückwunsch-Auswahl vorbehalten;
   das Detail zu Tod oder Wegzug steht jeweils in `notes`.
-- IDs werden als `G-2026-001`, `G-2026-002`, … vergeben.
+- IDs werden als `G-2026-001`, `G-2026-002`, … vergeben. (Der spätere
+  LABO-Import vergibt neue IDs mit dem jeweils laufenden Jahr, z. B. `G-2027-…`.)
 
 ## 2. API-Basis kennen
 

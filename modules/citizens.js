@@ -1,4 +1,4 @@
-import { normalize, nextId, todayIso, calculateAge } from './utils.js';
+import { normalize, nextId, todayIso, calculateAge, runYear } from './utils.js';
 import { duplicateKey } from './assignment.js';
 import { citizenFlagText, hasCitizenExclusionFlag } from './citizenFlags.js';
 import { questionnaireCycleForCitizen } from './questionnaireCases.js';
@@ -53,7 +53,7 @@ export const buildImportResult = (mapped, existingCitizens, assignGroup) => {
     } else {
       seen.add(key);
       const assignment = assignmentInfo(assignGroup(row));
-      newRows.push({ ...row, deceased: false, moved: false, id: nextId("G-2026", [...existingCitizens, ...newRows]), archived: false, questionnaireCycle: questionnaireCycleForCitizen(row), source: "CSV Import", createdAt: row.createdAt || todayIso(), updatedAt: todayIso(), status: assignment.ambiguous || !assignment.groupId ? "offen" : "importiert" });
+      newRows.push({ ...row, deceased: false, moved: false, id: nextId(`G-${runYear()}`, [...existingCitizens, ...newRows]), archived: false, questionnaireCycle: questionnaireCycleForCitizen(row), source: "CSV Import", createdAt: row.createdAt || todayIso(), updatedAt: todayIso(), status: assignment.ambiguous || !assignment.groupId ? "offen" : "importiert" });
     }
   }
   const missing = existingCitizens.filter(citizen => months.has(monthOf(citizen.birthDate)) && !seen.has(duplicateKey(citizen)));

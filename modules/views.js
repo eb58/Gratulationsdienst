@@ -321,7 +321,7 @@ export const memberDetailContent = member => member ? `
         ${postalCodeField("postalCode", "PLZ", member.postalCode)}
         ${field("city", "Ort", member.city)}
         ${field("phone", "Telefon", member.phone)}
-        ${field("mobile", "Mobiffunk", member.mobile)}
+        ${field("mobile", "Mobilfunk", member.mobile)}
         ${emailField("email", "E-Mail", member.email)}
       </section>
       <section class="member-tab-panel member-tab-billing-panel form-grid" role="tabpanel">
@@ -525,32 +525,10 @@ const buildMapInfoCache = () => {
 };
 export const refreshMapInfoCache = () => mapInfoCache = buildMapInfoCache();
 const mapInfoCacheForHover = () => mapInfoCache || refreshMapInfoCache();
-export const mapHoverInfoHtml = (groupId, streetName = "") => {
-  if (!groupId || groupId === "offen") return `<p class="map-soko-hint muted">&Uuml;ber eine SOKO auf der Karte fahren</p>`;
-  if (!groupId || groupId === "offen") return `<p class="map-soko-hint muted">Ãœber eine SOKO auf der Karte fahren</p>`;
-  const cache = mapInfoCacheForHover();
+const mapInfoHint = `<p class="map-soko-hint muted">Über eine SOKO auf der Karte fahren</p>`;
+const mapInfoPanelHtml = (groupId, streetName, { members, citizens, monthLabel, addrCount, segCount }) => {
   const group = state.data.sokoGroups.find(g => g.id === groupId);
-  const members = cache.membersByGroup[groupId] || [];
-  const citizens = cache.citizensByGroup[groupId] || [];
-  const monthLabel = cache.monthLabel;
-  const addrCount = cache.addrCounts[groupId] || 0;
-  const segCount = cache.segCounts[groupId] || 0;
   const color = sokoColors[groupId] || sokoColors.offen;
-  return `
-    <div class="map-info-header">
-      <span class="map-info-swatch" style="background:${escapeHtml(color)}"></span>
-      <div>
-        <h3>${escapeHtml(groupId)}</h3>
-        ${group?.region ? `<div class="muted" style="font-size:13px">${escapeHtml(group.region.split(" - ")[0])}</div>` : ""}
-      </div>
-    </div>
-    ${streetName ? `<div class="map-info-street">${escapeHtml(streetName)}</div>` : ""}
-    <div class="map-info-stats">
-      <span>${addrCount.toLocaleString("de-DE")} Adressen</span>
-      <span>${segCount.toLocaleString("de-DE")} Stra&szlig;enabschnitte</span>
-    </div>
-    ${sokoPeopleInfoHtml(members, citizens, monthLabel)}
-  `;
   return `
     <div class="map-info-header">
       <span class="map-info-swatch" style="background:${escapeHtml(color)}"></span>
@@ -566,6 +544,17 @@ export const mapHoverInfoHtml = (groupId, streetName = "") => {
     </div>
     ${sokoPeopleInfoHtml(members, citizens, monthLabel)}
   `;
+};
+export const mapHoverInfoHtml = (groupId, streetName = "") => {
+  if (!groupId || groupId === "offen") return mapInfoHint;
+  const cache = mapInfoCacheForHover();
+  return mapInfoPanelHtml(groupId, streetName, {
+    members: cache.membersByGroup[groupId] || [],
+    citizens: cache.citizensByGroup[groupId] || [],
+    monthLabel: cache.monthLabel,
+    addrCount: cache.addrCounts[groupId] || 0,
+    segCount: cache.segCounts[groupId] || 0
+  });
 };
 const citizenDetailSplitHtml = (citizen, showQuestionnairePanel, citizenSplit) => {
   if (!citizen) return "";
@@ -594,29 +583,14 @@ const receiptStatusPill = (canPrint, uncheckedCount) => {
   return `<span class="pill gold">${uncheckedCount} offen</span>`;
 };
 export const sokoMapInfoHtml = (groupId, streetName = "") => {
-  if (!groupId || groupId === "offen") return `<p class="map-soko-hint muted">Über eine SOKO auf der Karte fahren</p>`;
-  const group = state.data.sokoGroups.find(g => g.id === groupId);
-  const members = state.data.sokoMembers.filter(m => m.groupId === groupId).sort((a, b) => b.isLeader - a.isLeader);
-  const citizens = activeCitizens().filter(c => groupForCitizen(c)?.id === groupId && (state.filters.month === "alle" || c.birthDate?.slice(5, 7) === state.filters.month));
-  const monthLabel = months.find(([v]) => v === state.filters.month)?.[1] || state.filters.month;
-  const addrCount = (mapAddressPointGroups()[groupId] || []).length;
-  const segCount = mapSegmentCounts()[groupId] || 0;
-  const color = sokoColors[groupId] || sokoColors.offen;
-  return `
-    <div class="map-info-header">
-      <span class="map-info-swatch" style="background:${escapeHtml(color)}"></span>
-      <div>
-        <h3>${escapeHtml(groupId)}</h3>
-        ${group?.region ? `<div class="muted" style="font-size:13px">${escapeHtml(group.region.split(" - ")[0])}</div>` : ""}
-      </div>
-    </div>
-    ${streetName ? `<div class="map-info-street">${escapeHtml(streetName)}</div>` : ""}
-    <div class="map-info-stats">
-      <span>${addrCount.toLocaleString("de-DE")} Adressen</span>
-      <span>${segCount.toLocaleString("de-DE")} Straßenabschnitte</span>
-    </div>
-    ${sokoPeopleInfoHtml(members, citizens, monthLabel)}
-  `;
+  if (!groupId || groupId === "offen") return mapInfoHint;
+  return mapInfoPanelHtml(groupId, streetName, {
+    members: state.data.sokoMembers.filter(m => m.groupId === groupId).sort((a, b) => b.isLeader - a.isLeader),
+    citizens: activeCitizens().filter(c => groupForCitizen(c)?.id === groupId && (state.filters.month === "alle" || c.birthDate?.slice(5, 7) === state.filters.month)),
+    monthLabel: months.find(([v]) => v === state.filters.month)?.[1] || state.filters.month,
+    addrCount: (mapAddressPointGroups()[groupId] || []).length,
+    segCount: mapSegmentCounts()[groupId] || 0
+  });
 };
 
 const auditActionLabels = {

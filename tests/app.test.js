@@ -440,7 +440,7 @@ describe('app map hover handlers', () => {
     listeners.mouseover({ target });
 
     assert.equal(elements['#map-soko-info'].dataset.groupId, 'offen');
-    assert.match(elements['#map-soko-info'].innerHTML, /&Uuml;ber eine SOKO/);
+    assert.match(elements['#map-soko-info'].innerHTML, /Über eine SOKO/);
 
     listeners.mouseout({ target, relatedTarget: null });
 

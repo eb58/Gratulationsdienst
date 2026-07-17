@@ -415,8 +415,6 @@ export const loadCollectionData = ({ force = false, seedEmpty = true } = {}) => 
       }
       render();
       toast("Daten aus der Datenbank geladen.");
-      render();
-      toast("Daten aus der Datenbank geladen.");
     })
     .catch(error => console.warn("Datenbank-Laden nicht verfügbar.", error));
 };

@@ -342,6 +342,11 @@ export const printCurrentRun = () => {
   const blob = new Blob([html], { type: "text/html;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const w = globalThis.open(url, "_blank", "width=900,height=700");
+  if (!w) {
+    URL.revokeObjectURL(url);
+    toast("Druckfenster konnte nicht geöffnet werden. Bitte Popup-Blocker prüfen.");
+    return;
+  }
   w.addEventListener("load", () => {
     URL.revokeObjectURL(url);
     w.addEventListener("afterprint", () => {
