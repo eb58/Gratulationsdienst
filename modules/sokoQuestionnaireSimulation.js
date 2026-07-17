@@ -24,7 +24,7 @@ const checkboxLabels = {
   wishPost: "per Post",
   wishVisit: "Soko",
   wishNone: "keine",
-  pressPublication: "Veröffentlichung in der regionalen Presse",
+  pressPublication: "Veröffentlichung in der regionalen Presse*",
   weddingGold: "Goldene Hochzeit (50 J.)",
   weddingDiamond: "Diamantene Hochzeit (60 J.)",
   weddingIron: "Eiserne Hochzeit (65 J.)",

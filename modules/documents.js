@@ -496,7 +496,7 @@ export const renderSokoForm = (citizen, index) => {
     ${checkField("wishPost", "per Post")}
     ${checkField("wishVisit", "Soko")}
     ${checkField("wishNone", "keine")}
-    ${checkField("pressPublication", "Ver&ouml;ffentlichung in der regionalen Presse *")}
+    ${checkField("pressPublication", "Ver&ouml;ffentlichung in der regionalen Presse<sup>*</sup>")}
     ${checkField("weddingGold", "Goldene Hochzeit&nbsp;&nbsp;&nbsp;(50 J.)")}
     ${checkField("weddingDiamond", "Diamantene Hochzeit (60 J.)")}
     ${checkField("weddingIron", "Eiserne Hochzeit&nbsp;&nbsp;&nbsp;&nbsp;(65 J.)")}
