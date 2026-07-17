@@ -198,16 +198,29 @@ describe('test CSV row and text', () => {
 
 describe('seed CSV generation', () => {
   it('returns structured seed rows and matching CSV text', () => {
-    const { assignments, rows } = seedCsvRows(streets, 4, () => '06', () => 0);
-    const csv = seedCsv(streets, 4, () => '06', () => 0);
+    const options = { includeDoctoralDegrees: true };
+    const { assignments, rows } = seedCsvRows(streets, 4, () => '06', () => 0, options);
+    const csv = seedCsv(streets, 4, () => '06', () => 0, options);
 
     assert.equal(assignments.length, 4);
     assert.equal(rows.length, 4);
     assert.equal(csv.split('\n').length, 5);
     assert.deepEqual(assignments.map(assignment => assignment.rule.soko), ['01', '02', '01', '02']);
     assert.deepEqual([...new Set(rows.map(row => row.Geburtsdatum.split('/')[1]))], ['6']);
-    assert.equal(rows[0]['Dr.-Grad'], 'Dr.');
-    assert.equal(rows.slice(1).some(row => row['Dr.-Grad'] === 'Dr.'), false);
+    assert.equal(rows.filter(row => row['Dr.-Grad'] === 'Dr.').length, 4);
+  });
+
+  it('erzeugt bei einer normalen LABO-Simulation keinen Doktorgrad', () => {
+    const { rows } = seedCsvRows(streets, 4, () => '06', () => 0);
+
+    assert.equal(rows.some(row => row['Dr.-Grad']), false);
+  });
+
+  it('enthält beim Jahres-Seed mindestens einen Doktor pro Geburtsmonat', () => {
+    const { rows } = seedCsvRows(streets, 12, index => rollingSimulationDate(index, 12, 1, new Date(2026, 5, 28)), () => 0, { includeDoctoralDegrees: true });
+    const doctorMonths = new Set(rows.filter(row => row['Dr.-Grad'] === 'Dr.').map(row => row.Geburtsdatum.split('/')[1].padStart(2, '0')));
+
+    assert.equal(doctorMonths.size, 12);
   });
 
   it('builds a follow-up LABO CSV from existing birthdays', () => {

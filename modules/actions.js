@@ -965,7 +965,7 @@ export const actions = {
     state.focusTarget = "#view";
     await deleteAllQuestionnairePages();
     const rowCount = 500;
-    const csv = seedCsv(state.data.streets, rowCount, index => rollingSimulationDate(index, rowCount));
+    const csv = seedCsv(state.data.streets, rowCount, index => rollingSimulationDate(index, rowCount), Math.random, { includeDoctoralDegrees: true });
     state.importText = csv;
     const result = await importMappedRows(parseCsv(csv).map(mapImportRow), { resetFilters: false, allowMultipleMonths: true });
     const patches = new Map(importedCitizensFromResult(result).map((citizen, index) => [citizen.id, questionnaireCitizenPatch(citizen, index, rowCount)]));

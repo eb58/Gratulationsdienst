@@ -116,18 +116,29 @@ export const testCsvText = rows => {
     .join("\n");
 };
 
-export const seedCsvRows = (streets, rowCount, dateForIndex, rand = Math.random) => {
+export const seedCsvRows = (streets, rowCount, dateForIndex, rand = Math.random, { includeDoctoralDegrees = false } = {}) => {
   const groups = groupedTestAssignments(streets);
   if (!groups.length) return { assignments: [], rows: [] };
   const assignments = balancedTestAssignments(groups, rowCount, rand);
   const firstNames = shuffledTestValues(testFirstNames);
   const lastNames = shuffledTestValues(testLastNames);
-  const names = assignments.map((_, index) => {
-    const [salutation, firstName] = firstNames[index % firstNames.length];
-    return { salutation, doctoralDegree: index === 0 ? 'Dr.' : '', firstName, lastName: lastNames[index % lastNames.length] };
-  });
   const currentYear = Number(todayIso().slice(0, 4));
   const dates = assignments.map((_, index) => dateForIndex(index));
+  const monthForDate = date => date instanceof Date
+    ? String(date.getMonth() + 1).padStart(2, '0')
+    : String(date || '').padStart(2, '0');
+  const rowsPerMonth = includeDoctoralDegrees
+    ? dates.reduce((map, date) => map.set(monthForDate(date), (map.get(monthForDate(date)) || 0) + 1), new Map())
+    : new Map();
+  const doctorCounts = new Map();
+  const names = assignments.map((_, index) => {
+    const [salutation, firstName] = firstNames[index % firstNames.length];
+    const month = monthForDate(dates[index]);
+    const currentDoctors = doctorCounts.get(month) || 0;
+    const doctoralDegree = includeDoctoralDegrees && currentDoctors < Math.min(4, rowsPerMonth.get(month) || 1) ? 'Dr.' : '';
+    if (doctoralDegree) doctorCounts.set(month, currentDoctors + 1);
+    return { salutation, doctoralDegree, firstName, lastName: lastNames[index % lastNames.length] };
+  });
   const offsets = dates.map(date => date instanceof Date ? currentYear - date.getFullYear() : 0);
   // Das Alter muss sowohl im simulierten Lauf als auch heute ein Gratulationsalter sein,
   // sonst entstehen aus Vorjahres-Läufen z.B. 86-Jährige (85 + 1 Jahr Offset, kein Gratulationsalter).
@@ -147,7 +158,7 @@ export const seedCsvRows = (streets, rowCount, dateForIndex, rand = Math.random)
   });
   return { assignments, rows };
 };
-export const seedCsv = (streets, rowCount, dateForIndex, rand = Math.random) => testCsvText(seedCsvRows(streets, rowCount, dateForIndex, rand).rows);
+export const seedCsv = (streets, rowCount, dateForIndex, rand = Math.random, options = {}) => testCsvText(seedCsvRows(streets, rowCount, dateForIndex, rand, options).rows);
 
 const shuffledBy = (values, rand = Math.random) => values.map(value => ({ value, order: rand() })).sort((a, b) => a.order - b.order).map(item => item.value);
 const csvRowFromCitizen = citizen => ({

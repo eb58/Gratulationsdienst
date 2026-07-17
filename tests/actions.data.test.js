@@ -465,6 +465,8 @@ describe('Jubilare löschen und Testdaten', () => {
     const currentRun = activeCitizens();
     const openCitizens = allCitizens.filter(citizen => idNum(citizen) > 500);
     const monthCounts = Object.values(printed.reduce((map, citizen) => ({ ...map, [citizen.birthDate.slice(5, 7)]: (map[citizen.birthDate.slice(5, 7)] || 0) + 1 }), {}));
+    const doctorCounts = allCitizens.reduce((map, citizen) => ({ ...map, [citizen.birthDate.slice(5, 7)]: (map[citizen.birthDate.slice(5, 7)] || 0) + (citizen.doctoralDegree === 'Dr.' ? 1 : 0) }), {});
+    const activeDoctorCounts = allCitizens.filter(citizen => !citizen.archived).reduce((map, citizen) => ({ ...map, [citizen.birthDate.slice(5, 7)]: (map[citizen.birthDate.slice(5, 7)] || 0) + (citizen.doctoralDegree === 'Dr.' ? 1 : 0) }), {});
     const weddingCounts = printed.reduce((map, citizen) => ({ ...map, [citizen.weddingAnniversary || '-']: (map[citizen.weddingAnniversary || '-'] || 0) + 1 }), {});
     const wishCounts = printed.reduce((map, citizen) => ({ ...map, [citizen.wish]: (map[citizen.wish] || 0) + 1 }), {});
     const reference = untouched[0];
@@ -475,6 +477,8 @@ describe('Jubilare löschen und Testdaten', () => {
     assert.ok(missing.every(citizen => citizen.status === 'archiviert'));
     assert.equal(allCitizens.filter(citizen => citizen.status === 'gedruckt' && citizen.archived).length, 0);
     assert.equal(monthCounts.length, 11);
+    assert.ok(Object.values(doctorCounts).every(count => count >= 1));
+    assert.ok(Object.values(activeDoctorCounts).every(count => count >= 1));
     assert.ok(Math.max(...monthCounts) - Math.min(...monthCounts) <= 1);
     assert.ok(untouched.every(citizen => citizen.printedAt && citizen.printedYear && Number.isFinite(citizen.printedAge)));
     assert.equal(reference.printedYear, Number(reference.printedAt.slice(0, 4)));
