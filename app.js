@@ -1,4 +1,4 @@
-import { canAccessView, isAdmin, state, loadAuthStatus, loadCollectionData } from './modules/state.js';
+import { canAccessView, isAdmin, state, loadAuthStatus, loadCollectionData, clearStoredAuthToken } from './modules/state.js';
 import { MONTH_KEY, storeSplit, safeStorageSetItem, isValidEmail, normalizeIban, isValidIban, normalizeAmount, normalizeDigits, isValidPostalCode } from './modules/utils.js';
 import { viewTitles, mapHoverInfoHtml, sokoMapInfoHtml } from './modules/views.js';
 import { findNearestAddress } from './modules/map.js';
@@ -421,8 +421,7 @@ state.view = viewTitles[initialParams.get("view")]
   ? initialParams.get("view")
   : state.view;
 if (initialParams.get("resetToken")) {
-  localStorage.removeItem("gd_auth_token");
-  sessionStorage.removeItem("gd_auth_token");
+  clearStoredAuthToken();
   state.auth.token = "";
   state.auth.user = null;
   state.auth.mode = "reset";

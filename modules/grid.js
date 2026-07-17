@@ -9,8 +9,7 @@ import { requestDirtyFormLeave } from './dirtyForms.js';
 import { loadQuestionnairePagesForCitizen, prepareQuestionnairePageLoadForCitizen } from './questionnairePages.js';
 import { loadScript } from './scriptLoader.js';
 import { weddingAnniversaryLabel } from './weddingAnniversaries.js';
-import { citizenFlagText } from './citizenFlags.js';
-import { citizenListName } from './citizenNames.js';
+import { citizenGridRow } from './citizens.js';
 
 let agGridPromise = null;
 export const ensureAgGrid = () => agGridPromise ||= loadScript(`${import.meta.env?.BASE_URL ?? "/"}vendor/ag-grid-community.min.js`);
@@ -202,17 +201,7 @@ const saveGridState = (gridKey, api) => {
 export const gridDefinitions = {
   citizens: () => ({
     ...baseGridOptions(),
-    rowData: filteredCitizens().map(citizen => ({
-      id: citizen.id,
-      name: citizenListName(citizen),
-      birthday: citizen.birthDate,
-      age: Number(new Date().getFullYear()) - Number(citizen.birthDate?.slice(0, 4)),
-      address: `${citizen.street} ${citizen.houseNo}`,
-      groupId: groupForCitizen(citizen)?.id || "offen",
-      wish: citizen.wish || "",
-      flags: citizenFlagText(citizen),
-      status: citizen.status
-    })),
+    rowData: filteredCitizens().map(citizen => citizenGridRow(citizen, groupForCitizen(citizen))),
     columnDefs: [
       { headerName: "Name", field: "name", width: 220, minWidth: 150 },
       { headerName: "Status", field: "status", width: 135, minWidth: 115, cellRenderer: params => statusBadgeCell(params.value) },
@@ -356,15 +345,7 @@ export const gridDefinitions = {
       .filter(citizen => citizen.source === "CSV Import")
       .filter(citizen => !isArchivedCitizen(citizen))
       .filter(citizen => state.filters.month === "alle" || birthdayMonth(citizen.birthDate) === state.filters.month)
-      .map(citizen => ({
-        id: citizen.id,
-        name: citizenListName(citizen),
-        birthday: citizen.birthDate,
-        age: Number(new Date().getFullYear()) - Number(citizen.birthDate?.slice(0, 4)),
-        address: `${citizen.street} ${citizen.houseNo}`,
-        groupId: groupForCitizen(citizen)?.id || "offen",
-        status: citizen.status
-      })),
+      .map(citizen => citizenGridRow(citizen, groupForCitizen(citizen))),
     columnDefs: [
       { headerName: "Name", field: "name", width: 230, minWidth: 170 },
       { headerName: "Geburtstag", field: "birthday", width: 130, minWidth: 120, valueFormatter: params => formatDate(params.value) },

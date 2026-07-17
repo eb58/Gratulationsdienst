@@ -309,7 +309,7 @@ export const preparePrint = () => {
   document.head.append(style);
   return true;
 };
-export const completePrintRun = () => {
+export const completePrintRun = async () => {
   const printedIds = new Set(state.generatedDocs.map(doc => doc.citizenId));
   if (!printedIds.size) return;
   state.data.citizens = state.data.citizens.map(citizen => printedIds.has(citizen.id)
@@ -317,7 +317,7 @@ export const completePrintRun = () => {
     : citizen);
   state.generatedDocs = [];
   state.selectedCitizenId = state.data.citizens.find(c => c.status !== "gedruckt" && !c.archived && c.status !== 'archiviert')?.id || "";
-  saveData();
+  await saveData();
   render();
   toast(`${printedIds.size} Jubilare als gedruckt vermerkt.`);
 };

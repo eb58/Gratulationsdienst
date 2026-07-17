@@ -998,12 +998,12 @@ export const actions = {
     state.focusTarget = ".dialog-box [data-autofocus]";
     render();
   },
-  "confirm-reset-soko-members": () => {
+  "confirm-reset-soko-members": async () => {
     state.data.sokoMembers = structuredClone(defaultData.sokoMembers);
     state.selectedMemberId = state.data.sokoMembers[0]?.id || "";
     state.dialog = null;
     state.focusTarget = "#view";
-    saveData();
+    await saveData();
     render();
     toast("SOKO-Mitglieder auf Testdaten zurückgesetzt.");
   },
@@ -1112,7 +1112,7 @@ export const actions = {
     state.importMissingCitizens = [];
     state.dialog = null;
     state.focusTarget = "#view";
-    saveData();
+    await saveData();
     render();
     await deleteQuestionnairePagesForCitizens([...missingIds]);
     importToast(`${missingIds.size} Jubilare gelöscht.`);
@@ -1122,7 +1122,7 @@ export const actions = {
     try {
       importToast("SOKO-PDF wird ausgewertet...");
       const result = await applySokoPdfImport(file);
-      saveData();
+      await saveData();
       refreshSokoPdfImportUi(result);
       importToast(sokoPdfNotice(result.pages));
     } catch (error) {
@@ -1135,7 +1135,7 @@ export const actions = {
       if (!simulation) return;
       importToast("SOKO-PDF wird ausgewertet...");
       const result = await applySokoPdfImport(simulation.file, simulation.pages);
-      saveData();
+      await saveData();
       refreshSokoPdfImportUi(result);
       importToast(`Simulation: ${sokoPdfNotice(result.pages)}`);
     } catch (error) {

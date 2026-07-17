@@ -69,7 +69,7 @@ export const editableStreetAssignment = citizen => {
 export const preciseStreetAssignment = citizen => {
   const assignment = (() => {
     try {
-      return window.findeSoko?.(citizen.street, citizen.houseNo, citizen.postalCode);
+      return globalThis.findeSoko?.(citizen.street, citizen.houseNo, citizen.postalCode);
     } catch {
       return null;
     }

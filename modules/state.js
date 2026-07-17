@@ -8,7 +8,7 @@ const storedAuthToken = () => {
   localStorage.removeItem(AUTH_TOKEN_KEY);
   return sessionStorage.getItem(AUTH_TOKEN_KEY) || "";
 };
-const clearStoredAuthToken = () => {
+export const clearStoredAuthToken = () => {
   localStorage.removeItem(AUTH_TOKEN_KEY);
   sessionStorage.removeItem(AUTH_TOKEN_KEY);
 };
