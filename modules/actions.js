@@ -102,8 +102,9 @@ const saveTemplatePatch = async patch => {
   state.data.templates = updateItem(state.data.templates, id, template);
   state.selectedTemplateId = id;
   try {
-    if (!state.auth.token) await saveData();
-    else await saveCollectionItem("templates", template);
+    if (!state.auth.token) {
+      if (!await saveData()) return false;
+    } else await saveCollectionItem("templates", template);
     render();
     return true;
   } catch (error) {
@@ -119,8 +120,9 @@ const saveSenderPatch = async patch => {
   state.data.senders = updateItem(state.data.senders, id, sender);
   state.selectedSenderId = id;
   try {
-    if (!state.auth.token) await saveData();
-    else await saveCollectionItem("senders", sender);
+    if (!state.auth.token) {
+      if (!await saveData()) return false;
+    } else await saveCollectionItem("senders", sender);
     render();
     return true;
   } catch (error) {
@@ -137,7 +139,7 @@ const authDone = async session => {
   // Baselines existieren nur, wenn in diesem Tab bereits Server-Daten geladen wurden; bei einem
   // Konflikt lädt handleSaveError ohnehin den Server-Stand.
   const pushPending = Object.keys(state.collectionBaselines || {}).length > 0 || hasPendingBackendData() ? saveCollectionData(state.data) : Promise.resolve();
-  await pushPending;
+  if ((await pushPending) === false) return;
   await loadCollectionData();
 };
 const authFail = error => {
@@ -301,9 +303,8 @@ const selectImportedCitizen = result => {
   state.selectedCitizenId = (visible.find(citizen => importedIds.has(citizen.id)) || visible[0])?.id || "";
 };
 const saveImportStep = async () => {
-  const hadAuthToken = Boolean(state.auth.token);
   const saved = await saveData();
-  return !hadAuthToken || Boolean(saved);
+  return Boolean(saved);
 };
 const importMappedRows = async (mapped, { resetFilters = true, allowMultipleMonths = false } = {}) => {
   const months = importMonths(mapped);
@@ -322,8 +323,9 @@ const importMappedRows = async (mapped, { resetFilters = true, allowMultipleMont
   selectImportedCitizen(result);
   render();
   const mixedMonthsWarning = resetFilters && months.size > 1 ? "Achtung: Die CSV enthält mehrere Geburtsmonate. " : "";
-  if (await saveImportStep()) importToast(mixedMonthsWarning + importNotice(result));
-  return result;
+  const saved = await saveImportStep();
+  if (saved) importToast(mixedMonthsWarning + importNotice(result));
+  return { ...result, saved };
 };
 const importToast = message => toast(message, { anchor: ".soko-pdf-action-row, .import-action-row" });
 const buildLaboSeedCsv = groups => {
@@ -522,13 +524,6 @@ export const actions = {
     event.target.value = String(state.auditDays);
     await actions["load-audit"]();
   },
-  "clear-audit": async () => {
-    try {
-      state.audit = [];
-      if (state.auth.token) await apiRequest("/audit", { method: "DELETE" });
-      render();
-    } catch (error) { toast(error.message); }
-  },
   "new-user": () => { state.selectedUserId = "new"; state.auth.adminResetToken = ""; render(); },
   "select-user": event => { state.selectedUserId = event.target.closest("[data-id]").dataset.id; state.auth.adminResetToken = ""; render(); },
   "save-user": async () => {
@@ -616,7 +611,7 @@ export const actions = {
     state.selectedCitizenId = nextCitizenId || values.id;
     try {
       if (!state.auth.token) {
-        await saveData();
+        if (!await saveData()) return;
       } else {
         const savedCitizen = await apiRequest(`/citizens/${values.id}`, { method: "PUT", body: JSON.stringify(updatedCitizen) });
         syncSavedCollectionItem("citizens", savedCitizen);
@@ -660,7 +655,7 @@ export const actions = {
     state.selectedMemberId = id;
     try {
       if (!state.auth.token) {
-        await saveData();
+        if (!await saveData()) return;
       } else {
         await createCollectionItem("sokoMembers", member);
       }
@@ -685,7 +680,7 @@ export const actions = {
     if (updatedGroup) state.data.sokoGroups = updateItem(state.data.sokoGroups, updatedGroup.id, updatedGroup);
     try {
       if (!state.auth.token) {
-        await saveData();
+        if (!await saveData()) return;
       } else {
         await saveCollectionItem("sokoMembers", patch);
         if (updatedGroup) await saveCollectionItem("sokoGroups", updatedGroup);
@@ -718,7 +713,7 @@ export const actions = {
     state.focusTarget = "#view";
     try {
       if (!state.auth.token) {
-        await saveData();
+        if (!await saveData()) return;
       } else {
         await deleteCollectionItem("sokoMembers", memberId);
         for (const group of affectedGroups) await saveCollectionItem("sokoGroups", { ...group, leaderId: "" });
@@ -746,7 +741,7 @@ export const actions = {
     if (!patch.rules.length) { toast("Bitte mindestens einen Zuständigkeitsabschnitt erfassen."); return; }
     state.data.streets = updateItem(state.data.streets, patch.id, patch);
     try {
-      if (!state.auth.token) await saveData();
+      if (!state.auth.token && !await saveData()) return;
       else await saveCollectionItem("streets", patch);
       render();
       toast("Zuständigkeit gespeichert.");
@@ -761,7 +756,7 @@ export const actions = {
     const nextRule = { ...template, id: `custom-${Date.now()}`, von: "", bis: "" };
     state.data.streets = updateItem(state.data.streets, patch.id, { ...patch, rules: [...patch.rules, nextRule] });
     try {
-      if (!state.auth.token) await saveData();
+      if (!state.auth.token && !await saveData()) return;
       else await saveCollectionItem("streets", byId(state.data.streets, patch.id));
       render();
     } catch (error) {
@@ -777,7 +772,7 @@ export const actions = {
     const nextPatch = { ...patch, district: streetDistrictSummary(rules), groupId: streetGroupSummary(rules), rules };
     state.data.streets = updateItem(state.data.streets, patch.id, nextPatch);
     try {
-      if (!state.auth.token) await saveData();
+      if (!state.auth.token && !await saveData()) return;
       else await saveCollectionItem("streets", nextPatch);
       render();
     } catch (error) {
@@ -816,7 +811,7 @@ export const actions = {
     state.selectedTemplateId = id;
     try {
       if (!state.auth.token) {
-        await saveData();
+        if (!await saveData()) return;
       } else {
         await createCollectionItem("templates", template);
       }
@@ -935,7 +930,7 @@ export const actions = {
     state.focusTarget = "#view";
     try {
       if (!state.auth.token) {
-        await saveData();
+        if (!await saveData()) return;
       } else {
         await deleteCollectionItem("templates", templateId);
       }
@@ -950,7 +945,7 @@ export const actions = {
     if (state.auth.user?.role !== "admin") { toast("Nur Admins können Testdaten zurücksetzen."); return; }
     const groups = groupedTestAssignments(state.data.streets);
     if (!groups.length) { toast("Keine SOKO-Zuordnungen für Testdaten gefunden."); return; }
-    state.dialog = { type: "reset-test-database", title: "Test-Datenbank zurücksetzen", message: "Sollen alle Jubilare, Fragebögen, das Import-Protokoll und die Änderungen gelöscht und durch 500 neue Jahres-Testdaten mit Fragebogen-Rückmeldungen ersetzt werden? Stammdaten und Benutzer bleiben erhalten.", confirmLabel: "Zurücksetzen", confirmAction: "confirm-reset-test-database" };
+    state.dialog = { type: "reset-test-database", title: "Test-Datenbank zurücksetzen", message: "Sollen alle Jubilare, Fragebögen und das Import-Protokoll gelöscht und durch 500 neue Jahres-Testdaten mit Fragebogen-Rückmeldungen ersetzt werden? Das Änderungsprotokoll, Stammdaten und Benutzer bleiben erhalten.", confirmLabel: "Zurücksetzen", confirmAction: "confirm-reset-test-database" };
     state.focusTarget = ".dialog-box [data-autofocus]";
     render();
   },
@@ -968,14 +963,15 @@ export const actions = {
     const csv = seedCsv(state.data.streets, rowCount, index => rollingSimulationDate(index, rowCount), Math.random, { includeDoctoralDegrees: true });
     state.importText = csv;
     const result = await importMappedRows(parseCsv(csv).map(mapImportRow), { resetFilters: false, allowMultipleMonths: true });
+    if (!result.saved) return;
     const patches = new Map(importedCitizensFromResult(result).map((citizen, index) => [citizen.id, questionnaireCitizenPatch(citizen, index, rowCount)]));
     state.data.citizens = state.data.citizens.map(citizen => patches.get(citizen.id) || citizen);
     state.data.questionnaireCases = [...patches.values()].reduce((cases, citizen) => upsertQuestionnaireCase(cases, citizen, { source: 'Simulation', capturedAt: citizen.updatedAt }), []);
     syncWeddingAnniversaries([...patches.values()], "Simulation");
     const batch = await seedCurrentLaboBatch(groupedTestAssignments(state.data.streets));
+    if (!batch.result.saved) return;
     markMissingTestCitizensArchived(batch.result.missing);
-    await saveData();
-    await actions["clear-audit"]();
+    if (!await saveData()) return;
     render();
     importToast(`Test-Datenbank zurückgesetzt: ${patches.size.toLocaleString("de-DE")} Jahres-Testdaten mit Fragebogen-Rückmeldungen und ${batch.rowCount.toLocaleString("de-DE")} offene LABO-Fälle für ${monthAfterNext()} simuliert.`);
   },
@@ -1003,7 +999,7 @@ export const actions = {
     state.selectedMemberId = state.data.sokoMembers[0]?.id || "";
     state.dialog = null;
     state.focusTarget = "#view";
-    await saveData();
+    if (!await saveData()) return;
     render();
     toast("SOKO-Mitglieder auf Testdaten zurückgesetzt.");
   },
@@ -1038,7 +1034,7 @@ export const actions = {
     state.data.citizens = updateItem(state.data.citizens, citizen.id, { ...citizen, status: "geprüft", updatedAt: todayIso() });
     state.generatedDocs = [];
     try {
-      if (!state.auth.token) await saveData();
+      if (!state.auth.token && !await saveData()) return;
       else await saveCollectionItem("citizens", byId(state.data.citizens, citizen.id));
       render();
       toast("Jubilar für den Nachdruck auf geprüft gesetzt.");
@@ -1112,7 +1108,7 @@ export const actions = {
     state.importMissingCitizens = [];
     state.dialog = null;
     state.focusTarget = "#view";
-    await saveData();
+    if (!await saveData()) return;
     render();
     await deleteQuestionnairePagesForCitizens([...missingIds]);
     importToast(`${missingIds.size} Jubilare gelöscht.`);
@@ -1122,7 +1118,7 @@ export const actions = {
     try {
       importToast("SOKO-PDF wird ausgewertet...");
       const result = await applySokoPdfImport(file);
-      await saveData();
+      if (!await saveData()) return;
       refreshSokoPdfImportUi(result);
       importToast(sokoPdfNotice(result.pages));
     } catch (error) {
@@ -1135,7 +1131,7 @@ export const actions = {
       if (!simulation) return;
       importToast("SOKO-PDF wird ausgewertet...");
       const result = await applySokoPdfImport(simulation.file, simulation.pages);
-      await saveData();
+      if (!await saveData()) return;
       refreshSokoPdfImportUi(result);
       importToast(`Simulation: ${sokoPdfNotice(result.pages)}`);
     } catch (error) {

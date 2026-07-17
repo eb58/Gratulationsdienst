@@ -317,9 +317,10 @@ export const completePrintRun = async () => {
     : citizen);
   state.generatedDocs = [];
   state.selectedCitizenId = state.data.citizens.find(c => c.status !== "gedruckt" && !c.archived && c.status !== 'archiviert')?.id || "";
-  await saveData();
+  if (!await saveData()) return false;
   render();
   toast(`${printedIds.size} Jubilare als gedruckt vermerkt.`);
+  return true;
 };
 export const printCurrentRun = () => {
   if (!state.generatedDocs.length) {

@@ -85,7 +85,9 @@ globalThis.fetch = (url, options = {}) => {
   const routeResponse = routes.get(`${method} ${path}`);
   const res = routeResponse
     ? { ...routeResponse, json: async () => typeof routeResponse.payload === 'function' ? routeResponse.payload(request) : routeResponse.payload }
-    : { ok: true, status: 200, json: async () => ({}) };
+    : method === 'PUT' && path === '/data'
+      ? { ok: true, status: 200, json: async () => Object.fromEntries(Object.entries(body).map(([collection, payload]) => [collection, payload.items.map((item, index) => ({ ...item, _version: `1-${index}` }))])) }
+      : { ok: true, status: 200, json: async () => ({}) };
   return Promise.resolve(res);
 };
 
@@ -439,6 +441,7 @@ describe('Jubilare löschen und Testdaten', () => {
   });
 
   it('reset-test-database loescht Bestand, laesst Monatsauswahl unveraendert und erzeugt 500 Jahresdaten mit realistischen Fragebogenwerten', async () => {
+    state.auth.token = 'token';
     state.data.citizens = [{ id: 'G-old' }];
     state.data.weddingAnniversaries = [{ id: 'WA-G-old', citizenId: 'G-old' }];
     state.audit = [{ id: 'A-1', action: 'UPDATE' }];
@@ -446,14 +449,14 @@ describe('Jubilare löschen und Testdaten', () => {
 
     actions['reset-test-database']();
     assert.equal(state.dialog.type, 'reset-test-database');
-    assert.match(state.dialog.message, /Änderungen/);
+    assert.match(state.dialog.message, /Änderungsprotokoll/);
     assert.equal(state.data.citizens.length, 1, 'noch nicht geloescht vor Bestaetigung');
 
     await actions['confirm-reset-test-database']();
 
     assert.equal(state.dialog, null);
     assert.equal(state.filters.month, '05');
-    assert.deepEqual(state.audit, []);
+    assert.deepEqual(state.audit, [{ id: 'A-1', action: 'UPDATE' }]);
 
     const allCitizens = state.data.citizens;
     const idNum = citizen => Number(citizen.id.split('-').pop());
@@ -560,16 +563,15 @@ describe('Import-Lauf', () => {
       'G-3': { ...state.data.citizens[2] }
     };
     state.importText = laboCsv('Frau,,Erika,Muster,13407,Berlin Tegel,Hauptstr,1,,,5/4/1936,Deutschland,90');
-    route('PUT /citizens', request => request.body.items.map((item, index) => ({ ...item, _version: `2-${index}` })));
-    route('PUT /questionnaireCases', request => request.body.items.map((item, index) => ({ ...item, _version: `2-${index}` })));
+    route('PUT /data', request => Object.fromEntries(Object.entries(request.body).map(([collection, payload]) => [collection, payload.items.map((item, index) => ({ ...item, _version: `2-${index}` }))])));
 
     await actions['run-import']();
 
-    const citizenPuts = calls.filter(call => call.method === 'PUT' && call.path === '/citizens');
+    const dataPuts = calls.filter(call => call.method === 'PUT' && call.path === '/data');
     const imported = state.data.citizens.find(citizen => citizen.id === 'G-1');
-    assert.equal(citizenPuts.length, 1);
+    assert.equal(dataPuts.length, 1);
     assert.equal(calls.some(call => call.method === 'DELETE' && call.path === '/questionnaire-pages'), false);
-    assert.deepEqual(citizenPuts[0].body.items.map(citizen => citizen.id), ['G-1', 'G-2', 'G-3']);
+    assert.deepEqual(dataPuts[0].body.citizens.items.map(citizen => citizen.id), ['G-1', 'G-2', 'G-3']);
     assert.equal(imported.street, 'Hauptstr');
     assert.equal(imported.wish, 'offen');
     assert.equal(imported.pressPublication, false);
@@ -595,11 +597,11 @@ describe('Import-Lauf', () => {
       'G-2': { ...state.data.citizens[1] }
     };
     state.importText = laboCsv('Frau,,Erika,Muster,13407,Berlin Tegel,Hauptstr,1,,,5/4/1936,Deutschland,90');
-    route('PUT /citizens', { error: 'conflict' }, { ok: false, status: 409 });
+    route('PUT /data', { error: 'conflict' }, { ok: false, status: 409 });
 
     await actions['run-import']();
 
-    assert.ok(calls.some(call => call.method === 'PUT' && call.path === '/citizens'));
+    assert.ok(calls.some(call => call.method === 'PUT' && call.path === '/data'));
     assert.equal(calls.some(call => call.method === 'DELETE' && call.path === '/questionnaire-pages'), false);
     state.auth.token = '';
   });
@@ -1095,17 +1097,6 @@ describe('Benutzerverwaltung (apiRequest)', () => {
     assert.equal(state.auditDays, 12);
     assert.equal(target.value, '12');
     assert.equal(calls.some(call => call.method === 'GET' && call.path === '/audit?limit=100&days=12'), true);
-  });
-
-  it('clear-audit leert lokale und Backend-Änderungen', async () => {
-    state.auth.token = 'token';
-    state.audit = [{ id: '1', action: 'UPDATE' }];
-    route('DELETE /audit', { ok: true });
-
-    await actions['clear-audit']();
-
-    assert.equal(calls.some(call => call.method === 'DELETE' && call.path === '/audit'), true);
-    assert.deepEqual(state.audit, []);
   });
 
   it('save-user legt per POST an und lädt die Liste neu', async () => {

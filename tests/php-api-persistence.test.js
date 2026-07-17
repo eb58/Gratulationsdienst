@@ -70,6 +70,11 @@ const prelude = `
     address TEXT DEFAULT '', phone TEXT DEFAULT '', email TEXT DEFAULT '', logo TEXT DEFAULT '',
     signature TEXT DEFAULT '', signature_image TEXT DEFAULT '', color TEXT DEFAULT '', row_version INTEGER NOT NULL DEFAULT 1
   )");
+  $pdo->exec("CREATE TABLE gd_questionnaire_cases (
+    id TEXT PRIMARY KEY, citizen_id TEXT, cycle TEXT, wish TEXT DEFAULT '', press_publication INTEGER DEFAULT 0,
+    wedding_anniversary TEXT DEFAULT '', wedding_date TEXT, spouse_name TEXT DEFAULT '', notes TEXT DEFAULT '',
+    source TEXT DEFAULT '', captured_at_date TEXT, updated_at_date TEXT, created_at TEXT, row_version INTEGER NOT NULL DEFAULT 1
+  )");
   $pdo->exec("CREATE TABLE gd_audit_log (
     id INTEGER PRIMARY KEY AUTOINCREMENT, actor_user_id TEXT DEFAULT '', actor_email TEXT DEFAULT '', action TEXT,
     collection_name TEXT, record_id TEXT DEFAULT '', before_json TEXT, after_json TEXT,
@@ -168,19 +173,20 @@ suite('php-api persistence', () => {
       upsertItem($db, 'citizens', 'C-1', ['id' => 'C-1', 'firstName' => 'Anna'], $actor);
       upsertItem($db, 'citizens', 'C-1', ['id' => 'C-1', 'firstName' => 'Anne'], $actor);
       deleteItem($db, 'citizens', 'C-1', $actor);
-      upsertItem($db, 'senders', 'S-1', ['id' => 'S-1', 'name' => 'Nicht auditiert'], $actor);
+      upsertItem($db, 'senders', 'S-1', ['id' => 'S-1', 'name' => 'Absender'], $actor);
       $audit = $pdo->query('SELECT action, collection_name, record_id, actor_email, previous_hash, entry_hash, before_json, after_json FROM gd_audit_log ORDER BY id')->fetchAll();
-      echo json_encode(['citizen' => readItem($db, 'citizens', 'C-1'), 'audit' => $audit]);
+      echo json_encode(['citizen' => readItem($db, 'citizens', 'C-1'), 'audit' => $audit, 'chainValid' => verifyAuditChain($db)]);
     `);
 
     assert.equal(result.citizen, null);
-    assert.deepEqual(result.audit.map(row => row.action), ['CREATE', 'UPDATE', 'DELETE']);
-    assert.deepEqual([...new Set(result.audit.map(row => row.collection_name))], ['citizens']);
+    assert.deepEqual(result.audit.map(row => row.action), ['CREATE', 'UPDATE', 'DELETE', 'CREATE']);
+    assert.deepEqual([...new Set(result.audit.map(row => row.collection_name))], ['citizens', 'senders']);
     assert.ok(result.audit.every(row => row.actor_email === 'user@example.test'));
     assert.equal(result.audit[0].previous_hash, '');
     assert.ok(result.audit.every(row => row.entry_hash.length === 64));
     assert.ok(result.audit[2].before_json.includes('Anne'));
     assert.equal(result.audit[2].after_json, null);
+    assert.equal(result.chainValid, true);
   });
 
   it('mapped sender signature images through the API layer', () => {
@@ -198,6 +204,8 @@ suite('php-api persistence', () => {
       $actor = ['id' => 'U-1', 'email' => 'user@example.test', 'role' => 'user'];
       echo json_encode([
         'citizens' => shouldAuditCollection('citizens', $actor),
+        'questionnaireCases' => shouldAuditCollection('questionnaireCases', $actor),
+        'weddingAnniversaries' => shouldAuditCollection('weddingAnniversaries', $actor),
         'sokoGroups' => shouldAuditCollection('sokoGroups', $actor),
         'sokoMembers' => shouldAuditCollection('sokoMembers', $actor),
         'streets' => shouldAuditCollection('streets', $actor),
@@ -209,11 +217,13 @@ suite('php-api persistence', () => {
 
     assert.deepEqual(result, {
       citizens: true,
+      questionnaireCases: true,
+      weddingAnniversaries: true,
       sokoGroups: true,
       sokoMembers: true,
       streets: true,
-      senders: false,
-      templates: false,
+      senders: true,
+      templates: true,
       anonymous: false,
     });
   });
@@ -238,9 +248,8 @@ suite('php-api persistence', () => {
   it('filtert Audit-Eintraege ueber den Admin-Endpunkt nach Zeitraum', () => {
     const result = runPhp(`${prelude}
       $admin = ['id' => 'A-1', 'email' => 'admin@example.test', 'role' => 'admin'];
-      auditLog($db, $admin, 'UPDATE', 'citizens', 'C-old', ['wish' => 'offen'], ['wish' => 'Besuch']);
       $old = (new DateTimeImmutable())->modify('-6 days')->format('Y-m-d H:i:s');
-      executeStatement($db, 'UPDATE gd_audit_log SET occurred_at = ? WHERE record_id = ?', [$old, 'C-old']);
+      auditLog($db, $admin, 'UPDATE', 'citizens', 'C-old', ['wish' => 'offen'], ['wish' => 'Besuch'], $old);
       auditLog($db, $admin, 'UPDATE', 'citizens', 'C-new', ['wish' => 'offen'], ['wish' => 'Post']);
       $_GET['limit'] = '10';
       $_GET['days'] = '5';
@@ -257,8 +266,20 @@ suite('php-api persistence', () => {
       handleAudit($db, 'DELETE', $admin);
     `);
 
-    assert.equal(result.ok, true);
-    assert.equal(result.deleted, 1);
+    assert.equal(result.error, 'Methode nicht erlaubt.');
+  });
+
+  it('erkennt nachträgliche Änderungen an Bearbeiter oder Zeitpunkt im Audit', () => {
+    const result = runPhp(`${prelude}
+      $admin = ['id' => 'A-1', 'email' => 'admin@example.test', 'role' => 'admin'];
+      auditLog($db, $admin, 'UPDATE', 'questionnaireCases', 'QC-1', ['wish' => 'offen'], ['wish' => 'Besuch']);
+      $before = verifyAuditChain($db);
+      executeStatement($db, 'UPDATE gd_audit_log SET actor_email = ? WHERE record_id = ?', ['other@example.test', 'QC-1']);
+      $afterEmailChange = verifyAuditChain($db);
+      echo json_encode(['before' => $before, 'afterEmailChange' => $afterEmailChange]);
+    `);
+
+    assert.deepEqual(result, { before: true, afterEmailChange: false });
   });
 
 });

@@ -60,6 +60,11 @@ const {
   writableCollections
 } = stateModule;
 
+const savedDataResponse = body => Object.fromEntries(Object.entries(body).map(([collection, payload]) => [
+  collection,
+  (payload.items || []).map(item => ({ ...item, _version: '1' }))
+]));
+
 beforeEach(() => {
   state.auth.user = { role: 'admin' };
   state.auth.token = '';
@@ -168,7 +173,7 @@ describe('backend and permission helpers', () => {
       const path = url.replace(/.*\/php-api/, '');
       if (!options.method) return Promise.resolve({ ok: true, json: async () => path === '/settings/receipt' ? {} : [] });
       const body = JSON.parse(options.body || '{}');
-      return Promise.resolve({ ok: true, json: async () => (body.items || []).map(item => ({ ...item, _version: '1' })) });
+      return Promise.resolve({ ok: true, json: async () => path === '/data' ? savedDataResponse(body) : (body.items || []).map(item => ({ ...item, _version: '1' })) });
     };
 
     await loadCollectionData();
@@ -186,7 +191,7 @@ describe('backend and permission helpers', () => {
         return Promise.resolve({ ok: true, json: async () => path === '/citizens' ? [{ id: 'G-1' }] : [] });
       }
       const body = JSON.parse(options.body || '{}');
-      return Promise.resolve({ ok: true, json: async () => (body.items || []).map(item => ({ ...item, _version: '1' })) });
+      return Promise.resolve({ ok: true, json: async () => path === '/data' ? savedDataResponse(body) : (body.items || []).map(item => ({ ...item, _version: '1' })) });
     };
 
     await loadCollectionData();
@@ -299,6 +304,51 @@ describe('backend and permission helpers', () => {
     assert.deepEqual(state.collectionVersions.citizens, { 'G-1': '4' });
     assert.deepEqual(state.collectionBaselines.citizens['G-1'], { id: 'G-1', firstName: 'Ada' });
     assert.equal(localStorage.getItem('gratulationsdienst.pending'), null);
+  });
+
+  it('speichert mehrere geaenderte Collections atomar ueber den Daten-Endpunkt', async () => {
+    const calls = [];
+    state.auth.token = 'token';
+    state.collectionVersions = { citizens: { 'G-1': '1' }, questionnaireCases: {} };
+    state.collectionBaselines = { citizens: { 'G-1': { id: 'G-1', wish: 'offen' } }, questionnaireCases: {} };
+    state.data = {
+      citizens: [{ id: 'G-1', wish: 'per Post' }],
+      questionnaireCases: [{ id: 'QC-G-1-2026-06', citizenId: 'G-1', cycle: '2026-06', wish: 'per Post' }],
+      weddingAnniversaries: [], sokoGroups: [], sokoMembers: [], streets: [], senders: [], templates: []
+    };
+    globalThis.fetch = (url, options = {}) => {
+      const path = url.replace(/.*\/php-api/, '');
+      const body = JSON.parse(options.body || '{}');
+      calls.push({ path, body });
+      return Promise.resolve({ ok: true, json: async () => savedDataResponse(body) });
+    };
+
+    const saved = await saveData();
+
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].path, '/data');
+    assert.deepEqual(Object.keys(calls[0].body).sort(), ['citizens', 'questionnaireCases']);
+    assert.equal(saved.citizens[0]._version, '1');
+    assert.equal(state.collectionBaselines.questionnaireCases['QC-G-1-2026-06'].wish, 'per Post');
+  });
+
+  it('sichert bei jedem Backend-Fehler den gesamten lokalen Stand', async () => {
+    state.auth.token = 'token';
+    state.collectionVersions = { citizens: { 'G-1': '1' } };
+    state.collectionBaselines = { citizens: { 'G-1': { id: 'G-1', firstName: 'Alt' } } };
+    state.data = {
+      citizens: [{ id: 'G-1', firstName: 'Neu' }],
+      questionnaireCases: [], weddingAnniversaries: [], sokoGroups: [], sokoMembers: [], streets: [], senders: [], templates: []
+    };
+    globalThis.fetch = () => Promise.resolve({ ok: false, status: 500, json: async () => ({ error: 'kaputt' }) });
+    const realWarn = console.warn;
+    console.warn = () => {};
+    const saved = await saveData();
+    console.warn = realWarn;
+
+    assert.equal(saved, false);
+    assert.match(localStorage.getItem('gratulationsdienst.pending'), /Neu/);
+    assert.equal(state.collectionBaselines.citizens['G-1'].firstName, 'Alt');
   });
 
   it('speichert viele neue Jubilare (z.B. aus Testdaten-Erzeugung) in einem Request statt vieler Einzelaufrufe', async () => {

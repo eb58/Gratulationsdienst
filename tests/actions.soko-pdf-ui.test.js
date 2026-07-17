@@ -121,6 +121,17 @@ beforeEach(() => {
     senders: [],
     templates: []
   };
+  state.auth.token = 'token';
+  state.auth.user = { id: 'U-1', role: 'admin' };
+  state.collectionVersions = {};
+  state.collectionBaselines = {};
+  globalThis.fetch = (_url, options = {}) => {
+    const body = JSON.parse(options.body || '{}');
+    return Promise.resolve({
+      ok: true,
+      json: async () => Object.fromEntries(Object.entries(body).map(([collection, payload]) => [collection, payload.items.map((item, index) => ({ ...item, _version: `1-${index}` }))]))
+    });
+  };
   state.filters = { q: '', month: 'alle', groupId: 'alle', age: 'alle', status: 'alle', occasion: 'Geburtstag' };
   state.selectedCitizenId = 'G-2';
   state.gridApis = {};

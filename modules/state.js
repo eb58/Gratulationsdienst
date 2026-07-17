@@ -317,10 +317,10 @@ const handleSaveError = error => {
   if (isConflictError(error)) {
     console.warn("Datenbank-Konflikt erkannt.", error);
     toast("Daten wurden parallel geändert. Der aktuelle Stand wird neu geladen; bitte die Änderung erneut prüfen.");
-    return loadCollectionData({ force: true, seedEmpty: false });
+    return loadCollectionData({ force: true, seedEmpty: false }).then(() => false);
   }
+  storePendingBackendData(state.data);
   if (error?.status === 401) {
-    storePendingBackendData(state.data);
     state.auth.message = sessionExpiredMessage;
     notifyAuthExpired();
   }
@@ -328,18 +328,26 @@ const handleSaveError = error => {
   toast(error?.status === 401
     ? sessionExpiredMessage
     : "Speichern fehlgeschlagen – Änderungen sind nur lokal vorhanden.");
-  return null;
+  return false;
 };
+
+const savedCollectionEntries = (collections, savedData) => collections.map(collection => [collection, savedData?.[collection] || []]);
+const saveBackendCollections = (collections, persisted) => apiRequest('/data', {
+  method: 'PUT',
+  body: JSON.stringify(Object.fromEntries(collections.map(collection => [collection, {
+    items: (persisted[collection] || []).map(item => withKnownVersion(collection, item)),
+    knownVersions: state.collectionVersions[collection] || {}
+  }])))
+}).then(savedData => savedCollectionEntries(collections, savedData));
 
 const persistBackendCollections = async data => {
   const persisted = dataForPersistence(data);
   const changedCollections = writableCollections().filter(collection => collectionOperations(collection, persisted[collection] || []).length > 0);
   if (!changedCollections.length) { clearPendingBackendData(); return {}; }
-  const results = await Promise.allSettled(changedCollections.map(collection => saveBackendCollection(collection, persisted[collection] || [])));
-  results
-    .filter(result => result.status === "fulfilled")
-    .map(result => result.value)
-    .forEach(([collection, savedItems]) => {
+  const savedEntries = changedCollections.length === 1
+    ? [await saveBackendCollection(changedCollections[0], persisted[changedCollections[0]] || [])]
+    : await saveBackendCollections(changedCollections, persisted);
+  savedEntries.forEach(([collection, savedItems]) => {
       const normalizedSavedItems = Array.isArray(savedItems) ? savedItems : [];
       state.collectionVersions[collection] = collectionVersionMap(normalizedSavedItems);
       state.collectionBaselines[collection] = collectionBaselineMap(normalizedSavedItems);
@@ -348,17 +356,14 @@ const persistBackendCollections = async data => {
         state.data[collection] = state.data[collection].map(item => versionById.has(item.id) ? { ...item, _version: versionById.get(item.id) } : item);
       }
     });
-  const rejected = results.find(result => result.status === "rejected");
-  if (rejected) throw rejected.reason;
   clearPendingBackendData();
-  return Object.fromEntries(results.map(result => result.value));
+  return Object.fromEntries(savedEntries);
 };
 
 let saveQueue = Promise.resolve();
 
 export const saveCollectionData = data => {
   if (!state.auth.token) {
-    storePendingBackendData(state.data);
     return Promise.resolve(handleSaveError({ status: 401, message: sessionExpiredMessage }));
   }
   saveQueue = saveQueue

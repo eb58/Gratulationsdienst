@@ -5,7 +5,7 @@ declare(strict_types=1);
 // idempotent an, veraendert vorhandene Tabellen aber nicht automatisch.
 const COLLECTIONS = ['citizens', 'questionnaireCases', 'weddingAnniversaries', 'sokoGroups', 'sokoMembers', 'streets', 'senders', 'templates'];
 const ADMIN_COLLECTIONS = ['sokoGroups', 'sokoMembers', 'streets', 'senders', 'templates'];
-const AUDITED_COLLECTIONS = ['citizens', 'sokoGroups', 'sokoMembers', 'streets'];
+const AUDITED_COLLECTIONS = ['citizens', 'questionnaireCases', 'weddingAnniversaries', 'sokoGroups', 'sokoMembers', 'streets', 'senders', 'templates'];
 const SESSION_TTL_SECONDS = 28800;
 const MFA_TICKET_TTL_SECONDS = 300;
 const PASSWORD_RESET_TTL_SECONDS = 900;
@@ -431,11 +431,8 @@ function handleQuestionnairePages(array $db, string $method, array $route, array
 function handleAudit(array $db, string $method, array $user): void
 {
     requireAdmin($user);
-    if ($method === 'DELETE') {
-        $deleted = executeStatement($db, 'DELETE FROM gd_audit_log', []);
-        respond(['ok' => true, 'deleted' => $deleted]);
-    }
     if ($method !== 'GET') respond(['error' => 'Methode nicht erlaubt.'], 405);
+    if (!verifyAuditChain($db)) respond(['error' => 'Die Integritätsprüfung des Änderungsprotokolls ist fehlgeschlagen.'], 409);
     $limit = min(500, max(1, (int)($_GET['limit'] ?? 100)));
     $days = min(365, max(1, (int)($_GET['days'] ?? 5)));
     $cutoff = (new DateTimeImmutable())->modify('-' . $days . ' days')->format('Y-m-d H:i:s');
@@ -1086,15 +1083,67 @@ function shouldAuditCollection(string $collection, ?array $actor): bool
     return $actor !== null && in_array($collection, AUDITED_COLLECTIONS, true);
 }
 
-function auditLog(array $db, array $actor, string $action, string $collection, string $recordId, ?array $before, ?array $after): void
+function canonicalAuditValue(mixed $value): mixed
+{
+    if (!is_array($value)) return $value;
+    if (array_is_list($value)) return array_map('canonicalAuditValue', $value);
+    ksort($value);
+    return array_map('canonicalAuditValue', $value);
+}
+
+function auditJsonValue(?string $json): mixed
+{
+    return $json === null ? null : canonicalAuditValue(json_decode($json, true, flags: JSON_THROW_ON_ERROR));
+}
+
+function auditCanonical(string $previousHash, string $actorId, string $actorEmail, string $action, string $collection, string $recordId, string $occurredAt, ?string $beforeJson, ?string $afterJson): string
+{
+    return json_encode([
+        $previousHash,
+        $actorId,
+        $actorEmail,
+        $action,
+        $collection,
+        $recordId,
+        $occurredAt,
+        auditJsonValue($beforeJson),
+        auditJsonValue($afterJson),
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+}
+
+function verifyAuditChain(array $db): bool
+{
+    $previousHash = '';
+    $rows = queryAll($db, 'SELECT actor_user_id, actor_email, action, collection_name, record_id, before_json, after_json, occurred_at, previous_hash, entry_hash FROM gd_audit_log ORDER BY id');
+    foreach ($rows as $row) {
+        if (!hash_equals($previousHash, (string)$row['previous_hash'])) return false;
+        $canonical = auditCanonical(
+            $previousHash,
+            (string)$row['actor_user_id'],
+            (string)$row['actor_email'],
+            (string)$row['action'],
+            (string)$row['collection_name'],
+            (string)$row['record_id'],
+            (string)$row['occurred_at'],
+            $row['before_json'] === null ? null : (string)$row['before_json'],
+            $row['after_json'] === null ? null : (string)$row['after_json'],
+        );
+        if (!hash_equals((string)$row['entry_hash'], hash('sha256', $canonical))) return false;
+        $previousHash = (string)$row['entry_hash'];
+    }
+    return true;
+}
+
+function auditLog(array $db, array $actor, string $action, string $collection, string $recordId, ?array $before, ?array $after, ?string $occurredAt = null): void
 {
     $beforeJson = $before === null ? null : json_encode($before, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
     $afterJson = $after === null ? null : json_encode($after, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
     // Letzte Zeile sperren, damit parallele Transaktionen die Hash-Kette nicht verzweigen (SQLite serialisiert per Transaktion).
     $lockSuffix = ($db['driver'] === 'mysqli' || $db['driver'] === 'mysql') ? ' FOR UPDATE' : '';
     $previousHash = (string)(fetchOne($db, 'SELECT entry_hash FROM gd_audit_log ORDER BY id DESC LIMIT 1' . $lockSuffix)['entry_hash'] ?? '');
-    $canonical = json_encode([$previousHash, (string)$actor['id'], $action, $collection, $recordId, $beforeJson, $afterJson], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
-    executeStatement($db, 'INSERT INTO gd_audit_log (actor_user_id, actor_email, action, collection_name, record_id, before_json, after_json, previous_hash, entry_hash) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', [
+    $occurredAt ??= sqlDateTime(time());
+    $canonical = auditCanonical($previousHash, (string)$actor['id'], (string)($actor['email'] ?? ''), $action, $collection, $recordId, $occurredAt, $beforeJson, $afterJson);
+    executeStatement($db, 'INSERT INTO gd_audit_log (actor_user_id, actor_email, action, collection_name, record_id, before_json, after_json, occurred_at, previous_hash, entry_hash) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [
         (string)$actor['id'],
         (string)($actor['email'] ?? ''),
         $action,
@@ -1102,6 +1151,7 @@ function auditLog(array $db, array $actor, string $action, string $collection, s
         $recordId,
         $beforeJson,
         $afterJson,
+        $occurredAt,
         $previousHash,
         hash('sha256', $canonical),
     ]);

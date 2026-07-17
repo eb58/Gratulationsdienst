@@ -600,9 +600,13 @@ const auditActionLabels = {
 };
 const auditCollectionLabels = {
   citizens: "Jubilar",
+  questionnaireCases: 'Fragebogenfall',
+  weddingAnniversaries: 'Hochzeitsjubiläum',
   sokoGroups: "SOKO",
   sokoMembers: "SOKO-Mitglied",
-  streets: "Straßenzuordnung"
+  streets: "Straßenzuordnung",
+  senders: 'Absender',
+  templates: 'Vorlage'
 };
 const auditFieldLabels = {
   firstName: "Vorname",
@@ -703,7 +707,7 @@ export const views = {
       </div>
       <section class="panel">
         <h2>Änderungen</h2>
-        <p class="muted">Protokolliert werden Änderungen an Jubilaren, SOKOs, SOKO-Mitgliedern und Straßenzuordnungen.</p>
+        <p class="muted">Protokolliert werden alle fachlichen Änderungen mit Bearbeiter und Zeitpunkt. Die Hashkette wird beim Laden auf Integrität geprüft.</p>
         <div class="list">
           ${entries.map(entry => `
             <div class="list-item-row audit-entry">
