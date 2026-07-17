@@ -146,7 +146,6 @@ const drawQuestionnairePage = async (citizen, marks, pageIndex) => {
   text(context, "Abt. Finanzen, Personal und Bürgerdienste", 15, 20, 3);
   text(context, "Senioren 2", 15, 26, 3);
   text(context, `UR Sozialkommission: ${group?.id || ""}`, 15, 40, 4.1, "bold");
-  text(context, citizen.id || "", 168, SOKO_QR_BOX.top + SOKO_QR_BOX.size + 4, 2.2);
 
   box(context, 104, 8, 27, 14);
   box(context, 131, 8, 25, 14);

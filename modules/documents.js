@@ -474,7 +474,6 @@ export const renderSokoForm = (citizen, index) => {
     ${text(15, 22, 40, 5, "Senioren 2", "font-size:8.5pt")}
     ${text(15, 34, 82, 7, `UR Sozialkommission: <strong>${escapeHtml(group?.id || "")}</strong>`, "font-size:11pt")}
     ${text(SOKO_QR_BOX.left, SOKO_QR_BOX.top, SOKO_QR_BOX.size, SOKO_QR_BOX.size, qrCode, "background:#fff")}
-    ${text(168, SOKO_QR_BOX.top + SOKO_QR_BOX.size + 1, 27, 4, escapeHtml(citizen.id || ""), "font-size:6.2pt;text-align:center;letter-spacing:.1pt")}
 
     ${box(104, 8, 27, 14, `<div>Datum</div><div style="margin-top:2mm">${formatDateDe(todayIso())}</div>`, "padding:1.2mm;font-size:8.5pt")}
     ${box(131, 8, 25, 14, `<div>Telefon</div><div style="margin-top:2mm">90294 4055</div>`, "padding:1.2mm;border-left:0;font-size:8.5pt")}
