@@ -19,6 +19,7 @@ services:
       GD_APP_URL: ${GD_APP_URL:?Set GD_APP_URL in docker/.env}
       GD_MAIL_FROM: ${GD_MAIL_FROM:-noreply@example.org}
       GD_MAIL_FROM_NAME: ${GD_MAIL_FROM_NAME:-Gratulationsdienst Reinickendorf}
+      GD_TRUSTED_PROXIES: ${GD_TRUSTED_PROXIES:-}
     secrets:
       - db_password
     read_only: true

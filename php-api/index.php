@@ -487,7 +487,7 @@ function handleAuth(array $db, string $method, array $route): void
         $email = normalizedEmail($data['email'] ?? '');
         $emailLimitKey = 'login-email:' . hash('sha256', $email);
         $allowed = rateLimit($db, $emailLimitKey, LOGIN_RATE_LIMIT_MAX, LOGIN_RATE_LIMIT_SECONDS)
-            && rateLimit($db, 'login-ip:' . hash('sha256', clientIp()), LOGIN_RATE_LIMIT_MAX * 2, LOGIN_RATE_LIMIT_SECONDS);
+            && rateLimit($db, 'login-ip:' . hash('sha256', clientIp($db)), LOGIN_RATE_LIMIT_MAX * 2, LOGIN_RATE_LIMIT_SECONDS);
         if (!$allowed) respond(['error' => 'Zu viele Anmeldeversuche. Bitte später erneut probieren.'], 429);
         $user = userByEmail($db, $email);
         $active = $user && (bool)$user['active'];
@@ -497,8 +497,9 @@ function handleAuth(array $db, string $method, array $route): void
         }
         clearRateLimit($db, $emailLimitKey);
         if ((bool)$user['mfa_enabled']) {
+            // Kein user-Objekt vor dem zweiten Faktor herausgeben.
             $ticket = createAuthToken($db, $user['id'], 'mfa', MFA_TICKET_TTL_SECONDS);
-            respond(['mfaRequired' => true, 'ticket' => $ticket, 'user' => publicUser($user)]);
+            respond(['mfaRequired' => true, 'ticket' => $ticket]);
         }
         respond(authResponse($db, $user));
     }
@@ -512,7 +513,7 @@ function handleAuth(array $db, string $method, array $route): void
     if ($method === 'POST' && $action === 'mfa' && ($route[1] ?? '') === 'verify') {
         $data = requireObject(readJson());
         $ticket = (string)($data['ticket'] ?? '');
-        if (!rateLimit($db, 'mfa-ip:' . hash('sha256', clientIp()), LOGIN_RATE_LIMIT_MAX * 2, LOGIN_RATE_LIMIT_SECONDS)) {
+        if (!rateLimit($db, 'mfa-ip:' . hash('sha256', clientIp($db)), LOGIN_RATE_LIMIT_MAX * 2, LOGIN_RATE_LIMIT_SECONDS)) {
             respond(['error' => 'Zu viele Versuche. Bitte später erneut probieren.'], 429);
         }
         $tokenRow = authTokenRow($db, $ticket, 'mfa');
@@ -533,7 +534,7 @@ function handleAuth(array $db, string $method, array $route): void
         $email = normalizedEmail($data['email'] ?? '');
         $allowed = filter_var($email, FILTER_VALIDATE_EMAIL)
             && rateLimit($db, 'reset-email:' . hash('sha256', $email), PASSWORD_RESET_RATE_LIMIT_MAX, PASSWORD_RESET_RATE_LIMIT_SECONDS)
-            && rateLimit($db, 'reset-ip:' . hash('sha256', clientIp()), PASSWORD_RESET_RATE_LIMIT_MAX * 2, PASSWORD_RESET_RATE_LIMIT_SECONDS);
+            && rateLimit($db, 'reset-ip:' . hash('sha256', clientIp($db)), PASSWORD_RESET_RATE_LIMIT_MAX * 2, PASSWORD_RESET_RATE_LIMIT_SECONDS);
         $user = $allowed ? userByEmail($db, $email) : null;
         if ($user && (bool)$user['active']) {
             executeStatement($db, "DELETE FROM gd_auth_tokens WHERE user_id = ? AND token_type = 'reset'", [$user['id']]);
@@ -548,7 +549,7 @@ function handleAuth(array $db, string $method, array $route): void
 
     if ($method === 'POST' && $action === 'password' && ($route[1] ?? '') === 'reset') {
         $data = requireObject(readJson());
-        if (!rateLimit($db, 'reset-apply-ip:' . hash('sha256', clientIp()), 20, PASSWORD_RESET_RATE_LIMIT_SECONDS)) respond(['error' => 'Zu viele Versuche. Bitte später erneut probieren.'], 429);
+        if (!rateLimit($db, 'reset-apply-ip:' . hash('sha256', clientIp($db)), 20, PASSWORD_RESET_RATE_LIMIT_SECONDS)) respond(['error' => 'Zu viele Versuche. Bitte später erneut probieren.'], 429);
         $tokenRow = authTokenRow($db, (string)($data['token'] ?? ''), 'reset');
         if (!$tokenRow) respond(['error' => 'Rücksetz-Code ist ungültig oder abgelaufen.'], 401);
         $password = (string)($data['password'] ?? '');
@@ -702,9 +703,26 @@ function db(): array
     return ['driver' => $pdo->getAttribute(PDO::ATTR_DRIVER_NAME), 'pdo' => $pdo, 'config' => $config];
 }
 
+// Fuehrt das Schema-Skript nur aus, wenn es sich seit dem letzten Lauf geaendert hat
+// (Hash-Marker in gd_settings) - keine Migration, nur ein Cache gegen 13 CREATE-Statements pro Request.
 function ensureSchema(array $db): void
 {
-    executeSqlScript($db, file_get_contents(__DIR__ . '/schema.mysql.sql'));
+    $sql = file_get_contents(__DIR__ . '/schema.mysql.sql');
+    $marker = hash('sha256', $sql);
+    if (appliedSchemaScriptHash($db) === $marker) return;
+    executeSqlScript($db, $sql);
+    saveSetting($db, 'schemaScriptHash', json_encode($marker, JSON_THROW_ON_ERROR));
+}
+
+function appliedSchemaScriptHash(array $db): string
+{
+    try {
+        $row = fetchOne($db, 'SELECT value FROM gd_settings WHERE name = ?', ['schemaScriptHash']);
+        $decoded = json_decode((string)($row['value'] ?? ''), true);
+        return is_string($decoded) ? $decoded : '';
+    } catch (Throwable) {
+        return ''; // gd_settings existiert noch nicht -> Schema-Skript ausfuehren
+    }
 }
 
 function readAll(array $db): array
@@ -733,12 +751,16 @@ function readReceiptSettings(array $db): array
 
 function saveReceiptSettings(array $db, array $settings): void
 {
-    $payload = json_encode(receiptSettingsFromPayload($settings), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+    saveSetting($db, RECEIPT_SETTINGS_NAME, json_encode(receiptSettingsFromPayload($settings), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
+}
+
+function saveSetting(array $db, string $name, string $payload): void
+{
     if ($db['driver'] === 'mysqli' || $db['driver'] === 'mysql') {
-        executeStatement($db, 'INSERT INTO gd_settings (name, value) VALUES (?, ?) ON DUPLICATE KEY UPDATE value = VALUES(value)', [RECEIPT_SETTINGS_NAME, $payload]);
+        executeStatement($db, 'INSERT INTO gd_settings (name, value) VALUES (?, ?) ON DUPLICATE KEY UPDATE value = VALUES(value)', [$name, $payload]);
         return;
     }
-    executeStatement($db, 'INSERT INTO gd_settings (name, value) VALUES (?, ?) ON CONFLICT(name) DO UPDATE SET value = excluded.value', [RECEIPT_SETTINGS_NAME, $payload]);
+    executeStatement($db, 'INSERT INTO gd_settings (name, value) VALUES (?, ?) ON CONFLICT(name) DO UPDATE SET value = excluded.value', [$name, $payload]);
 }
 
 function readQuestionnairePages(array $db, string $citizenId): array
@@ -1068,7 +1090,9 @@ function auditLog(array $db, array $actor, string $action, string $collection, s
 {
     $beforeJson = $before === null ? null : json_encode($before, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
     $afterJson = $after === null ? null : json_encode($after, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
-    $previousHash = (string)(fetchOne($db, 'SELECT entry_hash FROM gd_audit_log ORDER BY id DESC LIMIT 1')['entry_hash'] ?? '');
+    // Letzte Zeile sperren, damit parallele Transaktionen die Hash-Kette nicht verzweigen (SQLite serialisiert per Transaktion).
+    $lockSuffix = ($db['driver'] === 'mysqli' || $db['driver'] === 'mysql') ? ' FOR UPDATE' : '';
+    $previousHash = (string)(fetchOne($db, 'SELECT entry_hash FROM gd_audit_log ORDER BY id DESC LIMIT 1' . $lockSuffix)['entry_hash'] ?? '');
     $canonical = json_encode([$previousHash, (string)$actor['id'], $action, $collection, $recordId, $beforeJson, $afterJson], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
     executeStatement($db, 'INSERT INTO gd_audit_log (actor_user_id, actor_email, action, collection_name, record_id, before_json, after_json, previous_hash, entry_hash) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', [
         (string)$actor['id'],
@@ -1337,9 +1361,20 @@ function appConfig(array $db): array
     return $db['config'] ?? [];
 }
 
-function clientIp(): string
+// Hinter einem Reverse-Proxy (Docker) verbinden sich alle Nutzer mit derselben REMOTE_ADDR;
+// das IP-Rate-Limit wuerde dann alle gemeinsam sperren. Nur wenn die REMOTE_ADDR als Proxy
+// konfiguriert ist (trusted_proxies), wird X-Forwarded-For ausgewertet - von rechts, weil nur
+// der letzte Eintrag vom eigenen Proxy stammt und Clients den Header beliebig vorbelegen koennen.
+function clientIp(array $db): string
 {
-    return (string)($_SERVER['REMOTE_ADDR'] ?? 'unknown');
+    $remote = (string)($_SERVER['REMOTE_ADDR'] ?? 'unknown');
+    $trustedProxies = array_map('strval', (array)(appConfig($db)['trusted_proxies'] ?? []));
+    if (!$trustedProxies || !in_array($remote, $trustedProxies, true)) return $remote;
+    $forwarded = array_map('trim', explode(',', (string)($_SERVER['HTTP_X_FORWARDED_FOR'] ?? '')));
+    foreach (array_reverse($forwarded) as $candidate) {
+        if ($candidate !== '' && !in_array($candidate, $trustedProxies, true) && filter_var($candidate, FILTER_VALIDATE_IP)) return $candidate;
+    }
+    return $remote;
 }
 
 function tokenHash(string $token): string

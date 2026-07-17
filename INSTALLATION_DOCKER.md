@@ -215,6 +215,15 @@ GD_MAIL_FROM=noreply@example.org
 GD_MAIL_FROM_NAME=Gratulationsdienst Reinickendorf
 ```
 
+Läuft die PHP-API hinter einem Reverse-Proxy, sehen alle Anwender für die API dieselbe
+Proxy-IP; die Login-Rate-Limits würden dann alle gemeinsam treffen. In dem Fall die
+Proxy-IP(s) kommagetrennt in `GD_TRUSTED_PROXIES` eintragen — nur dann wertet die API
+`X-Forwarded-For` für die Client-IP aus:
+
+```text
+GD_TRUSTED_PROXIES=172.18.0.2
+```
+
 Unter `docker/certs/` müssen vor dem Start vorhanden sein:
 
 ```text

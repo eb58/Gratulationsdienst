@@ -16,6 +16,9 @@ describe('database schema', () => {
     assert.match(tableDefinition('gd_citizens'), /age INT/);
     assert.doesNotMatch(tableDefinition('gd_citizens'), /phone VARCHAR|email VARCHAR/);
     assert.doesNotMatch(api, /SCHEMA_VERSION|ensureColumn|ensureIndex|dropColumnIfExists|storedSchemaVersion|setSchemaVersion/);
-    assert.match(api, /function ensureSchema\(array \$db\): void\s*\{\s*executeSqlScript/);
+    // ensureSchema fuehrt weiterhin nur das komplette SQL-Skript aus; der Hash-Marker
+    // in gd_settings verhindert lediglich den erneuten Lauf pro Request (keine Migrationen).
+    assert.match(api, /function ensureSchema\(array \$db\): void\s*\{[\s\S]{0,400}?executeSqlScript\(\$db, \$sql\);/);
+    assert.match(api, /appliedSchemaScriptHash\(\$db\) === \$marker/);
   });
 });

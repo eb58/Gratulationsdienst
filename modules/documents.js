@@ -398,7 +398,7 @@ const renderSokoQuittungPage = (citizens, groupId, betragProPerson, telefon, mon
     return `<tr>
       ${td("padding:1mm 2mm;width:8mm;height:8mm;text-align:center", i + 1)}
       ${td("padding:1mm 2mm;border-left:0;", name)}
-      ${td("padding:1mm 2mm;border-left:0;width:28mm;text-align:right", c ? `${betragProPerson} €` : "")}
+      ${td("padding:1mm 2mm;border-left:0;width:28mm;text-align:right", c ? `${escapeHtml(betragProPerson)} €` : "")}
       ${td("padding:1mm 2mm;border-left:0;width:22mm;", age ? `${age}. Geb.` : "")}
     </tr>`;
   }).join("");
@@ -427,7 +427,7 @@ const renderSokoQuittungPage = (citizens, groupId, betragProPerson, telefon, mon
     </tr></table>
     <table style="width:100%;border-collapse:collapse;margin-bottom:3mm"><tr>
       <td style="padding:2mm 0;width:60%"><span style="font-size:7.5pt;color:#555">Begründung: </span><strong>Zuwendung für Alters- und Ehejubilare</strong></td>
-      <td style="${b};padding:2mm;width:40%">${label("Monat")}${month}</td>
+      <td style="${b};padding:2mm;width:40%">${label("Monat")}${escapeHtml(month)}</td>
     </tr></table>
     <table style="width:100%;border-collapse:collapse;margin-bottom:4mm">
       <thead><tr>
