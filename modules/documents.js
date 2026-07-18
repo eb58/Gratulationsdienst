@@ -4,7 +4,7 @@ import { groupForCitizen, selectedCitizen, selectedTemplate, selectedSender } fr
 import { render } from './render.js'; // Zyklus OK: render wird nur in Callbacks aufgerufen
 import { templateBodyForAge } from './templates.js';
 import { qrCodeSvg } from './qr.js';
-import { SOKO_CHECKBOXES, SOKO_CHECKBOX_SIZE_MM, SOKO_QR_BOX, SOKO_QR_BOX2, sokoQuestionnaireBirthdayLabel, sokoQuestionnaireCode } from './sokoQuestionnaire.js';
+import { SOKO_CHECKBOXES, SOKO_CHECKBOX_SIZE_MM, SOKO_PRIVACY_BOX, SOKO_QR_BOX, SOKO_QR_BOX2, sokoQuestionnaireBirthdayLabel, sokoQuestionnaireCode } from './sokoQuestionnaire.js';
 import { SOKO_PRIVACY_TEXT_HTML } from './sokoPrivacyText.js';
 import { cardBackLayoutFor, cardLayoutFor } from './cardLayouts.js';
 import { citizenAddressName, citizenFormalName, citizenListName } from './citizenNames.js';
@@ -505,7 +505,7 @@ export const renderSokoForm = (citizen, index) => {
     ${box(15, 174, 88, 25, "Unterschrift der Sozialkommission und Datum", "padding:2mm;border-top:0;font-size:9.8pt")}
     ${box(103, 174, 92, 25, "Vorname des Ehegatten, ggf. abweichender Familienname", "padding:2mm;border-top:0;border-left:0;font-size:9.8pt")}
 
-    ${box(15, 203, 180, 80, `
+    ${box(SOKO_PRIVACY_BOX.left, SOKO_PRIVACY_BOX.top, SOKO_PRIVACY_BOX.width, SOKO_PRIVACY_BOX.height, `
       <div style="font-size:11pt;text-decoration:underline;margin-bottom:5mm">*Datenschutzrechtliche Einwilligungserkl&auml;rung</div>
       <div style="font-size:10.5pt;line-height:1.28;text-decoration:none">
         ${SOKO_PRIVACY_TEXT_HTML}

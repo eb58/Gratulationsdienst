@@ -116,7 +116,7 @@ export const authView = () => {
         ${field("displayName", "Name", "Administration")}
         ${field("email", "E-Mail", "", "email")}
         ${field("password", "Passwort", "", "password", "full", 'autocomplete="new-password"')}
-        <div class="field full"><button type="button" class="primary-button" data-action="auth-setup">Admin anlegen</button></div>
+        <div class="field full"><button type="submit" class="primary-button" data-action="auth-setup">Admin anlegen</button></div>
       </form>
   `);
   if (state.auth.mfaTicket) return panel(`
@@ -125,7 +125,7 @@ export const authView = () => {
       <form id="auth-mfa-form" class="form-grid">
         ${field("code", "Authenticator-Code", "", "text", "full", 'inputmode="numeric" autocomplete="one-time-code"')}
         <div class="field full button-row">
-          <button type="button" class="primary-button" data-action="auth-mfa-login">Anmelden</button>
+          <button type="submit" class="primary-button" data-action="auth-mfa-login">Anmelden</button>
           <button type="button" class="ghost-button" data-action="auth-cancel-mfa">Zurück</button>
         </div>
       </form>
@@ -135,13 +135,13 @@ export const authView = () => {
       ${notice}
       <form id="auth-reset-request-form" class="form-grid">
         ${field("email", "E-Mail", state.auth.pendingEmail ?? "", "email", "full")}
-        <div class="field full"><button type="button" class="ghost-button" data-action="auth-reset-request">Reset-Link per E-Mail anfordern</button></div>
+        <div class="field full"><button type="submit" class="ghost-button" data-action="auth-reset-request">Reset-Link per E-Mail anfordern</button></div>
       </form>
       <form id="auth-reset-apply-form" class="form-grid">
         ${field("token", "Rücksetz-Token", state.auth.resetToken || "", "text", "full")}
         ${field("password", "Neues Passwort", "", "password", "full", 'autocomplete="new-password"')}
         <div class="field full button-row">
-          <button type="button" class="primary-button" data-action="auth-reset-apply">Passwort setzen</button>
+          <button type="submit" class="primary-button" data-action="auth-reset-apply">Passwort setzen</button>
           <button type="button" class="ghost-button" data-action="auth-show-login">Zur Anmeldung</button>
         </div>
       </form>
@@ -153,7 +153,7 @@ export const authView = () => {
         ${field("email", "E-Mail", "", "email", "full", 'autocomplete="username"')}
         ${field("password", "Passwort", "", "password", "full", 'autocomplete="current-password"')}
         <div class="field full button-row">
-          <button type="button" class="primary-button" data-action="auth-login">Anmelden</button>
+          <button type="submit" class="primary-button" data-action="auth-login">Anmelden</button>
           <button type="button" class="ghost-button" data-action="auth-show-reset">Passwort vergessen</button>
         </div>
       </form>

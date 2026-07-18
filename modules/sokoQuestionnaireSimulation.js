@@ -6,6 +6,7 @@ import {
   SOKO_CHECKBOXES,
   SOKO_HANDWRITING_FIELDS,
   SOKO_PAGE_MM,
+  SOKO_PRIVACY_BOX,
   SOKO_QR_BOX,
   SOKO_QR_BOX2,
   sokoQuestionnaireBirthdayLabel,
@@ -91,8 +92,24 @@ const text = (context, value, x, y, size = 3.1, weight = "") => {
   setFont(context, size, weight);
   context.fillText(String(value || ""), x, y);
 };
-const multiText = (context, value, x, y, lineHeight = 4.3, size = 3.1, weight = "") =>
-  String(value || "").split("\n").forEach((line, index) => text(context, line, x, y + index * lineHeight, size, weight));
+const wrappedLines = (context, value, maxWidth, size, weight) => String(value || "").split("\n").flatMap(paragraph => {
+  const words = paragraph.trim().split(/\s+/).filter(Boolean);
+  if (!Number.isFinite(maxWidth) || !words.length) return words.length ? [paragraph] : [""];
+  setFont(context, size, weight);
+  let current = "";
+  const result = [];
+  words.forEach(word => {
+    const candidate = current ? `${current} ${word}` : word;
+    if (current && context.measureText(candidate).width > maxWidth) {
+      result.push(current);
+      current = word;
+    } else current = candidate;
+  });
+  if (current) result.push(current);
+  return result;
+});
+const multiText = (context, value, x, y, lineHeight = 4.3, size = 3.1, weight = "", maxWidth = Infinity) =>
+  wrappedLines(context, value, maxWidth, size, weight).forEach((line, index) => text(context, line, x, y + index * lineHeight, size, weight));
 const box = (context, x, y, width, height) => context.strokeRect(x, y, width, height);
 const drawCheck = (context, config) => {
   const x = config.left, y = config.top, size = SOKO_CHECKBOX_SIZE_MM;
@@ -186,8 +203,8 @@ const drawQuestionnairePage = async (citizen, marks, pageIndex) => {
   box(context, 103, 174, 92, 25);
   text(context, "Unterschrift der Sozialkommission und Datum", 18, 180, 3.1);
   text(context, "Vorname des Ehegatten, ggf. abweichender Familienname", 106, 180, 2.8);
-  box(context, 15, 203, 180, 80);
-  multiText(context, SIMULATED_SOKO_PRIVACY_TEXT, 18, 212, 3.9, 3.0);
+  box(context, SOKO_PRIVACY_BOX.left, SOKO_PRIVACY_BOX.top, SOKO_PRIVACY_BOX.width, SOKO_PRIVACY_BOX.height);
+  multiText(context, SIMULATED_SOKO_PRIVACY_TEXT, 18, 212, 3.9, 3.0, "", 174);
   clearBlankHandwritingAreas(context);
 
   return canvas.toDataURL("image/jpeg", JPEG_QUALITY);

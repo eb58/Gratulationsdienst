@@ -222,6 +222,8 @@ const handleNavClick = nav => {
 };
 const handleActionClick = (action, event) => {
   if (!action) return false;
+  const isSubmitButton = action.matches?.('button[type="submit"]') || (String(action.tagName || '').toLowerCase() === 'button' && action.type === 'submit');
+  if (isSubmitButton) event.preventDefault();
   const runAction = () => {
     state.focusTarget = focusSelectorFor(action);
     runActionByName(action.dataset.action, event);
@@ -231,6 +233,16 @@ const handleActionClick = (action, event) => {
     return true;
   }
   runAction();
+  return true;
+};
+const handleFormSubmit = (form, event) => {
+  event.preventDefault();
+  if (!form?.querySelector) return true;
+  const submitter = event.submitter || form.querySelector('button[type="submit"][data-action]');
+  const actionName = submitter?.dataset.action;
+  if (!actionName) return true;
+  state.focusTarget = focusSelectorFor(submitter);
+  runActionByName(actionName, event);
   return true;
 };
 
@@ -283,7 +295,7 @@ document.addEventListener("input", event => {
   if (bound) state[bound.dataset.bind] = boundValue(bound);
 });
 
-document.addEventListener("submit", event => event.preventDefault());
+document.addEventListener("submit", event => handleFormSubmit(event.target, event));
 
 document.addEventListener("pointerdown", event => {
   const splitter = event.target.closest("[data-splitter]");

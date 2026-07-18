@@ -74,9 +74,12 @@ describe('SOKO questionnaire simulation helpers', () => {
 
   it('uses the full questionnaire privacy text in the simulation', () => {
     assert.equal(SIMULATED_SOKO_PRIVACY_TEXT.endsWith(SOKO_PRIVACY_TEXT), true);
+    assert.doesNotMatch(SOKO_PRIVACY_TEXT, /\r?\n/);
     assert.match(SIMULATED_SOKO_PRIVACY_TEXT, /Datenschutzrechtliche Einwilligungserkl\u00e4rung/);
-    assert.match(SIMULATED_SOKO_PRIVACY_TEXT, /Die Soko-Mitarbeiterin\/der Soko-Mitarbeiter hat die Jubilarin\/den Jubilar/);
+    assert.match(SIMULATED_SOKO_PRIVACY_TEXT, /Das Soko-Mitglied hat die betroffene Person/);
+    assert.doesNotMatch(SIMULATED_SOKO_PRIVACY_TEXT, /\/(?:der|den) /);
+    assert.match(SIMULATED_SOKO_PRIVACY_TEXT, /Verarbeitung und Nutzung ihrer Daten/);
     assert.match(SIMULATED_SOKO_PRIVACY_TEXT, /Die Verweigerung der Einwilligung f\u00fchrt dazu, dass keine Pressemitteilung/);
-    assert.match(SIMULATED_SOKO_PRIVACY_TEXT, /Verarbeitung der personenbezogenen Daten m\u00fcndlich\/telefonisch gegeben wurde\./);
+    assert.match(SIMULATED_SOKO_PRIVACY_TEXT, /Verarbeitung der Daten\s+gegeben wurde\./);
   });
 });

@@ -27,7 +27,7 @@ const waitForServer = async (url, timeoutMs = 30000) => {
 let questionnairePageSeq = 0;
 const mockBackend = context => context.route('**/php-api/**', route => {
   const request = route.request();
-  const path = new URL(request.url()).pathname.replace(/.*\/php-api/, '');
+  const path = new URL(request.url()).pathname.replace(/.*\/php-api/, '').replace(/^\/index\.php/, '');
   const json = (body, status = 200) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
   if (path === '/auth/status') return json({ setupRequired: false, authenticated: false });
   if (path === '/auth/login') return json({ token: 'e2e-token', user: adminUser });
@@ -92,6 +92,17 @@ describe('Gratulationsdienst E2E', () => {
       assert.equal(await page.locator('#page-title').textContent(), 'Dashboard');
       assert.match(await page.locator('.user-chip strong').textContent(), /Admin Demo/);
       assert.equal(await page.evaluate(() => document.body.classList.contains('auth-locked')), false);
+    } finally { await context.close(); }
+  });
+
+  it('meldet sich mit Enter aus dem Passwortfeld an', async () => {
+    const { context, page } = await openApp();
+    try {
+      await page.fill('#auth-login-form input[name="email"]', 'admin@local');
+      await page.fill('#auth-login-form input[name="password"]', 'geheim');
+      await page.press('#auth-login-form input[name="password"]', 'Enter');
+      await page.waitForSelector('.user-chip');
+      assert.equal(await page.locator('#page-title').textContent(), 'Dashboard');
     } finally { await context.close(); }
   });
 

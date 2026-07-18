@@ -294,6 +294,8 @@ describe('SOKO print artifacts', () => {
     assert.match(html, /Frau Dr\. Erika Mustermann/);
     assert.match(html, /90\. Geburtstag der nebenstehend Genannten/);
     assert.match(maleHtml, /90\. Geburtstag des nebenstehend Genannten/);
+    assert.match(html, /left:18mm;top:261mm;width:16mm;height:16mm/);
+    assert.match(html, /left:15mm;top:203mm;width:176mm;height:76mm/);
     assert.match(html, /005 \/ 06/);
     assert.ok(html.indexOf('005 / 06') < html.indexOf('Lfd. Nr. / Monat'));
     assert.match(html, /left:104mm;top:22mm;width:91mm;height:58mm;[\s\S]*?005 \/ 06<\/div><\/div>/);

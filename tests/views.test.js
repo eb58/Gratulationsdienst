@@ -177,19 +177,24 @@ beforeEach(() => {
 describe('authView', () => {
   it('renders login, setup, MFA and reset states', () => {
     assert.match(authView(), /auth-login-form/);
+    assert.match(authView(), /<button type="submit" class="primary-button" data-action="auth-login">/);
 
     state.auth.setupRequired = true;
     assert.match(authView(), /auth-setup-form/);
+    assert.match(authView(), /<button type="submit" class="primary-button" data-action="auth-setup">/);
 
     state.auth.setupRequired = false;
     state.auth.mfaTicket = 'ticket';
     assert.match(authView(), /auth-mfa-form/);
+    assert.match(authView(), /<button type="submit" class="primary-button" data-action="auth-mfa-login">/);
 
     state.auth.mfaTicket = '';
     state.auth.mode = 'reset';
     state.auth.message = '<Fehler>';
     assert.match(authView(), /auth-reset-request-form/);
     assert.match(authView(), /&lt;Fehler&gt;/);
+    assert.match(authView(), /<button type="submit" class="ghost-button" data-action="auth-reset-request">/);
+    assert.match(authView(), /<button type="submit" class="primary-button" data-action="auth-reset-apply">/);
   });
 });
 

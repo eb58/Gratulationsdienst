@@ -6,7 +6,8 @@ export const SOKO_PAGE_MM = { width: 210, height: 297 };
 export const SOKO_QR_BOX = { left: 176, top: 24, size: 16 };
 // Abstand zum Rahmen der Datenschutz-Box (15,203,180,80) bewusst groß halten: bei nur 2mm Puffer
 // verschmiert die Rahmenlinie nach Scan/JPEG-Kompression in die QR-Ruhezone und macht ihn unlesbar.
-export const SOKO_QR_BOX2 = { left: 20, top: 258, size: 16 };
+export const SOKO_PRIVACY_BOX = { left: 15, top: 203, width: 176, height: 76 };
+export const SOKO_QR_BOX2 = { left: 18, top: 261, size: 16 };
 export const SOKO_QR_BOXES = [SOKO_QR_BOX, SOKO_QR_BOX2];
 export const SOKO_CHECKBOX_SIZE_MM = 4;
 export const SOKO_QUESTIONNAIRE_IMPORTED_STATUS = "geladen";

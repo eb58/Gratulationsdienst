@@ -2,8 +2,10 @@ services:
   web:
     environment:
       ALLOW_SELF_SIGNED_CERT: 'true'
+      GD_APP_URL: 'http://127.0.0.1/gratulationsdienst/'
     volumes:
-      - ./certs:/etc/apache2/ssl
+      - ./apache-http-dev.conf:/etc/apache2/sites-available/000-default.conf:ro
+      - ./apache-https-dev.conf:/etc/apache2/sites-available/default-ssl.conf:ro
       - ./src/gratulationsdienst/index.html:/var/www/html/gratulationsdienst/index.html:ro
       - ./src/gratulationsdienst/favicon.svg:/var/www/html/gratulationsdienst/favicon.svg:ro
       - ./src/gratulationsdienst/assets:/var/www/html/gratulationsdienst/assets:ro

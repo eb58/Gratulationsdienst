@@ -50,7 +50,7 @@ if (!(Test-Path docker/secrets/db_password.txt)) {
 Für die lokale Installation enthält `docker/.env` beispielsweise:
 
 ```text
-GD_APP_URL=https://localhost/gratulationsdienst/
+GD_APP_URL=http://127.0.0.1/gratulationsdienst/
 GD_MAIL_FROM=noreply@example.test
 GD_MAIL_FROM_NAME=Gratulationsdienst Reinickendorf
 ```
@@ -59,7 +59,7 @@ Die Dateien `docker/.env` und `docker/secrets/*.txt` werden von Git ignoriert. P
 
 ## 4. Lokale Installation starten
 
-Der lokale Override darf bei fehlenden Zertifikaten ein selbstsigniertes Zertifikat erzeugen. phpMyAdmin wird durch das Profil `admin` aktiviert:
+Der lokale Override liefert die Anwendung über HTTP und HTTPS aus. Für die Entwicklung ist HTTP ohne Zertifikatswarnung empfohlen; HTTPS bleibt für bereits geöffnete lokale Lesezeichen verfügbar. phpMyAdmin wird durch das Profil `admin` aktiviert:
 
 ```powershell
 docker-compose --env-file docker/.env `
@@ -127,7 +127,7 @@ Niemals `-v` oder `docker volume rm` verwenden, wenn die bestehende Datenbank er
 Health-Endpunkt:
 
 ```powershell
-curl.exe -k https://localhost/gratulationsdienst/php-api/index.php/health
+curl.exe http://127.0.0.1/gratulationsdienst/php-api/index.php/health
 ```
 
 Erwartet wird unter anderem:
@@ -139,10 +139,11 @@ Erwartet wird unter anderem:
 Anwendung:
 
 ```text
+http://127.0.0.1/gratulationsdienst/
 https://localhost/gratulationsdienst/
 ```
 
-Bei einer leeren Datenbank erscheint die Ersteinrichtung für das erste Administratorkonto. Das Anwendungspasswort ist unabhängig von den MariaDB-Secrets. Beim selbstsignierten lokalen Zertifikat ist eine Browserwarnung zu erwarten.
+Bei einer leeren Datenbank erscheint die Ersteinrichtung für das erste Administratorkonto. Das Anwendungspasswort ist unabhängig von den MariaDB-Secrets.
 
 ## 7. phpMyAdmin
 

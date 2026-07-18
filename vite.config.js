@@ -7,11 +7,14 @@ const copyDataFile = file => { try { copyFileSync(`public/data/${file}`, `${data
 const gitShortHash = () => { try { return execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim(); } catch { return 'nogit'; } };
 const buildDateStamp = () => new Date().toISOString().slice(0, 10).replaceAll('-', '');
 const appVersion = `${buildDateStamp()}-${gitShortHash()}`;
+export const cleanAssetsForWatch = watchMode => !watchMode;
 
 // vite build --watch beobachtet public/ nicht zuverlässig -> eigener fs.watch kopiert Datenänderungen direkt
 const cleanAssets = () => ({
   name: 'clean-assets',
-  buildStart() { rmSync('docker/src/gratulationsdienst/assets', { recursive: true, force: true }); }
+  buildStart() {
+    if (cleanAssetsForWatch(this.meta.watchMode)) rmSync('docker/src/gratulationsdienst/assets', { recursive: true, force: true });
+  }
 });
 
 const watchPublicData = () => {

@@ -8,6 +8,8 @@ import {
   citizenIdFromSokoQuestionnaireCode,
   findSokoQuestionnaireCitizen,
   SOKO_QUESTIONNAIRE_IMPORTED_STATUS,
+  SOKO_PRIVACY_BOX,
+  SOKO_QR_BOX2,
   sokoQuestionnaireBirthdayLabel,
   sokoQuestionnaireCode,
   sokoQuestionnaireDataFromCode,
@@ -47,6 +49,11 @@ describe('SOKO questionnaire codes', () => {
     assert.equal(sokoQuestionnaireBirthdayLabel({ salutation: 'Frau' }, 90), '90. Geburtstag der nebenstehend Genannten');
     assert.equal(sokoQuestionnaireBirthdayLabel({ salutation: 'Herr' }, 90), '90. Geburtstag des nebenstehend Genannten');
     assert.equal(sokoQuestionnaireBirthdayLabel({}, 90), '90. Geburtstag des nebenstehend Genannten');
+  });
+
+  it('uses the adjusted lower QR and privacy box coordinates', () => {
+    assert.deepEqual(SOKO_QR_BOX2, { left: 18, top: 261, size: 16 });
+    assert.deepEqual(SOKO_PRIVACY_BOX, { left: 15, top: 203, width: 176, height: 76 });
   });
 
   it('matches citizens by QR data when the QR id is no longer present', () => {
