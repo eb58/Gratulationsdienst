@@ -14,10 +14,20 @@ const ibanHint = (normalized, valid) => {
 export const field = (name, label, value, type = "text", extra = "", inputAttrs = "") => {
   const isEmail = type === "email";
   const valid = !isEmail || isValidEmail(value);
+  const input = `<input id="${name}" name="${name}" class="${valid ? "" : "invalid"}" type="${type}" value="${escapeHtml(value)}" ${inputAttrs}>`;
+  const leadingIcon = type === "password"
+    ? `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path></svg>`
+    : isEmail ? `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7" r="4"></circle><path d="M4 21a8 8 0 0 1 16 0"></path></svg>` : "";
+  const control = leadingIcon ? `
+      <div class="input-icon-wrap${type === "password" ? " password-input-wrap" : ""}">
+        <span class="input-leading-icon">${leadingIcon}</span>
+        ${input}
+        ${type === "password" ? `<button type="button" class="password-toggle" data-password-toggle="${escapeHtml(name)}" aria-label="Passwort anzeigen" aria-pressed="false" title="Passwort anzeigen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"></path><circle cx="12" cy="12" r="2.5"></circle></svg></button>` : ""}
+      </div>` : input;
   return `
     <div class="field ${extra}">
       <label for="${name}">${label}</label>
-      <input id="${name}" name="${name}" class="${valid ? "" : "invalid"}" type="${type}" value="${escapeHtml(value)}" ${inputAttrs}>
+      ${control}
       ${isEmail ? `<small class="field-hint error">${emailHint(value)}</small>` : ""}
     </div>
   `;

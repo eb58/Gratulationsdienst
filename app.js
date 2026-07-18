@@ -32,6 +32,31 @@ const focusSelectorFor = element => {
   }
   return "";
 };
+const passwordVisibilityTimers = new WeakMap();
+const setPasswordToggleState = (button, visible) => {
+  const label = visible ? "Passwort verbergen" : "Passwort anzeigen";
+  button.setAttribute("aria-label", label);
+  button.setAttribute("title", label);
+  button.setAttribute("aria-pressed", String(visible));
+};
+const togglePasswordVisibility = button => {
+  const input = document.getElementById(button?.dataset.passwordToggle || "");
+  if (!input) return false;
+  const previousTimer = passwordVisibilityTimers.get(input);
+  if (previousTimer) {
+    globalThis.clearTimeout(previousTimer);
+    passwordVisibilityTimers.delete(input);
+  }
+  const visible = input.type === "password";
+  input.type = visible ? "text" : "password";
+  setPasswordToggleState(button, visible);
+  if (visible) passwordVisibilityTimers.set(input, globalThis.setTimeout(() => {
+    input.type = "password";
+    setPasswordToggleState(button, false);
+    passwordVisibilityTimers.delete(input);
+  }, 5000));
+  return true;
+};
 const closeNav = () => {
   document.body.classList.remove("nav-open");
   document.querySelector("[data-nav-toggle]")?.setAttribute("aria-expanded", "false");
@@ -251,11 +276,13 @@ document.addEventListener("click", event => {
   const navToggle = event.target.closest("[data-nav-toggle]");
   const sidebarToggle = event.target.closest("[data-sidebar-toggle]");
   const nav = event.target.closest("[data-nav]");
+  const passwordToggle = event.target.closest("[data-password-toggle]");
   const action = event.target.closest("[data-action]");
   const adminOnly = event.target.closest("[data-admin-only]");
   if (handleSkipLinkClick(skipLink)) { event.preventDefault(); return; }
   if (handleNavToggleClick(navToggle)) return;
   if (handleSidebarToggleClick(sidebarToggle)) return;
+  if (passwordToggle && togglePasswordVisibility(passwordToggle)) { event.preventDefault(); return; }
   if ((nav || action) && adminOnly && !isAdmin()) return;
   if (handleNavClick(nav)) return;
   handleActionClick(action, event);

@@ -177,6 +177,9 @@ beforeEach(() => {
 describe('authView', () => {
   it('renders login, setup, MFA and reset states', () => {
     assert.match(authView(), /auth-login-form/);
+    assert.match(authView(), /data-password-toggle="password"/);
+    assert.match(authView(), /aria-label="Passwort anzeigen"/);
+    assert.match(authView(), /class="input-leading-icon"/);
     assert.match(authView(), /<button type="submit" class="primary-button" data-action="auth-login">/);
 
     state.auth.setupRequired = true;

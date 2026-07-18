@@ -984,9 +984,13 @@ body.is-resizing {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 10px;
+  align-self: stretch;
   flex-shrink: 0;
-  width: 110px;
+  width: 138px;
+  padding-right: 28px;
+  border-right: 1px solid var(--line);
 }
 
 .auth-logo {
@@ -1237,6 +1241,71 @@ body.is-resizing {
   color: var(--muted);
   font-size: 12px;
   font-weight: 700;
+}
+
+.input-icon-wrap {
+  position: relative;
+}
+
+.input-icon-wrap > input {
+  padding-left: 42px;
+}
+
+.input-leading-icon {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  display: grid;
+  color: var(--teal);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.input-leading-icon svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.password-input-wrap input {
+  padding-right: 44px;
+}
+
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 7px;
+  display: grid;
+  width: 30px;
+  height: 30px;
+  min-height: 30px;
+  padding: 5px;
+  border: 0;
+  border-radius: 6px;
+  color: var(--muted);
+  background: transparent;
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+
+.password-toggle:hover,
+.password-toggle:focus-visible {
+  color: var(--ink);
+  background: var(--panel-soft);
+}
+
+.password-toggle svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .street-rule-list {
@@ -3244,6 +3313,19 @@ body.is-busy-visible .busy-indicator {
 
   .document-preview:not(.format-square) .document-sheet {
     padding: 20px;
+  }
+
+  .auth-panel {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .auth-brand {
+    align-self: auto;
+    width: auto;
+    padding: 0 0 16px;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
   }
 }
 
