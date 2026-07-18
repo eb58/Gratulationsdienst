@@ -287,6 +287,7 @@ describe('SOKO print artifacts', () => {
     const html = renderSokoForm({ ...citizen, doctoralDegree: 'Dr.' }, 4);
 
     assert.doesNotMatch(html, /<img\b/);
+    assert.doesNotMatch(html, /G-2026-001/);
     assert.match(html, /Bezirksamt Reinickendorf/);
     assert.match(html, /SOKO 01/);
     assert.match(html, /Frau Dr\. Erika Mustermann/);

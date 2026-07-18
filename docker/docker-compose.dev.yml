@@ -4,3 +4,8 @@ services:
       ALLOW_SELF_SIGNED_CERT: 'true'
     volumes:
       - ./certs:/etc/apache2/ssl
+      - ./src/gratulationsdienst/index.html:/var/www/html/gratulationsdienst/index.html:ro
+      - ./src/gratulationsdienst/favicon.svg:/var/www/html/gratulationsdienst/favicon.svg:ro
+      - ./src/gratulationsdienst/assets:/var/www/html/gratulationsdienst/assets:ro
+      - ./src/gratulationsdienst/data:/var/www/html/gratulationsdienst/data:ro
+      - ./src/gratulationsdienst/vendor:/var/www/html/gratulationsdienst/vendor:ro
