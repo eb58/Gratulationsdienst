@@ -177,7 +177,7 @@ const drawQuestionnairePage = async (citizen, marks, pageIndex) => {
   text(context, formatDateDe(citizen.birthDate), 162, 18, 3);
   box(context, 104, 22, 91, 42);
   multiText(context, address, 108, 31, 5, 3.4);
-  text(context, `${String(pageIndex + 1).padStart(3, "0")} / ${month}`, 176, 77, 3);
+  text(context, `${String(pageIndex + 1).padStart(3, "0")} / ${month}`, 176, 61, 3);
   box(context, 14, 47, 86, 17);
   text(context, sokoQuestionnaireBirthdayLabel(citizen, age), 20, 57, 3.6, "bold");
   text(context, "Sehr geehrte Damen und Herren,", 15, 77, 3.4);
@@ -198,7 +198,7 @@ const drawQuestionnairePage = async (citizen, marks, pageIndex) => {
   box(context, SOKO_REMARKS_BOX.left, SOKO_REMARKS_BOX.top, SOKO_REMARKS_BOX.width, SOKO_REMARKS_BOX.height);
   text(context, "Unterschrift der Sozialkommission und Datum", 18, 145, 3.1);
   text(context, "Vorname des Ehegatten, ggf. abweichender Familienname", 106, 145, 2.8);
-  text(context, "Bemerkungen", 18, 161, 3.1);
+  text(context, "Bemerkungen", 18, 171, 3.1);
   box(context, SOKO_PRIVACY_BOX.left, SOKO_PRIVACY_BOX.top, SOKO_PRIVACY_BOX.width, SOKO_PRIVACY_BOX.height);
   multiText(context, SIMULATED_SOKO_PRIVACY_TEXT, 18, 221, 3.6, 2.8, "", 174);
   clearBlankHandwritingAreas(context);

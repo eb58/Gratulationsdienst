@@ -27,8 +27,8 @@ export const SOKO_CHECKBOXES = {
 
 export const SOKO_HANDWRITING_FIELDS = {
   weddingDate: { left: 164, top: 119, width: 28, height: 17, label: "am (Datum)" },
-  spouseName: { left: 106, top: 141, width: 86, height: 24, label: "Vorname des Ehegatten" },
-  remarks: { left: 17, top: 171, width: 176, height: 37, label: "Bemerkungen" }
+  spouseName: { left: 106, top: 152, width: 86, height: 12, label: "Vorname des Ehegatten" },
+  remarks: { left: 17, top: 176, width: 176, height: 32, label: "Bemerkungen" }
 };
 
 const entriesForGroup = group => Object.entries(SOKO_CHECKBOXES).filter(([, config]) => config.group === group);
