@@ -11,6 +11,8 @@ export const SOKO_QR_BOXES = [SOKO_QR_BOX, SOKO_QR_BOX2];
 export const SOKO_CHECKBOX_SIZE_MM = 4;
 export const SOKO_QUESTIONNAIRE_IMPORTED_STATUS = "geladen";
 
+export const sokoQuestionnaireBirthdayLabel = (citizen, age) => `${age}. Geburtstag ${(String(citizen?.salutation || "").trim().toLowerCase() === "frau" ? "der" : "des")} nebenstehend Genannten`;
+
 export const SOKO_CHECKBOXES = {
   wishPost: { left: 19, top: 153, group: "wish", value: "per Post" },
   wishVisit: { left: 50, top: 153, group: "wish", value: "Besuch erwünscht" },

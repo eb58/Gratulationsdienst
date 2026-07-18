@@ -8,6 +8,7 @@ import {
   citizenIdFromSokoQuestionnaireCode,
   findSokoQuestionnaireCitizen,
   SOKO_QUESTIONNAIRE_IMPORTED_STATUS,
+  sokoQuestionnaireBirthdayLabel,
   sokoQuestionnaireCode,
   sokoQuestionnaireDataFromCode,
   sokoQuestionnairePatchFromMarks
@@ -40,6 +41,12 @@ describe('SOKO questionnaire codes', () => {
     });
     assert.equal(citizenIdFromSokoQuestionnaireCode('GD-SOKO:G-2026-001'), 'G-2026-001');
     assert.equal(citizenIdFromSokoQuestionnaireCode('Code G-2026-002'), 'G-2026-002');
+  });
+
+  it('renders the birthday label with the correct gendered article', () => {
+    assert.equal(sokoQuestionnaireBirthdayLabel({ salutation: 'Frau' }, 90), '90. Geburtstag der nebenstehend Genannten');
+    assert.equal(sokoQuestionnaireBirthdayLabel({ salutation: 'Herr' }, 90), '90. Geburtstag des nebenstehend Genannten');
+    assert.equal(sokoQuestionnaireBirthdayLabel({}, 90), '90. Geburtstag des nebenstehend Genannten');
   });
 
   it('matches citizens by QR data when the QR id is no longer present', () => {

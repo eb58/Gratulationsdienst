@@ -4,7 +4,7 @@ import { groupForCitizen, selectedCitizen, selectedTemplate, selectedSender } fr
 import { render } from './render.js'; // Zyklus OK: render wird nur in Callbacks aufgerufen
 import { templateBodyForAge } from './templates.js';
 import { qrCodeSvg } from './qr.js';
-import { SOKO_CHECKBOXES, SOKO_CHECKBOX_SIZE_MM, SOKO_QR_BOX, SOKO_QR_BOX2, sokoQuestionnaireCode } from './sokoQuestionnaire.js';
+import { SOKO_CHECKBOXES, SOKO_CHECKBOX_SIZE_MM, SOKO_QR_BOX, SOKO_QR_BOX2, sokoQuestionnaireBirthdayLabel, sokoQuestionnaireCode } from './sokoQuestionnaire.js';
 import { SOKO_PRIVACY_TEXT_HTML } from './sokoPrivacyText.js';
 import { cardBackLayoutFor, cardLayoutFor } from './cardLayouts.js';
 import { citizenAddressName, citizenFormalName, citizenListName } from './citizenNames.js';
@@ -482,7 +482,7 @@ export const renderSokoForm = (citizen, index) => {
     ${box(104, 22, 91, 58, `${addr}<div style="position:absolute;right:4mm;bottom:1.5mm">${String(index + 1).padStart(3, "0")} / ${month}</div>`, "padding:3mm 25mm 3mm 3mm;line-height:1.25;font-size:9.5pt")}
     ${box(166, 80, 29, 9, `<div style="margin-top:2.4mm">Lfd. Nr. / Monat</div>`, "text-align:center;font-size:9pt;line-height:1.1")}
 
-    ${box(14, 47, 86, 17, `${age}. Geburtstag d. nebenstehend Genannten`, "display:flex;align-items:center;justify-content:center;text-align:center;font-weight:bold;font-size:10.5pt")}
+    ${box(14, 47, 86, 17, sokoQuestionnaireBirthdayLabel(citizen, age), "display:flex;align-items:center;justify-content:center;text-align:center;font-weight:bold;font-size:10.5pt")}
     ${box(104, 94, 48, 16, "Zutreffendes ist<br>angekreuzt", "display:flex;align-items:center;justify-content:center;text-align:center;font-weight:bold;font-size:11pt")}
 
     ${text(15, 77, 85, 7, "Sehr geehrte Damen und Herren,", "font-size:10.5pt")}

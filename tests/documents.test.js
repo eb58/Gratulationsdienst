@@ -285,12 +285,15 @@ describe('SOKO print artifacts', () => {
 
   it('renders SOKO questionnaire forms with assignment and date data', () => {
     const html = renderSokoForm({ ...citizen, doctoralDegree: 'Dr.' }, 4);
+    const maleHtml = renderSokoForm({ ...citizen, salutation: 'Herr', doctoralDegree: 'Dr.', id: 'G-2026-002' }, 4);
 
     assert.doesNotMatch(html, /<img\b/);
     assert.doesNotMatch(html, /G-2026-001/);
     assert.match(html, /Bezirksamt Reinickendorf/);
     assert.match(html, /SOKO 01/);
     assert.match(html, /Frau Dr\. Erika Mustermann/);
+    assert.match(html, /90\. Geburtstag der nebenstehend Genannten/);
+    assert.match(maleHtml, /90\. Geburtstag des nebenstehend Genannten/);
     assert.match(html, /005 \/ 06/);
     assert.ok(html.indexOf('005 / 06') < html.indexOf('Lfd. Nr. / Monat'));
     assert.match(html, /left:104mm;top:22mm;width:91mm;height:58mm;[\s\S]*?005 \/ 06<\/div><\/div>/);

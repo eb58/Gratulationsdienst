@@ -8,6 +8,7 @@ import {
   SOKO_PAGE_MM,
   SOKO_QR_BOX,
   SOKO_QR_BOX2,
+  sokoQuestionnaireBirthdayLabel,
   sokoQuestionnaireCode
 } from './sokoQuestionnaire.js';
 import { questionnaireCaseId } from './questionnaireCases.js';
@@ -163,7 +164,7 @@ const drawQuestionnairePage = async (citizen, marks, pageIndex) => {
   text(context, "Lfd. Nr. / Monat", 169, 86, 3);
 
   box(context, 14, 47, 86, 17);
-  text(context, `${age}. Geburtstag d. nebenstehend Genannten`, 20, 57, 3.6, "bold");
+  text(context, sokoQuestionnaireBirthdayLabel(citizen, age), 20, 57, 3.6, "bold");
   text(context, "Sehr geehrte Damen und Herren,", 15, 77, 3.4);
   multiText(context, "bitte senden Sie mir diesen Fragebogen\ninnerhalb von drei Wochen\nausgef\u00fcllt und unterschrieben zur\u00fcck.", 15, 89, 5.2, 3.45);
   text(context, "F\u00fcr weitere Angaben bitte die R\u00fcckseite benutzen.", 15, 108, 3.2);
