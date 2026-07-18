@@ -10,6 +10,7 @@ import {
   SOKO_QUESTIONNAIRE_IMPORTED_STATUS,
   SOKO_PRIVACY_BOX,
   SOKO_QR_BOX2,
+  SOKO_REMARKS_BOX,
   sokoQuestionnaireBirthdayLabel,
   sokoQuestionnaireCode,
   sokoQuestionnaireDataFromCode,
@@ -52,8 +53,9 @@ describe('SOKO questionnaire codes', () => {
   });
 
   it('uses the adjusted lower QR and privacy box coordinates', () => {
-    assert.deepEqual(SOKO_QR_BOX2, { left: 18, top: 261, size: 16 });
-    assert.deepEqual(SOKO_PRIVACY_BOX, { left: 15, top: 203, width: 176, height: 76 });
+    assert.deepEqual(SOKO_QR_BOX2, { left: 18, top: 258, size: 16 });
+    assert.deepEqual(SOKO_PRIVACY_BOX, { left: 15, top: 212, width: 180, height: 67 });
+    assert.deepEqual(SOKO_REMARKS_BOX, { left: 15, top: 166, width: 180, height: 44 });
   });
 
   it('matches citizens by QR data when the QR id is no longer present', () => {

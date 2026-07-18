@@ -4,7 +4,7 @@ import { groupForCitizen, selectedCitizen, selectedTemplate, selectedSender } fr
 import { render } from './render.js'; // Zyklus OK: render wird nur in Callbacks aufgerufen
 import { templateBodyForAge } from './templates.js';
 import { qrCodeSvg } from './qr.js';
-import { SOKO_CHECKBOXES, SOKO_CHECKBOX_SIZE_MM, SOKO_PRIVACY_BOX, SOKO_QR_BOX, SOKO_QR_BOX2, sokoQuestionnaireBirthdayLabel, sokoQuestionnaireCode } from './sokoQuestionnaire.js';
+import { SOKO_CHECKBOXES, SOKO_CHECKBOX_SIZE_MM, SOKO_PRIVACY_BOX, SOKO_QR_BOX, SOKO_QR_BOX2, SOKO_REMARKS_BOX, sokoQuestionnaireBirthdayLabel, sokoQuestionnaireCode } from './sokoQuestionnaire.js';
 import { SOKO_PRIVACY_TEXT_HTML } from './sokoPrivacyText.js';
 import { cardBackLayoutFor, cardLayoutFor } from './cardLayouts.js';
 import { citizenAddressName, citizenFormalName, citizenListName } from './citizenNames.js';
@@ -479,21 +479,16 @@ export const renderSokoForm = (citizen, index) => {
     ${box(104, 8, 27, 14, `<div>Datum</div><div style="margin-top:2mm">${formatDateDe(todayIso())}</div>`, "padding:1.2mm;font-size:8.5pt")}
     ${box(131, 8, 25, 14, `<div>Telefon</div><div style="margin-top:2mm">90294 4055</div>`, "padding:1.2mm;border-left:0;font-size:8.5pt")}
     ${box(156, 8, 39, 14, `<div>Geburtsdatum</div><div style="margin-top:3.2mm">${formatDateDe(citizen.birthDate)}</div>`, "padding:1.2mm;text-align:center;border-left:0;font-size:8.5pt")}
-    ${box(104, 22, 91, 58, `${addr}<div style="position:absolute;right:4mm;bottom:1.5mm">${String(index + 1).padStart(3, "0")} / ${month}</div>`, "padding:3mm 25mm 3mm 3mm;line-height:1.25;font-size:9.5pt")}
-    ${box(166, 80, 29, 9, `<div style="margin-top:2.4mm">Lfd. Nr. / Monat</div>`, "text-align:center;font-size:9pt;line-height:1.1")}
-
+    ${box(104, 22, 91, 42, `${addr}<div style="position:absolute;right:4mm;bottom:1.5mm">${String(index + 1).padStart(3, "0")} / ${month}</div>`, "padding:3mm 25mm 3mm 3mm;line-height:1.25;font-size:9.5pt")}
     ${box(14, 47, 86, 17, sokoQuestionnaireBirthdayLabel(citizen, age), "display:flex;align-items:center;justify-content:center;text-align:center;font-weight:bold;font-size:10.5pt")}
-    ${box(104, 94, 48, 16, "Zutreffendes ist<br>angekreuzt", "display:flex;align-items:center;justify-content:center;text-align:center;font-weight:bold;font-size:11pt")}
-
     ${text(15, 77, 85, 7, "Sehr geehrte Damen und Herren,", "font-size:10.5pt")}
-    ${text(15, 89, 82, 14, "bitte senden Sie mir diesen <strong>Fragebogen</strong><br><strong>innerhalb von drei Wochen</strong><br>ausgef&uuml;llt und unterschrieben zur&uuml;ck.", "font-size:10.5pt;line-height:1.18")}
-    ${text(15, 108, 92, 7, "F&uuml;r weitere Angaben bitte die R&uuml;ckseite benutzen.", "font-size:10.5pt")}
-    ${text(16, 121, 50, 7, "Ihre Gratulationsstelle", "font-size:10.5pt")}
+    ${text(15, 89, 180, 7, "bitte senden Sie mir diesen <strong>Fragebogen</strong> <strong>innerhalb von drei Wochen</strong> ausgef&uuml;llt und unterschrieben zur&uuml;ck.", "font-size:10.5pt;line-height:1.18")}
+    ${text(15, 94, 50, 7, "Ihre Gratulationsstelle", "font-size:10.5pt")}
 
-    ${box(15, 134, 180, 7, "Von der Sozialkommission auszuf&uuml;llen", "display:flex;align-items:center;justify-content:center;font-size:11pt")}
-    ${box(15, 141, 88, 33, "Gl&uuml;ckw&uuml;nsche", "padding:2mm;font-size:9.8pt")}
-    ${box(103, 141, 58, 33, "Es steht bevor die", "padding:2mm;border-left:0;font-size:9.2pt")}
-    ${box(161, 141, 34, 33, "am (Datum)", "padding:2mm;border-left:0;font-size:9.8pt")}
+    ${box(15, 101, 180, 7, "Von der Sozialkommission auszufüllen", "display:flex;align-items:center;justify-content:center;font-size:11pt")}
+    ${box(15, 108, 88, 33, "Gl&uuml;ckw&uuml;nsche", "padding:2mm;font-size:9.8pt")}
+    ${box(103, 108, 58, 33, "Es steht bevor die", "padding:2mm;border-left:0;font-size:9.2pt")}
+    ${box(161, 108, 34, 33, "am (Datum)", "padding:2mm;border-left:0;font-size:9.8pt")}
     ${checkField("wishPost", "per Post")}
     ${checkField("wishVisit", "Soko")}
     ${checkField("wishNone", "keine")}
@@ -502,12 +497,13 @@ export const renderSokoForm = (citizen, index) => {
     ${checkField("weddingDiamond", "Diamantene Hochzeit (60 J.)")}
     ${checkField("weddingIron", "Eiserne Hochzeit&nbsp;&nbsp;&nbsp;&nbsp;(65 J.)")}
     ${checkField("weddingGrace", "Gnadenhochzeit&nbsp;&nbsp;&nbsp;(70 J.)")}
-    ${box(15, 174, 88, 25, "Unterschrift der Sozialkommission und Datum", "padding:2mm;border-top:0;font-size:9.8pt")}
-    ${box(103, 174, 92, 25, "Vorname des Ehegatten, ggf. abweichender Familienname", "padding:2mm;border-top:0;border-left:0;font-size:9.8pt")}
+    ${box(15, 141, 88, 25, "Unterschrift der Sozialkommission und Datum", "padding:1mm 2mm 2mm;border-top:0;font-size:9.8pt")}
+    ${box(103, 141, 92, 25, "Vorname des Ehegatten, ggf. abweichender Familienname", "padding:1mm 2mm 2mm;border-top:0;border-left:0;font-size:9.8pt")}
+    ${box(SOKO_REMARKS_BOX.left, SOKO_REMARKS_BOX.top, SOKO_REMARKS_BOX.width, SOKO_REMARKS_BOX.height, "Bemerkungen", "padding:2mm;border-top:0;font-size:9.8pt")}
 
     ${box(SOKO_PRIVACY_BOX.left, SOKO_PRIVACY_BOX.top, SOKO_PRIVACY_BOX.width, SOKO_PRIVACY_BOX.height, `
       <div style="font-size:11pt;text-decoration:underline;margin-bottom:5mm">*Datenschutzrechtliche Einwilligungserkl&auml;rung</div>
-      <div style="font-size:10.5pt;line-height:1.28;text-decoration:none">
+      <div style="font-size:9.5pt;line-height:1.25;text-decoration:none;padding-bottom:18mm">
         ${SOKO_PRIVACY_TEXT_HTML}
       </div>
     `, "padding:2mm")}

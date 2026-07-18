@@ -9,6 +9,7 @@ import {
   SOKO_PRIVACY_BOX,
   SOKO_QR_BOX,
   SOKO_QR_BOX2,
+  SOKO_REMARKS_BOX,
   sokoQuestionnaireBirthdayLabel,
   sokoQuestionnaireCode
 } from './sokoQuestionnaire.js';
@@ -174,37 +175,32 @@ const drawQuestionnairePage = async (citizen, marks, pageIndex) => {
   text(context, "90294 4055", 133, 18, 3);
   text(context, "Geburtsdatum", 158, 12, 2.7);
   text(context, formatDateDe(citizen.birthDate), 162, 18, 3);
-  box(context, 104, 22, 91, 58);
+  box(context, 104, 22, 91, 42);
   multiText(context, address, 108, 31, 5, 3.4);
   text(context, `${String(pageIndex + 1).padStart(3, "0")} / ${month}`, 176, 77, 3);
-  box(context, 166, 80, 29, 9);
-  text(context, "Lfd. Nr. / Monat", 169, 86, 3);
-
   box(context, 14, 47, 86, 17);
   text(context, sokoQuestionnaireBirthdayLabel(citizen, age), 20, 57, 3.6, "bold");
   text(context, "Sehr geehrte Damen und Herren,", 15, 77, 3.4);
-  multiText(context, "bitte senden Sie mir diesen Fragebogen\ninnerhalb von drei Wochen\nausgef\u00fcllt und unterschrieben zur\u00fcck.", 15, 89, 5.2, 3.45);
-  text(context, "F\u00fcr weitere Angaben bitte die R\u00fcckseite benutzen.", 15, 108, 3.2);
-  text(context, "Ihre Gratulationsstelle", 16, 121, 3.4);
+  multiText(context, "bitte senden Sie mir diesen Fragebogen innerhalb von drei Wochen ausgef\u00fcllt und unterschrieben zur\u00fcck.", 15, 89, 5.2, 3.45, "", 180);
+  text(context, "Ihre Gratulationsstelle", 15, 94, 3.4);
 
-  box(context, 104, 94, 48, 16);
-  text(context, "Zutreffendes ist", 112, 101, 4, "bold");
-  text(context, "angekreuzt", 116, 106, 4, "bold");
-  box(context, 15, 134, 180, 7);
-  text(context, "Von der Sozialkommission auszufüllen", 72, 139, 3.5, "bold");
-  box(context, 15, 141, 88, 33);
-  box(context, 103, 141, 58, 33);
-  box(context, 161, 141, 34, 33);
-  text(context, "Glückwünsche", 18, 147, 3.2);
-  text(context, "Es steht bevor die", 106, 147, 3.2);
-  text(context, "am (Datum)", 164, 147, 3.2);
+  box(context, 15, 101, 180, 7);
+  text(context, "Von der Sozialkommission auszufüllen", 72, 106, 3.5, "bold");
+  box(context, 15, 108, 88, 33);
+  box(context, 103, 108, 58, 33);
+  box(context, 161, 108, 34, 33);
+  text(context, "Glückwünsche", 18, 114, 3.2);
+  text(context, "Es steht bevor die", 106, 114, 3.2);
+  text(context, "am (Datum)", 164, 114, 3.2);
   Object.keys(SOKO_CHECKBOXES).forEach(key => drawCheckbox(context, key, marks[key]));
-  box(context, 15, 174, 88, 25);
-  box(context, 103, 174, 92, 25);
-  text(context, "Unterschrift der Sozialkommission und Datum", 18, 180, 3.1);
-  text(context, "Vorname des Ehegatten, ggf. abweichender Familienname", 106, 180, 2.8);
+  box(context, 15, 141, 88, 25);
+  box(context, 103, 141, 92, 25);
+  box(context, SOKO_REMARKS_BOX.left, SOKO_REMARKS_BOX.top, SOKO_REMARKS_BOX.width, SOKO_REMARKS_BOX.height);
+  text(context, "Unterschrift der Sozialkommission und Datum", 18, 145, 3.1);
+  text(context, "Vorname des Ehegatten, ggf. abweichender Familienname", 106, 145, 2.8);
+  text(context, "Bemerkungen", 18, 161, 3.1);
   box(context, SOKO_PRIVACY_BOX.left, SOKO_PRIVACY_BOX.top, SOKO_PRIVACY_BOX.width, SOKO_PRIVACY_BOX.height);
-  multiText(context, SIMULATED_SOKO_PRIVACY_TEXT, 18, 212, 3.9, 3.0, "", 174);
+  multiText(context, SIMULATED_SOKO_PRIVACY_TEXT, 18, 221, 3.6, 2.8, "", 174);
   clearBlankHandwritingAreas(context);
 
   return canvas.toDataURL("image/jpeg", JPEG_QUALITY);

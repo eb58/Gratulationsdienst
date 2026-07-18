@@ -4,30 +4,31 @@ import { questionnaireCaseId } from './questionnaireCases.js';
 export const SOKO_QR_PREFIX = "GD-SOKO:";
 export const SOKO_PAGE_MM = { width: 210, height: 297 };
 export const SOKO_QR_BOX = { left: 176, top: 24, size: 16 };
-// Abstand zum Rahmen der Datenschutz-Box (15,203,180,80) bewusst groß halten: bei nur 2mm Puffer
-// verschmiert die Rahmenlinie nach Scan/JPEG-Kompression in die QR-Ruhezone und macht ihn unlesbar.
-export const SOKO_PRIVACY_BOX = { left: 15, top: 203, width: 176, height: 76 };
-export const SOKO_QR_BOX2 = { left: 18, top: 261, size: 16 };
+// Datenschutz- und QR-Bereich liegen bewusst mit ausreichend Abstand unter dem Antwortteil.
+export const SOKO_PRIVACY_BOX = { left: 15, top: 212, width: 180, height: 67 };
+export const SOKO_QR_BOX2 = { left: 18, top: 258, size: 16 };
 export const SOKO_QR_BOXES = [SOKO_QR_BOX, SOKO_QR_BOX2];
+export const SOKO_REMARKS_BOX = { left: 15, top: 166, width: 180, height: 44 };
 export const SOKO_CHECKBOX_SIZE_MM = 4;
 export const SOKO_QUESTIONNAIRE_IMPORTED_STATUS = "geladen";
 
 export const sokoQuestionnaireBirthdayLabel = (citizen, age) => `${age}. Geburtstag ${(String(citizen?.salutation || "").trim().toLowerCase() === "frau" ? "der" : "des")} nebenstehend Genannten`;
 
 export const SOKO_CHECKBOXES = {
-  wishPost: { left: 19, top: 153, group: "wish", value: "per Post" },
-  wishVisit: { left: 50, top: 153, group: "wish", value: "Besuch erwünscht" },
-  wishNone: { left: 73.5, top: 153, group: "wish", value: "keine" },
-  pressPublication: { left: 19, top: 165, group: "pressPublication", value: true },
-  weddingGold: { left: 104, top: 149, group: "weddingAnniversary", value: "Goldene Hochzeit" },
-  weddingDiamond: { left: 104, top: 155, group: "weddingAnniversary", value: "Diamantene Hochzeit" },
-  weddingIron: { left: 104, top: 161, group: "weddingAnniversary", value: "Eiserne Hochzeit" },
-  weddingGrace: { left: 104, top: 167, group: "weddingAnniversary", value: "Gnadenhochzeit" }
+  wishPost: { left: 19, top: 120, group: "wish", value: "per Post" },
+  wishVisit: { left: 50, top: 120, group: "wish", value: "Besuch erwünscht" },
+  wishNone: { left: 73.5, top: 120, group: "wish", value: "keine" },
+  pressPublication: { left: 19, top: 132, group: "pressPublication", value: true },
+  weddingGold: { left: 104, top: 116, group: "weddingAnniversary", value: "Goldene Hochzeit" },
+  weddingDiamond: { left: 104, top: 122, group: "weddingAnniversary", value: "Diamantene Hochzeit" },
+  weddingIron: { left: 104, top: 128, group: "weddingAnniversary", value: "Eiserne Hochzeit" },
+  weddingGrace: { left: 104, top: 134, group: "weddingAnniversary", value: "Gnadenhochzeit" }
 };
 
 export const SOKO_HANDWRITING_FIELDS = {
-  weddingDate: { left: 164, top: 152, width: 28, height: 17, label: "am (Datum)" },
-  spouseName: { left: 106, top: 184, width: 86, height: 12, label: "Vorname des Ehegatten" }
+  weddingDate: { left: 164, top: 119, width: 28, height: 17, label: "am (Datum)" },
+  spouseName: { left: 106, top: 141, width: 86, height: 24, label: "Vorname des Ehegatten" },
+  remarks: { left: 17, top: 171, width: 176, height: 37, label: "Bemerkungen" }
 };
 
 const entriesForGroup = group => Object.entries(SOKO_CHECKBOXES).filter(([, config]) => config.group === group);
