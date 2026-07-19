@@ -6,6 +6,7 @@ export const QUITTUNG_SETTINGS_KEY = "gd_quittung_settings";
 export const MAP_MONTH_KEY = "gd_map_month";
 export const API_BASE = import.meta.env?.VITE_API_BASE ?? "/php-api";
 export const SPLITTERS_KEY = "gratulationsdienst.splitters";
+
 const storedSplitters = () => {
   try { return JSON.parse(localStorage.getItem(SPLITTERS_KEY)) || {}; }
   catch { return {}; }
@@ -31,15 +32,15 @@ export const safeStorageSetItem = (storage, key, value, label = key) => {
 export const storeSplit = (key, value) => safeStorageSetItem(localStorage, SPLITTERS_KEY, JSON.stringify({ ...storedSplitters(), [key]: value }), "Splitter-Position");
 export const $ = selector => document.querySelector(selector);
 export const $$ = selector => [...document.querySelectorAll(selector)];
+export const byId = (items, id) => items.find(item => item.id === id);
+
 export const todayIso = () => new Date().toISOString().slice(0, 10);
 export const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[char]);
 export const normalize = value => String(value ?? "").trim().toLowerCase();
 export const normalizeEmail = value => String(value ?? "").trim();
 export const normalizeDigits = value => String(value ?? "").replace(/\D/g, "");
-export const isValidPostalCode = value => {
-  const postalCode = normalizeDigits(value);
-  return !postalCode || postalCode.length === 5;
-};
+export const isValidPostalCode = value => { const postalCode = normalizeDigits(value);  return !postalCode || postalCode.length === 5;};
+
 export const normalizeAmount = value => {
   const chars = [...String(value ?? "").trim().replace(".", ",")];
   const result = chars.reduce((acc, char) => {
@@ -49,12 +50,9 @@ export const normalizeAmount = value => {
   }, { euros: "", separator: false, decimals: "" });
   return result.separator && result.euros ? `${result.euros},${result.decimals}` : result.euros;
 };
-export const byId = (items, id) => items.find(item => item.id === id);
 export const formatDate = value => value ? new Intl.DateTimeFormat("de-DE").format(new Date(value)) : "";
-export const isValidEmail = value => {
-  const email = normalizeEmail(value);
-  return !email || /^[^\s@]+@(?:[^\s@.]+\.)+[^\s@.]{2,}$/.test(email);
-};
+export const isValidEmail = value => {  const email = normalizeEmail(value);  return !email || /^[^\s@]+@(?:[^\s@.]+\.)+[^\s@.]{2,}$/.test(email);};
+
 export const normalizeIban = value => String(value ?? "").replace(/\s/g, "").toUpperCase();
 export const formatIban = value => normalizeIban(value).match(/.{1,4}/g)?.join(" ") || "";
 export const ibanToNumeric = value => [...value].map(char => /[A-Z]/.test(char) ? String(char.codePointAt(0) - 55) : char).join("");
@@ -71,6 +69,7 @@ export const isValidIban = value => {
     && iban.length <= 34
     && ibanMod97(ibanToNumeric(rearranged)) === 1;
 };
+
 export const runYear = () => Number(todayIso().slice(0, 4));
 export const birthdayInRunYear = birthDate => {
   const birth = new Date(birthDate);
@@ -122,6 +121,7 @@ export const downloadText = (name, content, type = "text/plain;charset=utf-8") =
   const needsBom = /csv/i.test(type) && !content.startsWith(UTF8_BOM); // BOM, damit Excel UTF-8 (Umlaute) korrekt liest
   downloadBlob(new Blob([needsBom ? `${UTF8_BOM}${content}` : content], { type }), name);
 };
+
 let toastTimer = null;
 export const toast = (message, options = {}) => {
   const element = $("#toast");

@@ -3,7 +3,7 @@ import { describe, it } from 'node:test';
 import {
   numOr, lo, hi, parityOf, plzCompatible, parityOverlap,
   hasNumberInRange, rangeLabel, directoryConflicts
-} from '../scripts/check-directory.js';
+} from '../scripts/just-for-doku/check-directory.js';
 
 describe('Hausnummern-Grenzen', () => {
   it('zieht die Zahl aus dem Wert, sonst Fallback', () => {
