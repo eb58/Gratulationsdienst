@@ -7,10 +7,9 @@ import { parseCsv } from "../modules/import.js";
 // Aufruf: node scripts/migrate-citizens.js <input.csv> [output.json]
 // Ausgabe ist ein camelCase-Array passend zur API-Collection citizens (PUT /citizens).
 
-// Entfernt deutsche Dezimalreste ("480,00" -> "480", "1,00" -> "1")
-export const cleanNumber = value => String(value ?? "").trim().replace(/[.,]\d{1,2}$/, "");
-// Flag-Spalten ("0"/"1"/"1,00") als Boolean
-export const isTruthy = value => !["", "0"].includes(cleanNumber(value));
+
+export const cleanNumber = value => String(value ?? "").trim().replace(/[.,]\d{1,2}$/, ""); // Entfernt deutsche Dezimalreste ("480,00" -> "480", "1,00" -> "1")
+export const isTruthy = value => !["", "0"].includes(cleanNumber(value)); // Flag-Spalten ("0"/"1"/"1,00") als Boolean
 
 // "26.03.1946" -> "1946-03-26", leer -> ""
 export const parseDate = value => {
@@ -25,14 +24,12 @@ export const normalizeSalutation = value => {
   return String(value ?? "").trim();
 };
 
-// "Nachname, Vorname" -> { firstName, lastName }
-export const splitName = value => {
+export const splitName = value => { // "Nachname, Vorname" -> { firstName, lastName }
   const [last, ...rest] = String(value ?? "").split(",");
   return { lastName: (last || "").trim(), firstName: rest.join(",").trim() };
 };
 
-// "Musterstr. 19" -> { street: "Musterstr.", houseNo: "19" }
-export const splitStreet = value => {
+export const splitStreet = value => { // "Musterstr. 19" -> { street: "Musterstr.", houseNo: "19" }
   const match = String(value ?? "").trim().match(/^(.*?)\s+(\d.*)$/);
   return match ? { street: match[1].trim(), houseNo: match[2].trim() } : { street: String(value ?? "").trim(), houseNo: "" };
 };

@@ -53,7 +53,7 @@ export const sokoQuestionnaireCode = citizen => [
 
 export const citizenIdFromSokoQuestionnaireCode = value => {
   const raw = String(value ?? "").trim();
-  const prefixed = raw.match(new RegExp(`${SOKO_QR_PREFIX}\\s*(G-[A-Za-z0-9-]+)`, "i"));
+  const prefixed = raw.match(new RegExp(String.raw`${SOKO_QR_PREFIX}\s*(G-[A-Za-z0-9-]+)`, "i"));
   return prefixed?.[1] || raw.match(/\bG-[A-Za-z0-9-]+\b/)?.[0] || "";
 };
 

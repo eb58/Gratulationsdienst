@@ -5,7 +5,7 @@
 - In JavaScript moeglichst `const` und Arrow Functions verwenden.
 - `let` nur nutzen, wenn eine erneute Zuweisung noetig ist.
 - Schreibweise kompakt halten, ohne Lesbarkeit zu opfern.
-- Aenderungen eng am bestehenden Stil und an der vorhandenen Struktur halten.
+- Änderungen eng am bestehenden Stil und an der vorhandenen Struktur halten.
 - Textdateien in UTF-8 halten; keine ungepruefte Umcodierung und kein mojibake in neuem Text.
 - Keep it simple, stupid -> KISS-Prinzip
 - use globalThis not window

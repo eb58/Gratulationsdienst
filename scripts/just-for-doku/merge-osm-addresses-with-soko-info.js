@@ -13,7 +13,7 @@
 // - am Ende: Deduplizierung, Sortierung und Schreiben der Ausgabe-Datei
 const fs = require("fs");
 const path = require("path");
-const { findeSoko } = require("../public/data/soko-strassenverzeichnis.js");
+const { findeSoko } = require("../../public/data/soko-strassenverzeichnis.js");
 
 const targetFile = process.argv[2] || "data/osm-reinickendorf-address-points.js";
 const overpassUrl = process.env.OVERPASS_URL || "https://overpass-api.de/api/interpreter";
