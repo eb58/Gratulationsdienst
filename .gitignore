@@ -7,5 +7,3 @@ docker/src
 docker/certs/*
 docker/secrets/*.txt
 docker/.env
-ansible/inventory.direct.yml
-ansible/files/*.pem

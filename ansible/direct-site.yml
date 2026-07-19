@@ -1,8 +1,0 @@
----
-- name: Gratulationsdienst direkt auf Debian installieren
-  hosts: gratulationsdienst_direct
-  become: true
-  gather_facts: true
-
-  roles:
-    - role: gratulationsdienst_direct
