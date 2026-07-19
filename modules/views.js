@@ -1235,7 +1235,6 @@ export const views = {
               </div>
               <button type="button" class="ghost-button test-action-button" data-action="download-labo-seed">LABO-Daten herunterladen</button>
               <button type="button" class="ghost-button test-action-button" data-action="seed-citizens">LABO-Import simulieren</button>
-              <button type="button" class="danger-button test-action-button" data-action="reset-test-database">Reset Test-Datenbank</button>
             </div>
           ` : ""}
           <input id="import-file" class="file-input" type="file" accept=".csv,text/csv">
@@ -1317,6 +1316,7 @@ export const views = {
       <div class="toolbar">
         <button type="button" class="ghost-button" data-action="load-users">Aktualisieren</button>
         <button type="button" class="primary-button" data-action="new-user">Neuer Benutzer</button>
+        <button type="button" class="danger-button test-action-button" data-action="reset-test-database">Reset Test-Datenbank</button>
       </div>
       ${state.auth.adminResetToken ? `<div class="alert">Rücksetz-Code: <code>${escapeHtml(state.auth.adminResetToken)}</code></div>` : ""}
       <div class="users-split" style="--users-left:${state.usersSplit}%">
