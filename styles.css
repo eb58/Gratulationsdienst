@@ -1473,9 +1473,13 @@ input[type="checkbox"].toggle:checked::after {
   flex-wrap: wrap;
 }
 
-.soko-questionnaire-picker .test-action-button {
-  min-height: 32px;
-  white-space: nowrap;
+.soko-questionnaire-test-actions {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+
+.soko-questionnaire-test-actions .test-actions-meta {
+  margin-right: auto;
 }
 
 .soko-questionnaire-load {

@@ -31,6 +31,20 @@ export const viewTitles = {
   audit: "Änderungen"
 };
 
+const questionnaireTestOrigins = new Set([
+  'https://localhost',
+  'https://senioren-luebars.berlin'
+]);
+
+const questionnaireTestEnvironment = () => {
+  try {
+    const url = new URL(globalThis.location?.href || '');
+    return questionnaireTestOrigins.has(url.origin) && url.pathname === '/gratulationsdienst/';
+  } catch {
+    return false;
+  }
+};
+
 const templateBackgroundInput = (field, label, hasImage) => {
   const inputId = `template-${field}`;
   return `
@@ -839,6 +853,7 @@ export const views = {
     const citizenSplitClass = showQuestionnairePanel ? "citizen-split has-questionnaire-images" : "citizen-split";
     const citizenContainerClass = citizen ? citizenSplitClass : "";
     const citizenContainerStyle = citizen ? `style="--citizen-left:${citizenSplit}%"` : "";
+    const showQuestionnaireTestActions = questionnaireTestEnvironment();
     return `
       <div class="toolbar">
         <select name="month" data-filter>${months.map(month => `<option value="${month[0]}" ${state.filters.month === month[0] ? "selected" : ""}>${month[1]}</option>`).join("")}</select>
@@ -850,9 +865,15 @@ export const views = {
           ${[["alle", "Alle Status"], ["offen", "offen"], ["importiert", "importiert"], ["geprüft", "geprüft"], [SOKO_QUESTIONNAIRE_IMPORTED_STATUS, SOKO_QUESTIONNAIRE_IMPORTED_STATUS], ["gedruckt", "gedruckt"]].map(option => `<option value="${option[0]}" ${state.filters.status === option[0] ? "selected" : ""}>${option[1]}</option>`).join("")}
         </select>
         <div class="file-action-row soko-pdf-action-row">
-          <div class="file-picker import-file-picker soko-questionnaire-picker">
+          ${showQuestionnaireTestActions ? `<div class="test-actions soko-questionnaire-test-actions" aria-label="Testzwecke">
+            <div class="test-actions-meta">
+              <span>Nur für Testzwecke</span>
+              <strong>Simulierte Fragebögen</strong>
+            </div>
             <button type="button" class="primary-button test-action-button" data-action="simulate-soko-pdf-import">Simuliere Fragebögen laden</button>
             <button type="button" class="ghost-button test-action-button" data-action="download-soko-pdf-simulation">Fragebögen-PDF herunterladen</button>
+          </div>` : ""}
+          <div class="file-picker import-file-picker soko-questionnaire-picker">
             <label class="soko-questionnaire-load" for="soko-pdf-file"><span>Fragebögen laden</span><em>Gescannte Fragebögen</em></label>
           </div>
           <input id="soko-pdf-file" class="file-input" type="file" accept=".pdf,application/pdf">

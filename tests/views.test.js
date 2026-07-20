@@ -248,6 +248,37 @@ describe('view partials', () => {
     assert.doesNotMatch(html, /01\.06\.2026/);
   });
 
+  it('places questionnaire simulations in a test-only box', () => {
+    const originalLocation = globalThis.location;
+    try {
+      globalThis.location = { protocol: 'https:', href: 'https://localhost/gratulationsdienst/', search: '' };
+      const html = views.citizens();
+      const testActions = html.match(/<div class="test-actions soko-questionnaire-test-actions"[\s\S]*?<\/div>\s*<div class="file-picker/)?.[0] || '';
+
+      assert.match(testActions, /Nur für Testzwecke/);
+      assert.match(testActions, /data-action="simulate-soko-pdf-import"/);
+      assert.match(testActions, /data-action="download-soko-pdf-simulation"/);
+      assert.match(html, /data-action="simulate-soko-pdf-import"[\s\S]*data-action="download-soko-pdf-simulation"/);
+    } finally {
+      globalThis.location = originalLocation;
+    }
+  });
+
+  it('zeigt Fragebogensimulationen nur auf den freigegebenen HTTPS-Adressen', () => {
+    const originalLocation = globalThis.location;
+    try {
+      ['https://localhost/gratulationsdienst/', 'https://senioren-luebars.berlin/gratulationsdienst/'].forEach(href => {
+        globalThis.location = { protocol: 'https:', href, search: '' };
+        assert.match(views.citizens(), /data-action="simulate-soko-pdf-import"/);
+      });
+
+      globalThis.location = { protocol: 'https:', href: 'https://example.test/gratulationsdienst/', search: '' };
+      assert.doesNotMatch(views.citizens(), /data-action="simulate-soko-pdf-import"|data-action="download-soko-pdf-simulation"/);
+    } finally {
+      globalThis.location = originalLocation;
+    }
+  });
+
   it('renders a sender signature image upload control and preview', () => {
     state.data.senders = [{ ...sender, signatureImage: 'sig.png' }];
 
