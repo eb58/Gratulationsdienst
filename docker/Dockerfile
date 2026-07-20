@@ -15,22 +15,14 @@ RUN npm run build:release
 
 FROM php:8.2.32-apache-bookworm
 
-# Installiere die MariaDB-kompatiblen Erweiterungen für PHP und das Tool für ein Default-Zertifikat
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends openssl \
-    && rm -rf /var/lib/apt/lists/* \
-    && docker-php-ext-install mysqli pdo pdo_mysql \
-    && a2enmod rewrite ssl headers \
+# MariaDB-kompatible PHP-Erweiterungen und benoetigte Apache-Module
+RUN docker-php-ext-install mysqli pdo pdo_mysql \
+    && a2enmod rewrite headers \
     && a2dismod -f autoindex
 
 COPY docker/apache-http.conf /etc/apache2/sites-available/000-default.conf
-COPY docker/apache-https.conf /etc/apache2/sites-available/default-ssl.conf
-COPY docker/apache-entrypoint.sh /usr/local/bin/apache-entrypoint.sh
 COPY --from=frontend-build /app/docker/src/ /var/www/html/
 
-RUN chmod +x /usr/local/bin/apache-entrypoint.sh \
-    && cp /var/www/html/gratulationsdienst/php-api/config.example.php /var/www/html/gratulationsdienst/php-api/config.php \
-    && a2ensite default-ssl
+RUN cp /var/www/html/gratulationsdienst/php-api/config.example.php /var/www/html/gratulationsdienst/php-api/config.php
 
-ENTRYPOINT ["/usr/local/bin/apache-entrypoint.sh"]
 CMD ["apache2-foreground"]

@@ -4,6 +4,3 @@ dist-check/
 .vite/
 .claude
 docker/src
-docker/certs/*
-docker/secrets/*.txt
-docker/.env
